@@ -1,0 +1,33 @@
+language: java
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.sonar/cache
+
+env:
+  global:
+    - SONAR_ORGANIZATION=utarwyn-github
+
+services:
+  - docker
+
+before_install:
+  - git fetch --unshallow
+
+install:
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V; fi
+
+before_script:
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then echo "Caching SonarCloud"; fi
+
+script:
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then mvn clean verify sonar:sonar -Pcoverage -Dsonar.organization=$SONAR_ORGANIZATION -Dsonar.login=$SONAR_TOKEN; fi
+  - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then mvn clean install; fi
+
+branches:
+  only:
+    - main
+    - develop

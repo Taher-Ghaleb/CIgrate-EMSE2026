@@ -1,0 +1,27 @@
+Here is the migrated Travis CI configuration:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+script:
+  - unset _JAVA_OPTIONS
+  - cd finish
+  - chmod +x../scripts/travisTest.sh
+  - sudo mount --make-rshared /
+  - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+  - chmod +x kubectl
+  - sudo ln -s $(pwd)/kubectl /usr/local/bin/kubectl
+  - wget https://github.com/kubernetes/minikube/releases/download/v0.28.2/minikube-linux-amd64 -q -O minikube
+  - chmod +x minikube
+  - sudo ln -s $(pwd)/minikube /usr/local/bin/minikube
+  - sudo minikube start --vm-driver=none --bootstrapper=localkube
+  - cd finish &&../scripts/travisTest.sh
+
+after_failure:
+  - sudo minikube stop
+```
+
+Note that I've kept the `after_failure` section to stop the minikube cluster after the build fails, as it's a good practice to clean up resources when the build fails.

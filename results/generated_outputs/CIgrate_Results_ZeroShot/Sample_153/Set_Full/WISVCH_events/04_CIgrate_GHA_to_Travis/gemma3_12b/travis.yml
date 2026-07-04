@@ -1,0 +1,60 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+services:
+  - postgres:13
+  options: --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=5
+env:
+  global:
+    - TRAVIS_BUILD_NUMBER: $GITHUB_RUN_NUMBER
+    - CC_TEST_REPORTER_ID: $CC_TEST_REPORTER_ID
+    - DOCKER_USERNAME: $DOCKER_USERNAME
+    - DOCKER_PASSWORD: $DOCKER_PASSWORD
+branches:
+  only:
+    - master
+  except:
+    - /^doc$/
+    - /^release$/
+    - /^hotfix$/
+    - /^feature$/
+    - /^bugfix$/
+    - /^develop$/
+    - /^main$/
+    - /^release-candidate$/
+    - /^release-patch$/
+    - /^release-major$/
+    - /^release-minor$/
+    - /^develop-candidate$/
+    - /^develop-patch$/
+    - /^develop-major$/
+    - /^develop-minor$/
+    - /^bugfix-candidate$/
+    - /^bugfix-patch$/
+    - /^bugfix-major$/
+    - /^bugfix-minor$/
+    - /^feature-candidate$/
+    - /^feature-patch$/
+    - /^feature-major$/
+    - /^feature-minor$/
+    - /^hotfix-candidate$/
+    - /^hotfix-patch$/
+    - /^hotfix-major$/
+    - /^hotfix-minor$/
+    - /^release-candidate-candidate$/
+    - /^release-candidate-patch$/
+    - /^release-candidate-major$/
+    - /^release-candidate-minor$/
+    - /^release-patch-candidate$/
+    - /^release-patch-major$/
+    - /^release-patch-minor$/
+    - /^release-major-candidate$/
+    - /^release-major-minor$/
+    - /^release-minor-candidate$/
+    - /^release-minor-major$/
+    - /^develop-candidate-candidate$/
+    -

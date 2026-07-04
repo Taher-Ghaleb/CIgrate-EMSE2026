@@ -1,0 +1,45 @@
+name: Dokany-NIO-Adapter CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        env:
+          MAVEN_OPTS: -Dmaven.repo.remote=*https://repo1.maven.org/maven2/*
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+          curl -o $HOME/.m2/settings.xml https://gist.githubusercontent.com/cryptobot/cf5fbd909c4782aaeeeb7c7f4a1a43da/raw/e60ee486e34ee0c79f89f947abe2c83b4290c6bb/settings.xml
+          mvn dependency:go-offline -Pdependency-check,coverage,release
+      - name: Run tests
+        run: |
+          mvn clean test jacoco:report verify -Dsurefire.useFile=false -Pcoverage
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Deploy
+        run: |
+          mvn clean versions:set -DnewVersion=${GITHUB_REF##*/} deploy -DskipTests -Prelease
+          # TODO: Use a more secure way to store and use the Codacy project token and Bintray API key.
+          curl -o ~/codacy-coverage-reporter-assembly-latest.jar https://oss.sonatype.org/service/local/repositories/releases/content/com/codacy/codacy-coverage-reporter/4.0.1/codacy-coverage-reporter-4.0.1-assembly.jar
+          $JAVA_HOME/bin/java -jar ~/codacy-coverage-reporter-assembly-latest.jar report -l Java -r target/site/jacoco/jacoco.xml
+      - name: Update Bintray
+        run: |
+          echo '{

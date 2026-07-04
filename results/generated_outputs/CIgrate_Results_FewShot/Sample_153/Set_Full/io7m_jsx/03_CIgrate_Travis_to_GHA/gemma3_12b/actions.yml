@@ -1,0 +1,21 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 9
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '9'
+      - name: Maven Build, Verify, and Site Generation
+        run: mvn --errors clean verify site
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash) -f ./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml
+
+  notifications:
+    irc: "chat.freenode.net#io7m"

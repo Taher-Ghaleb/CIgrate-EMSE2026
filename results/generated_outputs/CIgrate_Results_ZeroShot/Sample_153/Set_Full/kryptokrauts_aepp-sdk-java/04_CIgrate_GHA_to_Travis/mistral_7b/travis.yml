@@ -1,0 +1,75 @@
+language: java
+
+branches:
+  only:
+    - master
+
+deploy:
+  on:
+    tags: true
+    types: [release]
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+before_script:
+  - checkout
+
+script:
+  - setup-java -v 8
+  - setup-gradle
+  - cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle
+  - install: |
+      chmod +x travis-install-libsodium.sh
+      ./travis-install-libsodium.sh
+      echo "PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+      echo "LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+  - run: chmod +x gradlew
+  - run: docker-compose up -d
+  - run: ./gradlew integrationTest
+  - run: ./gradlew build
+  - run: ./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$GITHUB_RUN_NUMBER
+
+matrix:
+  include:
+    - java:
+        - 8
+
+  before_install:
+    - setup-java -v 8
+    - setup-gradle
+
+  cache:
+    directories:
+      - ~/.m2/repository
+      - ~/.gradle
+
+  script:
+    - chmod +x travis-install-libsodium.sh
+    - ./travis-install-libsodium.sh
+    - echo "PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+    - echo "LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+    - run: chmod +x gradlew
+    - run: ./gradlew build
+
+  snapshot:
+    if: $GITHUB_REF == 'refs/heads/dev' && $GITHUB_EVENT_NAME == 'push'
+    script:
+      - ./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$GITHUB_RUN_NUMBER
+
+  release:
+    if: $GITHUB_REF == 'refs/heads/master' && $GITHUB_EVENT_NAME == 'push'
+    permissions:
+      contents: write
+    script:
+      - ./gradlew bintrayUpload -x test -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$GITHUB_RUN_NUMBER
+      - run: |
+          VERSION=$(./gradlew -q pV)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION"

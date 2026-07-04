@@ -1,0 +1,71 @@
+name: CI
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+
+deploy:
+  on:
+    tags: true
+
+script:
+  - chmod +x ci/build-docker-image
+  - ci/build-docker-image
+  - ./ci/docker-build-game
+
+language: ubuntu
+
+before_install:
+  - chmod +x ci/build-docker-image
+  - ci/build-docker-image
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+services:
+  - docker
+
+before_script:
+  - checkout
+
+env:
+  global:
+    JDK_VERSION: 11
+    GIT_VERSION: latest
+
+matrix:
+  include:
+    - jdk: ${{ fromJson(env.JDK_VERSION) }}
+      git: ${{ fromJson(env.GIT_VERSION) }}
+
+  allow_failures:
+    - jdk: 12
+
+before_install:
+  - git config --global --unset core.autocrlf
+  - git config --global core.autosetuprepositories false
+
+install:
+  - apt-get update
+  - apt-get install -y openjdk ${{ matrix.jdk }}
+  - git config core.editor vim
+  - git config core.pager less
+
+script:
+  - ./ci/build-docker-image
+  - ./ci/docker-build-game
+
+after_success:
+  deploy:
+    provider: script
+    script: ./deploy.sh
+
+after_failure:
+  deploy:
+    provider: script
+    script: ./deploy.sh

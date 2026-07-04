@@ -1,0 +1,25 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.gradle
+
+jobs:
+  include:
+    - stage: check
+      script:
+        - chmod +x gradlew
+        - ./gradlew check
+
+    - stage: publish
+      if: branch = master AND type = push
+      script:
+        - chmod +x gradlew
+        - ./gradlew build publish
+      env:
+        - ACCESS_KEY=$ACCESS_KEY

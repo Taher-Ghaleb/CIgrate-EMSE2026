@@ -1,0 +1,24 @@
+language: java
+jdk:
+- oraclejdk8
+env:
+  matrix:
+  - TERM=dumb
+  global:
+    secure: "********************"
+install: true
+script:
+  - ./gradlew test jacocoTestReport && ./gradlew coveralls bintrayUpload
+
+addons:
+  coverity_scan:
+    project:
+      name: "micheljung/nocatch"
+      description: "Get rid of annoying checked exceptions!"
+    notification_email: michel.jung89@gmail.com
+    build_command_prepend: "./gradlew clean"
+    build_command:   "./gradlew build"
+    branch_pattern: coverity_scan
+
+deploy:
+  on: release

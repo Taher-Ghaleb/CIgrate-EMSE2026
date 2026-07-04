@@ -1,0 +1,31 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Maven 3.2.5
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+        run: |
+          echo "Downloading Maven 3.2.5"
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.zip
+          unzip -q apache-maven-3.2.5-bin.zip
+          export M2_HOME=$(pwd)/apache-maven-3.2.5
+          export PATH=$M2_HOME/bin:$PATH
+          cp ./.middleware-common/.travis.settings.xml $HOME/.m2/settings.xml
+          mvn -version
+
+      - name: Install dependencies
+        run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+      - name: Check format and generate coverage
+        run: |
+          sh ./.middleware-common/check_format.sh
+          mvn cobertura:cobertura
+
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)

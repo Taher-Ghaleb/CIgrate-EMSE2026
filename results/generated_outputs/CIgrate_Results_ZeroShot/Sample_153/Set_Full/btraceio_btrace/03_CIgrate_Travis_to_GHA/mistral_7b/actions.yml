@@ -1,0 +1,54 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+env:
+  global:
+    secure: ${{ secrets.SECRET_1 }}
+    secure: ${{ secrets.SECRET_2 }}
+    JAVA_HOME: /root/.sdkman/candidates/openjdk11
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+      - name: Setup SDKMAN
+        run: |
+          curl -sL https://get.sdkman.io | bash
+          echo sdkman_auto_answer=true > ~/.sdkman/etc/config
+          echo sdkman_auto_selfupdate=true >> ~/.sdkman/etc/config
+          source ~/.sdkman/bin/sdkman-init.sh
+      - name: Install dependencies
+        run: pip install --user codecov
+      - name: Install CA certificates
+        run: |
+          sudo apt-get update
+          sudo apt-get install ca-certificates-java
+          sudo update-ca-certificates -f
+      - name: Cache Gradle and SDKMAN
+        uses: actions/cache@v4 with:
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/$HOME/.sdkman/') }}
+          path: $HOME/.gradle $HOME/.sdkman
+      - name: Checkout and configure build
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Gradle
+        run: ./gradlew wrapper --gradle-version 6.8.3
+      - name: Build and Test
+        run: |
+          source ./config_build.sh
+          ./gradlew

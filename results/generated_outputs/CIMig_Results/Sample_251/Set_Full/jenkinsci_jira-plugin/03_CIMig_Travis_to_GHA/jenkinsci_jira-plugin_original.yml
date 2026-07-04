@@ -1,0 +1,37 @@
+matrix:
+  language: java
+  java
+  os:
+    windows-latest
+    ubuntu-latest
+
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      env:
+        github_token: ${{ github.token }}
+      with:
+        java-version: ${{ matrix.java }}
+        path: ~/.maven-~/.sonar/cache\n!**/*edelta*\n
+      uses: actions/setup-java@version
+      with: java-version
+    - name: build with maven-
+      uses: actions/checkout@version
+    run: mvn -Penable-jacoco -Dsonar.projectKey=jenkins-jira-plugin -Dsonar.coverage.jacoco.xmlReportPaths=/home/travis/build/jenkinsci/jira-plugin/target/site/jacoco/jacoco.xml clean verify coveralls:report sonar:sonar
+

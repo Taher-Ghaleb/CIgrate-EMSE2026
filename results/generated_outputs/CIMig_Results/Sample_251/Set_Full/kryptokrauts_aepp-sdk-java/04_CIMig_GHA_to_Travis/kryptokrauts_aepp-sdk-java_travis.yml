@@ -1,0 +1,25 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: 3.x
+before_install:
+  java -version
+  echo \"AETERNITY_GENERATE_SOURCES=true\" >> $GITHUB_ENV\necho \"AETERNAL_BASE_URL=http://localhost:8080\" >> $GITHUB_ENV\necho \"AETERNITY_BASE_URL=http://localhost\" >> $GITHUB_ENV\necho \"COMPILER_BASE_URL=http://localhost:3080\" >> $GITHUB_ENV\necho \"INDAEX_BASE_URL=http://localhost:4000\" >> $GITHUB_ENV\n
+script:
+  script:
+    ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+directories:
+  ~/.maven-
+  ~/.gradle
+  ~/.gradle
+  ~/.gradle-3
+  ~/.gradle-2
+  ~/.jdk
+include:
+  stage: tests
+services: docker-compose up -d\n./gradlew test integrationTest\n
+apt:
+  packages: jdk-8-jdk

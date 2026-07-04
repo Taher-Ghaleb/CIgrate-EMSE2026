@@ -1,0 +1,48 @@
+name: Java Project
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          apt-get update && apt-get install -y maven
+      - name: Build and deploy
+        run: |
+          mvn clean test jacoco:report coveralls:report
+          mvn deploy -Dmaven.test.skip=true --settings.github/workflows/.travis.settings.xml
+      - name: Send notification
+        uses: actions/notification@v1
+        with:
+          email: gr-tig-oss@future.co.jp
+          on_success: change
+          on_failure: always
+```
+
+Note: The `deploy` step in the original Travis CI configuration uses a script provider, which is not a standard GitHub Actions feature. In this migrated workflow, I've replaced it with a `run` step that executes the `mvn deploy` command. If you need to use a script provider, you may need to use a custom action or a third-party service.

@@ -1,0 +1,38 @@
+language: bash
+
+branches:
+  only:
+    - develop
+    - master
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+before_script:
+  - sh -c "curl -sL https://get.sdkman.io | bash"
+  - sh -c "echo 'sdkman_auto_answer=true' > $HOME/.sdkman/etc/config"
+  - sh -c "echo 'sdkman_auto_selfupdate=true' >> $HOME/.sdkman/etc/config"
+  - sh -c "source $HOME/.sdkman/bin/sdkman-init.sh"
+  - sh -c "sdk version"
+
+script:
+  - sh -c "if [[ ! -d $HOME/.sdkman/bin/ ]]; then sdk install java 11.0.12-temurin-jdk; fi"
+  - sh -c "sdk use java 11.0.12-temurin-jdk"
+  - sh -c "sdk install python 3.9.12"
+  - sh -c "sdk use python 3.9.12"
+  - sh -c "pip install codecov"
+  - sh -c "rm -rf $HOME/.cache/pip"
+  - sh -c "rm -rf $HOME/.cache/pip-download"
+  - sh -c "rm -rf $HOME/.cache/pip-wheels"
+  - sh -c "rm -rf $HOME/.sdkman"
+  - sh -c "curl -sL https://raw.githubusercontent.com/oracle/docker-images/master/Java/11/Dockerfile | tee Dockerfile"
+  - sh -c "docker build -t java:11 . && docker run --rm -it --name java_container java:11 java -version"
+  - sh -c "curl -sL https://raw.githubusercontent.com/actions/checkout/v4/contrib/scripts/cache/gradle.sh |

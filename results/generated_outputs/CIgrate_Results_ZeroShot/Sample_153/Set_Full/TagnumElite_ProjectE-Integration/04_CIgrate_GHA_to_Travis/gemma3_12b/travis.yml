@@ -1,0 +1,51 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.gradle/caches
+branches:
+  only:
+    - "1.12.x"
+notifications:
+  email:
+    recipients:
+      -
+    on_success: change
+    on_failure: change
+before_install:
+  -
+install:
+  -
+before_script:
+  - chmod +x gradlew
+script:
+  - ./gradlew setupCIWorkspace -S
+  - ./gradlew build
+  - ./gradlew javadoc
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "1.12.x" ] && [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
+      echo "Deploying to GitHub Pages..."
+      git config --global user.email "$USER@${TRAVIS_BUILD_EMAIL}"
+      git config --global user.name "${TRAVIS_COMMIT_AUTHOR}"
+      deploy:
+        provider: pages
+        token: $GITHUB_TOKEN
+        local_dir: ./build/docs/javadoc
+        keep_files: true
+        on:
+          tags: true
+  - else
+      echo "Skipping GitHub Pages deployment."
+  fi
+after_failure:
+  -
+deploy:
+  provider:
+    pages:
+      token: $GITHUB_TOKEN
+      local_dir: ./build/docs/javadoc
+      keep_files: true
+      on:
+        tags: true

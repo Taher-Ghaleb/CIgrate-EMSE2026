@@ -1,0 +1,85 @@
+language: java
+jdk: openjdk8
+sudo: required
+
+env:
+  matrix:
+    - BRANCH=dev
+    - BRANCH=master
+
+services:
+  - docker
+
+addons:
+  gradle:
+    version: '4'
+
+script:
+  - actions/checkout@v4
+
+  - name: Set up JDK 8
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '8'
+
+  - name: Setup Gradle
+    uses: gradle/actions/setup-gradle@v4
+
+  - name: Cache libsodium
+    uses: actions/cache@v4
+    with:
+      path: ~/libsodium
+      key: ${{ runner.os }}-libsodium-${{ hashFiles('travis-install-libsodium.sh') }}
+      restore-keys: ${{ runner.os }}-libsodium-
+
+  - name: Install libsodium
+    run: |
+      chmod +x travis-install-libsodium.sh
+      ./travis-install-libsodium.sh
+      echo "PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+      echo "LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
+  - name: Make gradlew executable
+    run: chmod +x gradlew
+
+  - name: Start services
+    run: docker-compose up -d
+
+  - name: Run integration tests
+    if: ${{ matrix.BRANCH == 'dev' }}
+    run: ./gradlew integrationTest
+
+  - name: Build
+    run: ./gradlew build
+
+  - name: Upload build artifacts
+    if: ${{ matrix.BRANCH == 'dev' }}
+    uses: actions/upload-artifact@v4
+    with:
+      name: jar-files
+      path: build/libs/*.jar
+
+  - name: Publish snapshot
+    if: ${{ matrix.BRANCH == 'dev' }}
+    run: |
+      ./gradlew artifactoryPublish -x test \
+        -Dsnapshot=true \
+        -Dbintray.user=${{ secrets.BINTRAY_USER }} \
+        -Dbintray.key=${{ secrets.BINTRAY_KEY }} \
+        -Dbuild.number=${{ github.run_number }}
+
+  - name: Publish to Bintray
+    if: ${{ matrix.BRANCH == 'master' }}
+    run: |
+      ./gradlew bintrayUpload -x test \
+        -Dbintray.user=${{ secrets.BINTRAY_USER }} \
+        -Dbintray.key=${{ secrets.BINTRAY_KEY }} \
+        -Dbuild.number=${{ github.run_number }}
+
+  - name: Get version
+    id: version
+    if: ${{ matrix.BRANCH == 'master' }}
+    run: |
+      VERSION=$(./gradlew -q pV)
+      echo "version=$VERSION" >> $GITHUB_OUTPUT

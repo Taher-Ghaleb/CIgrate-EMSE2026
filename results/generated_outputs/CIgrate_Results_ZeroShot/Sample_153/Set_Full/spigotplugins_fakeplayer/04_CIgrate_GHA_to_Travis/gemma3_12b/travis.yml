@@ -1,0 +1,15 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.m2/
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+script:
+  - mvn package -Dmaven.javadoc.skip=true -Dsource.skip=true -Dgpg.skip=true -B -ntp

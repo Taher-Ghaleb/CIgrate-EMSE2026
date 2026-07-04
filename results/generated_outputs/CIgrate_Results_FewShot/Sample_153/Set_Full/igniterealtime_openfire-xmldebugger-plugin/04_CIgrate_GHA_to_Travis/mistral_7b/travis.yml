@@ -1,0 +1,36 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+    - develop
+
+env:
+  global:
+    - SECRET_1: ${{ env.MAVEN_DEPLOY_USERNAME }}
+    - SECRET_2: ${{ env.MAVEN_DEPLOY_PASSWORD }}
+
+script:
+  - mvn clean verify
+
+deploy:
+  on:
+    branches:
+      only:
+        - master
+        - develop
+    types:
+      - release
+
+  before_install:
+    - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+
+  install:
+    - mkdir -p $HOME/.m2
+    - cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+
+  script:
+    - mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml

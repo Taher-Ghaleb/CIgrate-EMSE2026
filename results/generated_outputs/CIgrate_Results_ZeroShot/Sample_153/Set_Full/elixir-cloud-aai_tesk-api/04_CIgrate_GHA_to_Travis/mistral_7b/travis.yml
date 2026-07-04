@@ -1,0 +1,77 @@
+language: ubuntu
+
+branches:
+  include:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+script:
+  - run: |
+      chmod +x mvnw
+      ./mvnw clean verify
+
+install:
+  - run: |
+      wget https://github.com/staltz/gradle-wrapper/releases/download/latest_release/gradle-wrapper.jar
+      chmod +x gradle-wrapper.jar
+      ./gradle-wrapper.jar download --gradle-version 6.5
+      ./gradlew wrapper
+
+before_script:
+  - run: |
+      export JAVA_HOME=$(which java)
+      export MAVEN_HOME=$(which mvn)
+      export GRADLE_HOME=$(pwd)/.gradle
+
+env:
+  global:
+    - JAVA_HOME=$JAVA_HOME
+    - MAVEN_HOME=$MAVEN_HOME
+    - GRADLE_HOME=$GRADLE_HOME
+
+matrix:
+  include:
+    - java:
+        - openjdk8
+    - maven:
+        - '3.6.3'
+    - gradle:
+        - '6.5'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+
+deploy:
+  on:
+    tags: true
+
+after_success:
+  script:
+    - ./mvnw -B org.codecov:codecov:report
+
+after_failure:
+  script:
+    - ./mvnw -B org.codecov:codecov:report
+
+notifications:
+  on_success:
+    - slack:
+        url: ${{ env.SLACK_URL }}
+        channel: '#ci'
+        message: 'Successfully built and tested the project.'
+
+  on_failure:
+    - slack:
+        url: ${{ env.SLACK_URL }}
+        channel: '#ci'
+        message: 'Failed to

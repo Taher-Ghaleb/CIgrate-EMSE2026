@@ -1,0 +1,47 @@
+language: java
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.m2
+branches:
+  only:
+    - master
+    - /^tag\/.*$/
+  except:
+    - /^doc.*/
+notifications:
+  email:
+    recipients:
+      -
+    on_success: change
+    on_failure: change
+before_install:
+  - rm -rf $HOME/.m2/repository/io/vlingo
+  - cp .travis/settings.xml $HOME/.m2/settings.xml
+  - mvn deploy:help versions:help help:help
+script:
+  - mvn install -PTravisCI
+deploy:
+  on:
+    tags: true
+  provider:
+    script: mvn deploy -DskipTests
+    provider: shell
+    skip_cleanup: true
+  tag: true
+  commit_message: "Release ${TRAVIS_TAG}"
+  target_branch: master
+  environment:
+    global:
+      secure:
+        -
+before_success:
+  - if [ "$TRAVIS_TAG" != "" ]; then
+    - chmod u+x .travis/trigger_deps.sh
+    - .travis/trigger_deps.sh
+    - fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+    - mvn deploy -DskipTests
+    - fi
+before_cache:
+  - rm -rf $HOME/.m2/repository/io/vlingo

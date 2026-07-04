@@ -1,0 +1,68 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies..."
+  - apt-get update && apt-get install -y default-jdk
+
+install:
+  - echo "Installing Gradle..."
+  - curl -s https://get.sdkman.io | sh && source $HOME/.sdkman/bin/sdkman-init.sh && sdk install gradle 7.5
+  - export GRADLE_HOME=$HOME/.sdkman/candidates/gradle/current
+  - export PATH=$GRADLE_HOME/bin:$PATH
+
+script:
+  - echo "Building and testing..."
+  - chmod +x gradlew
+  -./gradlew :jar :test
+
+after_success:
+  - echo "Deploying..."
+  - echo "Deploying to production..."
+
+after_failure:
+  - echo "Deploying..."
+  - echo "Deploying to production..."
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production..."
+  on:
+    branch: never
+  skip_cleanup: true
+  environment:
+    name: production
+  before_deploy:
+    - echo "Before deploying to production..."
+  after_deploy:
+    - echo "After deploying to production..."
+
+matrix:
+  include:
+    - java: '11'
+      dist: 'temurin'
+      cache: 'gradle'
+  allow_failures: true
+
+services:
+  - docker
+
+addons:
+  apt:
+    sources:
+      - 'ppa:deadsnakes/ppa'
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle/
+    - $HOME/.npm
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+    recipients:
+      - 'your_email@example.com'

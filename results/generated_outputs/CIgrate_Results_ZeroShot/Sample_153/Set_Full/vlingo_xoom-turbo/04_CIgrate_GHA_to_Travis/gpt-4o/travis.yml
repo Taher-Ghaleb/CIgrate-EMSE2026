@@ -1,0 +1,38 @@
+language: java
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+services:
+  - docker
+
+before_install:
+  - rm -rf $HOME/.m2/repository/io/vlingo
+  - cp .travis/settings.xml $HOME/.m2/settings.xml
+  - mvn deploy:help versions:help help:help
+
+install:
+  - mvn install -PTravisCI
+
+script:
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_EVENT_TYPE" == "push" ]; then mvn deploy -DskipTests; fi
+  - if [[ "$TRAVIS_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then mvn deploy -DskipTests; fi
+
+after_success:
+  - if [[ "$TRAVIS_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      chmod u+x .travis/trigger_deps.sh;
+      .travis/trigger_deps.sh;
+    fi
+
+branches:
+  only:
+    - master
+    - /^v[0-9]+\.[0-9]+\.[0-9]+$/
+
+env:
+  global:
+    - GITHUB_TOKEN=$GITHUB_TOKEN
+    - TRIGGER_TOKEN=$TRIGGER_TOKEN

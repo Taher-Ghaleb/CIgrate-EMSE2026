@@ -1,0 +1,26 @@
+notifications: email
+env:
+  global:
+    OBJ-NODE:
+      secure: token
+    OBJ-NODE:
+      secure: token
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+jdk: [jdk7,jdk8]
+before_install:
+  java -version
+  mvn --batch-mode --update-snapshots verify
+script
+after_success:
+  bash <(curl-cmd
+directories: ~/.maven-
+include:
+  if: type in (pull_request, push)
+apt:
+  packages: jdk-8-jdk

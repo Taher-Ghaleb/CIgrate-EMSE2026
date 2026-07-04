@@ -1,0 +1,56 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  global:
+    - PROJ_VERSION=9.4.1
+    - PROJ_INSTALL_PREFIX=/usr/local
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.m2
+    - /usr/local
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y sqlite3 libsqlite3-dev libtiff-dev libcurl4-openssl-dev pkg-config cmake build-essential
+
+install:
+  - if [ ! -d "/usr/local/include/proj" ]; then
+      wget https://download.osgeo.org/proj/proj-${PROJ_VERSION}.tar.gz;
+      tar xf proj-${PROJ_VERSION}.tar.gz;
+      cd proj-${PROJ_VERSION};
+      mkdir build;
+      cd build;
+      cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX};
+      NPROC=$(nproc);
+      make -j${NPROC};
+      sudo make install;
+      cd ../..;
+    fi
+  - sudo ldconfig
+  - echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
+  - echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> ~/.bashrc
+  - source ~/.bashrc
+
+before_script:
+  - proj --version
+  - pkg-config --modversion proj
+
+script:
+  - mvn clean package
+  - javac -cp target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java
+  - java -cp "target/proj-1.0-SNAPSHOT.jar:example" TransformPoints
+
+after_success:
+  - zip -r proj-jni-jar.zip target/proj-*.jar
+  - curl -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/zip" --data-binary @proj-jni-jar.zip https://uploads.github.com/repos/$TRAVIS_REPO_SLUG/releases/assets?name=proj-jni-jar.zip
+
+branches:
+  only:
+    - main
+    - develop

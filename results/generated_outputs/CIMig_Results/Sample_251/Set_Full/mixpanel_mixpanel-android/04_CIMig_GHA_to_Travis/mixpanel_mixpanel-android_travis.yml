@@ -1,0 +1,19 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components: platform-tools
+deploy:
+  github_token: $github_token
+  overwrite: TRUE
+  api_key: $github_token
+coverity_scan:
+  branch_pattern: release.*
+stages:
+  if: branch = master

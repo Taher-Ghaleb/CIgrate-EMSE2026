@@ -1,0 +1,33 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - mvn --version
+  - mvn install site -e -B
+  - rm -rf ~/.m2/repository/org/joda/time
+  - chmod +x./.github/website.sh
+deploy:
+  - name: Deploy website (website tags)
+    if: branch =~ /website$/
+    on:
+      tags: true
+    script:./.github/website.sh
+    env:
+      SECRET_TOKEN: $SECRET_TOKEN
+  - name: Deploy website (version tags)
+    if: branch =~ /v$/
+    on:
+      tags: true
+    script:./.github/website.sh
+    env:
+      SECRET_TOKEN: $SECRET_TOKEN
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that in Travis CI, the `on` keyword is used to specify the event that triggers the deployment, and the `if` keyword is used to specify the conditions under which the deployment should be executed. The `branch` keyword is used to specify the branch or tag that triggers the deployment.

@@ -1,0 +1,21 @@
+language: java
+sudo: false
+branches:
+  only:
+    - master
+  except:
+    - pull_request
+
+jobs:
+  check:
+    script:
+      - chmod +x gradlew
+      - ./gradlew check
+  publish:
+    needs: check
+    if: $GITHUB_EVENT_NAME == "push" && $GITHUB_REF == "refs/heads/master"
+    script:
+      - chmod +x gradlew
+      - ./gradlew build publish
+      env:
+        ACCESS_KEY: $ACCESS_KEY

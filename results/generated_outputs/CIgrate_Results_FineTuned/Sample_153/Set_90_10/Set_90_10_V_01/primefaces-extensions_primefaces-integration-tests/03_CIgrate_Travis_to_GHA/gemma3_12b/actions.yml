@@ -1,0 +1,44 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        jdk: ['8', '11']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Install Firefox geckodriver
+        run: sudo apt-get -y install firefox-geckodriver
+      - name: Install Chrome driver
+        run: .travis/install-chromedriver.sh
+      - name: Install PrimeFaces and PrimeFaces Extensions
+        run: |
+          git clone https://github.com/primefaces/primefaces && cd primefaces && mvn install && cd ..
+          git clone https://github.com/primefaces-extensions/primefaces-selenium && cd primefaces-selenium && mvn install && cd ..
+      - name: Build with headless mode
+        if: matrix.jdk == '8'
+        run: mvn -B -V clean install -Pheadless-mode
+      - name: Build with headless mode and Chrome
+        if: matrix.jdk == '8'
+        run: mvn -B -V clean install -Pheadless-mode,chrome
+      - name: Build with headless mode
+        if: matrix.jdk == '11'
+        run: mvn -B -V clean install -Pheadless-mode
+      - name: Build with headless mode and Chrome
+        if: matrix.jdk == '11'
+        run: mvn -B -V clean install -Pheadless-mode,chrome

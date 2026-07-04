@@ -1,0 +1,29 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - master
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+jobs:
+  include:
+    - stage: without-authentication
+      script:
+        - mvn clean verify -P without-authentication
+
+    - stage: one-way-authentication
+      script:
+        - mvn clean verify -P with-one-way-authentication
+
+    - stage: two-way-authentication-trusting-each-other
+      script:
+        - mvn clean verify -P with-two-way-authentication-by-trusting-each-other
+
+    - stage: two-way-authentication-trusting-root-ca
+      script:
+        - mvn clean verify -P with-two-way-authentication-by-trusting-root-ca

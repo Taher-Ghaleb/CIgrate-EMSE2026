@@ -1,0 +1,13 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - oraclejdk8
+install: true
+script:
+  - chmod +x gradlew
+  -./gradlew test
+```
+
+Note that the `gradle/actions/setup-gradle@v4` action is not directly equivalent to a Travis CI configuration, as Travis CI uses the `gradle` language and the `gradlew` command to run Gradle tasks. The `gradle` language is enabled by default in Travis CI, so there is no need to specify it explicitly.

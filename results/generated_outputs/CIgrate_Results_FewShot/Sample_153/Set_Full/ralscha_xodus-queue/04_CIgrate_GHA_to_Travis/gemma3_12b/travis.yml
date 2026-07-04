@@ -1,0 +1,18 @@
+language: java
+sudo: false
+env:
+  global:
+    - SONATYPE_USERNAME: ralscha23
+    - secure: ${{ secrets.SONATYPE_PASSWORD }}
+jdk:
+  - openjdk8
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+script:
+  - mvn install
+after_success:
+  - if [ $TRAVIS_BRANCH = "main" ]; then
+      python addsettings.py
+      mvn clean deploy -DskipTests=true --settings ~/.m2/mySettings.xml
+    fi

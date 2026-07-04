@@ -1,0 +1,42 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - '$HOME/.sdkman'
+    - '~/.gradle'
+env:
+  global:
+    - ADB_INSTALL_TIMEOUT: 10
+    - secure: "rFMDGYB3C4EbfS+CJq9lEuCtTmJgz8FmyrBp39P0lo6Zk/LqcuXolJBR2CLU9xkf/0oIOURov6+H6lMLRtmpYl6ZbmgAB+grq/y5ORLvlqccij+9UM19LeO/w8Nf1raOnwpB+V1VAfUx1dNTnxZIJRO/RrhtJDDdb9nWjyU0ua0=" # TODO: Replace with actual CODECOV_TOKEN
+jdk:
+  - openjdk11
+branches:
+  only:
+    - main
+    - develop
+  except:
+    - /^hotfix\/.*$/
+    - /^feature\/.*/
+    - /^release\/.*/
+script:
+  - if [[ ! -d $HOME/.sdkman/bin/ ]]; then
+    rm -rf $HOME/.sdkman
+    curl -sL https://get.sdkman.io | bash
+    echo "sdkman_auto_answer=true" > $HOME/.sdkman/etc/config
+    echo "sdkman_auto_selfupdate=true" >> $HOME/.sdkman/etc/config
+  fi
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk version
+  - sudo dpkg --purge --force-depends ca-certificates-java || true
+  - sudo apt-get update
+  - sudo apt-get install -y ca-certificates-java
+  - sudo update-ca-certificates -f
+  - chmod +x gradlew
+  - source ./config_build.sh
+  - ./gradlew assemble -DexcludeBenchmark
+  - source ./config_build.sh
+  - ./run_tests.sh
+  - if [ "$TRAVIS_BRANCH" == "develop" ]; then
+    ./gradlew buildDistributions -DexcludeBenchmark
+  fi
+  - if [ "$TRAVIS_BRANCH"

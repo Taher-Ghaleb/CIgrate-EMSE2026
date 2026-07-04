@@ -1,0 +1,16 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+script:
+  - mvn -B -nsu verify
+```
+
+Note that the `before_install` and `install` sections are not needed in this case, as the `script` section is sufficient to run the `mvn` command. The `cache` section is used to cache the Maven packages, and the `jdk` section specifies the Java version to use.

@@ -1,0 +1,20 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn package -f ion-java-cli/pom.xml
+script:
+  script:
+    mvn test
+deploy:
+  github_token: $github_token
+  target-branch: gh-pages
+stage:
+  build
+  ☕ 11

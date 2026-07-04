@@ -1,0 +1,16 @@
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew clean build --info --stacktrace --warning-mode all
+stage: ☕ 11

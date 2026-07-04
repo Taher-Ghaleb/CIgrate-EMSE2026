@@ -1,0 +1,25 @@
+language: java
+sudo: false
+env:
+  matrix:
+    - JDK_VERSION=8
+    - ANDROID_TARGET=android-28
+    - ANDROID_ABI=armeabi-v7a
+
+jdk:
+  - openjdk8
+
+addons:
+  android:
+    components:
+      - platform-tools
+      - android-28
+      - build-tools-28.0.3
+      - extras;android;m2repository
+
+script:
+  - actions/checkout@v4
+  - actions/setup-java@v4 -distribution:temurin -java-version:$JDK_VERSION -cache:gradle
+  - android-actions/setup-android@v3
+  - chmod +x gradlew
+  - ./gradlew build

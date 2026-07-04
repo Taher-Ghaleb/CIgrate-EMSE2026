@@ -1,0 +1,60 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+    - /^(\([0-9]+|[a-z0-9]+)\)$/
+    - /^feature\/.+$/
+    - /^bugfix\/.+$/
+    - /^hotfix\/.+$/
+    - /^release\/.+$/
+    - /^fixup\/.+$/
+    - /^chore\/.+$/
+    - /^docs\/.+$/
+    - /^test\/.+$/
+    - /^ci\/.+$/
+    - /^refactor\/.+$/
+    - /^perf\/.+$/
+    - /^style\/.+$/
+    - /^tooling\/.+$/
+    - /^build\/.+$/
+    - /^i18n\/.+$/
+    - /^packaging\/.+$/
+    - /^security\/.+$/
+    - /^accessibility\/.+$/
+    - /^experimental\/.+$/
+    - /^internal\/.+$/
+    - /^legacy\/.+$/
+    - /^migration\/.+$/
+    - /^optimization\/.+$/
+    - /^rework\/.+$/
+    - /^upgrade\/.+$/
+    - /^maintenance\/.+$/
+    - /^support\/.+$/
+    - /^tools\/.+$/
+    - /^utilities\/.+$/
+    - /^assets\/.+$/
+    - /^data\/.+$/
+    - /^api\/.+$/
+    - /^integration\/.+$/
+    - /^modules\/.+$/
+    - /^plugins\/.+$/
+    - /^scripts\/.+$/
+    - /^templates\/.+$/
+    - /^ui\/.+$/
+    - /^web\/.+$/
+    - /^mobile\/.+$/
+    - /^desktop\/.+$/
+    - /^server\/.+$/
+    - /^client\/.+$/
+    - /^backend\/.+$/
+    - /^frontend\/.+$/
+    - /^admin\/.+$/
+    - /^portal\/.+$/
+    - /^dashboard

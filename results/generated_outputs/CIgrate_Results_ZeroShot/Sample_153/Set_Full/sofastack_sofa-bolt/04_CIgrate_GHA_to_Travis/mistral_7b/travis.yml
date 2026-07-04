@@ -1,0 +1,66 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+services:
+  - docker
+
+before_install:
+  - install: maven -v
+    cache: maven
+
+script:
+  - echo "Downloading Maven 3.2.5"
+    wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.zip
+    unzip -q apache-maven-3.2.5-bin.zip
+    echo "$PWD/apache-maven-3.2.5/bin" >> $HOME/.bash_profile
+    cp ./.middleware-common/.travis.settings.xml $HOME/.m2/settings.xml
+    $PWD/apache-maven-3.2.5/bin/mvn -version
+
+install:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+before_script:
+  - if: ${{ matrix.jdk }} == '8'
+    script: |
+      cp ./.middleware-common/check_format.sh $HOME/check_format.sh
+      chmod +x $HOME/check_format.sh
+      $HOME/check_format.sh
+
+script:
+  - mvn cobertura:cobertura
+
+after_success:
+  - name: Upload coverage artifact
+    if: matrix.jdk == '8'
+    uses: actions/upload-artifact@v4
+    with:
+      name: coverage-data
+      path: '**/target/site/cobertura/'
+
+matrix:
+  jdk:
+    - 8
+    - 7
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+env:
+  global:
+    - GITHUB_TOKEN
+
+addons:
+  docker:
+    - docker/d

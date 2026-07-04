@@ -1,0 +1,45 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['9']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 9
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '9'
+      - name: Install Maven
+        uses: actions/setup-node@v4
+      - name: Install Maven
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Install Maven
+        run: |
+          curl -sL https://deb.nodesource.com | sudo -E bash -
+          curl -sL https://raw.githubusercontent.com/python-maven/maven-python/master/maven-python-plugin/install.sh | bash
+      - name: Checkout and build
+        run: mvn --errors clean verify site
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash) -f com.io7m.jmurmur.core/target/site/jacoco/jacoco.xml
+      - name: Notify on IRC
+        uses: actions/twitter-bot@v4
+        with:
+          twitter_username: io7m
+          twitter_oauth_token: ${{ secrets.TWITTER_OAUTH_TOKEN }}
+          twitter_oauth_token_secret: ${{ secrets.TWITTER_OAUTH_TOKEN_SECRET }}
+          twitter_access_token: ${{ secrets.TWITTER

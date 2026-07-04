@@ -1,0 +1,53 @@
+Here is the equivalent complete Travis CI configuration:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+
+script:
+  - mvn clean verify -P without-authentication
+  - mvn clean verify -P with-one-way-authentication
+  - mvn clean verify -P with-two-way-authentication-by-trusting-each-other
+  - mvn clean verify -P with-two-way-authentication-by-trusting-root-ca
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+matrix:
+  include:
+    - JDK=11
+  allow_failures: true
+
+before_install:
+  - echo no | android create avd --force --name test --target android-21 --abi armeabi-v7a
+  - emulator -avd test -no-skin -no-audio -no-window &
+  - android-wait-for-emulator
+  - adb devices
+  - adb shell input keyevent 82 &
+  - adb shell svc power stayon true
+
+android:
+  components:
+    - android-22
+    - android-23
+    - tools
+    - platform-tools
+    - build-tools-23.0.2
+    - extra-android-support
+    - extra-android-m2repository
+    - sys-img-armeabi-v7a-android-21
+  licenses:
+    - 'android-sdk-preview-license-52d11cd2'
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    on_state_change: false
+```
+
+Note that the `matrix` section is used to specify the JDK version, and the `before_install` section is used to set up the Android environment. The `script` section is used to run the Maven commands for each test scenario. The `cache` section is used to cache the Maven repository. The `notifications` section is used to configure email notifications for the build.

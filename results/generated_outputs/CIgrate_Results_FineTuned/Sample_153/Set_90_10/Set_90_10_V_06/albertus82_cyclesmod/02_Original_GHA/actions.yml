@@ -1,0 +1,91 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JRE6_HOME: /usr/lib/jvm/java-6-openjdk-amd64/jre
+
+jobs:
+  build-linux-jdk11:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Add Wine repository and install packages
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo mkdir -pm755 /etc/apt/keyrings
+          sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+          sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/focal/winehq-focal.sources
+          sudo apt-get update
+          sudo apt-get install -y ant-optional lib32ncurses5 lib32z1 openjdk-6-jdk winehq-stable
+      - name: Ant diagnostics
+        run: ant -diagnostics
+      - name: Build
+        run: ant all
+
+  build-linux-jdk8:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Add Wine repository and install packages
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo mkdir -pm755 /etc/apt/keyrings
+          sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+          sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/focal/winehq-focal.sources
+          sudo apt-get update
+          sudo apt-get install -y ant-optional lib32ncurses5 lib32z1 openjdk-6-jdk winehq-stable
+      - name: Ant diagnostics
+        run: ant -diagnostics
+      - name: Build
+        run: ant all
+
+  build-linux-jdk7:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 7
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '7'
+      - name: Add Wine repository and install packages
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo mkdir -pm755 /etc/apt/keyrings
+          sudo wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+          sudo wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/ubuntu/dists/focal/winehq-focal.sources
+          sudo apt-get update
+          sudo apt-get install -y ant-optional lib32ncurses5 lib32z1 openjdk-6-jdk winehq-stable
+      - name: Ant diagnostics
+        run: ant -diagnostics
+      - name: Build
+        run: ant all
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install wine-stable ant
+      - name: Ant diagnostics
+        run: ant -diagnostics
+      - name: Build
+        run: ant all

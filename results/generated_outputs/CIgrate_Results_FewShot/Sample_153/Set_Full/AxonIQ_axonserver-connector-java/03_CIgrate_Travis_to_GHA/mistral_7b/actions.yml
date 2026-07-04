@@ -1,0 +1,37 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JAVA_VERSIONS: '8 11'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK ${{ matrix.java_version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java_version }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Check Maven version
+        run: mvn -version
+      - name: Build and Verify
+        run: mvn -B -U -Possrh clean verify
+        env:
+          M2_HOME: ${{ runner.workspace}/.m2
+```
+
+This GitHub Actions workflow preserves the semantics of the Travis CI configuration, including services, JDK versions, caches, and script. It uses the modern actions for setting up Java and checks out the repository with a fetch depth of 0. The Maven version is checked, and the project is built and verified using Maven.

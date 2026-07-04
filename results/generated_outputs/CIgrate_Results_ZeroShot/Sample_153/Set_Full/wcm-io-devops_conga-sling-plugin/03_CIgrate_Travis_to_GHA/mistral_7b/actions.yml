@@ -1,0 +1,56 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      regex: '^(?!.*-\d+(\.\d+\.\d+)?(\..*|\-.*)?$).+'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+
+      - name: Install and build
+        shell: bash
+        env:
+          M2_HOME: ${{ env.JAVA_HOME }}
+        run: |
+          mvn -s ./.travis.maven-settings.xml clean
+          mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install
+          mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install -f example
+          rm -rf $HOME/.m2/repository/io/wcm
+
+      - name: Upload code coverage
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: codecov/sonar-github-action@v1
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          owner: your-github-username
+          repo: your-repository-name
+          token: ${{ secrets.SONAR_TOKEN }}
+          branch: ${{ github.ref }}
+          coverageFile: 'cobertura.xml'
+
+work

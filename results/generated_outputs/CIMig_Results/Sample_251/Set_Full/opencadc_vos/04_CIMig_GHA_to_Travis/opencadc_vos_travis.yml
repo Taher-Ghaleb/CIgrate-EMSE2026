@@ -1,0 +1,15 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+script:
+  script:
+    cd cadc-vos-server && gradle --info clean build javadoc install
+apt:
+  packages: jdk-8-jdk

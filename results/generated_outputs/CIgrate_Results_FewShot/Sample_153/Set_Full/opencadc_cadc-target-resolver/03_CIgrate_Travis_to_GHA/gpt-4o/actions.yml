@@ -1,0 +1,68 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  DOCKER_COMPOSE_VERSION: 1.29.2
+  VERSION: latest
+  REGISTRY_HOST: registry.example.com
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10.7
+        options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Docker CE and Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce curl
+          sudo rm /usr/local/bin/docker-compose
+          curl -L https://github.com/docker/compose/releases/download/${{ env.DOCKER_COMPOSE_VERSION }}/docker-compose-`uname -s`-`uname -m` > docker-compose
+          chmod +x docker-compose
+          sudo mv docker-compose /usr/local/bin
+      - name: Build and Test
+        run: gradle -i clean build test
+      - name: Build Docker Image
+        run: |
+          mkdir docker && cp Dockerfile docker/ && cp build/libs/*.war docker/
+          docker build -t opencadc/cadc-target-resolver:SNAPSHOT -t opencadc/cadc-target-resolver:alpine -t opencadc/cadc-target-resolver:${{ env.VERSION }} -f docker/Dockerfile docker/
+      - name: Run Integration Tests
+        run: |
+          cd integrationTest
+          docker-compose up -d
+          docker ps -a
+          docker-compose logs cadc-target-resolver.cadc.dao.nrc.ca
+          docker-compose logs proxy.cadc.dao.nrc.ca
+          curl -vL -d 'level=DEBUG' http://proxy.cadc.dao.nrc.ca/cadc-target-resolver/logControl
+          gradle -i -b ../build.gradle -Dca.nrc.cadc.reg.client.RegistryClient.host=${{ env.REGISTRY_HOST }} clean intTest
+          cd ../ && rm -rf docker
+      - name: Deploy
+        if: success()
+        run: |
+          if [ "$(. ./can-deploy.sh)" = "DEPLOY" ]; then
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            docker push opencadc/cadc-target-resolver:alpine
+            docker push opencadc/cadc-target-resolver:${{ env.VERSION }}
+          else
+            echo "Not deploying."
+          fi
+  notify:
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

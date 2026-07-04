@@ -1,0 +1,20 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+    - /^(\([0-9]+|[a-z0-9]+)\)$/
+    - /^feature\/.+$/
+    - /^bugfix\/.+$/
+    - /^hotfix\/.+$/
+    - /^release\/.+$/
+script:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
+  - mvn test
+  - mvn clean cobertura:cobertura coveralls:report

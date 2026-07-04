@@ -1,0 +1,67 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 11"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-11
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+before_script:
+  - echo "Setting up Maven cache"
+  - mkdir -p ~/.m2/repository
+  - mkdir -p ~/.gradle
+  - mkdir -p $HOME/.npm
+
+script:
+  - echo "Building, verifying and generating site"
+  - mvn --errors clean verify site
+
+after_success:
+  - echo "Uploading coverage to Codecov"
+  - if [ $? -eq 0 ]; then
+      codecov/codecov-action@v4
+      with:
+        token: $CODECOV_TOKEN
+        files: com.io7m.jmurmur.core/target/site/jacoco/jacoco.xml
+        fail_ci_if_error: false
+    fi
+
+after_failure:
+  - echo "Sending IRC notification"
+  - if [ $? -ne 0 ]; then
+      rectalogic/notify-irc@v2
+      with:
+        server: irc.libera.chat
+        port: 6697
+        channel: '#io7m'
+        nickname: github-actions-jmurmur
+        message: 'Build failed: $TRAVIS_REPO_SLUG ($TRAVIS_COMMIT)'
+    fi
+
+matrix:
+  include:
+    - java: '11'
+  allow_failures:
+    - java: '11'
+
+services:
+  - docker-compose
+
+deploy:
+  on:
+    tags: true
+
+notifications:
+  irc:
+    server: irc.libera.chat
+    port: 6697
+    channel: '#io7m'
+    nickname: github-actions-jmurmur
+    message: 'Build $TRAVIS_BUILD_RESULT: $TRAVIS_REPO_SLUG ($TRAVIS_COMMIT)'
+```
+
+Note: The above configuration uses the `matrix` keyword to specify the Java version, and the `allow_failures` keyword to allow the build to fail if the Java version is not available. The `services` keyword is used to specify the Docker Compose service. The `deploy` keyword is used to specify the deployment configuration, and the `notifications` keyword is used to specify the IRC notification configuration.

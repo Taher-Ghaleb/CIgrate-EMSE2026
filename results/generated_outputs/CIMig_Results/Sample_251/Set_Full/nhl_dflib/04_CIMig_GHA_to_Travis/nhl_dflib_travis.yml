@@ -1,0 +1,20 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  mvn clean verify -U -P ${{ matrix.db }}
+script:
+  script:
+    mvn clean source:jar javadoc:javadoc deploy -U -DskipTests --settings .github/workflows/maven_settings.xml
+directories: ~/.m2/repository
+name: test
+stages:
+  build
+  test

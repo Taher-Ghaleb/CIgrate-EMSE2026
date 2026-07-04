@@ -1,0 +1,34 @@
+matrix:
+  language: java
+  os:
+    windows-latest
+    ubuntu-latest
+  java
+
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+        path: ~/.gradle\n~/.gradle\n
+      uses: actions/checkout@version
+      run:
+        git fetch --prune --unshallow
+        ./gradlew clean check sonarqube --info --stacktrace --warning-mode all
+
+env:
+  github_token: ${{ github.token }}
+

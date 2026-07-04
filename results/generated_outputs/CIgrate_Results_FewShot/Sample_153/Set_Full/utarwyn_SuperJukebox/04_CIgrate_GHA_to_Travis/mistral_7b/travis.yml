@@ -1,0 +1,27 @@
+language: java
+sudo: false
+install: true
+addons:
+  sonarqube:
+    token: ${{ secrets.SONAR_TOKEN }}
+    branches:
+      - master
+      - develop
+jdk:
+  - openjdk8
+script:
+  - mvn clean verify sonar:sonar -Pcoverage -Dsonar.organization=utarwyn-github
+
+before_install:
+  - actions/checkout@v4 with:
+      fetch-depth: 0
+
+cache:
+  directories:
+    - '$HOME/.sonar/cache'
+
+before_script:
+  - if: $GITHUB_EVENT_NAME != 'pull_request'
+    - env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_ORGANIZATION: utarwyn-github

@@ -1,0 +1,29 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  echo \"PROJECT_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -B | grep -v '\\[')\" >> $GITHUB_ENV
+script:
+  script:
+    npm run test
+    cd vertx-web-graphql
+    mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer -Dexec.classpathScope=test > ${HOME}/ApolloTestsServer.log 2>&1 &
+deploy
+stage:
+  deploy
+  tests
+email:
+  on_success: always
+sonarcloud:
+  organization: powsybl-ci-github
+name: placeholder_Name
+directories: ~/.m2/repository
+env:
+  global
+  jdk='oracle jdk 8'

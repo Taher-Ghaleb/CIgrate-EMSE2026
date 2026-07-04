@@ -1,0 +1,36 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - export GIT_STRATEGY=include
+
+before_script:
+  - checkout --depth 1
+
+script:
+  - actions/checkout@v4
+
+  - actions/setup-java@v4 -d 'temurin' -j '8'
+
+  - cache --directories ~/.m2/repository --key ${{ os }}-m2-${{ hashFiles('**/pom.xml') }} --restore-keys ${{ os }}-m2-
+
+  - .travis/build.sh
+
+before_deploy:
+  - cache --directories ~/.m2/repository --key ${{ os }}-m2-${{ hashFiles('**/pom.xml') }} --restore-keys ${{ os }}-m2-
+
+deploy:
+  provider: script
+  if: $TRAVIS_TAG
+  script: .travis/deploy.sh

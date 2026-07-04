@@ -1,0 +1,19 @@
+language: android
+sudo: required
+jdk: openjdk8
+env:
+  global:
+    cache: gradle
+    ADB_INSTALL_TIMEOUT: 10
+
+before_install:
+  - chmod +x ./gradlew
+
+install:
+  - sdkmanager --install "platform-tools"
+  - sdkmanager --install "build-tools;25.0.2"
+  - sdkmanager --install "platforms;android-22"
+  - yes | sdkmanager --licenses
+
+script:
+  - ./gradlew build

@@ -1,0 +1,50 @@
+name: Java Gradle Build
+
+on:
+  push:
+    branches:
+      - main
+      - feature/* 
+  pull_request:
+    branches:
+      - main
+      - feature/*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      gradle:
+        image: gradle:latest
+        options: --linked-services gradle
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Setup Gradle
+        run: |
+          echo "export GRADLE_HOME=/usr/local/lib/gradle" >> $GITHUB_ENV_FILE
+          echo "export PATH=$GRADLE_HOME/bin:$PATH" >> $GITHUB_ENV_FILE
+      - name: Install dependencies
+        run: |
+          sh./gradlew --version
+      - name: Build and test
+        run: |
+          sh./gradlew clean test
+    env:
+      - name: GRADLE_HOME
+        value: /usr/local/lib/gradle
+      - name: PATH
+        value: $GRADLE_HOME/bin:$PATH
+    continue-on-error: true
+    cache:
+      paths:
+        - node_modules/
+      key: ${{ runner.os }}-gradle-${{ hashFiles('node_modules/**') }}
+      restore-keys: node_modules/
+```
+Note: The above workflow uses the `ubuntu-latest` image, which is a common choice for Java development. If you need a different image, you can replace it with your preferred one. Also, the `continue-on-error` option is set to `true` to preserve the original behavior of Travis CI.

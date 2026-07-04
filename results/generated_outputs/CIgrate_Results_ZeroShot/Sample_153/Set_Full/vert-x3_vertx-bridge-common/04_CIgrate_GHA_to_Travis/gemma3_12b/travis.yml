@@ -1,0 +1,39 @@
+language: java
+branches:
+  only:
+    - master
+    - /^[0-9]+.[0-9]+$/
+pull_request:
+  branches:
+    - master
+    - /^[0-9]+.[0-9]+$/
+
+matrix:
+  include:
+    - java: 8
+      jdk: oraclejdk8
+      env:
+        - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      script:
+        - mvn -q clean verify -B
+    - java: 11
+      jdk: openjdk11
+      if: github.event_name != 'pull_request'
+      script:
+        - mvn -q clean verify -B
+
+  allow_failures:
+    - java: 8
+    - java: 11
+
+deploy:
+  provider:
+    script:
+      - chmod +x .travis.deploy.artifacts.sh
+      - bash .travis.deploy.artifacts.sh
+    on:
+      tags: true
+    if: github.event_name != 'pull_request'
+    jdk: oraclejdk8
+    env:
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64

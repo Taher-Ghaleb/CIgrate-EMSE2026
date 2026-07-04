@@ -1,0 +1,21 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+      uses: actions/checkout@version
+      run: ./gradlew build integrationTest
+

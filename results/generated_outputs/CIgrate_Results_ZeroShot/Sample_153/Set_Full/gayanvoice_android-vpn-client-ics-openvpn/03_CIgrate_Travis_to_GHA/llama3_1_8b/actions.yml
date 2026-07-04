@@ -1,0 +1,64 @@
+name: Android Build
+
+on:
+  push:
+    branches:
+      - main
+      - android
+  pull_request:
+    branches:
+      - android
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      android-emulator:
+        image: ghcr.io/microsoft/android-emulator:latest
+        privileged: true
+        ports:
+          - 5554:5554
+          - 5555:5555
+          - 5556:5556
+        env:
+          ANDROID_HOME: /usr/lib/android-sdk
+          ANDROID_SDK_TOOLS_VERSION: 29.0.0
+          ANDROID_BUILD_TOOLS_VERSION: 29.0.0
+          ANDROID_SDK_VERSION: 28
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Setup Android
+        run: |
+          export ANDROID_HOME=/usr/lib/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+         ./gradlew
+      - name: Cache Android dependencies
+        uses: actions/cache@v4
+          at: gradle-cache
+          key: ${{ runner.os }}-gradle-${GITHUB_SHA:0:7}
+          paths:
+            - $ANDROID_HOME/caches/modules-2/file
+            - $ANDROID_HOME/caches/gradle-kotlin/directory
+      - name: Install Android SDK components
+        run: |
+          echo y | android update sdk --all --no-ui --filter platform-tools,tools,build-tools-29.0.0
+      - name: Build Android
+        run:./gradlew assembleDebug
+      - name: Test Android
+        run:./gradlew test
+      - name: Deploy
+        uses: appleboy/ssh-action@v1
+          hostname: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASSWORD }}
+          script: |
+            ssh ${{ secrets.HOST }} "mkdir -p /home/${{ secrets.USER }}/android-builds"
+            scp -r android/build/outputs/apk/debug /home/${{ secrets.USER }}/android-builds/
+      - name: Notify
+        uses: dawb/notify-action@v1
+          token

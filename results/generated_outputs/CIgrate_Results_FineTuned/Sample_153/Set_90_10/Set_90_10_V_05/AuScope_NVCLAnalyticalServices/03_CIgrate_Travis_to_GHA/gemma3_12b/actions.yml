@@ -1,0 +1,25 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Build with Gradle
+        run: ./gradlew build
+      - name: Deploy
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${{ secrets.GCLOUD_TOKEN }}" | base64 --decode > gcloud-token.json
+          gcloud auth activate-service-account --key-file=gcloud-token.json
+          gcloud releases create AuScope/NVCLAnalyticalServices --version=${GITHUB_REF##*/} --release-notes="Automated release from GitHub Actions"
+          gcloud releases upload build/libs/NVCLAnalyticalServices-1.0.0.jar --release-channel=beta

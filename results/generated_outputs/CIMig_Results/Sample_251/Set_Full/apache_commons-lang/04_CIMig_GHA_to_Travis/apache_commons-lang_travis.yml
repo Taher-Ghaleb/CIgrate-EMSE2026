@@ -1,0 +1,14 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn -V apache-rat:check spotbugs:check javadoc:javadoc -Ddoclint=all package --file pom.xml
+script
+include:
+  env: jacoco_skip=true
+sudo: FALSE
+directories: ~/.maven-

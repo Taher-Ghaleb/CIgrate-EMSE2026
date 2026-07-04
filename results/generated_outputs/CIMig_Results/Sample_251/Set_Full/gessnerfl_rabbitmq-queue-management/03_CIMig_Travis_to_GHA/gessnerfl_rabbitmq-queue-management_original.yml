@@ -1,0 +1,41 @@
+matrix:
+  language: java
+  java
+  os:
+    ubuntu-latest
+    windows-latest
+
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        java-version:
+          ${{ matrix.java }}
+          1.8
+      with: key
+      with: java-version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      run: ./gradlew --stacktrace build
+    - name: placeholder_Name
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+
+image: rabbitmq
+
+macos:
+  jdk: oraclejdk8
+

@@ -1,0 +1,14 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  chmod +x gradlew
+  java -version
+script
+stage:
+  build
+  ☕ 11

@@ -1,0 +1,55 @@
+name: Android Build
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+      -'release/*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      android-emulator:
+        image: ghcr.io/microsoft/android-emulator:latest
+        privileged: true
+        ports:
+          - 5554:5554
+          - 5555:5555
+          - 5556:5556
+        env:
+          ANDROID_HOME: /usr/lib/android-sdk
+          ANDROID_SDK_TOOLS: /usr/lib/android-sdk/tools
+          ANDROID_PLATFORM_TOOLS: /usr/lib/android-sdk/platform-tools
+          ANDROID_BUILD_TOOLS: /usr/lib/android-sdk/build-tools/28.0.3
+          ANDROID_EXTRA_ANDROID_M2REPOSITORY: /usr/lib/android-sdk/extras/android-m2repository
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Install Android SDK
+        run: |
+          echo y | android update sdk --all --no-web --filter platform-tools,tools,android-28,build-tools-28.0.3,extra-android-m2repository
+      - name: Build
+        run: |
+         ./gradlew build
+      - name: Cache
+        uses: actions/cache@v4
+          at: 'gradle'
+          path: $HOME/.gradle
+          key: ${{ runner.hash }}
+      - name: Send email
+        uses: dbrgn/send-email-action@v1
+          # TODO: Replace with a more modern email action
+          to: 'your-email@example.com'
+          subject: 'Android Build Result'
+          body: 'Build successful'
+      - name: Fail the job on error
+        continue-on-error: true
+```
+
+Note: The above YAML is a complete migrated version of the provided Travis CI configuration to GitHub Actions workflow. It includes all the required elements such as `name`, `on`, `jobs`, `runs-on`, `services`, `steps`, `cache`, and `notifications`. The `jdk` and `notifications` sections are also preserved. The `continue-on-error` keyword is used to map the `allow_failures` matrix in the original Travis

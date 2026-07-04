@@ -1,0 +1,53 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    services:
+      dbs:
+        - postgres:latest
+    env:
+      RUNTIME: ${{ if eq(matrix.runtime, 'ol') }}ol${{ else }}wlp{ { end }}
+      RUNTIME_VERSION: ${{ matrix.runtime_version }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      matrix:
+        runtime: [ol, wlp]
+        runtime_version: [19.0.0.3, 19.0.0.6]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.runtime_version }}
+
+      - name: Set up Maven
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Install .m2 dependencies
+        run: |
+          echo "Deleting old .m2 artifacts..."
+          rm -rf $HOME/.m2/repository/net/wasdev
+          rm -rf $HOME/.m2/repository/io/openliberty
+
+      - name: Install ci.common lib
+        run: |
+          git clone https://github.com/OpenLiberty/ci.common.git ./ci.common
+          cd ./ci.common
+          mvn clean install
+          cd ..
+
+      - name: Build and Test
+        run: travis_wait 30 mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=${{ env.RUNTIME}} -DruntimeVersion=${{ env.RUNTIME_VERSION }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: maven-artifacts
+          path: ./target/*.jar

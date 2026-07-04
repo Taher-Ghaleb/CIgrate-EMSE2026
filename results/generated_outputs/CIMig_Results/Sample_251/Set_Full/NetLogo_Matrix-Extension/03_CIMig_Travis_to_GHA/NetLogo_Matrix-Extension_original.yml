@@ -1,0 +1,38 @@
+matrix:
+  os:
+    ubuntu-latest
+    windows-latest
+  language: java
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      with:
+        java-version: 1.8
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+    - name: set up jdk 1.8
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+
+macos:
+  jdk: oraclejdk8
+

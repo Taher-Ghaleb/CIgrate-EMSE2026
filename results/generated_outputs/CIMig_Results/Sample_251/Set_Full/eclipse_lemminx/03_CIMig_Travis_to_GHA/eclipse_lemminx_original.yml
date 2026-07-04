@@ -1,0 +1,27 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+      with:
+        restore-keys: ${{ runner.os }}-maven-
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/checkout@version
+      with: java-version
+      uses: actions/setup-java@version
+    - name: build with maven-
+    run: ./mvnw clean verify
+
+macos:
+  jdk: oraclejdk8
+

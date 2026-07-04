@@ -1,0 +1,47 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '7']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Build
+        run: ./gradlew check
+      - name: Assemble distribution
+        run: ./gradlew assembleDist
+      - name: Import Sonar certificate
+        run: sudo keytool -import -alias sonar -keystore $JAVA_HOME/jre/lib/security/cacerts -file sonar_cert.pem -storepass changeit -noprompt
+      - name: Run Sonar reports
+        if: github.event_name != 'pull_request' && github.repository == 'ical4j/ical4j-connector' && github.ref == 'refs/heads/master'
+        run: ./gradlew sonarqube
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Build
+        run: ./gradlew assembleDist
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }}
+          gh release upload ${{ github.ref_name }} build/distributions/ical4j-${{ github.ref_name }}.zip
+          gh release upload ${{ github.ref_name }} build/distributions/ical4j-${{ github.ref_name }}.tar.gz

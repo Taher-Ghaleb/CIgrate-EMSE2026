@@ -1,0 +1,41 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  buildNumber: ${{ github.sha }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      - docker
+      - postgresql
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Download Code Climate Test Reporter
+        run: curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+      - name: Make Code Climate Test Reporter Executable
+        run: chmod +x ./cc-test-reporter
+      - name: Code Climate Before Build
+        run: ./cc-test-reporter before-build
+      - name: Create PostgreSQL Database
+        run: psql -c 'create database events;' -U postgres
+      - name: Build, Test, and Generate Coverage
+        run: "./gradlew clean build jacocoTestReport jacocoFix -PbuildNumber=$buildNumber --scan"
+      - name: Build Docker Image
+        run: docker build --no-cache --pull -t wisvch/events:$buildNumber .
+      - name: Docker Login and Push (Master Branch Only)
+        if: github.ref == 'refs/heads/master'
+        run: |
+          docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+          docker push wisvch/events:$buildNumber
+      - name: Format Coverage
+        run: cd src/main/java && ../../../cc-test-reporter format-coverage -d -t jacoco
+      - name: Upload Coverage
+        run: ../../../cc-test-reporter upload-coverage -d

@@ -1,0 +1,60 @@
+name: Java Build and Deploy
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  global:
+    DB_PROFILE: derby
+  jobs:
+    - name: Build and Deploy (Derby)
+      runs-on: ubuntu-latest
+      services:
+        dbs:
+          - docker-image: postgres:latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Set up JDK
+          uses: actions/setup-java@v4
+          with:
+            distribution: temurin
+            java-version: 8
+
+        - name: Cache dependencies
+          uses: actions/cache@v4
+          with:
+            path: ~/.m2
+            key: ${{ runner.os }}-maven-dependencies
+            restore-keys: |
+              ${{ runner.os }}-maven-dependencies
+
+        - name: Install Maven
+          run: |
+            curl -sL https://apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz -o apache-maven.tar.gz
+            tar -xzf apache-maven.tar.gz
+            mv apache-maven-3.6.3 /usr/local/maven
+            export M2_HOME=/usr/local/maven
+            export PATH=$M2_HOME/bin:$PATH
+
+        - name: Configure Maven settings
+          run: mv settings.xml travis_settings.xml
+
+        - name: Build and Deploy
+          env:
+            DB_PROFILE: ${{ job.name }}
+          run: mvn verify -P$DB_PROFILE
+
+    - name: Build and Deploy (MySQL)
+      needs: Build and Deploy (Derby)
+      services:
+        dbs:
+          - docker-image: mysql:latest
+      env:
+        DB_PROFILE: mysql
+      runs-on: ubuntu-

@@ -1,0 +1,54 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+
+install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+script:
+  - cd quarkus.jdt.ext &&./mvnw clean verify
+  - cd quarkus.ls.ext/com.redhat.quarkus.ls &&./mvnw clean verify
+
+after_success:
+  - echo "Cleaning SNAPSHOT artifacts"
+  - rm -rf $HOME/.m2/repository/**/*-SNAPSHOT
+
+after_failure:
+  - echo "Cleaning SNAPSHOT artifacts"
+  - rm -rf $HOME/.m2/repository/**/*-SNAPSHOT
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.m2/wrapper
+
+matrix:
+  allow_failures:
+    - true
+  include:
+    - java: '8'
+
+services:
+  - docker
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - cd quarkus.jdt.ext &&./mvnw clean verify
+    - cd quarkus.ls.ext/com.redhat.quarkus.ls &&./mvnw clean verify
+  skip_cleanup: true
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on_success: always
+    on_failure: always
+```
+
+Note: Replace `your_email@example.com` with your actual email address.

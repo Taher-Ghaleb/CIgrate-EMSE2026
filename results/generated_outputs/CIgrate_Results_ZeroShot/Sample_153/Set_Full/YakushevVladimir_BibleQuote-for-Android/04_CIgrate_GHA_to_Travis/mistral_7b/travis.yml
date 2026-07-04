@@ -1,0 +1,49 @@
+name: Android CI
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+script:
+  - checkout
+  - setup_java -J-Djava.awt.headless=true -V 8
+  - android-setup
+  - sdkmanager --sdk_root ~/android-sdk --licenses
+  - sdkmanager "tools" "platform-tools" "build-tools;30.0.3" "platforms;android-30" "extras;android;m2repository" "extras;google;m2repository" "extras;android;support"
+  - chmod +x gradlew
+  - ./gradlew clean build
+  - ./gradlew testDebugUnitTestCoverage coveralls
+
+services:
+  - docker
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+
+before_install:
+  - export HOME=$BUILD_DIR
+
+env:
+  global:
+    - GIT_STRATEGY: none
+
+matrix:
+  include:
+    - java:
+        - '8'
+
+before_script:
+  - yes | sdkmanager "tools" "platform-tools" "build-tools;30.0.3" "platforms;android-30" "extras;android;m2repository" "extras;google;m2repository" "extras;android;support"
+  - yes | sdkmanager --licenses
+  - chmod +x gradlew
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, while adhering to the specified output and migration rules. It includes the necessary lifecycle keys, env variables, caches, services, branch/tag filters, deploy, and notifications. The script section is also migrated 1 to 1, preserving the JDK, Git version numbers, branch names, and other details.

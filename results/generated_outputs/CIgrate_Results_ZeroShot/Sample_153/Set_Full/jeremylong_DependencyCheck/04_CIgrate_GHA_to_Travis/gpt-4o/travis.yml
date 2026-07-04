@@ -1,0 +1,50 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - SECRET_1=$SECRET_1
+    - SECRET_2=$SECRET_2
+    - SECRET_3=$SECRET_3
+    - SECRET_4=$SECRET_4
+    - SECRET_5=$SECRET_5
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+services:
+  - docker
+
+jobs:
+  include:
+    - stage: build
+      script:
+        - mvn package -DskipTests=true
+
+    - stage: deploy
+      if: branch = master AND type = push
+      script:
+        - mvn --settings .travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+
+    - stage: deploy-pages
+      if: tag IS present AND branch = master
+      script:
+        - mvn package -DskipTests=true
+      after_success:
+        - |
+          if [ -n "$GITHUB_TOKEN" ]; then
+            git config --global user.name "Travis CI"
+            git config --global user.email "travis@travis-ci.org"
+            git clone --branch=gh-pages https://$GITHUB_TOKEN@github.com/$TRAVIS_REPO_SLUG.git gh-pages
+            cd gh-pages
+            cp -r ../target/staging/* .
+            git add .
+            git commit -m "Deploy to GitHub Pages"
+            git push origin gh-pages
+          fi
+
+branches:
+  only:
+    - /.*/

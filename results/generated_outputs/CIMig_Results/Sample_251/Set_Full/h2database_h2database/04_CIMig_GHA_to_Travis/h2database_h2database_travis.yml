@@ -1,0 +1,19 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+script:
+  script:
+    cd h2\necho $JAVA_OPTS\nexport JAVA_OPTS=-Xmx512m\n./build.sh jar testCI\n
+    yarn run test
+include:
+  if: type in (pull_request, push)
+stage: ☕ 11
+apt:
+  packages: jdk-8-jdk
+sonarcloud:
+  organization: powsybl-ci-github

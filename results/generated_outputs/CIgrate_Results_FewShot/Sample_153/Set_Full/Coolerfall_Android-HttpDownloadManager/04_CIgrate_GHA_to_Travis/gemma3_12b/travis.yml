@@ -1,0 +1,21 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.gradle
+    - ~/.m2/repository
+    - $HOME/.sdkman/candidates/gradle
+jdk:
+  - openjdk8
+
+before_install:
+  - echo no | android create avd --force --name test --target android-28 --abi armeabi-v7a
+  - emulator -avd test -no-skin -no-audio -no-window &
+  - android-wait-for-emulator
+
+install:
+  - sdkmanager "platform-tools" "platforms;android-28" "build-tools;28.0.3" "extras;android;m2repository"
+
+script:
+  - chmod +x gradlew
+  - ./gradlew build

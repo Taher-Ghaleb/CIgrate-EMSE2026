@@ -1,0 +1,38 @@
+name: Java Build
+
+on:
+  push:
+  pull_request:
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx2g
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+          - oraclejdk11
+          - oraclejdk12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Gradle Build
+        run: ./gradlew build --scan -s
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hash }}
+      - name: Clean Cache
+        shell: bash
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/

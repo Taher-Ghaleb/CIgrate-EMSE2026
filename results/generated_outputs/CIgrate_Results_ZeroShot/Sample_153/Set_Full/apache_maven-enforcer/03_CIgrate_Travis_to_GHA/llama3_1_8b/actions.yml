@@ -1,0 +1,48 @@
+name: Java Maven Build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --always-chown-rw /srv
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: '11'
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install dependencies
+      run: |
+        mvn dependency:resolve
+    - name: Run tests
+      run: |
+        mvn verify -Prun-its
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Deploy
+      run: |
+        # TODO: Add deploy logic here
+    - name: Send notification
+      run: |
+        # TODO: Add notification logic here

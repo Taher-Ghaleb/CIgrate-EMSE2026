@@ -1,0 +1,59 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 7"
+  - export JAVA_HOME=/usr/lib/jvm/zulu-7
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+before_script:
+  - echo "Setting up Maven cache"
+  - mkdir -p ~/.m2/repository
+  - mkdir -p ~/.gradle
+  - mkdir -p $HOME/.npm
+
+script:
+  - echo "Building with Maven"
+  - mvn test -B
+
+after_success:
+  - echo "Deploying snapshot"
+  - if [ "${TRAVIS_BRANCH}"!= "refs/tags/*" ] && [ "${TRAVIS_EVENT_TYPE}" == "push" ]; then
+      echo "Deploying to OSSRH"
+      echo "OSSRH_USER=${OSSRH_USER}" >> ~/.travis/deploy.env
+      echo "OSSRH_PASS=${OSSRH_PASS}" >> ~/.travis/deploy.env
+      cat > ~/.travis/deploy.sh <<EOF
+      cat > ~/settings.xml <<EOF
+      <settings><servers><server><id>ossrh</id><username>\$OSSRH_USER</username><password>\$OSSRH_PASS</password></server></servers></settings>
+      EOF
+      mvn deploy --settings ~/settings.xml
+      EOF
+      chmod +x ~/.travis/deploy.sh
+      ~/.travis/deploy.sh
+    fi
+
+deploy:
+  on:
+    branch: only
+    branches:
+      - main
+  environment:
+    OSSRH_USER: $OSSRH_USER
+    OSSRH_PASS: $OSSRH_PASS
+  script:
+    - bash ~/.travis/deploy.sh
+
+matrix:
+  allow_failures:
+    - main
+  include:
+    - java: '7'
+      dist: 'zulu'
+      cache:'maven'
+```
+
+Note: The above configuration uses the `ubuntu-latest` image, which is the default image used by Travis CI. If you want to use a different image, you can specify it in the `before_install` section.

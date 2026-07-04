@@ -1,0 +1,16 @@
+language: android
+
+jdk:
+  - oraclejdk8
+
+android:
+  components:
+    - build-tools-29.0.2
+    - android-29
+
+  licenses:
+    - 'android-sdk-license-.+'
+
+script:
+  - cd project
+  - ./gradlew test

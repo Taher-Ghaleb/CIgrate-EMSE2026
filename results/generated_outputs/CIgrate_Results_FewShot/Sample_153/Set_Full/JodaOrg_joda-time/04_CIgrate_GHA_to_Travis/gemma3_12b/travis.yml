@@ -1,0 +1,34 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+branches:
+  only:
+    - main
+    - /^release\/.*$/
+  except:
+    - /^hotfix\/.*$/
+    - /^feature\/.*$/
+
+env:
+  global:
+    - SECRET_TOKEN: $SECRET_TOKEN
+
+script:
+  - mvn --version
+  - mvn install site -e -B
+  - rm -rf ~/.m2/repository/org/joda/time
+
+before_success:
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+    - echo "Deploying website..."
+    - chmod +x ./.github/website.sh
+    - ./.github/website.sh
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+    - echo "Deploying website..."
+    - chmod +x ./.github/website.sh
+    - ./.github/website.sh
+    fi

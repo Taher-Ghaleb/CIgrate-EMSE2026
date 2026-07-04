@@ -1,0 +1,79 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+script:
+  - checkout
+
+  - name: Set up JDK ${{ matrix.jdk }}
+    addons:
+      name: oracle/java
+      java_home: ${{ matrix.jdk }}
+
+  - name: Make gradlew executable
+    script: chmod +x gradlew
+
+  - name: Build with Gradle
+    script: ./gradlew build --scan -s
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+
+matrix:
+  include:
+    - jdk: 8
+      jdk_version: 8
+    - jdk: 11
+      jdk_version: 11
+    - jdk: 17
+      jdk_version: 17
+
+before_script:
+  - export GRADE_HOME=$HOME/.gradle
+
+env:
+  - name: GIT_STRATEGY
+    value: include
+
+  - name: GIT_SUBMODULE_STRATEGY
+    value: recursive
+
+  - name: GIT_DEPTH
+    value: 0
+
+  - name: GIT_TAG_MESSAGE
+    value: ${{ github.event.pull_request.merge_commit_message }}
+
+  - name: GIT_COMMIT_MESSAGE
+    value: ${{ github.event.commit.message }}
+
+  - name: GITHUB_TOKEN
+    value: ${{ secrets.GITHUB_TOKEN }}
+
+  - name: JAVA_HOME
+    value: ${{ env.java_home }}
+
+  - name: GRADLE_HOME
+    value: ${{ env.GRADE_HOME }}
+
+  - name: JAVA_TOOL_OPTIONS
+    value: -Xmx2g -XX:MaxPermSize=512m
+
+  - name

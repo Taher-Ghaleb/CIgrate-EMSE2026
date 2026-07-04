@@ -1,0 +1,13 @@
+language: java
+jdk:
+  - openjdk11
+
+install: true
+
+script:
+  - mvn clean package
+
+after_success:
+  - echo "Uploading build artifacts"
+  # TODO: Implement artifact upload equivalent in Travis CI
+  # Travis CI does not have a direct equivalent for GitHub Actions' upload-artifact

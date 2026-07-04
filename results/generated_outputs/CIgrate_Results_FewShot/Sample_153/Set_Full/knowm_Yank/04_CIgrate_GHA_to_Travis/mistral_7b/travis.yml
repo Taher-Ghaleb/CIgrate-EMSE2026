@@ -1,0 +1,37 @@
+language: java
+sudo: false
+jdk: openjdk11
+env:
+  global:
+    - GITHUB_TOKEN
+
+script:
+  - git clone -b travis https://${{ env.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git target/travis
+
+before_install:
+  - actions/setup-java@v4 -distribution: temurin -java-version: '11' -cache: maven
+
+matrix:
+  include:
+    - MAVEN_USERNAME: ${{ env.MAVEN_USERNAME }}
+    - MAVEN_PASSWORD: ${{ env.MAVEN_PASSWORD }}
+
+branches:
+  only:
+    - develop
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+if: github.event_name == 'pull_request'
+script:
+  - mvn clean verify --settings target/travis/settings.xml
+
+if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+script:
+  - mvn clean deploy --settings target/travis/settings.xml

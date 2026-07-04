@@ -1,0 +1,61 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+jdk:
+  - openjdk17
+install: true
+addons:
+  sonarqube:
+    token:
+      secure: "your-sonar-token"
+    branches:
+      - master
+      - develop
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.maven'
+    - 'frontend/node'
+    - 'frontend/node_modules'
+    - 'docker'
+before_install:
+  - cat /etc/hosts
+  - sudo hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+  - cat /etc/hosts
+  - echo no | android create avd --force --name test --target android-21 --abi armeabi-v7a
+  - emulator -avd test -no-skin -no-audio -no-window &
+  - android-wait-for-emulator
+  - adb devices
+  - adb shell input keyevent 82 &
+  - adb shell svc power stayon true
+script:
+  -./mvnw -U -q -Drevision=$(date +%Y%m%d.%H.%M) -P frontend -P jacoco -P docker -P webdriver-chrome -P webdriver-firefox -Dcustom.selenium.headless=true clean install
+  -./mvnw -U -q -Drevision=$(date +%Y%m%d.%H.%M) -pl deploy-test -P deploy-test clean test
+  - docker-compose up -d
+  - docker-compose exec app mvn clean test
+  - docker-compose down
+  - rm -rf ~/.m2/repository/com/github/nkonev/blog
+  - rm -rf $GITHUB_WORKSPACE/frontend/node_modules/.cache
+deploy:
+  provider: script
+  script:
+    - echo "Pushing Docker image"
+    - echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_LOGIN }}" --password-stdin
+    - docker push nkonev/blog:latest
+    - ssh -o "BatchMode yes" -o StrictHostKeyChecking=no -q ${{ secrets.CONNECT_LINE }} "${{ secrets.UPDATE_COMMAND }}"
+  on:
+    branch: master
+    if: success() && github.event_name == 'push'
+notifications:
+  email:
+    on_success: false
+    on_failure: false
+    on_start: false
+  webhooks:
+    on_success: false
+    on_failure: false
+    on_start: false
+```
+Note that I've removed the unnecessary steps and kept only the essential ones. I've also replaced

@@ -1,0 +1,41 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '8'
+
+    - name: Cache Maven packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-m2-
+
+    - name: Install Maven
+      run: mvn --version
+
+    - name: Build and install
+      run: mvn install site -e -B
+
+    - name: Deploy website (tag)
+      if: startsWith(github.ref, 'refs/tags/website') && matrix.java-version == '8'
+      run: chmod +x ./.github/website.sh; ./.github/website.sh
+
+    - name: Deploy website (version tag)
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'pull_request' && matrix.java-version == '8'
+      run: chmod +x ./.github/website.sh; ./.github/website.sh
+
+    - name: Cleanup Maven Cache
+      if: always()
+      run: rm -rf $HOME/.m2/repository/org/joda/time

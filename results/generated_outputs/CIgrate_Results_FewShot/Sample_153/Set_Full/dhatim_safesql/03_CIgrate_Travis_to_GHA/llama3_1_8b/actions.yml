@@ -1,0 +1,49 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Import GPG keys
+        run: |
+          echo $GPG_SECRET_KEYS | base64 --decode | gpg --import
+          echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
+      - name: Run tests and coverage
+        run: mvn -B jacoco:report coveralls:report
+      - name: Deploy
+        uses: actions/deploy@v1
+        with:
+          script:.deploy.sh
+          repo: dhatim/safesql
+          branch: master
+          jdk: oraclejdk8
+      - name: Deploy on tags
+        uses: actions/deploy@v1
+        with:
+          script:.deploy.sh
+          repo: dhatim/safesql
+          tags: true
+          jdk: oraclejdk8
+```
+
+Note: The `GPG_SECRET_KEYS` and `GPG_OWNERTRUST` environment variables are assumed to be base64 encoded. You should replace `********************` with the actual base64 encoded values.

@@ -1,0 +1,46 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  JAVA_SECRET_1: ${{ secrets.JAVA_SECRET_1 }}
+  JAVA_SECRET_2: ${{ secrets.JAVA_SECRET_2 }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+          - oraclejdk9
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Install and configure Git
+        uses: actions/setup-git@v4
+      - name: Configure GitHub Secrets
+        uses: actions/configure-git@v4
+        with:
+          git_user_name: ${{ secrets.GITHUB_USERNAME }}
+          git_user_email: ${{ secrets.GITHUB_EMAIL }}
+      - name: Build and verify
+        run: mvn clean verify
+      - name: Deploy (for master and bootique/bootique-logback)
+        if: ${{ github.ref_type == 'push' }} && ${{ github.ref_name == 'master' }} && ${{ github.repository_owner == 'bootique' }} && ${{ github.repository == 'bootique-logback' }}
+        run: mvn clean source:jar javadoc:javadoc deploy --settings travis_settings

@@ -1,0 +1,63 @@
+language: java
+jdk:
+  - openjdk11
+  - openjdk17
+  - openjdk21
+script:
+  - ./gradlew build
+deploy:
+  provider: releases
+  api_key:
+    secure: "********************"
+  file: dist/build-*.jar
+  on:
+    tags: true
+    prerelease: true
+  skip_cleanup: true
+  # TODO: Add GitHub token for release creation
+  # github_token: $GITHUB_TOKEN
+model
+language: java
+jdk:
+  - openjdk11
+  - openjdk17
+  - openjdk21
+git:
+  quiet: true
+before_install:
+  - git fetch --unshallow # keep repo shallow for faster builds
+script:
+  - ./gradlew build
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.m2/repository
+before_deploy:
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then pubkey="——pg—”; elif [ "$TRAVIS_OS_NAME" = "osx" ]; then pubkey="——pg—"; fi
+deploy:
+  provider: releases
+  api_key:
+    secure: "********************"
+  file: dist/build-*.jar
+  on:
+    tags: true
+    prere/except: true
+  skip_cleanup: true
+  # github_token: $GITHUB_TOKEN
+  # TODO: Add GitHub token for release creation
+notifications:
+  email: false
+  slack:
+    secure: "********************"
+www
+model: "//github.com/travis-ci/travis-ci/issues/9899"
+model
+model: "//github.com/travis-ci/travis-ci/issues/9899"
+model
+model: "github.com/travis-ci/travis-ci/issues/9899"
+model
+model: "github.com/travis-

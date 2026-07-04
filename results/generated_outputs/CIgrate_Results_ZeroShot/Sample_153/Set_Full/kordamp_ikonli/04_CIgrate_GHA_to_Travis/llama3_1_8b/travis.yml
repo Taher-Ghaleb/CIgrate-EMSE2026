@@ -1,0 +1,59 @@
+language: java
+
+before_install:
+  - export TERM=dumb
+  - export DISPLAY=:99.0
+
+install:
+  - apt-get update
+  - apt-get install -y xvfb
+
+before_script:
+  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+
+script:
+  - chmod +x gradlew
+  -./gradlew --version
+  -./gradlew clean build --console=plain -S --scan
+
+after_success:
+  - echo "Build successful"
+
+after_failure:
+  - echo "Build failed"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    -./gradlew deploy
+
+matrix:
+  include:
+    - java-version: '11'
+      distribution: temurin
+  allow_failures: true
+
+services:
+  xvfb:
+    image: xvfb
+    privileged: true
+
+addons:
+  xvfb:
+    image: xvfb
+    privileged: true
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+    recipients:
+      - your_email@example.com
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm

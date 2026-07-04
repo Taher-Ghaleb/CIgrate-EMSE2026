@@ -1,0 +1,56 @@
+language: java
+sudo: required
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - 'frontend/node'
+    - 'frontend/node_modules'
+  pip_cache: true
+env:
+  global:
+    - ADB_INSTALL_TIMEOUT: 10
+    - DATE_VERSION: $(date +%Y%m%d.%H.%M)
+  matrix:
+    - JAVA_HOME: $JAVA_HOME
+jdk:
+  - openjdk17
+before_install:
+  - cat /etc/hosts
+  - sudo hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+  - cat /etc/hosts
+install:
+  - sudo apt-get update && sudo apt-get install -y chromium-browser
+  - browser-actions/setup-firefox@v1
+    firefox-version: 'latest'
+script:
+  - mkdir -p ~/.ssh
+  - openssl aes-256-cbc \
+    -K "${ENCRYPTED_7051AC01CF89_KEY}" \
+    -iv "${ENCRYPTED_7051AC01CF89_IV}" \
+    -in ./.travis/id_rsa.enc \
+    -out ~/.ssh/id_rsa -d
+  - chmod 600 ~/.ssh/id_rsa
+  - java -version
+  - echo "JAVA_HOME: $JAVA_HOME"
+  - chmod +x mvnw
+  - cd docker
+  - docker-compose up -d
+  - ./mvnw -U -q -Drevision=$DATE_VERSION \
+    -P frontend -P jacoco -P docker \
+    -P webdriver-chrome -P webdriver-firefox \
+    -Dcustom.selenium.headless=true \
+    clean install
+  - cd docker
+  - docker-compose down
+  - ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+  - rm -rf ~/.m2/repository/com/github/nkonev/blog
+  - rm -rf $GITHUB_WORKSPACE/frontend/node_modules/.cache
+after_success:
+  - codecov/codecov-action@v4
+    token: "${CODECOV_TOKEN}"
+    fail_ci_if_error: false
+deploy:
+  provider: script
+  script: |
+    echo "${

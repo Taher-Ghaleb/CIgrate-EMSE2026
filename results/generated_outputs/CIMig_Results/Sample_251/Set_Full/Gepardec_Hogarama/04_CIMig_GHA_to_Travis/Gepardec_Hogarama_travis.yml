@@ -1,0 +1,21 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    cd Hogajama mvn clean -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+deploy:
+  github_token: $github_token
+stage:
+  sonarcloud
+  Build
+  ☕ 11
+directories:
+  ~/.m2
+  ~/.sonar/cache

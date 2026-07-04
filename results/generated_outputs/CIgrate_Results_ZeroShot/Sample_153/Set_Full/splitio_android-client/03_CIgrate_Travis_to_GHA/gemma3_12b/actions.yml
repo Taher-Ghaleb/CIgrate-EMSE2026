@@ -1,0 +1,32 @@
+name: Android Build and Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Set up Android SDK
+        uses: android/setup-android@v3
+        with:
+          components: |
+            build-tools-29.0.2
+            android-29
+          licenses: |
+            android-sdk-preview-license-.+
+            android-sdk-license-.+
+            google-gdk-license-.+
+      - name: Grant execute permission for gradle
+        run: chmod +x ./project/gradlew
+      - name: Run Tests
+        working-directory: project
+        run: ./gradlew test

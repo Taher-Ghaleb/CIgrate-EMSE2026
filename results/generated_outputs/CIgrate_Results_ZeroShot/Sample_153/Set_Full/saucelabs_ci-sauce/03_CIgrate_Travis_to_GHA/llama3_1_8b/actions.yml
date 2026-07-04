@@ -1,0 +1,54 @@
+name: Java Maven Build
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+      - 'feature/*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-8
+        options: --always-chown-logs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+          pip install --user codecov
+      - name: Install and build
+        run: |
+          mvn install -DskipTests=true -Dgpg.skip=true -B -V
+      - name: Code coverage
+        uses: codecov/codecov-action@v2
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file:./target/site/jacoco/xml/aggregate.xml
+      - name: Deploy
+        run: |
+          # TODO: Add deployment steps here
+      - name: After deploy
+        run: |
+          # TODO: Add after deploy steps here
+    after_success:
+      - name: Code coverage
+        uses: codecov/codecov-action@v2
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file:./target/site/jacoco/xml/aggregate.xml
+    after_failure:
+      - name: Code coverage
+        uses: codecov/codecov-action@v2
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file:./target/site/jacoco/xml/aggregate.xml
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

@@ -1,0 +1,65 @@
+name: Java CI/CD
+
+on:
+  push:
+    branches:
+      - master
+      - '^\d+\.\d+$'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+          - openjdk11
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.jdk }}
+          java-version: ${{ matrix.jdk }}
+      - name: Install Maven
+        run: |
+          apt-get update && apt-get install -y maven
+      - name: Run Maven
+        run: |
+          mvn -q clean verify -B
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: type!= pull_request
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: oraclejdk8
+          java-version: oraclejdk8
+      - name: Deploy to Sonatype's snapshots repository
+        run: |
+          bash.travis.deploy.artifacts.sh
+
+env:
+  FOO: ${{ secrets.FOO }}
+
+services:
+  test:
+    oraclejdk8:
+      image: oraclejdk8
+    openjdk11:
+      image: openjdk11
+
+cache:
+  key: ${{ runner.os }}-jdk-${{ matrix.jdk }}
+  paths:
+    - node_modules/
+
+continue-on-error: true

@@ -1,0 +1,31 @@
+name: Fedora Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      FEDORA: 27
+    services:
+      - docker
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Dependencies
+        run: |
+          docker pull registry.fedoraproject.org/fedora:${{ env.FEDORA }}
+          docker run \
+            --name=container \
+            --detach \
+            -i \
+            -v $(pwd):/root/jss \
+            registry.fedoraproject.org/fedora:${{ env.FEDORA }}
+          docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+          docker exec container dnf copr -y enable @pki/10.6
+          docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+          docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+      - name: Build RPM
+        run: |
+          docker exec container rpm -Uvh /root/build/jss/RPMS/*

@@ -1,0 +1,61 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request, tags]
+
+env:
+  TRAVIS_TAG: ${{ github.event.release.tag_name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Install dependencies
+        run: |
+          rm -rf $HOME/.m2/repository/io/vlingo
+          cp.github/settings.xml $HOME/.m2/settings.xml
+          mvn deploy:help versions:help help:help
+      - name: Install and deploy
+        run: mvn install -PTravisCI
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Deploy
+        uses: actions/deploy@v1
+        with:
+          provider: script
+          script: mvn deploy -DskipTests
+          skip_cleanup: true
+          on:
+            tags: true
+      - name: Deploy on master
+        uses: actions/deploy@v1
+        with:
+          provider: script
+          script: mvn deploy -DskipTests
+          skip_cleanup: true
+          on:
+            branch: master
+      - name: Trigger dependencies
+        run: |
+          chmod u+x.github/trigger_deps.sh
+          if [ -n "$TRAVIS_TAG" ]; then.github/trigger_deps.sh; fi
+      - name: Slack notification
+        uses: slack-dev/notify@v1
+        with:
+          token: ${{ secrets.SLACK_TOKEN }}
+          channel: ${{ secrets.SLACK_CHANNEL }}
+          message: ${{ secrets.SLACK_MESSAGE }}
+```
+
+Note that I've used the `actions/deploy@v1` action for the deploy step, which is a more modern and flexible way to deploy your application. I've also used the `slack-dev/notify@v1` action for the notification step, which is a more modern and secure way to send notifications to Slack.

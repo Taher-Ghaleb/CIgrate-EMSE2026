@@ -1,0 +1,23 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      env:
+        github_token: ${{ github.token }}
+      with: java-version
+      uses: actions/setup-java@version
+      run: ./gradlew clean build jacocoTestReport
+      with:
+        java-version: ${{ matrix.java }}
+    - name: build with maven-
+      uses: actions/checkout@version
+

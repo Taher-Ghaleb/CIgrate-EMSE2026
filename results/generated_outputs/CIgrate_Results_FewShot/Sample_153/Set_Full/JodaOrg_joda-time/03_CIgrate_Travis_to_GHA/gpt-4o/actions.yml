@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    tags:
+      - 'website*'
+      - 'v*'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    env:
+      secure: "********************"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Remove Joda Time from cache
+        run: rm -rf $HOME/.m2/repository/org/joda/time
+      - name: Install Maven
+        run: mvn --version
+      - name: Build and generate site
+        run: mvn install site -e -B
+      - name: Deploy website
+        if: startsWith(github.ref, 'refs/tags/website') && matrix.jdk == '8'
+        run: |
+          chmod +x ./.github/website.sh
+          ./.github/website.sh
+      - name: Deploy release
+        if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push' && matrix.jdk == '8'
+        run: |
+          chmod +x ./.github/website.sh
+          ./.github/website.sh

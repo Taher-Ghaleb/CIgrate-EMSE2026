@@ -1,0 +1,25 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+sudo: false
+install: true
+permissions:
+  contents: write
+before_install:
+  - chmod +x./gradlew
+script:
+  -./gradlew build
+deploy:
+  on:
+    tags: true
+  provider: releases
+  api_key:
+    secure: "your_api_key_here"
+  file_glob: true
+  artifacts: build/libs/*.jar
+```
+
+Note: Replace `"your_api_key_here"` with your actual GitHub API key.

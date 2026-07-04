@@ -1,0 +1,63 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        jdk: ['7-custom', '8', '11', '17']
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Echo JDK version
+        run: echo "Building with JDK ${{ matrix.jdk }}"
+      
+      - name: Install Oracle JDK 7 (custom)
+        if: matrix.jdk == '7-custom'
+        run: |
+          # Download and install Oracle JDK 7
+          wget https://s3.amazonaws.com/d2fbee19-5fe2-425f-ae11-cd25b35dc99a/jdk-7u80-linux-x64.tar.gz -O /tmp/jdk-7u80-linux-x64.tar.gz
+          tar xzf /tmp/jdk-7u80-linux-x64.tar.gz -C /tmp
+          sudo mv /tmp/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle
+          
+          # Install JCE Unlimited Strength Crypto policies
+          curl -q -L -C - https://238dj3282as03k369.s3-us-west-1.amazonaws.com/UnlimitedJCEPolicyJDK7.zip -o /tmp/UnlimitedJCEPolicyJDK7.zip
+          sudo unzip -oj -d "/usr/lib/jvm/java-7-oracle/jre/lib/security" /tmp/UnlimitedJCEPolicyJDK7.zip \*/\*.jar
+          rm /tmp/UnlimitedJCEPolicyJDK7.zip
+          
+          # Set environment variables for subsequent steps
+          echo "JAVA_HOME=/usr/lib/jvm/java-7-oracle" >> $GITHUB_ENV
+          echo "/usr/lib/jvm/java-7-oracle/bin" >> $GITHUB_PATH
+          echo "MAVEN_OPTS=-Dhttps.protocols=TLSv1.2 -Xmx512m -XX:MaxPermSize=128m" >> $GITHUB_ENV
+      
+      - name: Set up JDK ${{ matrix.jdk }}
+        if: matrix.jdk != '7-custom'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+          cache: 'maven'
+      
+      - name: Verify Java version
+        run: java -version
+      
+      - name: Build with Maven
+        run: mvn install
+      
+      - name: Run coverage analysis
+        if: matrix.jdk == '8'
+        run: |
+          mvn clean clover:setup test
+          mvn -pl . clover:clover clover:check
+      
+      - name: Upload coverage to Coveralls
+        if: matrix.jdk == '8'
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: target/site/clover/clover.xml
+        continue-on-error: true

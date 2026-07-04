@@ -1,0 +1,44 @@
+language: bash
+sudo: required
+jdk: openjdk17
+
+env:
+  matrix:
+    - DATE_VERSION=$(date +%Y%m%d.%H.%M)
+
+services:
+  - docker
+
+script:
+  - mkdir -p ~/.ssh
+  - openssl aes-256-cbc \
+    -K ${{ env.ENCRYPTED_7051AC01CF89_KEY }} \
+    -iv ${{ env.ENCRYPTED_7051AC01CF89_IV }} \
+    -in ./.travis/id_rsa.enc \
+    -out ~/.ssh/id_rsa -d
+  - chmod 600 ~/.ssh/id_rsa
+  - apt-get update && apt-get install -y chromium-browser
+  - yarn install
+  - yarn install browser-actions -g
+  - yarn install @nkonev/blog
+  - yarn build
+  - yarn test
+  - java -version
+  - echo "JAVA_HOME: $JAVA_HOME"
+  - chmod +x mvnw
+  - docker-compose up -d
+  - ./mvnw -U -q -Drevision=$DATE_VERSION \
+    -P frontend -P jacoco -P docker \
+    -P webdriver-chrome -P webdriver-firefox \
+    -Dcustom.selenium.headless=true \
+    clean install
+  - docker-compose down
+  - ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+  - rm -rf ~/.m2/repository/com/github/nkonev/blog
+  - rm -rf $GITHUB_WORKSPACE/frontend/node_modules/.cache
+  - yarn coverage --verbose --format cobertura > coverage.xml
+  - codecov --token $CODECOV_TOKEN --fail-on-error=false --output-format=json --json --file=coverage.xml
+  - echo "Pushing Docker image"
+  - echo "${{ env.DOCKER_PASSWORD }}" | docker login -u "${{ env.DOCKER_LOGIN }}" --password-stdin
+  - docker push nkonev/blog:latest
+  - ssh -o "BatchMode yes" -o StrictHostKeyChecking=

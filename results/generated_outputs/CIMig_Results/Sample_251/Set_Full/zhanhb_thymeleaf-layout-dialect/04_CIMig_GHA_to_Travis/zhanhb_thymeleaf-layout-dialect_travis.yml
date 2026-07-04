@@ -1,0 +1,25 @@
+env: global
+cache:
+  directories: ~/.gradle
+sudo
+language:
+  java
+  addons:
+    firefox: latest
+branches: main
+before_install:
+  java -version
+  ./mvnw build-helper:remove-project-artifact || :\nfind ~/.m2/ -type d -name '*-SNAPSHOT' \\( -exec rm -rf '{}' \\; -prune \\)\n
+install:
+  ./mvnw build-helper:remove-project-artifact || :\nfind ~/.m2/ -type d -name '*-SNAPSHOT' \\( -exec rm -rf '{}' \\; -prune \\)\n
+script
+after_success:
+  bash <(curl -s https://codecov.io/bash)
+  Codecov
+  python-cmd
+  ./mvnw clean install
+directories: ~/.m2
+stages:
+  build
+  test
+local_dir

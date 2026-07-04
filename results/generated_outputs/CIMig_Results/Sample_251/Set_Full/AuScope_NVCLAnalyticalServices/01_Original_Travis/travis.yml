@@ -1,0 +1,16 @@
+language: java
+jdk:
+- oraclejdk8
+install: true
+script:
+  - ./gradlew build
+deploy:
+  provider: releases
+  api_key:
+    secure: QY2HjCx+hO98lWd93j/Me6pklbkt/GN6vd//XiJ/qH5+V9gJoug63tiSHSs2HHSF3ERrKgqmltsOflJfxPBaOOw3gRbh0nEDpiDZ7fCA87F4F8I2h+nSPr372+aFqkpwgjsE2p9B0U2HQLj4hQbA5NrcKvG9WIeD5ZniEwa8DvyRrMVHCE1CsYa0nj6VtP6SaXVCW19udILasOpwdhtXuULaLjIOyc5ABSjCEZB4UKAwzuoR1kLJyLvDvHjfTXsya0cYSGv5ceswdFJ2tv64faF60O+JeT4HQpJADdk7tgAYvZIBNsdLBH/Xcy+eCyqqE53rZKNc69eUqq6wQkW35PSMakScqzZC5sn9psB2zStBJfybycwwGq/Qoma0bS/fxyr5SopQ+n3mSH5S5WF9BuX3e+t3KBlz5tqccY0rjQmSqnM5YHT6YNIlroK+zyvx9IoKgpFhHp2f8+SSPa+7ilP9m+CkiQ89Growd8ROw/Q8tHBgfi3NjTkfCOeAu4+1n5EGIkV/DwKuPs1qYi54AgcezvsQW73ilvQARFjyuYNw/jFtWg+xXAp06Rz1s9aIdoQS0DxUvxcgOmecdkQVZ1dr/9X5mQ4igUxYR2CZMCe34kE3gIrzj0O14CtaeiEY1fj28UYLtqrHfFd6X5fjqynFERaSNCsAARU5OiRUG44=
+  file: build/libs/NVCLAnalyticalServices-1.0.0.jar
+  skip_cleanup: true
+  on:
+    repo: AuScope/NVCLAnalyticalServices
+    tags: true
+    

@@ -1,0 +1,24 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  _JAVA_OPTIONS: "-Xms1G -Xmx4G"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Oracle Java 8
+        run: sudo apt-get update && sudo apt-get install -y oracle-java8-installer
+      - name: Maven Build
+        run: mvn clean verify
+      - name: Send IRC Notification
+        # TODO: Implement IRC notification using a dedicated action or script.
+        run: echo "IRC notification not implemented."

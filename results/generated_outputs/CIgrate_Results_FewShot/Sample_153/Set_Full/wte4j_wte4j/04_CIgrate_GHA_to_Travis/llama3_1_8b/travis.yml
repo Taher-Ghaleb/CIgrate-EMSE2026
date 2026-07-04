@@ -1,0 +1,27 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - zulu7
+install: true
+script:
+  - mvn test -B
+deploy:
+  - provider: ssh
+    on:
+      branch: never
+      condition: success()
+      if: startsWith(github.ref,'refs/pull/')
+    script:
+      - |
+        cat > ~/settings.xml <<EOF
+        <settings><servers><server><id>ossrh</id><username>${OSSRH_USER}</username><password>${OSSRH_PASS}</password></server></servers></settings>
+        EOF
+      - mvn deploy --settings ~/settings.xml
+    env:
+      - OSSRH_USER: $OSSRH_USER
+      - OSSRH_PASS: $OSSRH_PASS
+```
+
+Note that the `ssh` provider is used to deploy the snapshot, and the `OSSRH_USER` and `OSSRH_PASS` environment variables are set to the corresponding secrets. The `if` condition is used to deploy only on push events, and the `condition` is used to deploy only on successful builds. The `script` section is used to create a `settings.xml` file with the OSSRH credentials and then deploy the snapshot using Maven.

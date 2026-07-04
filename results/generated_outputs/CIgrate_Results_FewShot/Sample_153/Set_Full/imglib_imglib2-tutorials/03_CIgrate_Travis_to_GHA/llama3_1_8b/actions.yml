@@ -1,0 +1,39 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  branches:
+    - master
+    - '/.*-[0-9]+\\..*/'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Set environment variables
+        run: |
+          echo "MY_SECRET_1=${{ secrets.MY_SECRET_1 }}" >> $GITHUB_ENV
+          echo "MY_SECRET_2=${{ secrets.MY_SECRET_2 }}" >> $GITHUB_ENV
+          echo "MY_SECRET_3=${{ secrets.MY_SECRET_3 }}" >> $GITHUB_ENV
+          echo "MY_SECRET_4=${{ secrets.MY_SECRET_4 }}" >> $GITHUB_ENV
+      - name: Run script
+        run:.travis/build.sh
+```
+
+Note: The `secure` environment variables in the original Travis CI configuration are migrated to GitHub Actions secrets, which are referenced in the workflow using the `secrets` keyword.

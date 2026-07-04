@@ -1,0 +1,57 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - qa
+  pull_request:
+    branches:
+      - master
+      - qa
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      server:
+        image: openjdk:8-jdk-alpine
+        ports:
+          - 9080:9080
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+          cd finish
+          chmod +x../scripts/travisTest.sh
+      - name: Run tests
+        run: |
+         ../scripts/travisTest.sh
+      - name: Get server name
+        run: |
+          serverName=$(target/liberty/wlp/bin/server list | cut -d '.' -f2| tr -d '\n')
+      - name: Archive server logs
+        run: |
+          repo_name=$(echo "$GITHUB_REPOSITORY" | sed -e "s/\//-/g")
+          if [ $GITHUB_STATUS == "success" ]; then result="passed";
+          else result="failed"; fi
+          serverlogsarchive="$repo_name-$GITHUB_RUN_NUMBER-$result.zip"
+          zip -r "$serverlogsarchive".
+      - name: Upload logs to Artifactory
+        run: |
+          curl -H "$GITHUB_TOKEN" -T "$serverlogsarchive" "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"
+      - name: Cache dependencies
+        uses: actions/cache@v4
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${GITHUB_REPOSITORY}-${GITHUB_SHA}-cache
+          restore-keys: ${{ runner.os }}-maven-dependencies-${GITHUB_REPOSITORY}-${GITHUB_SHA}-cache
+      - name: Deploy to server
+        run: |
+          cd target/liberty/wlp/usr/servers/"$serverName"/logs/
+          curl -H "$GITHUB_TOKEN" -T "$serverlogsarchive" "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"
+```
+Note: I have used the

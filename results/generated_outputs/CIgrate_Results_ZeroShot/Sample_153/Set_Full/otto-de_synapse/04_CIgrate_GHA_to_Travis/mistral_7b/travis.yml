@@ -1,0 +1,61 @@
+language: java
+
+branches:
+  only:
+    - main
+    - master
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+services:
+  localstack:
+    image: localstack/localstack:${{ env.LOCALSTACK_VERSION }}
+    ports:
+      - 4566:4566
+      - 4571:4571
+    env:
+      SERVICES: ${{ env.SERVICES }}
+      DEBUG: 1
+      DATA_DIR: /tmp/localstack/data
+    options: >-
+      --health-cmd "awslocal kinesis list-streams || exit 1"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+  LOCALSTACK_VERSION: ${{ env.LOCALSTACK_VERSION }}
+
+before_install:
+  - checkout
+
+install:
+  - name: Set up JDK 8
+    java: oraclejdk8
+
+  - name: Setup Gradle
+    install: gradle
+    cache: gradle
+
+script:
+  - echo "Waiting for LocalStack to be ready..."
+    - for i in {1..30}; do
+        if curl -s http://localhost:4566/_localstack/health | jq -r '.[] | select(.name == "kinesis") | .status' | grep -q 'available'; then
+            echo "LocalStack is ready!"
+            break
+        fi
+        echo "Waiting... ($i/30)"
+        sleep 2
+    done
+
+    - echo "LocalStack health status:"
+      - curl -s http://localhost:4566/_localstack/health | jq
+
+  - chmod +x gradlew
+  - ./gradlew check

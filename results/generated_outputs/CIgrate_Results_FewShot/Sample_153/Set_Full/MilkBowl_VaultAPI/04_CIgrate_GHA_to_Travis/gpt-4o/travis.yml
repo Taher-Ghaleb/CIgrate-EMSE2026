@@ -1,0 +1,20 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  except:
+    - gh-pages
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+script:
+  - mvn test
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
+      chmod +x .utility/do-publish.sh;
+      SECRET_1=$SECRET_1 SECRET_2=$SECRET_2 SECRET_3=$SECRET_3 .utility/do-publish.sh;
+    fi

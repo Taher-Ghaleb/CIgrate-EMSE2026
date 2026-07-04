@@ -1,0 +1,56 @@
+language: bash
+branches:
+  only:
+    - main
+  except:
+    - tags
+
+env:
+  RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+  SONAR_TOKEN: $SONAR_TOKEN
+  SONAR_ORGANIZATION: constellation-app
+  GITHUB_TOKEN: $GITHUB_TOKEN
+
+cache:
+  directories:
+    - ~/.ivy2/cache
+    - $HOME/.ivy2/cache
+
+services:
+  - docker
+
+before_install:
+  - echo "Before Install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before Script"
+
+script:
+  - docker pull "${RUNNER_IMAGE}"
+  - docker run \
+      --mount "type=bind,source=${GITHUB_WORKSPACE},target=${GITHUB_WORKSPACE}" \
+      --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" \
+      --workdir "${GITHUB_WORKSPACE}" \
+      "${RUNNER_IMAGE}" \
+      .travis/run-tests.sh
+  - .travis/sonar.sh
+  - find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+
+after_success:
+  - echo "After Success"
+
+after_failure:
+  - echo "After Failure"
+
+deploy:
+  on:
+    tags: true
+  if: github.repository == 'constellation-app/constellation' && startsWith(github.ref, 'refs/tags/')
+  before_deploy:
+    - echo "Before Deploy"
+  deploy:
+    - docker run --rm -v $HOME/.ivy2/cache:/root/.ivy2/cache -v $HOME/.m2:/root/.m2 -v $HOME/.npm:/root/.npm -v $HOME/.gradle:/root/.gradle -v $HOME/.cache:/root/.cache -v $GITHUB_WORKSPACE:/app -e RUNNER_IMAGE=${RUNNER_IMAGE} -e SONAR_TOKEN=${SONAR_TOKEN} -e SONAR_ORGANIZATION=${SONAR_ORGANIZATION} -e GITHUB_TOKEN=${GITHUB_TOKEN} constellationapplication/netbeans-runner:11.3 .travis/deploy.sh
+  after_deploy

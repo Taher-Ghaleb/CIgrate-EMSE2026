@@ -1,0 +1,47 @@
+name: Java Build
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME_8 }}
+      JAVA_HOME_11: ${{ secrets.JAVA_HOME_11 }}
+      JAVA_HOME_12: ${{ secrets.JAVA_HOME_12 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_HOME }}
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          key: ${{ env.JAVA_HOME }}-gradle
+          path: ${{ runner.workspace}}/.gradle/caches/
+          restore-keys: |
+            ${{ env.JAVA_HOME_8 }}-gradle.lock
+            ${{ env.JAVA_HOME_11 }}-gradle.lock
+            ${{ env.JAVA_HOME_12 }}-gradle.lock
+          actions: v4
+
+      - name: Clean Gradle Cache
+        run: |
+          rm -f ${{ runner.workspace}}/.gradle/caches/modules-2/modules-2.lock
+          rm -fr ${{ runner.workspace}}/.gradle/caches/*/plugin-resolution/
+
+      - name: Build
+        run: ./gradlew build --scan -s
+```
+
+This GitHub Actions workflow maintains the semantics of the provided Travis CI configuration while adhering to the specified migration rules. It includes a single job named "Build" that runs on an Ubuntu runner, uses multiple versions of Oracle JDK, and performs a Gradle build. The workflow uses modern actions such as `actions/checkout@v4`, `actions/setup

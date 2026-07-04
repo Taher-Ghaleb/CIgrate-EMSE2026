@@ -1,0 +1,37 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.sonar/cache
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Build and verify
+        if: github.event_name == 'push' && github.event.pull_request.head.repo.owner.name != github.repository_owner
+        run: mvn clean verify sonar:sonar -Pcoverage
+      - name: Build
+        if: github.event_name != 'pull_request'
+        run: mvn clean install
+      - name: Build and verify PR
+        if: github.event_name == 'pull_request'
+        run: mvn clean install
+      - name: SonarCloud
+        if: github.event_name == 'push' && github.event.pull_request.head.repo.owner.name != github.repository_owner
+        run: mvn clean verify sonar:sonar -Pcoverage

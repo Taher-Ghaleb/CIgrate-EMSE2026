@@ -1,0 +1,46 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  branches:
+    - master
+    - '\d+\.\d+\.\d+$'
+
+env:
+  ANDROID_HOME: ${{ env.ANDROID_HOME }}
+  ANDROID_SDK_LICENSE: 24333f8a63b6825ea9c5514f83c2829b004d1fee
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install codecov
+        run: pip install --user codecov
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Cache Gradle and Maven
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle
+            ~/.m2/repository
+          key: ${{ runner.os }}-gradle-maven-${{ hashFiles('**/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-maven-
+      - name: Run tests and coverage
+        run: |
+         ./gradlew clean testDebugUnitTest jacocoTestReport
+      - name: Upload coverage to Codecov
+        run: codecov
+      - name: Upload coverage to Coveralls
+        run:./gradlew coveralls

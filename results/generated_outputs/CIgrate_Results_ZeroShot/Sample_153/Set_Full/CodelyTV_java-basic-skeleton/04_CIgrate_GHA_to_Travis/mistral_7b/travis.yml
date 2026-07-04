@@ -1,0 +1,58 @@
+name: CI
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: brew update
+    if: os == macOS
+
+script:
+  - checkout
+
+  - id: setup_java
+    script: |
+      if [ -z "${JAVA_HOME}" ]; then
+        wget --quiet https://download.java.net/java/GA/jdk11/8/GPL/openjdk-11+28_linux-x64_bin.tar.gz
+        tar -xzf openjdk-11+28_linux-x64_bin.tar.gz -C /usr/local
+        export JAVA_HOME=/usr/local/openjdk-11
+        export PATH=$JAVA_HOME/bin:$PATH
+      fi
+
+  - id: setup_gradle
+    script: |
+      if [ -d ~/.gradle ]; then
+        rm -rf ~/.gradle
+      fi
+      curl -s https://services.gradle.org/distributions/gradle-7.3.3-all.zip -o ~/gradle.zip
+      unzip ~/gradle.zip -d ~/
+      export GRADLE_HOME=~/gradle-7.3.3
+      export PATH=$GRADLE_HOME/bin:$PATH
+
+  - id: update_homebrew
+    script: brew update
+    if: os == macOS
+
+  - id: make_gradle_wrapper_executable
+    script: chmod +x gradlew
+
+  - id: assemble
+    script: ./gradlew assemble --warning-mode all
+
+  - id: check
+    script: ./gradlew check --warning-mode all
+
+  - id: cleanup_gradle_cache
+    script: |
+      rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+      rm -fr $HOME/.gradle/caches/*/plugin-

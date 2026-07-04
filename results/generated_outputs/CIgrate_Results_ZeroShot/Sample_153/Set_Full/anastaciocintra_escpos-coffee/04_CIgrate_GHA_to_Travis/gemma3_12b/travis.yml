@@ -1,0 +1,38 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - master
+  except:
+    - /^doc$/
+notifications:
+  email:
+    recipients:
+      -
+    on_success: change
+    on_failure: change
+before_install:
+-
+install:
+-
+before_script:
+-
+script:
+  - mvn install --settings .travis/settings.xml -DskipTests -Dmaven.javadoc.skip=true -B
+deploy:
+  provider:
+    script: mvn clean deploy --settings .travis/settings.xml -DskipTests=true -B
+    on:
+      tags: true
+      branch: master
+    env:
+      global:
+        secure:
+          - OSSRH_USERNAME: $OSSRH_USERNAME
+          - OSSRH_PASSWORD: $OSSRH_PASSWORD
+    skip_cleanup: true

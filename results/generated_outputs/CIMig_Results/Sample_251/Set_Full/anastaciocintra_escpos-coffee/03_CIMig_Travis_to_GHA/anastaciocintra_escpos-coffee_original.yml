@@ -1,0 +1,24 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+    - name: build with maven-
+      run: mvn install --settings .travis/settings.xml -DskipTests -Dmaven.javadoc.skip=true -B
+    run: mvn clean deploy --settings .travis/settings.xml -DskipTests=true -B
+
+macos:
+  jdk: openjdk8
+

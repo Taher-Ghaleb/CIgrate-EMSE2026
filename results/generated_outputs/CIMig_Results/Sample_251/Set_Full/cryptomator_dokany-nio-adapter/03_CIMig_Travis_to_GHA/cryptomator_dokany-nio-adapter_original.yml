@@ -1,0 +1,40 @@
+matrix:
+  language: java
+  java
+  os:
+    ubuntu-latest
+    windows-latest
+
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path
+        draft: TRUE
+        clean: TRUE
+      with: key
+      with: java-version
+      env:
+        github_token: ${{ github.token }}
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run:
+        mvn clean versions:set -DnewVersion=${TRAVIS_TAG} deploy -DskipTests -Prelease
+        echo '{\"close\": \"1\"}' | curl -X POST -u cryptobot:${BINTRAY_API_KEY} https://api.bintray.com/maven_central_sync/cryptomator/maven/dokany-nio-adapter/versions/${TRAVIS_TAG}
+
+macos:
+  jdk: oraclejdk8
+

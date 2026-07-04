@@ -1,0 +1,31 @@
+language: java
+jdk:
+  - openjdk8
+before_script:
+  - unset _JAVA_OPTIONS
+  - cd finish
+  - chmod +x ../scripts/travisTest.sh
+script:
+  - ../scripts/travisTest.sh
+after_success:
+  - cd finish
+  - serverName=$(target/liberty/wlp/bin/server list | cut -d '.' -f2| tr -d '\n')
+  - cd target/liberty/wlp/usr/servers/"$serverName"/logs/
+  - repo_name=$(echo "${TRAVIS_REPO_SLUG}" | sed -e "s/\//-/g")
+  - if [ "${TRAVIS_TEST_RESULT}" == "0" ]; then result="passed"; else result="failed"; fi
+  - serverlogsarchive="$repo_name-${TRAVIS_BUILD_NUMBER}-$result.zip"
+  - zip -r "$serverlogsarchive" .
+  - curl -H "${JFROG_TOKEN}" -T "$serverlogsarchive" "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"
+after_failure:
+  - cd finish
+  - serverName=$(target/liberty/wlp/bin/server list | cut -d '.' -f2| tr -d '\n')
+  - cd target/liberty/wlp/usr/servers/"$serverName"/logs/
+  - repo_name=$(echo "${TRAVIS_REPO_SLUG}" | sed -e "s/\//-/g")
+  - if [ "${TRAVIS_TEST_RESULT}" == "0" ]; then result="passed"; else result="failed"; fi
+  - serverlogsarchive="$repo_name-${TRAVIS_BUILD_NUMBER}-$result.zip"
+  - zip -r "$serverlogsarchive" .
+  - curl -H "${JFROG_TOKEN}" -T "$serverlogsarchive" "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"
+branches:
+  only:
+    - master
+    - qa

@@ -1,0 +1,48 @@
+language: java
+
+jdk:
+  - openjdk9
+  - openjdk8
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+env:
+  global:
+    - MAVEN_USERNAME=$OSSRH_USERNAME
+    - MAVEN_PASSWORD=$OSSRH_PASSWORD
+
+matrix:
+  include:
+    - jdk: openjdk9
+      env: JOB=build_nonmaster_jdk9
+    - jdk: openjdk8
+      env: JOB=build_nonmaster_jdk8
+    - jdk: openjdk9
+      env: JOB=build_master_push_jdk9
+    - jdk: openjdk8
+      env: JOB=deploy_master_repo_specific_jdk8
+    - jdk: openjdk8
+      env: JOB=build_master_push_other_repo_jdk8
+
+  allow_failures:
+    - env: JOB=build_nonmaster_jdk9
+    - env: JOB=build_nonmaster_jdk8
+
+branches:
+  only:
+    - master
+
+before_install:
+  - if [ "$JOB" = "deploy_master_repo_specific_jdk8" ]; then echo "Setting up for deployment"; fi
+
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - if [ "$JOB" = "build_nonmaster_jdk9" ] && [ "$TRAVIS_BRANCH" != "master" ]; then mvn clean verify; fi
+  - if [ "$JOB" = "build_nonmaster_jdk8" ] && [ "$TRAVIS_BRANCH" != "master" ]; then mvn clean verify; fi
+  - if [ "$JOB" = "build_master_push_jdk9" ] && [ "$TRAVIS_BRANCH" = "master" ]; then mvn clean verify; fi
+  - if [ "$JOB" = "deploy_master_repo_specific_jdk8" ] && [ "$TRAVIS_BRANCH" = "master" ] && [ "$TRAVIS_REPO_SLUG" = "bootique/bootique-logback" ]; then mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml; fi
+  - if [ "$JOB" = "build_master_push_other_repo_jdk8" ] && [ "$TRAVIS_BRANCH" = "master" ] && [ "$TRAVIS_REPO_SLUG" != "bootique/bootique-logback" ]; then mvn clean verify; fi

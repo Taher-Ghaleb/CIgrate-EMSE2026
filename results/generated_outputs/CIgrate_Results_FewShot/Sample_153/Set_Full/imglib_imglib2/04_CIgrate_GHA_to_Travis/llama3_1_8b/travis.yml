@@ -1,0 +1,22 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - oraclejdk8
+sudo: false
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+install: true
+script:
+  - chmod +x.travis/build.sh
+  -./travis/build.sh
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that the `before_install` and `before_script` sections are not needed in Travis CI as the `install` and `script` sections can handle the necessary setup and execution of the build script. The `cache` section is used to cache the Maven repository directory.

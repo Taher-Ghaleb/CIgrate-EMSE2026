@@ -1,0 +1,37 @@
+name: Java CI with Gradle and SonarCloud
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for sonar to provide blame information
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+
+      - name: Gradle Build
+        run: ./gradlew clean check sonarqube --info --stacktrace --warning-mode all
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.sonar/cache/
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+          key: gradle-${{ hash }}
+          restore-keys: |
+            gradle-${{ hash }}
+
+      # TODO: Add apt-get steps for addons.apt if needed.  This is a placeholder.
+      # - name: Add apt repositories
+      #   run: |
+      #     # Add apt repositories here

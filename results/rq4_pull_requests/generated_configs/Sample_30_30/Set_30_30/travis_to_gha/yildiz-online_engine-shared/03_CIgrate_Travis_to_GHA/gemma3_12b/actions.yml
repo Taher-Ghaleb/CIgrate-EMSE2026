@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: 'maven'
+      - name: Run build
+        env:
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+        run: travis_retry docker run -v $PWD:/src -v $HOME/.m2:/root/.m2 -e VAULT_TOKEN=$VAULT_TOKEN moussavdb/build-java:lts
+model
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: 'maven'
+      - name: Run build
+        env:
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+        run: travis_retry docker run -v $PWD:/src -v $HOME/.m2:/root/.m2 -e VAULT_TOKEN=$VAULT_TOKEN moussavdb/build-java:lts

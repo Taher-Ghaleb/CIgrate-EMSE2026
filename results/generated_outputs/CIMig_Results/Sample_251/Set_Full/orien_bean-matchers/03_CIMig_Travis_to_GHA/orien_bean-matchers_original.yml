@@ -1,0 +1,33 @@
+matrix:
+  language: java
+  os:
+    ubuntu-latest
+    windows-latest
+  java
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    strategy:
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      uses: actions/checkout@version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      run:
+        bash <(curl -s https://codecov.io/bash)
+        mvn cobertura:cobertura
+      with: java-version
+      uses: actions/setup-java@version
+

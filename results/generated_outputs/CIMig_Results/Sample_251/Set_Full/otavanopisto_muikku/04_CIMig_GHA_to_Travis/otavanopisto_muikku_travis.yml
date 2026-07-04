@@ -1,0 +1,26 @@
+api_key:
+  secure: token
+provider
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  echo \"::set-output name=scpid::$(cat /tmp/sc_client.pid)
+  java -version
+  mvn install -Pdummy-mail-plugin,pyramus-plugins,elastic-search-plugin,atests-plugin,evaluation-plugin,timed-notifications-plugin,matriculation-plugin -Dfindbugs.skip=true -Dmaven.javadoc.skip=true -Dsource.skip=true
+script:
+  script:
+    cd muikku-atests\nmvn verify -Psauce-it -Dmaven.javadoc.skip=true -Dsource.skip=true -Dit.browser=\"chrome\" -Dit.browser.version=\"latest\" -Dit.browser.resolution=\"1280x1024\" -Dit.platform=\"Windows 10\" -Dit.package=\"course/materials\" -Dit.sauce.username=${{secrets.SAUCE_USERNAME}} -Dit.sauce.accessKey=${{secrets.SAUCE_KEY}} -Dit.sauce.tunnelId=${{github.run_id}}\n
+after_success:
+  bash <(curl-cmd
+deploy:
+  skip_cleanup: TRUE
+email:
+  on_success: always
+directories: ~/.m2
+apt:
+  packages: jdk-8-jdk

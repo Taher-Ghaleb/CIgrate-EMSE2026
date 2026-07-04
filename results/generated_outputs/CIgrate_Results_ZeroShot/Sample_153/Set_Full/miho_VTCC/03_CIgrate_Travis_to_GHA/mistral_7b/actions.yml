@@ -1,0 +1,61 @@
+name: Build and Test
+on: [push, pull_request]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, osx]
+        jdk: [oraclejdk8, oraclejdk9]
+    env:
+      GRADE_VERSION: $(gradle --version | grep 'Gradle' | awk '{print $3}')
+
+    services:
+      dbs:
+        postgres:
+          image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Checkout Gradle version
+        run: |
+          GRADE_VERSION=$(gradle --version | grep 'Gradle' | awk '{print $3}')
+          echo ::set-output name=GRADE_VERSION::$GRADE_VERSION
+
+      - name: Install and Run Gradle
+        uses: actions/setup-node@v4
+        if: ${{ matrix.os } === 'osx' }
+
+      - name: Clean and Test
+        run: |
+          ./gradlew clean test
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        if: success()
+        with:
+          name: gradle-build
+          path: build/libs/*.jar
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-gradle-${{ env.GRADE_VERSION }}
+          path: ./gradlew
+          restore-keys: |
+            ${{ runner.os }}-gradle-${{ env.GRADE_VERSION }}
+
+      - name: Test PostgreSQL
+        uses: docker/setup-postgresql@v1
+        if: ${{ matrix.os } === 'linux' }
+        with:
+          image: postgres:latest
+          database: my

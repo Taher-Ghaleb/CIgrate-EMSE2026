@@ -1,0 +1,70 @@
+name: Java CI/CD
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+         ./gradlew wrapper --gradle-version 7.4.1
+         ./gradlew wrapper --distribution-type ALL
+      - name: Build and test
+        run: |
+         ./gradlew check -i
+      - name: Cache Gradle
+        uses: actions/cache@v4
+          at: gradle-cache
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradlew') }}
+      - name: Clean Gradle cache
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Run tests
+        run: |
+         ./gradlew check -i
+      - name: Upload test results
+        run: |
+          bash <(curl -s https://codecov.io/bash)
+      - name: Deploy
+        uses: actions/deploy@v1
+          provider: GitHub
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master
+          commit-message: "Automated deployment"
+          deploy-message: "Automated deployment"
+          deploy-type: push
+          deploy-once: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token-secret: GITHUB_TOKEN
+          github-repo: ${{ github.repository }}
+          github-branch: master
+          github-commit: ${{ github.sha }}
+          github-message: "Automated deployment"
+          github-deploy: true
+          github-push: true
+          github-force-push: true
+          github-force-merge: true
+          github-force-rebase: true
+          github-force-rebase-merge: true
+          github-force-rebase-merge-strategy: squash
+          github-force-rebase-merge-strategy

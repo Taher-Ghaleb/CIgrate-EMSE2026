@@ -1,0 +1,63 @@
+name: Java Maven Build and Coverage Report
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-coverage:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --always-chown-outputs
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: '8'
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install dependencies
+      run: |
+        mvn dependency:resolve -B --quiet
+    - name: Build and test
+      run: |
+        mvn verify -B --quiet
+    - name: Generate Javadoc
+      run: |
+        mvn javadoc:javadoc -B --quiet
+    - name: Generate Coverage Report
+      run: |
+        mvn coveralls:report -Pcoverage -B --quiet
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Save coverage report
+      uses: actions/coveralls@v2
+        token: ${{ secrets.COVERALLS_TOKEN }}
+        repo_token: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        report: coverage.xml
+    - name: Save Javadoc report
+      uses: actions/upload-artifact@v3
+        name: javadoc-report
+        path: target/site/apidocs/index.html
+    - name: Save coverage report
+      uses: actions/upload-artifact@v3
+        name: coverage-report
+        path: target/site/coverage-report/index.html
+    - name: Save Maven logs
+      uses: actions/upload-artifact@v3

@@ -1,0 +1,70 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:stable
+        options: --privileged
+    env:
+      DOCKER_COMPOSE_VERSION: ${{ secrets.DOCKER_COMPOSE_VERSION }}
+      VERSION: ${{ secrets.VERSION }}
+      REGISTRY_HOST: ${{ secrets.REGISTRY_HOST }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce curl
+        sudo rm /usr/local/bin/docker-compose
+        curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+        chmod +x docker-compose
+        sudo mv docker-compose /usr/local/bin
+
+    - name: Build and test
+      run: |
+        gradle -i clean build test
+        mkdir docker && cp Dockerfile docker/ && cp build/libs/*.war docker/
+        docker build -t opencadc/cadc-target-resolver:SNAPSHOT -t opencadc/cadc-target-resolver:alpine -t opencadc/cadc-target-resolver:${VERSION} -f docker/Dockerfile docker/
+        cd integrationTest
+        docker-compose up -d
+        docker ps -a
+        docker-compose logs cadc-target-resolver.cadc.dao.nrc.ca
+        docker-compose logs proxy.cadc.dao.nrc.ca
+        curl -vL -d 'level=DEBUG' http://proxy.cadc.dao.nrc.ca/cadc-target-resolver/logControl
+        gradle -i -b ../build.gradle -Dca.nrc.cadc.reg.client.RegistryClient.host=$REGISTRY_HOST clean intTest
+        cd ../ && rm -rf docker
+
+    - name: Deploy
+      if: success()
+      run: |
+        if [ "$(. ./can-deploy.sh)" = "DEPLOY" ]; then
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          docker push opencadc/cadc-target-resolver:alpine
+          docker push opencadc/cadc-target-resolver:${VERSION}
+        else
+          echo "Not deploying."
+        fi
+
+  notifications:
+    slack:
+      secure: "********************"

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Install and deploy
+        run: |
+          rm -rf $HOME/.m2/repository/io/vlingo
+          mvn install -PTravisCI
+      - name: Deploy
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: ~/.m2/repository/io/vlingo
+        if: success()
+      - name: Deploy tags
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: ~/.m2/repository/io/vlingo
+          if: startsWith(github.ref, 'refs/tags/')
+      - name: Deploy master
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: ~/.m2/repository/io/vlingo
+          if: github.ref == 'refs/heads/master'
+      - name: Trigger dependencies
+        if: ${{ github.event_name == 'release' && github.ref_type == 'tag' }}
+        run:

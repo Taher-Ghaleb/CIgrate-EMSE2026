@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - devel
+
+env:
+  global:
+    - name: OPENSHIFT_USERNAME
+      secure: ${{ secrets.OPENSHIFT_USERNAME }}
+    - name: OPENSHIFT_PASSWORD
+      secure: ${{ secrets.OPENSHIFT_PASSWORD }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['oraclejdk7', 'openjdk7']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Unset GEM_PATH
+        run: unset GEM_PATH
+      - name: Install
+        run: mvn install
+      - name: Package
+        if: ${{ needs.build.succeeded }}
+        run: mvn package -f muikku/pom.xml -Popenshift
+      - name: Prepare Maven
+        uses: actions/checkout@v4
+        id: travis-prepare-maven
+        with:
+          fetch-depth: 0
+      - name: Deploy
+        if: ${{ needs.build.succeeded }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+        env:
+          M2_HOME: ${{ runner.workspace}/.m2
+        steps:
+          - name: Deploy
+            uses: kubernetes-actions/kubectl@v2
+            with:
+              kubeconfig: ${{ secrets.KUBECONFIG }}
+            run: |
+              kubectl config use-context ${{ secrets.OPENSHIFT_PROJECT }}
+              kubectl apply -f muikku/deployment.yaml
+              kubectl rollout status deployment/muikku
+      - name: Deployed
+        if: ${{ needs.deploy.succeeded }}
+        run

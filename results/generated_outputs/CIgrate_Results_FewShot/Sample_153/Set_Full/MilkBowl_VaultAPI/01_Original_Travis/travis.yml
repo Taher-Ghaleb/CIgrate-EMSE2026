@@ -1,0 +1,12 @@
+language: java
+jdk: [ openjdk7 ]
+branches:
+  except:
+    - gh-pages
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+after_success:
+- .utility/do-publish.sh

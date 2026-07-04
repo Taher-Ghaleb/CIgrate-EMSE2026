@@ -1,0 +1,27 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  mvn test
+before_script:
+  mkdir /tmp/zookeeper\nexport ZK=\"apache-zookeeper-3.7.0-bin\"\nwget https://archive.apache.org/dist/zookeeper/zookeeper-3.7.0/$ZK.tar.gz\ntar xzf $ZK.tar.gz -C /tmp/zookeeper\ncp /tmp/zookeeper/$ZK/conf/zoo_sample.cfg /tmp/zookeeper/$ZK/conf/zoo.cfg\n/tmp/zookeeper/$ZK/bin/zkServer.sh start\ncat /tmp/zookeeper/$ZK/logs/*\nsed -i \"s/zookeepernodes:.*/zookeepernodes:\\ ['localhost:2181']/\" conf/bboxdb.yaml\necho \"#####################################################################\"\ncat conf/bboxdb.yaml\necho \"#####################################################################\"\nmkdir -p /tmp/bboxdb/data\n
+  wget-cmd
+  jdk_switcher use $jdk
+script:
+  script:
+    mvn -B compile
+deploy:
+  overwrite: TRUE
+stage:
+  build
+  coverage
+directories: ~/.maven-
+include:
+  if: type in (pull_request, push)

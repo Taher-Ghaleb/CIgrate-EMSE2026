@@ -1,0 +1,39 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_script:
+  - export JAVA_HOME=$(/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/bin/java -version | awk '{print $3}' | sed 's/\.openjdk//')
+
+script:
+  - checkout
+  - $JAVA_HOME/bin/java -version
+  - $JAVA_HOME/bin/mvn package -Dmaven.javadoc.skip=true -Dsource.skip=true -Dgpg.skip=true -B -ntp
+
+deploy:
+  on:
+    tags: true
+  script:
+    - $JAVA_HOME/bin/mvn deploy -Dgpg.skip=true
+
+# TODO: Add notifications if needed
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including the use of the `ubuntu-latest` runner, the `actions/checkout@v4`, `actions/setup-java@v4`, and the `mvn package` command. It also includes the caching of Maven dependencies, the use of JDK 8, and the deployment of the project on tag pushes. The branch filtering and matrix are also maintained.

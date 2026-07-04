@@ -1,0 +1,37 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  TRAVIS_JDK_VERSION: ${{ matrix.jdk }}
+  BUILD_COVERAGE: ${{ github.event.pull_request.base.ref == 'oraclejdk8' && 'true' || false }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['openjdk7', 'oraclejdk8', 'oraclejdk9', 'openjdk10']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install Oracle JDK 7 (if needed)
+        if: ${{ matrix.jdk == 'openjdk7' }}
+        run: |
+          echo "TRAVIS_JDK_VERSION is ${TRAVIS_JDK_VERSION}"
+          if [[ ! -d "${JAVA_HOME}" ]]; then
+            wget https://s3.amazonaws.com/d2fbee19-5fe2-425f-ae11-cd25b35dc99a/jdk-7u80-linux-x64.tar.gz -O /tmp/jdk-7u80-linux-x64.tar.gz
+            tar xvfz /tmp/jdk-7u80-linux-x64.tar.gz -C /tmp
+            sudo mv /tmp/jdk1.7.0_80 "${JAVA_HOME}"
+          fi
+          curl -q -L -C - https://238dj3282as03k369.s3-us-west-1.amazonaws.com/UnlimitedJCEPolicyJDK7.zip -o /tmp/UnlimitedJCEPolicyJDK7.zip
+          sudo unzip -oj -d "$JAVA_HOME/jre/lib/security" /tmp/UnlimitedJCEPolicyJDK7.zip \*/\*.jar
+          rm /tmp/UnlimitedJCEPolicyJDK7.zip
+      - name: Install
+        run: mvn install
+      - name: Run coverage checks
+        if: ${{ env.BUILD_

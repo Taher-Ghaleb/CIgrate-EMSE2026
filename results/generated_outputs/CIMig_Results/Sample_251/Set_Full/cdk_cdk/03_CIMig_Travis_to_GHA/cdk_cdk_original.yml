@@ -1,0 +1,30 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        java-version:
+          ${{ matrix.java }}
+          1.8
+      env:
+        ci: TRUE
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with: key
+      with: java-version
+      uses: actions/setup-java@version
+    - name: placeholder_Name
+      uses: actions/checkout@version
+    run: mvn clean test -q
+

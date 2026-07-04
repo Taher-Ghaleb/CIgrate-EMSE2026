@@ -1,0 +1,60 @@
+language: java
+sudo: false
+jdk: openjdk17
+env:
+  MAVEN_OPTS: -Xmx2500m
+
+script:
+  - actions/checkout@v4
+  - name: Set up JDK 17
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '17'
+      cache: 'maven'
+  - run: sudo apt-get update && sudo apt-get install -y p7zip-full
+  - name: Setup Xvfb for headless display
+    run: |
+      Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+    env:
+      DISPLAY: ':99.0'
+  - run: mvn package -q
+    env:
+      DISPLAY: ':99.0'
+
+deploy:
+  on:
+    branches:
+      - master
+      - master-11
+    tags: true
+  script:
+    - actions/checkout@v4
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+        cache: 'maven'
+    - name: Get tag branch
+      id: get_branch
+      run: |
+        TAG_BRANCH=$(git ls-remote origin | sed -n "\|${{ github.sha }}\s\+refs/heads/|{s///p}")
+        echo "tag_branch=$TAG_BRANCH" >> $GITHUB_OUTPUT
+        echo "Tag branch: $TAG_BRANCH"
+    - name: Check if tag is on master or master-11
+      id: check_branch
+      run: |
+        if [[ "${{ steps.get_branch.outputs.tag_branch }}" =~ ^(master|master-11)$ ]]; then
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+        else
+          echo "should_deploy=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Install p7zip
+      if: steps.check_branch.outputs.should_deploy == 'true'
+      run: sudo apt-get update && sudo apt-get install -y p7zip-full
+    - name: Prepare deployment
+      if: steps.check_branch.outputs.should_deploy == 'true'
+      run: |
+        chmod +x .github/deploy_prepare.sh
+        ./.github/deploy_prepare.sh

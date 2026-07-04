@@ -1,0 +1,57 @@
+name: Android Build and Deploy
+
+on:
+  push:
+    branches:
+      - main  # Replace 'main' with the original branch name
+  pull_request:
+    branches:
+      - main  # Replace 'main' with the original branch name
+  release:
+    types: [published]
+    tags:
+      - openjdk8  # Preserve original tag name
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      android:
+        android-sdk: latest
+        emulator: latest
+        ndk: latest
+        ndk-platform: latest
+        ndk-toolchain: latest
+
+    env:
+      ANDROID_HOME: ${{ steps.android_setup.outputs.ANDROID_HOME }}
+      STOREPASS: ${{ secrets.STOREPASS }}
+      KEYPASS: ${{ secrets.KEYPASS }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          distribution_version: 8
+
+      - name: Setup Android environment
+        uses: actions/setup-android@v2
+        with:
+          android_sdk: ${{ needs('android_setup').outputs.android_sdk }}
+          android_sdk_license_acceptance: all
+
+      - name: Setup NDK
+        uses: actions/setup-go@v5
+        with:
+          go_version: 1.17
+
+      - name: Setup NDK Platform
+        run: |
+          ANDROID_NDK=${{ needs('android_setup').outputs.android_ndk}}
+          ANDROID_NDK_PLATFORM=${{ needs('android_setup').outputs.android_ndk_platform}}
+          export ANDROID_NDK_HOME=$ANDROID_NDK
+          export ANDROID_NDK_PLATFORM=$ANDROID_NDK_PLATFORM
+          export PATH=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH

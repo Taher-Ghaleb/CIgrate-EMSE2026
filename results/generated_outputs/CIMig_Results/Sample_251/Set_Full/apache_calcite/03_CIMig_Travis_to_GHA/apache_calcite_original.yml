@@ -1,0 +1,36 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        java-version: 1.8
+      with: key
+      with: java-version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      env:
+        ci: TRUE
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+        bundler-cache: TRUE
+        restore-keys: jdk11-
+    - name: placeholder_Name
+      uses: actions/checkout@version
+      run: gradle-cmd
+
+macos:
+  jdk: openjdk8
+

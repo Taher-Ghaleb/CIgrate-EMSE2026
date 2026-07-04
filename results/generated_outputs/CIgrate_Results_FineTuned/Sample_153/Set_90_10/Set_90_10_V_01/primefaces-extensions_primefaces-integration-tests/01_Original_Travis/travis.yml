@@ -1,0 +1,28 @@
+language: java
+dist: xenial
+sudo: false
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+env:
+  - PROFILES=headless-mode
+  - PROFILES=headless-mode,chrome
+
+before_install:
+  - sudo apt-get -y install firefox-geckodriver
+install:
+  - git clone https://github.com/primefaces/primefaces && cd primefaces && mvn install && cd ..
+  - git clone https://github.com/primefaces-extensions/primefaces-selenium && cd primefaces-selenium && mvn install && cd ..
+script:
+  - ln -s /usr/bin/geckodriver geckodriver
+  - source .travis/install-chromedriver.sh
+  - mvn -B -V clean install -P${PROFILES}
+
+addons:
+  apt:
+    update: true
+cache:
+  directories:
+    - "$HOME/.m2/repository"

@@ -1,0 +1,55 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  SMALLD_VERSION: ${{ env.SMALLD_VERSION }}
+  MAVEN_OPTS: ${{ env.MAVEN_OPTS }}
+  ORGANIZATION: ianagbip1oti-github
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '9']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Extract secrets
+        if: github.event.pull_request == null
+        run: bash./etc/extract_secrets.sh
+      - name: Build and verify
+        run: mvn -B verify
+  release:
+    runs-on: ubuntu-latest
+    if: github.event.release_name =~ ^\d+\.\d+\.\d+$
+    env:
+      SMALLD_VERSION: ${{ env.SMALLD_VERSION }}
+      MAVEN_OPTS: ${{ env.MAVEN_OPTS }}
+      ORGANIZATION: ianagbip1oti-github
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Set up SonarCloud
+        uses: sonarcloud/sonarcloud-github-action@release/v1
+        with:
+          token: ${{ secrets.SONAR_TOKEN }}
+          organization: ${{ env.ORGANIZATION }}
+      - name: Set up Maven
+        run: |
+          mvn -s etc/settings.xml -B versions:set-property deploy -P release
+```
+
+Note that I've used the `github.event.release_name` condition to check if the workflow is triggered by a release event, and used the `github.event.pull_request` condition to check if the workflow is triggered by a pull request. I've also used the `secrets.SONAR_TOKEN` to store the SonarCloud token securely.

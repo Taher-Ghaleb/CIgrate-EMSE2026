@@ -1,0 +1,21 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        java-version: ${{ matrix.java }}
+      with: key
+      with: java-version
+      uses: actions/setup-java@version
+    - name: build with maven-
+      uses: actions/checkout@version
+    run: mvn install --batch-mode -DskipTests=true -Dmaven.javadoc.skip=true -Dsource.skip=true | pv -fbi 60 > mvn_install.log || (cat mvn_install.log && false)
+

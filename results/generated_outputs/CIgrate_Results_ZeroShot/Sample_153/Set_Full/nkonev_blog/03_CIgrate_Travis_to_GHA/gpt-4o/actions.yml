@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    env:
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      CONNECT_LINE: ${{ secrets.CONNECT_LINE }}
+      UPDATE_COMMAND: ${{ secrets.UPDATE_COMMAND }}
+      encrypted_7051ac01cf89_key: ${{ secrets.ENCRYPTED_7051AC01CF89_KEY }}
+      encrypted_7051ac01cf89_iv: ${{ secrets.ENCRYPTED_7051AC01CF89_IV }}
+    services:
+      docker:
+        image: docker:stable
+        options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 13
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '13'
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y chromium-browser firefox=63.0
+
+      - name: Decrypt SSH key
+        run: |
+          openssl aes-256-cbc -K $encrypted_7051ac01cf89_key -iv $encrypted_7051ac01cf89_iv -in ./.travis/id_rsa.enc -out ~/.ssh/id_rsa -d
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Verify Java installation
+        run: |
+          java -version
+          echo $JAVA_HOME
+
+      - name: Cache Maven and Node modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            frontend/node
+            frontend/node_modules
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Start Docker Compose
+        run: |
+          cd docker
+          docker-compose up -d
+
+      - name: Build and Test
+        run: |
+          DATE_VERSION=$(date +%Y%m%d.%H.%M)
+          rm ~/.m2/settings.xml
+          ./mvnw -U -q -Drevision=$DATE_VERSION -P frontend -P jacoco -P docker -P webdriver-chrome -P webdriver-firefox -Dcustom.selenium.headless=true clean install
+          cd docker
+          docker-compose down
+          ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+          rm -rf ~/.m2/repository/com/github/nkonev/blog
+          rm -rf frontend/node_modules/.cache
+
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+
+      - name: Deploy
+        if: github.ref == 'refs/heads/master' && success() && github.event_name != 'schedule'
+        run: |
+          echo "Will push docker image"
+          docker login -u="$DOCKER_LOGIN" -p="$DOCKER_PASSWORD"
+          docker push nkonev/blog:latest
+          ssh -o "BatchMode yes" -o StrictHostKeyChecking=no -q $CONNECT_LINE $UPDATE_COMMAND

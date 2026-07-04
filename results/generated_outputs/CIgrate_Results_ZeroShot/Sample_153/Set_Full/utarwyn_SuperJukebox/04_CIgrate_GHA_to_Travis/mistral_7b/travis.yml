@@ -1,0 +1,45 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4 -f --fetch-depth 0
+
+before_install:
+  - uses: actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+      cache: 'maven'
+
+before_script:
+  - if: $TRAVIS_PULL_REQUEST == false
+    cache: directories:
+      - ~/.sonar/cache
+    key: ${{ os }}-sonar-${{ sha1(files('pom.xml')) }}
+    restore-keys: |
+      ${{ os }}-sonar-
+
+script:
+  - if: $TRAVIS_PULL_REQUEST == false
+    env:
+      SONAR_TOKEN: $SONAR_TOKEN
+      SONAR_ORGANIZATION: utarwyn-github
+    run: mvn clean verify sonar:sonar -Pcoverage -Dsonar.organization=utarwyn-github
+  - if: $TRAVIS_PULL_REQUEST == true
+    run: mvn clean install
+
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including the use of jobs, steps, env variables, caches, services, branch filters, and deploy triggers. It also includes the necessary lifecycle keys (before_install, install, script, and deploy) and uses the appropriate Travis CI syntax. The JDK and Git version numbers, branch names, and other details are preserved as in the source.

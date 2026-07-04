@@ -1,0 +1,19 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+jdk:
+  - openjdk8
+
+script:
+  - chmod +x mvnw
+  - ./mvnw clean verify
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" = "main" ]; then
+      curl -sL https://codecov.io/bash | bash
+    fi
+env:
+  global:
+    - CODECOV_TOKEN: $CODECOV_TOKEN

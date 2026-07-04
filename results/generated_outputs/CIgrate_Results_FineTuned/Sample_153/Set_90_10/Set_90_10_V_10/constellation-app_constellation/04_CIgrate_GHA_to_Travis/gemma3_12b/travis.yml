@@ -1,0 +1,47 @@
+language: java
+sudo: false
+dist: xenial
+install: true
+
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+env:
+  global:
+    - RUNNER_IMAGE=constellationapplication/netbeans-runner:11.3
+    - SONAR_TOKEN=$SONAR_TOKEN
+
+before_cache:
+  - find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+
+jobs:
+  include:
+    - stage: build-and-test
+      script:
+        - git fetch --unshallow
+        - docker pull "$RUNNER_IMAGE"
+        - docker run --mount "type=bind,source=$TRAVIS_BUILD_DIR,target=$TRAVIS_BUILD_DIR" --mount "type=bind,source=$HOME/.ivy2/cache,target=/root/.ivy2/cache" --workdir "$TRAVIS_BUILD_DIR" "$RUNNER_IMAGE" .travis/run-tests.sh
+        - if [ -n "$TRAVIS_BUILD_NUMBER" ]; then .travis/sonar.sh; fi
+    - stage: deploy
+      script:
+        - git fetch --unshallow
+        - git config --local user.name "Constellation CI"
+        - git config --local user.email "$GIT_EMAIL"
+        - git tag -a "$TRAVIS_BUILD_NUMBER" -m "Automated build of constellation"
+        - git push https://$GIT_TOKEN@github.com/constellation-app/constellation.git HEAD:master --follow-tags
+        - if [ -n "$TRAVIS_BUILD_NUMBER" ]; then gh release upload "$TRAVIS_BUILD_NUMBER" dist/constellation.zip; fi
+        - if [ -n "$TRAVIS_BUILD_NUMBER" ]; then echo "Gitter notification not implemented"; | tee > /dev/null; fi
+      on:
+        repo: constellation-app/constellation
+        branch: master
+        tags: true
+
+stages:
+  - build-and-test
+  - name: deploy
+    if: repo = constellation-app/constellation AND branch = master AND type =~ ^(tag|master)$

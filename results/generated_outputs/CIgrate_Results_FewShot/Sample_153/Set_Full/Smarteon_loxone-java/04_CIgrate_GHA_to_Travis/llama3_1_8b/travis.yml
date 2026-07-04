@@ -1,0 +1,41 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+
+script:
+  - chmod +x gradlew
+  -./gradlew check -i
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+before_script:
+  - if [ $TRAVIS_BRANCH == "master" ]; then
+      echo "Testing"
+      echo "skip=false" >> $GITHUB_OUTPUT
+    else
+      echo "NOT testing"
+      echo "skip=true" >> $GITHUB_OUTPUT
+    fi
+
+install:
+  - if [ $GITHUB_OUTPUT == "skip=true" ]; then
+      exit 0
+    fi
+  - chmod +x examples/example/gradlew
+
+script:
+  - if [ $GITHUB_OUTPUT == "skip=true" ]; then
+      exit 0
+    fi
+  - cd examples/example/
+  -./gradlew check -i
+
+after_success:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - bash <(curl -s https://codecov.io/bash)
+```
+Note that I've removed the `upload-coverage` job as it's not a standard Travis CI configuration and is likely a custom job. If you need to upload coverage to Codecov, you can add the necessary steps to the `after_success` section.

@@ -1,0 +1,40 @@
+language: bash
+
+branches:
+  only:
+    - master
+    - develop
+  except:
+    - gh-pages
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - bash -c "curl -sSL https://get.sdkman.io | bash"
+  - sdk install java 8.0.272-temurin-jdk
+  - sdk use java 8.0.272-temurin-jdk-headless
+  - android-sdk-manager --licenses
+
+script:
+  - sdkmanager "platform-tools" "tools"
+  - sdkmanager "platforms;android-23"
+  - sdkmanager "build-tools;23.0.3"
+  - sdkmanager "extras;android;support"
+  - sdkmanager "extras;android;m2repository"
+  - chmod +x gradlew
+  - ./gradlew clean build
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: ./deploy.sh

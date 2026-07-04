@@ -1,0 +1,56 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      TEST_DIR: code/ingest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-gradle
+          path: ${{ env.TEST_DIR }}/.gradle/caches/
+          restore-keys: |
+            ${{ env.TEST_DIR }}/.gradle/caches/*/plugin-resolution/
+            ${{ env.TEST_DIR }}/.gradle/caches/modules-2/modules-2.lock
+
+      - name: Install Gradle
+        run: |
+          if [ ! -d ${{ env.TEST_DIR }}/.gradle ]; then
+            ./gradlew wrapper --gradle-version 6.5
+          fi
+
+      - name: Setup environment
+        run: |
+          export GRADLE_USER_HOME=${{ env.TEST_DIR }}/.gradle
+          export GRADLE_DAEMON_HOME=${{ env.TEST_DIR }}/.gradle/daemon
+
+      - name: Install and run tests
+        run: |
+          cd ${{ env.TEST_DIR }}
+          ./gradlew jacocoTestReport
+
+      - name: Upload code coverage to Codecov
+        if: success()
+        run: |
+          if [ -e ./gradlew ]; then
+            ./gradlew jacocoTestReport
+          else
+            gradle jacocoTestReport
+          fi
+          bash <(curl -s https://codecov.io/bash) -t uuid-repo-token

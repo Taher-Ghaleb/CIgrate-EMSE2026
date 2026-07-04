@@ -1,0 +1,98 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - export M2_HOME=~/.m2
+  - export MAVEN_OPTS=-Xmx512m
+  - export GRADLE_HOME=$HOME/.gradle
+  - export PATH=$GRADLE_HOME/bin:$PATH
+
+install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+script:
+  - chmod +x.travis/build.sh
+  -./travis/build.sh
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploying to staging"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "Deploying to staging on failure"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:./travis/deploy.sh
+  skip_cleanup: true
+  on:
+    branch: never
+  environment:
+    name: production
+    matrix:
+      - name: staging
+        on:
+          branch: never
+  before_deploy:
+    - echo "Before deploying to production"
+    - echo "Before deploying to staging"
+  after_deploy:
+    - echo "After deploying to production"
+    - echo "After deploying to staging"
+
+matrix:
+  include:
+    - java: '8'
+      os: linux
+      dist: ubuntu
+      env:
+        SECRET_1: $SECRET_1
+        SECRET_2: $SECRET_2
+  allow_failures:
+    - java: '8'
+      os: linux
+      dist: ubuntu
+      env:
+        SECRET_1: $SECRET_1
+        SECRET_2: $SECRET_2
+
+cache:
+  directories:
+    - $M2_HOME
+    - $GRADLE_HOME
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+    recipients:
+      - user@example.com
+
+branches:
+  only:
+    - master
+    - '**-[0-9]+.**'
+
+before_script:
+  - echo "Before script"
+  - docker-compose wait-for-it db:5432
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - 'ppa:certbot/certbot'
+    packages:
+      - certbot
+    cache:

@@ -1,0 +1,30 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      env:
+        github_token: ${{ github.token }}
+    - name: Placeholder
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      with: java-version
+    run: mvn clean verify
+    run: mvn clean verify
+    run: mvn clean verify
+    run: mvn clean verify
+    run: mvn clean verify
+
+macos:
+  jdk: oraclejdk8
+

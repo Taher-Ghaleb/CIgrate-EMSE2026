@@ -1,0 +1,15 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: develop
+before_install:
+  chmod +x gradlew
+  java -version
+script:
+  script:
+    jdk8
+    ./gradlew build testDebugUnitTest
+stage: ☕ 11

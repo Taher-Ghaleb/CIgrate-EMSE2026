@@ -1,0 +1,71 @@
+language: java
+
+services:
+  - docker
+
+before_install:
+  - apt-get update
+  - apt-get install -y docker.io
+  - docker run --rm -d -p 8080:8080 --name my-service my-service-image
+
+install:
+  - echo "PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+  - echo "LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
+script:
+  - chmod +x gradlew
+  -./gradlew build
+  -./gradlew integrationTest
+  -./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=${BINTRAY_USER} -Dbintray.key=${BINTRAY_KEY} -Dbuild.number=${TRAVIS_BUILD_NUMBER}
+  -./gradlew bintrayUpload -x test -Dbintray.user=${BINTRAY_USER} -Dbintray.key=${BINTRAY_KEY} -Dbuild.number=${TRAVIS_BUILD_NUMBER}
+  -./gradlew uploadArchives
+
+deploy:
+  - on:
+      branch: dev
+      tags: true
+    env:
+      - name: TRAVIS_BRANCH
+        value: $TRAVIS_BRANCH
+      - name: TRAVIS_TAG
+        value: $TRAVIS_TAG
+    script:
+      -./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=${BINTRAY_USER} -Dbintray.key=${BINTRAY_KEY} -Dbuild.number=${TRAVIS_BUILD_NUMBER}
+    after_success:
+      - echo "Deploying to Bintray"
+      -./gradlew bintrayUpload -x test -Dbintray.user=${BINTRAY_USER} -Dbintray.key=${BINTRAY_KEY} -Dbuild.number=${TRAVIS_BUILD_NUMBER}
+
+after_failure:
+  - echo "Deploy failed"
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+    recipients:
+      - your_email@example.com
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: temurin
+    - java-version: '11'
+      distribution: temurin
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+addons:
+  apt:
+    sources:
+      - source: 'ppa:openjdk/ppa'
+        version: '1.0'
+    packages:
+      - openjdk-8-jdk
+      - openjdk-11-jdk
+```
+
+Note: The above configuration is a complete Travis CI configuration YAML file. It includes all the necessary sections and settings to replicate the original GitHub Actions workflow. The configuration includes the `language`, `services`, `before_install`, `install`, `script`, `deploy`, `after_success`, `after_failure`, `notifications`, `matrix`, and `cache` sections. The `addons` section is also included to specify the apt sources and packages to be installed.

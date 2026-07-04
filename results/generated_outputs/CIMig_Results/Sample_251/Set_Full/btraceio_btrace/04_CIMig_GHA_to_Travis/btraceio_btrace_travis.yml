@@ -1,0 +1,22 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: develop
+before_install:
+  java -version
+  chmod +x gradlew
+script:
+  script:
+    ./gradlew :btrace-dist:publish
+after_success:
+  bash <(curl-cmd
+stage:
+  tests
+  Build
+  ☕ 11
+email:
+  on_failure: always

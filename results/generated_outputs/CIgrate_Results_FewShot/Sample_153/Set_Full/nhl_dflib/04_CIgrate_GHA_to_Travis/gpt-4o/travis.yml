@@ -1,0 +1,33 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  global:
+    - MAVEN_USERNAME=$OSSRH_USERNAME
+    - MAVEN_PASSWORD=$OSSRH_PASSWORD
+    - MAVEN_GPG_PASSPHRASE=$GPG_PASSPHRASE
+
+matrix:
+  include:
+    - env: DB_PROFILE=derby
+    - env: DB_PROFILE=mysql
+    - env: DB_PROFILE=postgresql
+  allow_failures:
+    - env: DB_PROFILE=derby
+    - env: DB_PROFILE=mysql
+    - env: DB_PROFILE=postgresql
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+script:
+  - mvn verify -P$DB_PROFILE
+
+deploy:
+  provider: script
+  script: mvn clean source:jar javadoc:javadoc deploy -DskipTests
+  on:
+    branch: master
+    condition: $TRAVIS_EVENT_TYPE = push AND $TRAVIS_REPO_SLUG = nhl/dflib

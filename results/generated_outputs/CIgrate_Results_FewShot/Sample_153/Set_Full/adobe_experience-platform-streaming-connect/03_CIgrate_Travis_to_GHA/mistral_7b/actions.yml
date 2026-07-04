@@ -1,0 +1,38 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  # Preserve global env
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['oraclejdk8']
+    services:
+      docker: docker-dind
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ matrix.jdk }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Install and build
+        run: sudo apt-get update && sudo apt-get install -y docker.io
+        env:
+          # Preserve sudo
+        shell: bash
+        # Preserve install and sudo:required
+        run: ./gradlew clean build

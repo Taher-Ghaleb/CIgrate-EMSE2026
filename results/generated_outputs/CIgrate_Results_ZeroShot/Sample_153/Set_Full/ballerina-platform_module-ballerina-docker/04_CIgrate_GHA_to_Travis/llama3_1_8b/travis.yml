@@ -1,0 +1,58 @@
+language: java
+
+services:
+  docker:
+    image: maven:3-jdk-8
+
+before_install:
+  - choco install jdk8 -params 'installdir=c:\\java8' -y
+  - echo "JAVA_HOME=c:\java8" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+  - echo "c:\java8\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+  - choco install maven --version 3.6.3 -y
+  - echo "C:\ProgramData\chocolatey\lib\maven\apache-maven-3.6.3\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+script:
+  -.\gradlew.bat build -x test --stacktrace --console=plain --no-daemon
+
+after_success:
+  - deploy:
+      provider: script
+      script: |
+        #!/bin/bash
+        # Upload coverage to Codecov
+        codecov -f build/coverage.xml -t $CODECOV_TOKEN
+
+after_failure:
+  - deploy:
+      provider: script
+      script: |
+        # Upload coverage to Codecov
+        codecov -f build/coverage.xml -t $CODECOV_TOKEN
+
+matrix:
+  include:
+    - os: windows
+      env: FOO=bar
+    - os: linux
+      env: FOO=bar
+  allow_failures:
+    - os: linux
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    on_error: true
+    recipients:
+      - user@example.com
+
+branches:
+  only:
+    - main
+    - feature/*

@@ -1,0 +1,65 @@
+name: Java Project Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+         ./mvnw install -P docs -q -U -DskipTests=true -Dmaven.test.redirectTestOutputToFile=true
+      - name: Build and deploy
+        run: |
+         ./mvnw clean deploy -nsu
+      - name: Deploy to GitHub Pages
+        run:./docs/src/main/asciidoc/ghpages.sh
+      - name: Cache dependencies
+        uses: actions/cache@v4
+          at: cache
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Login to GitHub
+        run: |
+          echo "https://$GH_TOKEN:@github.com" >.git/credentials
+      - name: Install Asciidoctor
+        run: gem install asciidoctor
+      - name: Configure Git
+        run: |
+          git config user.name "$GIT_NAME"
+          git config user.email "$GIT_EMAIL"
+      - name: Deploy to database
+        run: |
+         ./mvnw exec:it -Dmaven.test.redirectTestOutputToFile=true
+      - name: Send notification
+        uses: daniel-lange/notify-slack@v1
+          token: ${{ secrets.SLACK_TOKEN }}
+          channels: '#general'
+          message: 'Build and deploy successful'
+      - name: Allow failure
+        continue-on-error: true
+      - name: Send notification on failure
+        uses: daniel-lange/notify-slack@v1
+          token: ${{ secrets.SLACK_TOKEN }}
+          channels: '#general'
+          message: 'Build and deploy failed'
+          attachments:
+            author: 'Build and deploy'

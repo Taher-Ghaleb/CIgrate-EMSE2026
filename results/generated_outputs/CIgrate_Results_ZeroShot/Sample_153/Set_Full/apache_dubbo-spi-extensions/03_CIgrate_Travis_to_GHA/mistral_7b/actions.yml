@@ -1,0 +1,51 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        - postgres:latest-alpine
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME_8 }}
+      M2_HOME: ${{ secrets.M2_HOME }}
+    strategy:
+      matrix:
+        jdk: [openjdk11, openjdk8]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Set up Maven
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+          pip:
+            install: maven
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.M2_HOME }}/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ env.M2_HOME }}/repository/*
+
+      - name: Remove old Maven artifacts
+        run: rm -rf ${{ env.M2_HOME }}/repository/org/glassfish/javax.el/3.0.1-b08
+
+      - name: Build and Test
+        run: ./mvnw --batch-mode --no-transfer-progress clean install -DskipTests=false -DskipIntegrationTests=false -Dcheckstyle.skip=false -Drat.skip=false -Dmaven.javadoc.skip=true
+
+      - name: Upload code coverage to Codecov
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft }}
+        uses: codecov/codecov-action@v2
+        with:

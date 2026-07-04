@@ -1,0 +1,53 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4 -f -d 0
+
+install:
+  - uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '11'
+
+  - uses: gradle/actions/setup-gradle@v4
+
+before_script:
+  - run: chmod +x gradlew
+
+script:
+  - ./gradlew clean check sonarqube --info --stacktrace --warning-mode all
+
+env:
+  global:
+    GITHUB_TOKEN: $GITHUB_TOKEN
+    SONAR_TOKEN: $SONAR_TOKEN
+    SONAR_ORGANIZATION: kaklakariada-github
+
+cache:
+  directories:
+    - ~/.sonar/cache
+
+matrix:
+  include:
+    - java:
+        - 11
+
+  allow_failures:
+    - java: 11
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - # TODO: Add deploy script here

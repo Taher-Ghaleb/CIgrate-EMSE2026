@@ -1,0 +1,36 @@
+language: java
+sudo: false
+branches:
+  only:
+    - master
+  except:
+    - gh-pages
+pull_request:
+  branches_ignore:
+    - gh-pages
+
+env:
+  global:
+    - SECRET_1: $SECRET_1
+    - SECRET_2: $SECRET_2
+    - SECRET_3: $SECRET_3
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+
+jdk:
+  - openjdk11
+
+script:
+  - mvn test
+
+deploy:
+  provider: script
+  script:
+    - chmod +x .utility/do-publish.sh
+    - .utility/do-publish.sh
+  on:
+    branch: master
+    success: true

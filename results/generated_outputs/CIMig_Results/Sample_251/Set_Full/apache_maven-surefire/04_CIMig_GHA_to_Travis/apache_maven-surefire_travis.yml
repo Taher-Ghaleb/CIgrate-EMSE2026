@@ -1,0 +1,6 @@
+cache: directories
+sudo: FALSE
+language:
+  java
+jdk: jdk8
+branches: master

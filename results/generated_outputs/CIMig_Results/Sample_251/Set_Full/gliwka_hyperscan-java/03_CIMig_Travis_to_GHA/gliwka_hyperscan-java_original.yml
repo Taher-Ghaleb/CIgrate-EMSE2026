@@ -1,0 +1,32 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        java
+        os: linux-latest
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        java-version: ${{ matrix.java }}
+      env:
+        github_token: ${{ github.token }}
+    - name: build with maven-
+      run:
+        mvn sonar:sonar -Dsonar.organization=locatetech -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONARCLOUD_TOKEN
+        docker
+

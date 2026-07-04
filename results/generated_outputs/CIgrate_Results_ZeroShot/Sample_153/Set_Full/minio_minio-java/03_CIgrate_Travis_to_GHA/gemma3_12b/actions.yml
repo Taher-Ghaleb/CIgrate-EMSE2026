@@ -1,0 +1,25 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [oraclejdk8, openjdk8, oraclejdk9]
+    env:
+      JAVA_HOME: /opt/java
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Gradle Check
+        run: ./gradlew check
+      - name: Gradle Functional Test
+        run: ./gradlew runFunctionalTest
+    # TODO: Slack notifications - No direct equivalent, requires custom action or external integration.

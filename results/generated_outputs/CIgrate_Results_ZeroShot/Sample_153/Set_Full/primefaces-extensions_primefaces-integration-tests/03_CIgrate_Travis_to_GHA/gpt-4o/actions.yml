@@ -1,0 +1,62 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-16.04
+    strategy:
+      matrix:
+        jdk: [8, 11]
+        profile: [headless-mode, headless-mode,chrome]
+    env:
+      PROFILES: ${{ matrix.profile }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get -y install firefox-geckodriver
+
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Clone and install PrimeFaces
+        run: |
+          git clone https://github.com/primefaces/primefaces
+          cd primefaces
+          mvn install
+          cd ..
+
+      - name: Clone and install PrimeFaces Selenium
+        run: |
+          git clone https://github.com/primefaces-extensions/primefaces-selenium
+          cd primefaces-selenium
+          mvn install
+          cd ..
+
+      - name: Link geckodriver
+        run: ln -s /usr/bin/geckodriver geckodriver
+
+      - name: Install ChromeDriver
+        run: source .travis/install-chromedriver.sh
+
+      - name: Build with Maven
+        run: mvn -B -V clean install -P${{ env.PROFILES }}

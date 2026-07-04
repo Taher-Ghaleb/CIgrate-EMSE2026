@@ -1,0 +1,43 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  GIT_NAME: Spencer Gibb
+  GIT_EMAIL: sgibb@pivotal.io
+  CI_DEPLOY_USERNAME: sgibb
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Configure Git
+        run: |
+          git config user.name ${{ env.GIT_NAME }}
+          git config user.email ${{ env.GIT_EMAIL }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Install dependencies
+        run:./mvnw install -P docs -q -U -DskipTests=true -Dmaven.test.redirectTestOutputToFile=true
+      - name: Build and deploy
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" == "pull_request" ]; then
+           ./mvnw clean install -nsu
+          else
+           ./mvnw clean deploy -nsu
+          fi
+      - name: Deploy to GitHub Pages
+        run:./docs/src/main/asciidoc/ghpages.sh
+```
+
+Note: I've used the `GITHUB_EVENT_NAME` environment variable to determine whether the workflow is triggered by a push or a pull request. This variable is automatically set by GitHub Actions.

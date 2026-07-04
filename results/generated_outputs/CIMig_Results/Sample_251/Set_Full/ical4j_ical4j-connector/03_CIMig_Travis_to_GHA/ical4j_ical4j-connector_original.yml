@@ -1,0 +1,27 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      run: ./gradlew check
+    - name: build with maven-
+      with:
+        clean: TRUE
+        draft: TRUE
+        server-id: sonatype-releases
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+
+env:
+  github_token: ${{ github.token }}
+
+strategy:
+  fail-fast: FALSE
+

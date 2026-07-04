@@ -1,0 +1,57 @@
+name: Build and Test Constellation
+
+on:
+  push:
+  pull_request:
+  release:
+    types: [created, edited]
+  workflow_dispatch:
+  tag:
+  branch:
+    paths:
+      - 'master'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    env:
+      RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    strategy:
+      matrix:
+        dist: [bionic]
+        language: [java]
+    services:
+      - docker
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Cache Ivy Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.HOME }}/.ivy2/cache
+          key: ivy-cache
+      - name: Before Cache Cleanup
+        run: find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+      - name: Build and Test
+        run: |
+          docker pull "${RUNNER_IMAGE}"
+          docker run --mount "type=bind,source=${TRAVIS_BUILD_DIR},target=${TRAVIS_BUILD_DIR}" --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" --workdir "${TRAVIS_BUILD_DIR}" "${RUNNER_IMAGE}" .travis/run-tests.sh
+      - name: SonarCloud Analysis
+        run: .travis/sonar.sh
+        # TODO: Add SonarCloud action for more robust integration
+    # TODO: Add deploy step using actions/deployments or similar
+  release:
+    runs-on: ubuntu-22.04
+    if: github.ref == 'refs/tags/*'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        run: |
+          # TODO: Implement release deployment logic here
+          echo "Release deployment not yet implemented"
+    # TODO:

@@ -1,0 +1,30 @@
+Here is the equivalent complete Travis CI configuration (.travis.yml) for the given GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+
+script:
+  - mvn clean verify --settings target/travis/settings.xml
+  - mvn clean deploy --settings target/travis/settings.xml
+
+deploy:
+  on:
+    branch: develop
+  env:
+    global:
+      MAVEN_USERNAME: $MAVEN_USERNAME
+      MAVEN_PASSWORD: $MAVEN_PASSWORD
+
+before_install:
+  - git clone -b travis https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git target/travis
+
+before_script:
+  - mvn clean verify --settings target/travis/settings.xml
+
+after_success:
+  - mvn clean deploy --settings target/travis/settings.xml
+```
+
+Note: The `on` keyword in Travis CI is used to specify the event that triggers the deployment. In this case, we're deploying on the `develop` branch. The `env` keyword is used to set environment variables, and the `global` keyword is used to set environment variables that are available to all jobs. The `before_install` keyword is used to run a command before the installation of the job, and the `before_script` keyword is used to run a command before the script. The `after_success` keyword is used to run a command after the script has completed successfully.

@@ -1,0 +1,24 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  components:
+    extra-android-maven-repository
+    platform-tools
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    platform-tools
+    extra-android-maven-repository
+branches: *
+before_install:
+  java -version
+  echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+after_success:
+  if echo \"${TAG}\" | egrep '^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9]+)?$'\nthen\n    # the tag looks like a version number: proceed with release\n    echo ${GPG_SECRET_KEY} | base64 --decode | gpg --import --no-tty --batch --yes\n    echo ${GPG_OWNERTRUST} | base64 --decode | gpg --import-ownertrust --no-tty --batch --yes\n    mvn -ntp versions:set -DnewVersion=${TAG}\n    mvn -ntp -s .github/settings.xml -Prelease jacoco:report coveralls:report deploy\nelse\n    # this is a regular build\n    mvn -ntp install jacoco:report coveralls:report\nfi\n
+include:
+  stage: build
+directories: ~/.maven-

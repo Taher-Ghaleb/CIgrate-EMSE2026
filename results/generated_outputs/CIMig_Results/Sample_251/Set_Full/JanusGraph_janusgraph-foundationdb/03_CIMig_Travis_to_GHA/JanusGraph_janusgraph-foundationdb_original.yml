@@ -1,0 +1,38 @@
+matrix:
+  language: java
+  os:
+    ubuntu-latest
+    windows-latest
+
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: linux-latest
+      fail-fast: FALSE
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+      run:
+        docker
+        mvn clean install -DskipTests=true
+
+macos:
+  jdk: openjdk8
+

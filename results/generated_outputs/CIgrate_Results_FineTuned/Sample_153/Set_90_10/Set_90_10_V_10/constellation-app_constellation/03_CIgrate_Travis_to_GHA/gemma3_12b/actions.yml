@@ -1,0 +1,43 @@
+name: Java CI
+
+on: [push, pull_request]
+
+env:
+  RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.ivy2/cache
+        key: ${{ runner.os }}-ivy2-${{ hashFiles('**/ivy.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-ivy2-
+    - name: Before cache
+      run: find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+    - name: Build and test
+      run: |
+        docker pull "${RUNNER_IMAGE}"
+        docker run --mount "type=bind,source=${{ github.workspace }}/,target=${{ github.workspace }}/" --mount "type=bind,source=$HOME/.ivy2/cache,target=/root/.ivy2/cache" --workdir "${{ github.workspace }}" "${RUNNER_IMAGE}" .travis/run-tests.sh
+    - name: SonarCloud
+      if: github.ref == 'refs/heads/master'
+      run: .travis/sonar.sh
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - name: Deploy
+      if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
+      run: |
+        zip -r dist/constellation.zip .
+        gh release upload ${{ github.ref_name }} dist/constellation.zip
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    - name: Gitter notification
+      if: always()
+      run: |
+        curl -H "Content-Type: application/json" -d '{"text":"Build for commit ${{ github.sha }} on branch ${{ github.ref_name }} has finished."}' https://webhooks.gitter.im/e/82ac70bdb3f9e144d

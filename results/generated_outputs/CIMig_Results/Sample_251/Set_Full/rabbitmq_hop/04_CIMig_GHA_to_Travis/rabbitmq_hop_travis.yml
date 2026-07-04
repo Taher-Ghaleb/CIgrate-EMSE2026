@@ -1,0 +1,17 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  ./mvnw test
+script:
+  script:
+    yarn run test
+directories: ~/.m2
+apt:
+  packages: jdk-8-jdk

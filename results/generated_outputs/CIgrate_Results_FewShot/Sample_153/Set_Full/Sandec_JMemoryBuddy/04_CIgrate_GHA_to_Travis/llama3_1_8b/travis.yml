@@ -1,0 +1,13 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk: openjdk11
+install: true
+cache: gradle
+script:
+  - chmod +x gradlew
+  -./gradlew :jar :test
+```
+
+Note that the `cache` directive is used to cache the Gradle cache, which is specified in the GitHub Actions workflow. The `script` section contains the commands to make `gradlew` executable and run the build and test tasks.

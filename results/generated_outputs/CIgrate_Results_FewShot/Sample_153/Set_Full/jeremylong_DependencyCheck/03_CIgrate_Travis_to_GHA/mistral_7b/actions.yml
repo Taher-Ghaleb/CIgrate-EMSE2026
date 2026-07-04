@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  global:
+    - name: GITHUB_TOKEN
+      secure: ${{ secrets.GITHUB_TOKEN }}
+    - name: ORACLE_JDK_PASSWORD
+      secure: ${{ secrets.ORACLE_JDK_PASSWORD }}
+    - name: MAVEN_SETTINGS
+      value: |
+        <settings>
+          <servers>
+            <server>
+              <id>nexus</id>
+              <username>${{ secrets.NEXUS_USERNAME }}</username>
+              <password>${{ secrets.NEXUS_PASSWORD }}</password>
+            </server>
+          </servers>
+        </settings>
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk7
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Install Maven Dependencies
+        run: mvn dependency:go-offline
+
+      - name: Build
+        run: mvn package -DskipTests=true
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ needs.build.succeeded }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      -

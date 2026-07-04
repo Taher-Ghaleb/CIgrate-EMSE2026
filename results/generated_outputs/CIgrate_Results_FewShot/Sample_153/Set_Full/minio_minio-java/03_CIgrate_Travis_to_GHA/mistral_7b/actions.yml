@@ -1,0 +1,59 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+          - openjdk8
+          - oraclejdk9
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Run checks and functional tests
+        run: |
+          ./gradlew check
+          ./gradlew runFunctionalTest
+
+env:
+  SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify on release
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { context } = github;
+            const { repo } = context.payload.repository;
+            const { ref } = context.payload.pull_request || context.payload.release;
+            const url = `https://api.slack.com/apps/${process.env.SLACK_APP_ID}/api/chat.postMessage`;
+            const options = {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.SLACK_TOKEN}`,
+              },
+              body: JSON.stringify({
+                text: `Release ${ref} has been published to ${repo}`,
+              }),
+            };
+            const response = await fetch(url, options);
+            if (!response.ok) {
+              throw new Error(`Failed to send Slack notification: ${response.statusText}`);
+            }

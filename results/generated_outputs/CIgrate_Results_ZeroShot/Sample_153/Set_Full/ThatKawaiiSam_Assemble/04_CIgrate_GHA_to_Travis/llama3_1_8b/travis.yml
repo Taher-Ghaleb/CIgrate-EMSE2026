@@ -1,0 +1,66 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+script:
+  - echo "Building the project"
+  - mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+after_success:
+  - echo "Uploading artifact"
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      echo "Uploading to GitHub Releases"
+      mvn deploy -Dmaven.deploy.skip=true
+    else
+      echo "Uploading to GitHub Packages"
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+
+deploy:
+  on:
+    tags: true
+  before_deploy:
+    - echo "Deploying to GitHub Releases"
+  deploy:
+    provider: github
+    token: $GITHUB_TOKEN
+    repo_token: $GITHUB_TOKEN
+    repo: $GITHUB_REPOSITORY
+    tag: $TRAVIS_BRANCH
+    commitish: $TRAVIS_BRANCH
+    force: true
+    if: $TRAVIS_BRANCH == "master"
+    on:
+      tags: true
+    strategy: replace
+    assets: release.jar
+    asset_path: target/release.jar
+    asset_name: release.jar
+    asset_description: Release artifact
+    asset_release_name: $TRAVIS_BRANCH
+    asset_release_description: Release $TRAVIS_BRANCH
+    asset_release_message: Releasing $TRAVIS_BRANCH
+    asset_release_type: release
+    asset_release_name: $TRAVIS_BRANCH
+    asset_release_description: Release $TRAVIS_BRANCH
+    asset_release_message: Releasing $TRAVIS_BRANCH
+    asset_release_type: release
+    asset_release_name: $TRAVIS_BRANCH
+    asset_release_description: Release $TRAVIS_BRANCH
+    asset_release_message: Releasing $TRAVIS_BRANCH
+    asset_release_type: release
+    asset_release_name: $TRAVIS_BRANCH
+    asset_release_description: Release $TRAVIS_BRANCH
+    asset_release_message: Releasing $TRAVIS_BRANCH
+    asset_release_type: release
+    asset_release_name: $TRAVIS_BRANCH
+    asset_release_description: Release $TRAVIS_BRANCH
+    asset_release_message: Releasing $TRAVIS_BRANCH

@@ -1,0 +1,50 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ master, stable, beta, dev, test, gh-test ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Build with Gradle
+      run: ./gradlew build
+
+  test:
+    needs: [build]
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: gradle
+    - name: Generate unit test coverage report
+      run: ./gradlew jacocoTestReport
+      continue-on-error: true
+    - name: Run Android instrumentation tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 29
+        script: ./gradlew connectedCheck
+      continue-on-error: true
+    - name: Codecov
+      uses: codecov/codecov-action@v3.1.0

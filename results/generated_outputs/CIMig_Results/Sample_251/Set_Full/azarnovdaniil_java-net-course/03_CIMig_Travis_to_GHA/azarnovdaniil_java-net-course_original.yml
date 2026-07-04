@@ -1,0 +1,18 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path
+        restore-keys: jdk11-
+      uses: actions/checkout@version
+    - name: Placeholder
+    run: mvn clean package
+

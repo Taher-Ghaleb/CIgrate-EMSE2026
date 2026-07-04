@@ -1,0 +1,98 @@
+language: generic
+
+script:
+  - |
+    #!/bin/bash
+
+    # Install Docker
+    sudo apt-get update && sudo apt-get install -y docker.io
+
+    # Start Docker
+    sudo systemctl start docker
+
+    # Pull Fedora Docker image
+    docker pull registry.fedoraproject.org/fedora:${FEDORA}
+
+    # Start Fedora container
+    docker run \
+      --name=container \
+      --detach \
+      -i \
+      -v $(pwd):/root/jss \
+      registry.fedoraproject.org/fedora:${FEDORA}
+
+    # Install build dependencies
+    docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+    docker exec container dnf copr -y enable @pki/10.6
+    docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+
+    # Build RPM packages
+    docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+
+    # Install and test RPM packages
+    docker exec container rpm -Uvh /root/build/jss/RPMS/*
+
+    # Cleanup container
+    docker rm -f container || true
+
+matrix:
+  include:
+    - FEDORA: 38
+    - FEDORA: 39
+    - FEDORA: 40
+
+before_install:
+  - |
+    # Install Docker
+    sudo apt-get update && sudo apt-get install -y docker.io
+
+after_success:
+  - |
+    # Cleanup container
+    docker rm -f container || true
+
+after_failure:
+  - |
+    # Cleanup container
+    docker rm -f container || true
+
+deploy:
+  on:
+    branch: never
+  skip_cleanup: true
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on_success: always
+    on_failure: always
+
+services:
+  - docker
+
+addons:
+  services:
+    - docker
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+env:
+  global:
+    - FEDORA: 38
+    - FEDORA: 39
+    - FEDORA: 40
+  matrix:
+    - FEDORA: 38
+    - FEDORA: 39
+    - FEDORA: 40
+
+continue-on-error:
+  - matrix
+```
+
+Note: The `continue-on

@@ -1,0 +1,40 @@
+language: java
+sudo: false
+install: true
+branches:
+  only:
+    - master
+    - '[0-9]*.[0-9]*'
+jdk:
+  - oraclejdk8
+  - oraclejdk11
+script:
+  - mvn -q clean verify -B
+  - rm -rf $HOME/.m2/repository/io/vertx/
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.m2/repository/io/vertx/'
+deploy:
+  on:
+    push:
+      branches:
+        - master
+        - '[0-9]*.[0-9]*'
+  script:
+    - chmod +x.travis.deploy.artifacts.sh
+    - bash.travis.deploy.artifacts.sh
+    - rm -rf $HOME/.m2/repository/io/vertx/
+env:
+  matrix:
+    - SONATYPE_NEXUS_USERNAME=${{ secrets.SONATYPE_NEXUS_USERNAME }}
+    - SONATYPE_NEXUS_PASSWORD=${{ secrets.SONATYPE_NEXUS_PASSWORD }}
+addons:
+  sonarqube:
+    token:
+      secure: "rFMDGYB3C4EbfS+CJq9lEuCtTmJgz8FmyrBp39P0lo6Zk/LqcuXolJBR2CLU9xkf/0oIOURov6+H6lMLRtmpYl6ZbmgAB+grq/y5ORLvlqccij+9UM19LeO/w8Nf1raOnwpB+V1VAfUx1dNTnxZIJRO/RrhtJDDdb9nWjyU0ua0="
+    branches:
+      - master
+      - '[0-9]*.[0-9]*'
+```
+Note: The `deploy` section is not a standard Travis CI configuration section, but rather a custom section to deploy to Sonatype snapshots. The `addons` section is used to configure the SonarQube token.

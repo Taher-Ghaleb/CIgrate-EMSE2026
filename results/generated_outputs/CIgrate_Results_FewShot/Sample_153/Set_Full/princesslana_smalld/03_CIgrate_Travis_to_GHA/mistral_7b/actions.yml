@@ -1,0 +1,50 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    SMALLD_VERSION: ${{ github.ref | regex_replace '^refs/tags/', '' }}
+    MAVEN_OPTS: "-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"
+
+secrets:
+  SONARCLOUD_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+          - openjdk8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Checkout secrets
+        if: ${{ github.event_name != 'pull_request' }}
+        run: bash ./etc/extract_secrets.sh
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Build and verify
+        run: mvn -B verify
+
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ github.ref_type == 'tag' && github.ref_name =~ '^\\d+\\.\\d+\\.\\d+' }}
+    needs: build
+    services:
+      sonarcloud:
+        args: -Dsonarcloud.secrets.sonarcloud_token=${{ secrets.SONARCLOUD_TOKEN }}
+    env:
+      SMALLD_VERSION: ${{ github.ref | regex_replace '^refs/tags/', '' }}
+      MAV

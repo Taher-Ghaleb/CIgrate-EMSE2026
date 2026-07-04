@@ -1,0 +1,22 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+    - name: build with maven-
+      run: mvn -s ./.travis.maven-settings.xml clean
+
+macos:
+  jdk: oraclejdk8
+
+strategy:
+  fail-fast: FALSE
+

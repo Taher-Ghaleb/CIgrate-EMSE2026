@@ -1,0 +1,43 @@
+language: java
+sudo: false
+env:
+  matrix:
+    - TEST_DURATION=30s
+
+jdk: openjdk11
+
+install: true
+addons:
+  gradle:
+    version: '4'
+
+script:
+  - ./gradlew assemble --info
+
+before_install:
+  - ./gradlew setup
+
+before_script:
+  - ./gradlew assemble --info
+
+cache:
+  directories:
+    - '$HOME/.gradle'
+
+matrix:
+  include:
+    - TEST_DURATION=30s
+
+branches:
+  only:
+    - master
+    - develop
+
+after_success:
+  - ./gradlew check jacocoTestReport sonarqube --info
+
+deploy:
+  on:
+    tags: true
+  script:
+    - ./gradlew integrationTest --info

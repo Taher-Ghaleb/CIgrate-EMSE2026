@@ -1,0 +1,53 @@
+name: Java Build
+
+on:
+  push:
+    branches: [master, bootique/bootique-logback]
+  pull_request:
+    branches: [master, bootique/bootique-logback]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [oraclejdk8, oraclejdk9]
+
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SECRET_1: ${{ secrets.SECRET_1 }}
+      SECRET_2: ${{ secrets.SECRET_2 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ matrix.jdk }}
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies-${{ matrix.jdk }}-*
+
+      - name: Install Maven
+        run: |
+          curl -sL https://apache.org/dist/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz -o apache-maven.tar.gz
+          tar -xzf apache-maven.tar.gz
+          mv apache-maven-3.8.6 /usr/local/maven
+          export M2_HOME=/usr/local/maven
+          export PATH=$PATH:$M2_HOME/bin
+
+      - name: Cache Maven Plugins
+        run: |
+          mvn dependency:purge-local-repository -DlocalRepositoryPath=~/.

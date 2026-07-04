@@ -1,0 +1,49 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  SONAR_ORG: ${{ secrets.SONAR_ORG }}
+  SONAR_HOST: ${{ secrets.SONAR_HOST }}
+  SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['14.x', '12.x']
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+      - name: Cache Gradle, SonarQube, and .gradle wrapper
+        uses: actions/cache@v4
+        with:
+          path: |
+            $HOME/.gradle/caches/
+            $HOME/.gradle/wrapper/
+            $HOME/.sonar/cache/
+          key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Update APT
+        run: sudo apt-get update
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y libappindicator1 fonts-liberation
+          export CHROME_BIN=/usr/bin/google-chrome
+      - name: Install Chrome
+        uses: actions/setup-node@v4
+        with:
+          version: stable
+      - name: Install Firefox
+        run: |
+          wget -q -O - https://download-installer.cdn.mozilla.net/pub/firefox/releases/latest/linux-x86_64/firefox-${{ runner.os }}.tar.bz2 | tar xj -C /tmp
+          mv /tmp/firefox /usr/local/bin/firefox
+      - name: Install Gradle

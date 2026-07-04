@@ -1,0 +1,39 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push::
+    branches-ignore:
+      main
+      master
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: linux-latest
+    runs-on: ubuntu-latest
+    steps:
+      with: java-version
+      with:
+        java-version: 1.8
+    - name: placeholder_Name
+      with:
+        java-version: ${{ matrix.java }}
+        draft: TRUE
+        server-id: sonatype-releases
+        clean: TRUE
+        entrypoint: mvn
+        path: ~/.maven-~/.sonar/cache\n!**/*edelta*\n
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+    run: mvn -DskipTests=true -Dmaven.javadoc.skip=false -B -V package
+
+macos:
+  jdk: oraclejdk8
+
+env:
+  ci: TRUE
+  github_token: ${{ github.token }}
+

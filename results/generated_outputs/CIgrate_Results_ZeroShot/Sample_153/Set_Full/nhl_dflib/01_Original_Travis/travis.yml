@@ -1,0 +1,27 @@
+language: java
+
+branches:
+  only:
+    - "master"
+
+jdk:
+  - openjdk8
+
+script:
+  - mvn verify -P$DB_PROFILE
+
+jobs:
+  include:
+    - stage: deploy
+      jdk: openjdk8
+      script: mvn clean source:jar javadoc:javadoc deploy -DskipTests --settings travis_settings.xml
+      if: branch IN (master) AND type IN (push) AND repo = nhl/dflib
+
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+  jobs:
+    - DB_PROFILE=derby
+    - DB_PROFILE=mysql
+    - DB_PROFILE=postgresql

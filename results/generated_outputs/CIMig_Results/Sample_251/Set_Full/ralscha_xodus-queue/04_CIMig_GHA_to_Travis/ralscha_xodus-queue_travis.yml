@@ -1,0 +1,14 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  ./mvnw -B clean test --file pom.xml
+script:
+  script:
+    yarn run test
+    ./mvnw -B clean test --file pom.xml
+stage: ☕ 11

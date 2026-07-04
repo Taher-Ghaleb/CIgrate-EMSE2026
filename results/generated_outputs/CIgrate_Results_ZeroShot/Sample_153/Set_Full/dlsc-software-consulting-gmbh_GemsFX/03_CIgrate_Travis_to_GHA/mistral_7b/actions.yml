@@ -1,0 +1,67 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches: [$TAG_BRANCH]
+  pull_request:
+    branches: [$TAG_BRANCH]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker: docker-latest
+
+    env:
+      TAG_BRANCH: ${{ github.ref_name }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 12
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 12
+
+      - name: Install p7zip-full
+        run: apt-get update && apt-get install -y p7zip-full
+
+      - name: Setup cache
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-m2
+          path: ~/.m2
+          restore-keys: |
+            ${{ runner.os }}-m2
+
+      - name: Install Maven
+        run: apt-get update && apt-get install -y maven
+
+      - name: Install xvfb
+        if: ${{ runner.os } } == 'Linux'
+        run: |
+          export DISPLAY=:99.0
+          sh -e /etc/init.d/xvfb start
+
+      - name: Install Maven dependencies
+        run: mvn dependency:go-offline
+
+      - name: Build
+        run: mvn package -q
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-m2
+          path: ~/.m2
+          restore-keys: |
+            ${{ runner.os }}-m2
+          actions: v2
+
+      - name: Prepare deploy script
+        run: chmod +x .github/deploy_prepare.sh
+
+      - name: Deploy

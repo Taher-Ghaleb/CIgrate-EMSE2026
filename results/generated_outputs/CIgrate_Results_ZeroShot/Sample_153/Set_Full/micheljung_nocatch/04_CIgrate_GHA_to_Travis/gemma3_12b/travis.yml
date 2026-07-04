@@ -1,0 +1,33 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - main
+    - coverity_scan
+
+env:
+  TERM: dumb
+  
+matrix:
+  include:
+    - java: openjdk11
+      script:
+        - chmod +x gradlew
+        - ./gradlew test jacocoTestReport
+      after_success:
+        - if [ "$TRAVIS_BRANCH" == "main" ]; then
+            curl -sSL https://coveralls.io/github/micheljung/nocatch | bash
+          fi
+      
+    - if: $TRAVIS_BRANCH == "coverity_scan"
+      script:
+        - chmod +x gradlew
+        - ./gradlew build
+      
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.npm

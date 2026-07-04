@@ -1,0 +1,30 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+branches:
+  only:
+    - master
+    - develop
+  except:
+    - /^(\d+)$/
+jobs:
+  build:
+    script:
+      - mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+    after_success:
+      - if [ -n "$TRAVIS_TAG" ]; then
+          - mvn test -B
+          - mvn package
+          - echo "Releasing $TRAVIS_TAG"
+          - echo "release.jar" > release.jar
+          - echo "release.jar" > release.jar
+        fi
+  deploy:
+    if: $TRAVIS_TAG != null
+    script:
+      - if [ -n "$TRAVIS_TAG" ]; then
+          - echo "Deploying $TRAVIS_TAG"
+          - echo "release.jar" > release.jar
+        fi

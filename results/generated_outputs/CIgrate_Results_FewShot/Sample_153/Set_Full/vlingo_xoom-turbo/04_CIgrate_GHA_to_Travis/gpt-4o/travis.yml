@@ -1,0 +1,35 @@
+language: java
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+before_install:
+  - rm -rf $HOME/.m2/repository/io/vlingo
+  - cp .travis/settings.xml $HOME/.m2/settings.xml
+  - mvn deploy:help versions:help help:help
+
+script:
+  - mvn install -PTravisCI
+
+deploy:
+  - provider: script
+    script: mvn deploy -DskipTests
+    on:
+      tags: true
+  - provider: script
+    script: mvn deploy -DskipTests
+    on:
+      branch: master
+      condition: $TRAVIS_EVENT_TYPE = push
+
+after_success:
+  - if [ "$TRAVIS_TAG" ]; then
+      chmod u+x .travis/trigger_deps.sh;
+      .travis/trigger_deps.sh;
+    fi
+
+before_cache:
+  - rm -rf $HOME/.m2/repository/io/vlingo

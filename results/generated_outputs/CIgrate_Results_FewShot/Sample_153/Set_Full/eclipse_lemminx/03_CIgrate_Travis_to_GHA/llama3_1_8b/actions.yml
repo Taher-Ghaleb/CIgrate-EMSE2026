@@ -1,0 +1,40 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK_VERSION: oraclejdk8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Build and test
+        run:./mvnw clean verify
+      - name: Send notifications
+        uses: dbrgn/send-notification@v1
+        with:
+          email: true
+```
+
+Note: The `dbrgn/send-notification` action is used to send notifications via email. If you want to use a different notification service, you can replace this action with the one that suits your needs.

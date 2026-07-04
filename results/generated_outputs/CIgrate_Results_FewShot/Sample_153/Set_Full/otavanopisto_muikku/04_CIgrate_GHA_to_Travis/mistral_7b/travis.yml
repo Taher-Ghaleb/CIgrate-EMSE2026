@@ -1,0 +1,35 @@
+language: java
+sudo: false
+env:
+  global:
+    - GEM_PATH=
+
+jobs:
+  build:
+    includes:
+      - name: Before install
+        run: unset GEM_PATH
+      - name: Set up JDK 7
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '7'
+      - name: Build
+        script: mvn install
+
+  deploy:
+    if: $GITHUB_REF == 'refs/heads/devel' && $GITHUB_EVENT_NAME == 'push'
+    includes:
+      - name: Set up JDK 7
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '7'
+      - name: Before deploy
+        run: echo 'Starting deployment'
+      - name: After deploy
+        run: echo 'Deployed'
+
+branches:
+  include:
+    - devel

@@ -1,0 +1,38 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+install: true
+cache:
+  directories:
+    - '$HOME/.gradle/caches'
+    - '$HOME/.gradle/wrapper'
+    - '$HOME/.gradle/gradle-wrapper/dists'
+    - '$HOME/.gradle/gradle-wrapper/logs'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.properties'
+    - '$HOME/.gradle/gradle-wrapper/gradle-wrapper.jar'
+    - '$HOME/.gradle/gradle-wrapper/grad

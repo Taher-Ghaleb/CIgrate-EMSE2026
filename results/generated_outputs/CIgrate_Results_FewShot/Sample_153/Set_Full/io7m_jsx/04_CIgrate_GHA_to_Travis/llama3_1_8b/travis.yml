@@ -1,0 +1,44 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+
+script:
+  - mvn --errors clean verify site
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+after_success:
+  - codecov:
+      token: $CODECOV_TOKEN
+      files:./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml
+      fail_ci_if_error: false
+
+notifications:
+  irc:
+    server: irc.libera.chat
+    port: 6697
+    channel: '#io7m'
+    nickname: github-actions-jsx
+    message: |
+      [${{ repository }}] Build ${{ status }} - ${{ actor }}: ${{ event.head_commit.message }} (${{ sha }})
+      Details: ${{ server_url }}/${{ repository }}/actions/runs/${{ run_id }}
+```
+
+Note that I've used the following mappings:
+
+- `on: [push, pull_request]` -> `language: java` (Travis CI uses a different syntax for specifying the language)
+- `jobs: build` -> `script` (Travis CI uses a single `script` section for the build steps)
+- `steps` -> `script` (Travis CI uses a single `script` section for the build steps)
+- `uses: actions/checkout@v4` -> no equivalent (Travis CI has a built-in `checkout` step)
+- `name: Set up JDK 11` -> `jdk: openjdk11` (Travis CI uses a `jdk` section to specify the Java version)
+- `uses: actions/setup-java@v4` -> no equivalent (Travis CI has a built-in Java setup)
+- `with: distribution: temurin` -> no equivalent (Travis CI uses a `jdk` section to specify the Java version)
+- `with: java-version: '11'` -> no equivalent (Travis CI uses a `jdk` section to specify the Java version)
+- `cache:'maven'` -> `cache: directories: $HOME/.m2/repository` (Travis CI uses a `cache` section to specify the cache directories)
+- `mvn --errors clean verify site` -> `script: - mvn --errors clean verify site` (Travis CI uses a `script` section to specify the build commands)
+-

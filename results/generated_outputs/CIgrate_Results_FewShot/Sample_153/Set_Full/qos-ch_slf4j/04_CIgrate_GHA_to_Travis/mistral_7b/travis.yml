@@ -1,0 +1,21 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+script:
+  - mvn clean install
+
+after_success:
+  - actions/upload-artifact@v4 \
+    name: build-artifacts \
+    path: '**/target/*.jar'
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

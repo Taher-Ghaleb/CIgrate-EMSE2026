@@ -1,0 +1,33 @@
+name: Build and Test
+
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          pwd
+          ls
+          sudo apt-get update
+          sudo apt-get install sqlite3
+          echo $JAVA_HOME
+      - name: Install PROJ
+        run: |
+          wget https://download.osgeo.org/proj/proj-6.2.1.tar.gz
+          tar xf proj-6.2.1.tar.gz
+          cd proj-6.2.1
+          ./configure
+          NPROC=$(nproc)
+          make -j${NPROC}
+          sudo make install
+          cd ..
+      - name: Build PROJ-JNI
+        run: mvn package
+      - name: Run tests
+        run: java --class-path target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java

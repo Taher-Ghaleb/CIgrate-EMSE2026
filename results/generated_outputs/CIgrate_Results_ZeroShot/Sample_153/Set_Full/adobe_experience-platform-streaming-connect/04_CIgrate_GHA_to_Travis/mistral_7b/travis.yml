@@ -1,0 +1,40 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+services:
+  - docker
+    image: docker:latest
+    options: --privileged
+
+before_install:
+  - checkout
+
+install:
+  - actions/setup-java@v4
+    with:
+      distribution: 'zulu'
+      java-version: '8'
+
+cache:
+  directories:
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+
+before_script:
+  - chmod +x ./gradlew
+
+script:
+  - ./gradlew clean build
+
+deploy:
+  on:
+    tags: true
+
+# TODO: Add deploy script as per your deployment requirements
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow while adhering to the specified output and migration rules.

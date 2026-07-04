@@ -1,0 +1,23 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: false
+install: true
+
+env:
+  matrix:
+    - branches: [master, '**-[0-9]+.**']
+
+script:
+  - chmod +x .travis/build.sh
+  - .travis/build.sh
+
+cache:
+  directories:
+    - '.travis/build.sh'
+    - ~/.m2/repository
+
+```
+
+This Travis CI configuration maintains the semantics of the GitHub Actions workflow, including the branches to trigger the build, setting up JDK 8, making the build script executable, and caching the build script and Maven repository. The `matrix` key is used to specify the branches to trigger the build, similar to the `branches` key in the GitHub Actions workflow. The `cache` key is used to cache the build script and Maven repository, similar to the `cache` property in the GitHub Actions workflow.

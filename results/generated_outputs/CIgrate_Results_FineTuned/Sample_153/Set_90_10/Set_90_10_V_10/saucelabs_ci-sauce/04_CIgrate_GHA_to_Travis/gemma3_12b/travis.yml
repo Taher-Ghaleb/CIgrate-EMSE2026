@@ -1,0 +1,10 @@
+language: java
+jdk:
+  - oraclejdk8
+python:
+  - '3.x'
+install:
+  - pip install --user codecov
+  - mvn install -DskipTests=true -Dgpg.skip=true -B -V
+script:
+  - codecov

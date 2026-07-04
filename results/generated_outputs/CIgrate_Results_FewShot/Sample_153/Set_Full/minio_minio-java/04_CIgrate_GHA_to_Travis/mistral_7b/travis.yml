@@ -1,0 +1,28 @@
+language: java
+sudo: false
+jdk:
+  - distribution: zulu
+    jdk-version: '8'
+    name: 'Zulu 8 (Oracle JDK 8 equivalent)'
+  - distribution: temurin
+    jdk-version: '8'
+    name: 'Temurin 8 (OpenJDK 8)'
+  - distribution: zulu
+    jdk-version: '9'
+    name: 'Zulu 9 (Oracle JDK 9 - EOL)'
+
+script:
+  - chmod +x gradlew
+  - ./gradlew check
+  - ./gradlew runFunctionalTest
+
+before_script:
+  - actions/checkout@v4
+  - actions/setup-java@v4
+    with:
+      distribution: ${{ matrix.distribution }}
+      java-version: ${{ matrix.jdk-version }}
+
+```
+
+This Travis CI configuration maintains the semantics of the GitHub Actions workflow, including the matrix strategy, jobs, steps, and env variables. It uses the `actions/checkout` and `actions/setup-java` actions to set up the JDK and Gradle, and the script to run the checks and functional tests. The matrix strategy is used to run the workflow for different JDK versions and distributions. The `chmod +x gradlew` command is used to make the `gradlew` executable.

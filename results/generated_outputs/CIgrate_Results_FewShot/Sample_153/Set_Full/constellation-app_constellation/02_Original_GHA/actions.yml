@@ -1,0 +1,87 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      
+      - name: Cache Ivy packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-ivy-
+      
+      - name: Pull Docker image
+        run: docker pull "${RUNNER_IMAGE}"
+      
+      - name: Run tests in Docker
+        run: |
+          docker run \
+            --mount "type=bind,source=${GITHUB_WORKSPACE},target=${GITHUB_WORKSPACE}" \
+            --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" \
+            --workdir "${GITHUB_WORKSPACE}" \
+            "${RUNNER_IMAGE}" \
+            .travis/run-tests.sh
+      
+      - name: Run SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORGANIZATION: constellation-app
+        run: .travis/sonar.sh
+      
+      - name: Cleanup Ivy cache
+        if: always()
+        run: find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+      
+      - name: Upload distribution artifact
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: constellation-distribution
+          path: dist/constellation.zip
+          retention-days: 1
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.repository == 'constellation-app/constellation' && startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download distribution artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: constellation-distribution
+          path: dist/
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/constellation.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Send Gitter notification
+        if: always()
+        uses: zulip/github-actions-gitter@v1
+        with:
+          webhook-url: https://webhooks.gitter.im/e/82ac70bdb3f9e144d859
+          status: ${{ job.status }}

@@ -1,0 +1,16 @@
+language: java
+dist: trusty
+jdk:
+  - oraclejdk8
+install: mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+cache:
+  directories:
+    - $HOME/.m2
+deploy:
+  provider: releases
+  api_key:
+    secure: "********************"
+  file: target/release.jar
+  skip_cleanup: true
+  on:
+    tags: true

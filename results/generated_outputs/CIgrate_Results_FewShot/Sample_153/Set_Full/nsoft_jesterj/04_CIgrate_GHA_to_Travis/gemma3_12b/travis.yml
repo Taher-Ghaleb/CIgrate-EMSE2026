@@ -1,0 +1,29 @@
+language: java
+sudo: false
+env:
+  TEST_DIR: code/ingest
+jdk:
+  - openjdk8
+cache:
+  directories:
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+branches:
+  only:
+    - master
+    - main
+  except:
+    - /^(\d+)$/
+script:
+  - cd $TEST_DIR
+  - if [ -e ./gradlew ]; then
+    - ./gradlew jacocoTestReport
+  - else
+    - gradle jacocoTestReport
+  - fi
+after_success:
+  - if [ -n "$CODECOV_TOKEN" ]; then
+    - curl -L https://codecov.io/bash | bash
+    - else
+    - echo "Codecov token not set, skipping coverage upload."
+    - fi

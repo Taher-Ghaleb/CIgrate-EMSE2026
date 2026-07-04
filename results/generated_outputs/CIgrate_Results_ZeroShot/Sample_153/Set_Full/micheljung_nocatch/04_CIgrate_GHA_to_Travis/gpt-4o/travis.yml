@@ -1,0 +1,46 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  global:
+    - TERM=dumb
+
+jobs:
+  include:
+    - stage: build
+      if: branch != coverity_scan
+      script:
+        - chmod +x gradlew
+        - ./gradlew test jacocoTestReport
+      after_success:
+        - |
+          if [ -n "$COVERALLS_REPO_TOKEN" ]; then
+            ./gradlew jacocoTestReport
+            bash <(curl -s https://codecov.io/bash) -f build/reports/jacoco/test/jacocoTestReport.xml || echo "Codecov did not collect coverage reports"
+          fi
+      addons:
+        apt:
+          packages:
+            - curl
+      cache:
+        directories:
+          - $HOME/.gradle
+
+    - stage: coverity-scan
+      if: branch = coverity_scan
+      script:
+        - chmod +x gradlew
+        - ./gradlew build
+      addons:
+        apt:
+          packages:
+            - curl
+      cache:
+        directories:
+          - $HOME/.gradle
+
+branches:
+  only:
+    - master
+    - coverity_scan

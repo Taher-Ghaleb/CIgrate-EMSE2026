@@ -1,0 +1,21 @@
+language: java
+
+git:
+  quiet: true
+  submodules: false
+
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+
+
+
+script: mvn -B clean verify
+
+branches:
+  only:
+    - master
+    - "2.13"
+

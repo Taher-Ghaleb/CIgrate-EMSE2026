@@ -1,0 +1,30 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JAVA_VERSION: 8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install and run Maven
+        uses: actions/setup-node@v4
+        with:
+          cache: 'npm'
+      - name: Build, test, and generate documentation
+        run: mvn verify javadoc:javadoc coveralls:report -Pcoverage
+      - name: Upload coverage to Coveralls
+        uses: coveralls/coveralls-action@v3
+        with:
+          token: ${{ secrets.COVERALLS_TOKEN }}

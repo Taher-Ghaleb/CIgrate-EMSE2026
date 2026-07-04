@@ -1,0 +1,69 @@
+name: Android Build
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+      -'release/*'
+  pull_request:
+    branches:
+      -'main'
+      - 'feature/*'
+      -'release/*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      android-emulator:
+        image: ghcr.io/corbinu/docker-android-emulator:latest
+        privileged: true
+        ports:
+          - 5554:5554
+          - 5555:5555
+          - 5556:5556
+          - 5557:5557
+          - 5558:5558
+          - 5559:5559
+          - 5560:5560
+          - 8000:8000
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Setup Android
+        uses: actions/setup-android@v4
+          android-version: '23'
+      - name: Cache Gradle
+        uses: actions/cache@v4
+          at: 'gradle'
+          key: ${{ runner.hash }}
+          paths:
+            - $HOME/.gradle
+      - name: Install Android components
+        run: |
+          echo "y" | android update sdk --all --no-ui --verbose --force-reinstall --filter 'platform-tools,tools,android-23,build-tools-23.0.3,extra-android-support,extra-android-m2repository'
+      - name: Accept Android licenses
+        run: |
+          for license in android-sdk-license-.+; do
+            echo "$license" | android list licenses | grep -q "accepted\|accepted\ \(\)" && echo "$license" | android accept-license
+          done
+      - name: Build Android
+        run:./gradlew clean build
+      - name: Cache Gradle
+        uses: actions/cache@v4
+          at: 'gradle'
+          key: ${{ runner.hash }}
+          paths:
+            - $HOME/.gradle
+      - name: Send notification
+        uses: actions/notification@v4
+          email: false
+          on: push
+          branches:
+            -'main'
+            -

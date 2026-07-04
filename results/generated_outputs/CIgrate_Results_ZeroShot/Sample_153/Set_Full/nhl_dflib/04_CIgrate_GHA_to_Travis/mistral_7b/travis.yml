@@ -1,0 +1,59 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+scripts:
+  prepare:
+    - checkout
+
+    - setup-java:
+        distribution: temurin
+        java_version: 11
+        cache: maven
+
+  build:
+    on:
+      branches: [master]
+      pull_request: [master]
+
+    include:
+      - matrix:
+          db_profile: [derby, mysql, postgresql]
+          allow_failures: true
+
+    script: mvn verify -P${{ matrix.db_profile }}
+
+  deploy:
+    on:
+      branches:
+        only: master
+      types:
+        - push
+
+    if: $GITHUB_REF == 'refs/heads/master'
+
+    services:
+      - docker:
+          - image: maven:3.6.3-jdk-11
+
+    script:
+      - checkout
+
+      - setup-java:
+          distribution: temurin
+          java_version: 11
+          server-id: ossrh
+          server-username: ${{ env.OSSRH_USERNAME }}
+          server-password: ${{ env.OSSRH_PASSWORD }}
+          gpg-private-key: ${{ env.GPG_PRIVATE_KEY }}
+          gpg-passphrase: ${{ env.GPG_PASSPHRASE }}
+
+      - mvn clean source:jar javadoc:javadoc deploy -DskipTests
+
+env:
+  MAVEN_USERNAME: ${{ env.OSSRH_USERNAME }}
+  MAVEN_PASSWORD: ${{ env.OSSRH_PASSWORD }}
+  GPG_PRIVATE_KEY: ${{ env.GPG_PRIVATE_KEY }}
+  GPG_PASSPHRASE: ${{ env.GPG_PASSPHRASE }}

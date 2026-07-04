@@ -1,0 +1,38 @@
+language: android
+dist: focal
+
+env:
+  global:
+    - ANDROID_API_LEVEL=28
+    - ANDROID_BUILD_TOOLS_VERSION=28.0.3
+    - ANDROID_HOME=~/android-sdk
+
+before_install:
+  - yes | sdkmanager "platform-tools" "build-tools;$ANDROID_BUILD_TOOLS_VERSION" "platforms;android-$ANDROID_API_LEVEL" "extras;google;m2repository" "extras;android;m2repository"
+
+install:
+  - chmod +x gradlew
+
+jobs:
+  include:
+    - stage: build
+      script:
+        - ./gradlew clean build --stacktrace
+
+    - stage: release
+      if: branch = master AND type = push
+      script:
+        - ./gradlew clean assembleRelease --stacktrace
+        - openssl aes-256-cbc -K $KEYSTORE_ENCRYPTION_KEY -iv $KEYSTORE_ENCRYPTION_IV -in gotify-release-key.jks.enc -out gotify-release-key.jks -d
+        - jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore gotify-release-key.jks -storepass $KEYSTORE_PASSWORD -keypass $KEY_PASSWORD app/build/outputs/apk/release/app-release-unsigned.apk gotify-release-key
+        - jarsigner -verify app/build/outputs/apk/release/app-release-unsigned.apk
+        - "${ANDROID_HOME}/build-tools/$ANDROID_BUILD_TOOLS_VERSION/zipalign" -v 4 app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/Gotify.apk
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file: app/build/outputs/apk/release/Gotify.apk
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: gotify/android

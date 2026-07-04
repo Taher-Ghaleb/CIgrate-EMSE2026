@@ -1,0 +1,36 @@
+language: minimal
+
+services:
+  - docker
+
+env:
+  global:
+    - DOCKER_IMAGE=registry.fedoraproject.org/fedora
+
+matrix:
+  include:
+    - env: FEDORA=38
+    - env: FEDORA=39
+    - env: FEDORA=40
+  allow_failures:
+    - env: FEDORA=38
+    - env: FEDORA=39
+    - env: FEDORA=40
+
+before_install:
+  - docker pull $DOCKER_IMAGE:$FEDORA
+
+install:
+  - docker run --name=container --detach -i -v $(pwd):/root/jss $DOCKER_IMAGE:$FEDORA
+
+before_script:
+  - docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+  - docker exec container dnf copr -y enable @pki/10.6
+  - docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+
+script:
+  - docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+  - docker exec container rpm -Uvh /root/build/jss/RPMS/*
+
+after_script:
+  - docker rm -f container || true

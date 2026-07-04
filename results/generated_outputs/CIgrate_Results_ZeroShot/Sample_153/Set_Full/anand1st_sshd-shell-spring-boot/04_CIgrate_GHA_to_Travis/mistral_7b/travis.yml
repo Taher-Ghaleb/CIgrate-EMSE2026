@@ -1,0 +1,57 @@
+language: ubuntu
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+script:
+  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" $DOCKER_REGISTRY
+  - docker build -t $DOCKER_REGISTRY/my-image:$TRAVIS_TAG .
+  - docker push $DOCKIS_REGISTRY/my-image:$TRAVIS_TAG
+
+before_install:
+  - name: Set up JDK 8
+    script: |
+      wget --quiet https://download.java.net/java/GA/jdk8u275-b01/jdk-8u275-linux-x64.tar.gz
+      tar -xzf jdk-8u275-linux-x64.tar.gz -C /usr/local
+      export JAVA_HOME=/usr/local/jdk1.8.0_275
+      export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle
+        - $HOME/.npm
+
+script:
+  - mvn clean install
+
+before_script:
+  - mvn -B dependency:purge-local-repository
+
+after_success:
+  - name: Generate and upload coverage
+    working-directory: sshd-shell-spring-boot-starter
+    env:
+      COVERALLS_REPO_TOKEN: $COVERALLS_REPO_TOKEN
+    script: mvn jacoco:report coveralls:report
+
+matrix:
+  include:
+    - java:
+        - oraclejdk8
+        - openjdk8
+  allow_failures: 1

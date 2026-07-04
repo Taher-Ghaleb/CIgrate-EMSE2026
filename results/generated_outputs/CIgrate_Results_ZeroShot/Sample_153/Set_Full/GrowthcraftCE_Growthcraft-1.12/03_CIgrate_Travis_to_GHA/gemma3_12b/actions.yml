@@ -1,0 +1,68 @@
+name: Java CI with SonarCloud
+
+on:
+  push:
+  pull_request:
+  tag:
+
+env:
+  SONAR_ORGANIZATION: "growthcraftce"
+  GITHUB_OAUTH: ${{ secrets.GITHUB_OAUTH }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Ruby Version
+        run: ruby --version
+      - name: Change Permissions
+        run: chmod +x ./gradlew
+      - name: Install
+        run: ./gradlew setupCIWorkspace -S
+      - name: Build
+        run: ./gradlew build
+      - name: SonarCloud Analysis
+        run: ./gradlew sonarqube
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # TODO: Replace with SonarCloud token secret
+      - name: List Artifacts
+        run: ls -la build/libs
+
+  deploy:
+    if: github.ref == 'refs/tags/'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to GitHub Releases
+        uses: actions/upload-release-action@v1
+        with:
+          repo_uuid: ${{ github.repository_uuid }}
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          glob: checksums.txt build/libs/growthcraft-*.jar
+          skip_cleanup: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Gradle Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: gradle-cache-${{ hash }}
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper

@@ -1,0 +1,54 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      -'release/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      OSSRH_JIRA_USERNAME: ${{ secrets.OSSRH_JIRA_USERNAME }}
+      OSSRH_JIRA_PASSWORD: ${{ secrets.OSSRH_JIRA_PASSWORD }}
+      GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
+      GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y maven
+      - name: Build and test
+        run: |
+          mvn verify
+      - name: Generate coverage report
+        run: |
+          mvn clean test jacoco:report coveralls:report
+      - name: Prepare for deployment
+        run: |
+          release/createReleaseProperties.sh
+          echo $GPG_SECRET_KEYS | base64 --decode | gpg --import
+          echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
+          gpg -v --keyserver hkp://p80.pool.sks-keyservers.net:80 --refresh-keys
+          gpg -v --list-keys
+      - name: Deploy
+        run: |
+          mvn -X release:perform --settings release/mvnsettings.xml -Darguments="-DskipTests"
+          # TODO: Use a more modern deployment strategy
+      - name: Clean up
+        run: |
+          # No cleanup needed
+```
+Note: I've used the `ubuntu-latest` image as the base image for the workflow, but you can change it to any other image that suits your needs. Also, I've used the `temurin` distribution for Java 8, but you can change it to any other distribution or version that you need.

@@ -1,0 +1,85 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+script:
+  - chmod +x gradlew
+  -./gradlew build
+cache:
+  directories:
+    - '$HOME/.gradle'
+deploy:
+  - name: Upload build artifacts
+    needs: build-and-test
+    on:
+      branch: main
+      tags: true
+    script:
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build
+          path: build/
+```
+
+However, the above configuration does not exactly match the provided GitHub Actions workflow. The `docker-build` job is not included in the Travis CI configuration. To include it, you can use the `jobs` section in the `.travis.yml` file. Here's an updated version:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+jobs:
+  build-and-test:
+    script:
+      - chmod +x gradlew
+      -./gradlew build
+    cache:
+      directories:
+        - '$HOME/.gradle'
+  docker-build:
+    needs: build-and-test
+    script:
+      - uses: actions/download-artifact@v4
+        with:
+          name: gradle-build
+          path: build/
+      - docker build -t hl7_validator.
+    deploy:
+      - name: Upload build artifacts
+        on:
+          branch: main
+          tags: true
+        script:
+          - uses: actions/upload-artifact@v4
+            with:
+              name: gradle-build
+              path: build/
+```
+
+However, the above configuration still does not exactly match the provided GitHub Actions workflow. The `docker-build` job should be a separate job that depends on the `build-and-test` job, and it should not have a `deploy` section. Here's the corrected version:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+jobs:
+  build-and-test:
+    script:
+      - chmod +x gradlew
+      -./gradlew build
+    cache:
+      directories:
+        - '$HOME/.gradle'
+  docker-build:
+    needs: build-and-test
+    script:
+      - uses: actions/download-artifact@v4
+        with:
+          name: gradle

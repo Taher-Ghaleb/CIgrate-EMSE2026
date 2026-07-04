@@ -1,0 +1,53 @@
+name: Gradle Plugin Deployment
+
+on:
+  push:
+    tags: true
+  pull_request:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    services:
+      - name: gradle
+        image: gradle:latest
+        env:
+          GRADLE_INTEGRATION_TEST_VERSIONS: ${{ secrets.GRADLE_INTEGRATION_TEST_VERSIONS }}
+          PUBLISH_SONAR: ${{ secrets.PUBLISH_SONAR }}
+          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
+          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}
+          key: ${{ runner.hash }}
+          restore-keys: gradle
+
+      - name: Install Gradle
+        run: |
+          curl -s https://get.sdkman.io | sh && source $HOME/.sdkman/bin/sdkman-init.sh && sdk install gradle 6.9
+
+      - name: Build and deploy
+        run: |
+          GRADLE_ARGS="check -i -PintegrationTestGradleVersions=$GRADLE_INTEGRATION_TEST_VERSIONS";
+          if [[ "$PUBLISH_SONAR" == "true" && "$GITHUB_TOKEN" == "ghp_*" ]]; then
+            GRADLE_ARGS="${GRADLE_ARGS} sonarqube -Dsonar.projectKey=xenit-eu_alfresco-docker-gradle-plugin -Dsonar.organization=xenit-eu -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN"
+          fi;
+         ./gradlew $GRADLE_ARGS
+
+      - name: Deploy to Gradle
+        run: |
+         ./gradlew publishPlugins -Pgradle.publish.key=$GRADLE_PUBLISH_KEY -Pgradle.publish.secret=$GRADLE_PUBLISH_SECRET -x check
+
+      - name: Cleanup
+        run: |
+          docker rm -f alfresco/alfresco-content-repository-community:6.0.7-ga
+          docker rm -f tomcat:7

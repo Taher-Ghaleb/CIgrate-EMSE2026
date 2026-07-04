@@ -1,0 +1,15 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn clean install
+script
+include:
+  env: adoptopenjdk=11
+directories: ~/.maven-
+sudo: FALSE

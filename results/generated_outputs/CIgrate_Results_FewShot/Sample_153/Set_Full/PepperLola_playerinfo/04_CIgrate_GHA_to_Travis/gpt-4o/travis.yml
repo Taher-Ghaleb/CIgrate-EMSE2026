@@ -1,0 +1,36 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - BUILD_NUMBER=$TRAVIS_BUILD_NUMBER
+
+branches:
+  only:
+    - master
+    - main
+
+before_install:
+  - chmod +x gradlew
+
+install:
+  - ./gradlew assemble
+
+script:
+  - mkdir -p src/main/resources
+  - echo "$BUILD_NUMBER" > src/main/resources/build.txt
+  - cat src/main/resources/build.txt
+  - ./gradlew test
+  - ./gradlew build
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ] || [ "$TRAVIS_BRANCH" == "main" ]; then
+      curl -sL https://github.com/softprops/action-gh-release/releases/download/v2.0.0/action-gh-release-linux-amd64.tar.gz | tar xz;
+      ./action-gh-release-linux-amd64 -n "Beta Build $BUILD_NUMBER" -b "Automated beta build $BUILD_NUMBER\n\nCommit: $TRAVIS_COMMIT\nBranch: $TRAVIS_BRANCH" -t "build-$BUILD_NUMBER" -p -f "build/libs/*.jar" -r "PepperLola/playerinfo" -g;
+    fi
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/

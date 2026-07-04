@@ -1,0 +1,29 @@
+name: Java Maven Build
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-8
+        options: --always-chown-logs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Install dependencies
+        run: mvn install -DskipTests=true -Dmaven.javadoc.skip=true
+      - name: Build and package
+        run: mvn clean package

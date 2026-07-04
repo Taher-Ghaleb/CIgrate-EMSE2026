@@ -1,0 +1,17 @@
+language: minimal
+
+services:
+  - docker
+
+before_install:
+  - chmod +x ci/build-docker-image
+  - chmod +x ci/docker-build-game
+
+script:
+  - ./ci/build-docker-image
+  - ./ci/docker-build-game
+
+branches:
+  only:
+    - main
+    - develop

@@ -1,0 +1,40 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+
+services:
+  - docker
+
+before_install:
+  - cache: maven
+
+install:
+  - checkout
+  - setup_java -q -l temurin-8
+
+before_script:
+  - chmod +x .travis/build.sh
+
+script:
+  - ./.travis/build.sh
+
+env:
+  global:
+    - SECRET_1: $SECRET_1
+    - SECRET_2: $SECRET_2
+    - SECRET_3: $SECRET_3
+    - SECRET_4: $SECRET_4
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - # TODO: Add deploy script here
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including branches, jobs, steps, env variables, caches, and deploy. It uses the Travis lifecycle keys (before_install, install, before_script, script, and deploy) to map the GitHub Actions steps. The services and caches are also mapped accordingly. The script section is left as a TODO for you to add the deploy script.

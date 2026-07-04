@@ -1,0 +1,15 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+branches:
+  only:
+    - master
+    - develop
+  except:
+    - /^release\/.*$/
+jdk:
+  - openjdk8
+script:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V

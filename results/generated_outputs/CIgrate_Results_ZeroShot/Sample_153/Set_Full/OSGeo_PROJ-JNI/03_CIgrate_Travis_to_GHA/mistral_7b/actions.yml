@@ -1,0 +1,74 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Install dependencies
+        run: |
+          pwd
+          ls
+          apt-get update
+          apt-get install -y sqlite3
+          echo $JAVA_HOME
+
+      - name: Install PROJ
+        run: |
+          wget https://download.osgeo.org/proj/proj-6.2.1.tar.gz
+          tar xf proj-6.2.1.tar.gz
+          cd proj-6.2.1
+          ./configure
+          NPROC=$(nproc)
+          make -j${{ env.NPROC }}
+          sudo make install
+          cd ..
+
+      - name: Build PROJ-JNI
+        run: mvn package
+
+      - name: Test
+        run: java --class-path target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java
+
+      - name: Cache PROJ
+        uses: actions/cache@v4
+        with:
+          path: proj-6.2.1
+          key: ${{ runner.os }}-proj
+          restore-keys: |
+            ${{ runner.os }}-proj
+
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven
+          restore-keys: |
+            ${{ runner.os }}-maven
+
+      - name: Upload artifact
+        uses:

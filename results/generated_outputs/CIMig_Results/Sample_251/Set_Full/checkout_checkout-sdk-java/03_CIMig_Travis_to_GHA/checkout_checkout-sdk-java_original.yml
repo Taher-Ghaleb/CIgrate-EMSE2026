@@ -1,0 +1,25 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      run: ./gradlew build --scan -s
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+
+env:
+  github_token: ${{ github.token }}
+  ci: TRUE
+
+macos:
+  jdk: openjdk8
+

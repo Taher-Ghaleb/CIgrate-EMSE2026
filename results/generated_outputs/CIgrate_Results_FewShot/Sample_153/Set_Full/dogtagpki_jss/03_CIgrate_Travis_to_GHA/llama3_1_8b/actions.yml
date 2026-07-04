@@ -1,0 +1,43 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  FEDORA: 27
+  FEDORA_28: 28
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Pull Fedora image
+        run: |
+          docker pull registry.fedoraproject.org/fedora:$FEDORA
+      - name: Run Fedora container
+        run: |
+          docker run
+            --name=container
+            --detach
+            -i
+            -v $(pwd):/root/jss
+            registry.fedoraproject.org/fedora:$FEDORA
+      - name: Install dependencies in Fedora container
+        run: |
+          docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+      - name: Enable COPR repository in Fedora container
+        run: |
+          docker exec container dnf copr -y enable @pki/10.6
+      - name: Build dependencies in Fedora container
+        run: |
+          docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+      - name: Run build script in Fedora container
+        run: |
+          docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+```
+
+Note: I've used `FEDORA_28` as the second environment variable to avoid overwriting the first one.

@@ -1,0 +1,33 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: ${{ env.GITHUB_ACTIONS }}
+
+script:
+  - checkout
+  - java -version
+  - gradlew --version
+  - setup_java.sh
+  - chmod +x gradlew
+  - ./gradlew build integrationTest
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+
+before_script:
+  - if [ -f ~/.gradle/wrapper/gradle-wrapper.jar ]; then \
+      java -jar ~/.gradle/wrapper/gradle-wrapper.jar -Dorg.gradle.jvmargs="-Xmx1024M -XX:MaxPermSize=256m" -Dfile.encoding=UTF-8 -Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dorg.gradle.cachemaxsize=50000000 bytes -Dorg.gradle.logging.level.all=WARN -Dorg.gradle.logging.file=/dev/null -Dorg.gradle.logging.file.append=false -Dorg.gradle.logging.nextConsoleLogLevel.level=INFO -Dorg.gradle.jvmargs="-Xmx1024M -XX:MaxPermSize=256m" -Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.configureondemand=true -Dorg.gradle.cachemaxsize=50000000 bytes -Dorg.gradle.logging.level.all=WARN -Dorg.gradle.logging.file=/dev/null -Dorg.gradle.logging.file.append=false -Dorg.gradle.logging.nextConsoleLogLevel.level=INFO -Dorg.gradle.jvmargs="-Xmx1024M -XX:MaxPermSize

@@ -1,0 +1,24 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: ${{ runner.os == 'linux' ? '${{ runner.os }}-java-home' : 'java.home' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Build and test
+        run: ./gradlew clean test

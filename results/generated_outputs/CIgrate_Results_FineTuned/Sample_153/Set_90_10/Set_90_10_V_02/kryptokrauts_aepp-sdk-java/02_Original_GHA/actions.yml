@@ -1,0 +1,154 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TRAVIS_BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches/
+          ~/.gradle/wrapper/
+          $HOME/libsodium
+        key: ${{ runner.os }}-gradle-libsodium-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'travis-install-libsodium.sh') }}
+
+    - name: Install
+      run: |
+        ./travis-install-libsodium.sh
+        echo "PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
+    - name: Build
+      run: |
+        docker-compose up -d
+        ./gradlew integrationTest
+        ./gradlew build
+
+    - name: Before cache
+      if: always()
+      run: |
+        rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+  snapshot:
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      TRAVIS_BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches/
+          ~/.gradle/wrapper/
+          $HOME/libsodium
+        key: ${{ runner.os }}-gradle-libsodium-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'travis-install-libsodium.sh') }}
+
+    - name: Install
+      run: |
+        ./travis-install-libsodium.sh
+        echo "PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
+    - name: Publish snapshot
+      run: ./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER
+
+    - name: Before cache
+      if: always()
+      run: |
+        rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+  release:
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      TRAVIS_BUILD_NUMBER: ${{ github.run_number }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches/
+          ~/.gradle/wrapper/
+          $HOME/libsodium
+        key: ${{ runner.os }}-gradle-libsodium-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'travis-install-libsodium.sh') }}
+
+    - name: Install
+      run: |
+        ./travis-install-libsodium.sh
+        echo "PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
+    - name: Release build
+      run: ./gradlew bintrayUpload -x test -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER
+
+    - name: Compute tag
+      id: vars
+      run: |
+        VERSION=$(./gradlew -q pV)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Configure git and tag
+      run: |
+        git config --global user.name "Travis CI"
+        git config --global user.email "builds@travis-ci.com"
+        git tag ${{ steps.vars.outputs.tag }}
+
+    - name: Create release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_OAUTH_TOKEN }}
+      with:
+        tag_name: ${{ steps.vars.outputs.tag }}
+        release_name: ${{ steps.vars.outputs.tag }}
+        body: "Please take a look into the [release notes](https://github.com/kryptokrauts/aepp-sdk-java/blob/${{ steps.vars.outputs.tag }}/docs/release-notes/RELEASE-NOTES-${{ steps.vars.outputs.version }}.md) for more information about the recent changes."
+        draft: false
+        prerelease: false
+
+    - name: Upload release assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_OAUTH_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: build/libs/
+        asset_name: "*.jar"
+        asset_content_type: application/java-archive
+
+    - name: Before cache
+      if: always()
+      run: |
+        rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        rm -fr $HOME/.gradle/caches/*/plugin-resolution/

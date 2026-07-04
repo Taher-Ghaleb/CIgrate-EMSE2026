@@ -1,0 +1,77 @@
+language: java
+
+before_install:
+  - echo "Setting up environment"
+  - export FOO=${{ secrets.FOO }}
+  - export BAR=${{ secrets.BAR }}
+  - export JDK_VERSION=${{ matrix.jdk }}
+  - export OS=${{ matrix.os }}
+  - export GRADLE_VERSION=7.4.1
+
+install:
+  - echo "Installing dependencies"
+  - apt-get update
+  - apt-get install -y default-jdk
+  - apt-get install -y default-jre
+  - apt-get install -y openjdk-${JDK_VERSION}
+  - apt-get install -y gradle
+  - apt-get install -y curl
+  - curl -fsSLo /usr/local/bin/gradle https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}/gradle-${GRADLE_VERSION}-all-openjdk-linux-x64.tar.gz
+  - chmod +x /usr/local/bin/gradle
+
+before_script:
+  - echo "Setting up environment variables"
+  - export PATH=$PATH:/usr/local/bin
+  - export GRADLE_HOME=/usr/local/gradle
+  - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+  - export PATH=$PATH:$JAVA_HOME/bin
+
+script:
+  - echo "Running tests"
+  -./gradlew clean test
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploying to production"
+
+after_failure:
+  - echo "Deploying to production on failure"
+
+deploy:
+  - echo "Deploying to production"
+  - echo "Deploying to production"
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - os: ubuntu-latest
+      jdk: 8
+    - os: ubuntu-latest
+      jdk: 11
+    - os: ubuntu-latest
+      jdk: 17
+    - os: macos-latest
+      jdk: 8
+    - os: macos-latest
+      jdk: 11
+    - os: macos-latest
+      jdk: 17
+
+services:
+  - docker-compose
+
+addons:
+  - cache:
+      - directories: [~/.m2/repository, ~/.gradle/*, $HOME/.npm]
+
+branches:
+  only:
+    - main
+    - feature/new-feature
+  except:
+    - develop
+
+notifications:
+  email:
+    on_success: false

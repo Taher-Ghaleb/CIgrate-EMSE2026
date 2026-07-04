@@ -1,0 +1,30 @@
+language: android
+dist: focal
+
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-30.0.3
+    - android-30
+    - extra-android-m2repository
+    - extra-google-m2repository
+    - extra-android-support
+
+jdk:
+  - openjdk8
+
+before_install:
+  - yes | sdkmanager --licenses
+
+install:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew clean build
+  - ./gradlew testDebugUnitTestCoverage coveralls
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/

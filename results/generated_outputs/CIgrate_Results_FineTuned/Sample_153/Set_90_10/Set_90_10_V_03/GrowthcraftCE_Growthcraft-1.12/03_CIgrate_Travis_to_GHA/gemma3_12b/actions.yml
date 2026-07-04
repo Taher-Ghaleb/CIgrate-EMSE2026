@@ -1,0 +1,46 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.sonar/cache
+            ~/.m2/repository
+            .gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Before cache
+        run: rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+      - name: Before install
+        run: |
+          ruby --version
+          chmod +x ./gradlew
+      - name: Install
+        run: ./gradlew setupCIWorkspace -S
+      - name: Build
+        run: ./gradlew build
+      - name: SonarCloud
+        run: ./gradlew sonarqube
+      - name: List artifacts
+        run: ls -la build/libs
+      - name: Deploy
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_OAUTH: ${{ secrets.GITHUB_OAUTH }}
+        run: |
+          deploy --file-glob true --file checksums.txt build/libs/growthcraft-*.jar --skip-cleanup

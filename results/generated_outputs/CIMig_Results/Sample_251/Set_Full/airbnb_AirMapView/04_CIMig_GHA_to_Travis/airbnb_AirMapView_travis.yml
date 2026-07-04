@@ -1,0 +1,12 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+script:
+  script:
+    ./gradlew check

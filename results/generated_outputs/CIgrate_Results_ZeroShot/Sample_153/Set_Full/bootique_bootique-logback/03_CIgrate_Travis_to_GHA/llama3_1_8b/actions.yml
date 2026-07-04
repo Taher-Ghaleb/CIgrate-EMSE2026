@@ -1,0 +1,67 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - 'bootique/bootique-logback'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      oraclejdk9:
+        image: oracle/jdk9:latest
+        ports:
+          - 8000:8000
+      oraclejdk8:
+        image: oracle/jdk8:latest
+        ports:
+          - 8000:8000
+    strategy:
+      matrix:
+        jdk: [oraclejdk9, oraclejdk8]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+        distribution: ${{ matrix.jdk }}
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install Maven
+      run: |
+        apt-get update
+        apt-get install -y maven
+    - name: Build and deploy
+      run: |
+        if [ "$GITHUB_REPOSITORY" = "bootique/bootique-logback" ]; then
+          mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+        else
+          mvn clean verify
+        fi
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: ~/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Deploy
+      run: |
+        if [ "$GITHUB_REPOSITORY" = "bootique/bootique-logback" ]; then
+          # TODO: Deploy to specific repository
+        fi
+
+env:
+  build:
+    - name: FOO
+      value: ${{ secrets.FOO }}
+    - name: BAR
+      value: ${{ secrets.BAR }}

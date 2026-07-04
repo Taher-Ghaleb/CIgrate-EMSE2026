@@ -1,0 +1,56 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+    - /^(\d+)$/
+    - /^release\/(\d+)$/
+    - /^hotfix\/(\d+)$/
+    - /^feature\/(\d+)$/
+    - /^bugfix\/(\d+)$/
+    - /^experiment\/(\d+)$/
+    - /^chore\/(\d+)$/
+    - /^docs\/(\d+)$/
+    - /^refactor\/(\d+)$/
+    - /^test\/(\d+)$/
+    - /^fix\/(\d+)$/
+    - /^style\/(\d+)$/
+    - /^perf\/(\d+)$/
+    - /^ci\/(\d+)$/
+    - /^build\/(\d+)$/
+    - /^tooling\/(\d+)$/
+    - /^deps\/(\d+)$/
+    - /^i18n\/(\d+)$/
+    - /^accessibility\/(\d+)$/
+    - /^security\/(\d+)$/
+    - /^upgrade\/(\d+)$/
+    - /^internal\/(\d+)$/
+    - /^qa\/(\d+)$/
+    - /^data\/(\d+)$/
+    - /^api\/(\d+)$/
+    - /^integration\/(\d+)$/
+    - /^ui\/(\d+)$/
+    - /^admin\/(\d+)$/
+    - /^auth\/(\d+)$/
+    - /^payment\/(\d+)$/
+    - /^shipping\/(\d+)$/
+    - /^inventory\/(\d+)$/
+    - /^reporting\/(\d+)$/
+    - /^analytics\/(\d+)$/
+    - /^monitoring\/(\d+)$/
+    - /^logging\/(\d+)$/
+    - /^cache\/(\d+)$/
+    - /^search\/(\d+)$/
+    - /^notification\/(\d+)$/
+    - /^workflow\/(\d+)$/
+    - /^automation\/(\d+)$/
+    - /^optimization\/(\d+)$/
+    - /^performance\/(\d+)$/
+    - /^scalability\/(\d+)$/
+    - /^security\/(\d+)$/

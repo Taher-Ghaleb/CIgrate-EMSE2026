@@ -1,0 +1,52 @@
+direction,PR Status,Developer Reviews,Rating (in 5 scale),1st Follow Up,2nd Follow Up,sentiment_compound,sentiment_pos,sentiment_neg,feedback_category,inferred_rating
+travis_to_gha,Open,"Hello @nhossaincse. Thanks for reaching out.
+
+The conversion result looks very good in general. Also, your test build succeeded as you stated.
+
+The only spots which I identified are:
+
+Comments are not taken over fully. Therefore, some reasoning for certain configuration got lost.
+The wiring of TARGET_SDK_VERSION, targetSdkVersion and BUILD_TOOLS_VERSION, buildToolsVersion could maybe be simplified. Not sure, I did not try.
+Overall rating: 4 stars (with 5 being best rating)
+
+Earlier comment:
+Thanks for reaching out. I will have time to look into your PR in January.",4.0,Done,,0.9471,0.211,0.041,Positive,4.0
+travis_to_gha,Open,"I don't plan to migrate to GH, but if I decide to , I will check this PR, thanks",,Done,,0.5927,0.176,0.0,Positive,5.0
+travis_to_gha,Closed,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+travis_to_gha,Open,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+travis_to_gha,Open,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+travis_to_gha,Closed,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+travis_to_gha,Closed,This is a dying project after spring has introduced their own approach. I will not use time on it.,,Done,,0.0,0.0,0.0,Neutral,3.0
+travis_to_gha,Open,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+travis_to_gha,Open,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+travis_to_gha,Closed,"Apologies for not replying sooner.
+
+I'm not familiar with gihub actions, but at a glance it looks as though the configuration has correctly reflected the current Travis configuration. This isn't something that we're currently looking at, so I'll decline this for now, but it may prove useful to us in the future.",,Done,,0.5927,0.07,0.0,Rejection,5.0
+travis_to_gha,Closed,Thank you for your enquiry. We will look to review this in the new year and feedback.,,Done,,0.3612,0.135,0.0,Positive,4.0
+travis_to_gha,Open,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+travis_to_gha,Open,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+travis_to_gha,Open,No reviews yet,,"CLA Signed, and follow up done.",Done,0.0,0.0,0.0,No Response,3.0
+travis_to_gha,Merged,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+gha_to_travis,Closed,"I’m sorry but you should probably have a look at what you submit first. It’s not matching the project and it’s kinda obvious given it has references to something else.
+
+Also we are not very interested in Travis so it’s probably better you ask elsewhere.
+
+Thanks.
+
+",,Done,,0.694,0.149,0.08,Positive,5.0
+gha_to_travis,Closed,we review PRs that are intended to be merged to main branch. We are not in the business of reviewing this kind of stuff.,,Done,,0.0,0.0,0.0,Neutral,3.0
+gha_to_travis,Closed,No reviews yet,,"CLA agreement signed, follow up done.",Done,0.0,0.0,0.0,No Response,3.0
+gha_to_travis,Closed,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+gha_to_travis,Open,No reviews yet,,"CLA agreement signed, follow up done.",Done,0.0,0.0,0.0,No Response,3.0
+gha_to_travis,Open,No reviews yet,,"CLA agreement signed, follow up done.",Done,0.0,0.0,0.0,No Response,3.0
+gha_to_travis,Closed,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+gha_to_travis,Closed,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+gha_to_travis,Open,"Since this PR is not adding a new feature or addressing a bug, I will close it.",,Done,,0.0,0.0,0.0,Rejection,3.0
+gha_to_travis,Closed,did not even get the Java version correctly. Java 8 does not make any sense. Completely uselses,,Done,,0.0,0.0,0.0,Technical Issues,3.0
+gha_to_travis,Open,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+gha_to_travis,Closed,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0
+gha_to_travis,Closed,"You can not generate works for others without them agreeing first on being a participant of your research.
+
+This have already been discussed several times in the community, please stop.",,,,-0.2349,0.069,0.126,Neutral,2.0
+gha_to_travis,Closed,"Since this PR is not adding a new feature or addressing a bug, I will close it",,,,0.0,0.0,0.0,Rejection,3.0
+gha_to_travis,Closed,No reviews yet,,Done,Done,0.0,0.0,0.0,No Response,3.0

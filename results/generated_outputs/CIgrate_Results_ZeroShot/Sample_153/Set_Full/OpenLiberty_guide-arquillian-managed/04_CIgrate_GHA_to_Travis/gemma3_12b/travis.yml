@@ -1,0 +1,54 @@
+language: bash
+branches:
+  only:
+    - master
+    - qa
+  except:
+    - /^release\/.*$/
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+before_install:
+  - echo "Before install"
+install:
+  - echo "Install"
+before_script:
+  - echo "Before script"
+  - git version
+script:
+  - echo "Script"
+  - chmod +x finish/../scripts/travisTest.sh
+  - ../scripts/travisTest.sh
+  - echo "Server name: $serverName"
+  - echo "Creating archive: $serverlogsarchive"
+  - zip -r "$serverlogsarchive" .
+  - if [ -n "$JFROG_TOKEN" ]; then
+    - echo "Uploading to Artifactory..."
+    - curl -f -H "X-JFrog-Art-Api: ${JFROG_TOKEN}" \
+      -T "$serverlogsarchive" \
+      "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"
+    - echo "Upload completed successfully"
+  else
+    - echo "Warning: JFROG_TOKEN not set, skipping upload"
+  fi
+  - echo "Server name: $serverName"
+  - echo "Creating archive: $serverlogsarchive"
+  - zip -r "$serverlogsarchive" .
+  - if [ -n "$JFROG_TOKEN" ]; then
+    - echo "Uploading to Artifactory..."
+    - curl -f -H "X-JFrog-Art-Api: ${JFROG_TOKEN}" \
+      -T "$serverlogsarchive" \
+      "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"
+    - echo "Upload completed successfully"
+  else
+    - echo "Warning: JFROG_TOKEN not set, skipping upload"
+  fi
+after_success:
+  - echo "After success"
+after_failure:
+  - echo "After failure"
+env:
+  _JAVA_OPTIONS: ''
+  JFROG

@@ -1,0 +1,71 @@
+language: java
+sudo: false
+jdk:
+  - temurin-11
+  - temurin-17
+
+env:
+  matrix:
+    - profiles: headless-mode
+    - profiles: headless-mode,chrome
+
+script:
+  - mvn -B -V clean install -P${{ matrix.profiles }}
+
+addons:
+  chrome:
+    version: stable
+  firefox:
+    version: latest
+
+before_install:
+  - git clone --depth 1 https://github.com/primefaces/primefaces
+  - git clone --depth 1 https://github.com/primefaces-extensions/primefaces-selenium
+
+install:
+  - cd primefaces
+    mvn install -DskipTests
+    cd ..
+    mkdir -p ~/primefaces-install
+    touch ~/primefaces-install/.installed
+  - cd primefaces-selenium
+    mvn install -DskipTests
+    cd ..
+
+cache:
+  directories:
+    - '$HOME/primefaces-install'
+    - '~/.m2/repository/org/primefaces'
+
+after_success:
+  - mvn dependency:tree -Dverbose -Dformat=xml > dependency-tree.xml
+
+before_script:
+  - mvn dependency:tree -Dverbose -Dformat=pom > dependency-tree.pom
+
+after_success:
+  - mvn dependency:tree -Dverbose -Dformat=json > dependency-tree.json
+
+after_success:
+  - mvn test-compile
+
+after_success:
+  - mvn test
+
+after_success:
+  - mvn jacoco:report
+
+after_success:
+  - mvn jacoco:report -Pfailsafe
+
+after_success:
+  - mvn jacoco:report -Pfailsafe,chrome
+
+after_success:
+  - mvn jacoco:report -Pfailsafe,firefox
+
+after_success:
+  - mvn jacoco:check
+
+after_success:
+  - mvn jacoco:

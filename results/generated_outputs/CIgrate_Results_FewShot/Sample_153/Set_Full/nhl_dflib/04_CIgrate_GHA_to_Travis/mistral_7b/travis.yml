@@ -1,0 +1,35 @@
+language: java
+sudo: false
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - master
+
+matrix:
+  db_profile:
+    - derby
+    - mysql
+    - postgresql
+
+script:
+  - mvn verify -P${{ matrix.db_profile }}
+
+deploy:
+  on:
+    branches:
+      - master
+    types:
+      - push
+    repository: nhl/dflib
+
+  if: $GITHUB_REF == 'refs/heads/master' && $GITHUB_EVENT_NAME == 'push'
+
+  script:
+    - mvn clean source:jar javadoc:javadoc deploy -DskipTests
+
+env:
+  MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+  MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+  MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

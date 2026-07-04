@@ -1,0 +1,31 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+    env:
+      global:
+        - secure: "********************"
+        - secure: "********************"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Clone ci-tooling
+        run: git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+      - name: Copy Maven settings
+        run: cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+      - name: Maven Deploy
+        run: mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml
+        if: github.ref == 'refs/heads/*' # Deploy on all branches
+        continue-on-error: true

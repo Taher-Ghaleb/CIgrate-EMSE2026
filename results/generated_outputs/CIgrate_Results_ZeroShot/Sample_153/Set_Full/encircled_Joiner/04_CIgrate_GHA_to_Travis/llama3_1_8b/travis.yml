@@ -1,0 +1,65 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - apt-get update
+  - apt-get install -y maven
+
+script:
+  - mvn install -P eclipse
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      - echo "Deploying to production"
+      - travis encrypt $CODECOV_TOKEN --add --org --repo --env
+      - travis deploy create --branch master --dist gh-pages --message "Deploy to production"
+    else
+      - echo "Deploying to staging"
+      - travis encrypt $CODECOV_TOKEN --add --org --repo --env
+      - travis deploy create --branch $TRAVIS_BRANCH --dist gh-pages --message "Deploy to staging"
+    fi
+
+deploy:
+  on:
+    tags: true
+  matrix:
+    - java-version: '8'
+      dist: temurin
+      cache: maven
+  cache:
+    directories:
+      - ~/.m2/repository
+      - ~/.gradle/*
+      - $HOME/.npm
+  services:
+    - docker-compose
+  before_script:
+    - echo "Setting up JDK $java-version"
+    - export JAVA_HOME=/usr/lib/jvm/$dist-$java-version
+    - export PATH=$JAVA_HOME/bin:$PATH
+  script:
+    - mvn install -P eclipse
+  after_success:
+    - if [ "$TRAVIS_BRANCH" == "master" ]; then
+        - echo "Deploying to production"
+        - travis deploy create --branch master --dist gh-pages --message "Deploy to production"
+      else
+        - echo "Deploying to staging"
+        - travis deploy create --branch $TRAVIS_BRANCH --dist gh-pages --message "Deploy to staging"
+      fi
+  after_failure:
+    - if [ "$TRAVIS_BRANCH" == "master" ]; then
+        - echo "Deploying to production"
+        - travis deploy create --branch master --dist gh-pages --message "Deploy to production"
+      else
+        - echo "Deploying to staging"
+        - travis deploy create --branch $TRAVIS_BRANCH --dist gh-pages --message "Deploy to staging"
+      fi
+  notifications:
+    email:
+      on_success: change
+      on_failure: change

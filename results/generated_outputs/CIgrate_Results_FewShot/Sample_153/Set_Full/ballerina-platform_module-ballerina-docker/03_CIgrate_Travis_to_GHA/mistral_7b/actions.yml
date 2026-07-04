@@ -1,0 +1,36 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: ${{ runner.os == 'windows' ? 'c:\\java8' : undefined }}
+  PATH: ${{ runner.os == 'windows' ? 'C:\\ProgramData\\chocolatey\\lib\\maven\\apache-maven-3.6.3\\bin;$PATH' : '$PATH;$JAVA_HOME/bin' }}${{ runner.os == 'linux' ? ';C:\\ProgramData\\chocolatey\\lib\\maven\\apache-maven-3.6.3\\bin' : undefined }}
+
+jobs:
+  build:
+    runs-on: ${{ runner.os }}
+    strategy:
+      matrix:
+        os: [linux, windows]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        if: ${{ runner.os == 'linux' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Maven
+        if: ${{ runner.os == 'windows' }}
+        run: choco install maven -version 3.6.3
+      - name: Install Maven
+        if: ${{ runner.os == 'linux' }}
+        run: |
+          wget https://downloads.apache.org/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+          tar xzf apache-maven-3.6.3-bin.tar.gz
+          mv apache-maven-3.6.3 ${{ env.JAVA_HOME }}/maven
+          export PATH=${{ env.PATH }}:${{ env.JAVA_HOME }}/maven/bin
+      - name: Build
+        run: set -e && ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon
+      - name: Cache Maven
+        if: ${{ runner.

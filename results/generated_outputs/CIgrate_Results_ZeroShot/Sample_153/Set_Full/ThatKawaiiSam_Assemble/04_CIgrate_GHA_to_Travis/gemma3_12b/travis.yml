@@ -1,0 +1,39 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - /^(\([0-9]+|[a-z0-9])+\)$/
+    - tags
+os: ubuntu
+services:
+  - docker
+before_install:
+  - echo "Before Install"
+install:
+  - echo "Install"
+  - mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+before_script:
+  - echo "Before Script"
+script:
+  - echo "Running tests"
+  - mvn test -B
+  - echo "Tests completed"
+after_success:
+  - echo "After Success"
+  - if [ "$TRAVIS_TAG" != "" ]; then
+      echo "Uploading artifact"
+      echo "Release tag detected: $TRAVIS_TAG"
+      echo "Preparing release artifact..."
+      cp target/release.jar release.jar
+      echo "Artifact prepared."
+      echo "Uploading release.jar..."
+      travis curl -T "$TRAVIS_TAG" -f release.jar $TRAVIS_BUILD_WEB_URL
+      echo "Release.jar uploaded."
+    fi
+  - echo "After Success Complete"

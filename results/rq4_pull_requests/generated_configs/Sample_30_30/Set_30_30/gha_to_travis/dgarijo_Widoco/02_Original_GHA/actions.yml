@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, master]
+    tags:
+     - 'v*'
+  pull_request:
+
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  maven:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [11, 14, 17]
+    steps:
+      - uses: actions/checkout@v6
+      # details https://github.com/actions/setup-java
+      - name: Set up JDK  ${{ matrix.jdk }}
+        uses: actions/setup-java@v5
+        with:
+          java-version:  ${{ matrix.jdk }}
+          distribution: 'zulu'
+          cache: maven
+      - name: Build with Maven
+        run: mvn -e --batch-mode package
+      - name: Include JDK in filename
+        run: |
+          FN=$(ls JAR/*.jar)
+          mv ${FN} ${FN/.jar/_JDK-${{ matrix.jdk }}.jar}
+      - name: Upload JAR
+        uses: actions/upload-artifact@v5
+        with:
+          name: widoco_JDK-${{ matrix.jdk }}
+          path: JAR/*.jar
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # https://github.com/docker/metadata-action (lower cases image name, etc.)
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5.10.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: Build and push
+        uses: docker/build-push-action@v6.18.0
+        with:
+          push: ${{ github.event_name != 'pull_request' && github.actor != 'dependabot[bot]' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

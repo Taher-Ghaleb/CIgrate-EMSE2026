@@ -1,0 +1,16 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+sudo: false
+install: true
+cache: gradle
+before_install:
+  - chmod +x./gradlew
+script:
+  -./gradlew build
+```
+
+Note that the `android` section is not needed in this case, as the workflow does not use any Android-specific features. The `android` section is only used when the workflow uses Android-related tools and components.

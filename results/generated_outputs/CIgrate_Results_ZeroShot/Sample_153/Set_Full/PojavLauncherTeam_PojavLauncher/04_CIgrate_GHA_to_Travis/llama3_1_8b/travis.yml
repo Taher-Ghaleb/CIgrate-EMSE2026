@@ -1,0 +1,56 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 17"
+  - export ANDROID_API_LEVEL=33
+  - export ANDROID_BUILD_TOOLS_VERSION=33.0.2
+
+install:
+  - echo "Setting up Gradle"
+  - export GRADLE_CACHE=~/.gradle
+  - export GRADLE_HOME=~/.gradle
+  - export PATH=$GRADLE_HOME/bin:$PATH
+
+script:
+  - echo "Accepting Android SDK licenses"
+  - yes | sdkmanager --licenses || true
+  - echo "Installing Android SDK components"
+  - sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION"
+  - sdkmanager "platforms;android-$ANDROID_API_LEVEL"
+  - sdkmanager --list_installed
+  - echo "Making gradlew executable"
+  - chmod +x gradlew
+  - echo "Building with Gradle"
+  -./gradlew clean build
+  - echo "Running tests"
+  -./gradlew test
+  - echo "Uploading test results"
+  - if [ $? -eq 0 ]; then
+    echo "Uploading test results"
+    artifacts upload --name "test-results" --path "**/build/reports/tests/**" --keep-for 7
+  fi
+  - echo "Uploading APK artifacts"
+  - if [ $? -eq 0 ]; then
+    echo "Uploading APK artifacts"
+    artifacts upload --name "apk-builds" --path "**/build/outputs/apk/**/*.apk" --keep-for 7
+  fi
+  - echo "Creating development release"
+  - if [ $TRAVIS_BRANCH == "main" || $TRAVIS_BRANCH == "master" ]; then
+    echo "Creating development release"
+    gh-release create --tag "dev-build-$TRAVIS_BUILD_NUMBER" --name "Development Build $TRAVIS_BUILD_NUMBER" --description "Automatic development build of PojavLauncher" --files "app/build/outputs/apk/debug/app-debug.apk" --prerelease true --fail-on-unmatched-files true
+  fi
+
+deploy:
+  on:
+    branch: main
+    tags: true
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on_success: always
+    on_failure: always
+```
+
+Note: The `GITHUB_TOKEN` secret is not needed in Travis CI, as it is not used in the provided configuration. The `GITHUB_TOKEN` is

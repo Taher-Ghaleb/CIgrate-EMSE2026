@@ -1,0 +1,24 @@
+matrix:
+  os:
+    ubuntu-latest
+    windows-latest
+  language: java
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      uses: actions/checkout@version
+    run: mvn clean verify
+

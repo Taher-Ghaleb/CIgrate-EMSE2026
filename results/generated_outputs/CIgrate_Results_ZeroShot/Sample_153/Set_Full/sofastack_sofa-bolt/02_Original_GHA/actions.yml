@@ -1,0 +1,58 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '7']
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+          cache: 'maven'
+      
+      - name: Download and setup Maven 3.2.5
+        run: |
+          echo "Downloading Maven 3.2.5"
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.zip
+          unzip -q apache-maven-3.2.5-bin.zip
+          echo "$PWD/apache-maven-3.2.5/bin" >> $GITHUB_PATH
+          cp ./.middleware-common/.travis.settings.xml $HOME/.m2/settings.xml
+          $PWD/apache-maven-3.2.5/bin/mvn -version
+      
+      - name: Install dependencies
+        run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+      
+      - name: Check format
+        run: sh ./.middleware-common/check_format.sh
+      
+      - name: Run tests with coverage
+        run: mvn cobertura:cobertura
+      
+      - name: Upload coverage artifact
+        if: matrix.jdk == '8'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: '**/target/site/cobertura/'
+
+  upload-coverage:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4

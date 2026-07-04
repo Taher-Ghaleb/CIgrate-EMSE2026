@@ -1,0 +1,38 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  MAVEN_OPTS: -Dorg.slf4j.simpleMappping=true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFile('pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2
+      - name: Clean and Verify
+        run: |
+          rm -rf $HOME/.m2/repository/**/*-SNAPSHOT
+          cd quarkus.jdt.ext && ./mvnw clean verify && cd ..
+          cd quarkus.ls.ext/com.redhat.quarkus.ls && ./mvnw clean verify
+      - name: Notifications
+        if: always()
+        run: |
+          echo "Sending notifications..."
+          # TODO: Implement email notifications using a suitable action or script.

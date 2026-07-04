@@ -1,0 +1,33 @@
+language: android
+
+jdk:
+  - oraclejdk8
+
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-26.0.2
+    - android-23
+    - extra-android-m2repository
+    - extra-google-m2repository
+    - google-play-services
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/android-sdk-dl
+    - $HOME/android-sdk
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.android/build-cache
+
+before_install:
+  - ./gradlew --version
+
+script:
+  - echo "Build..."
+  - ./gradlew assembleDebugUnitTest -Dpre-dex=false
+  - ./gradlew testDebugUnitTest -Dpre-dex=false -q

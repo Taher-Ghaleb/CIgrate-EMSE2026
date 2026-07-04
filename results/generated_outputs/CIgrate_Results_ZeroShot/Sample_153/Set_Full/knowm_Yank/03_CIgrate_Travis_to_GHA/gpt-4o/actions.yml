@@ -1,0 +1,36 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      secure_env_var1: ${{ secrets.SECURE_ENV_VAR1 }}
+      secure_env_var2: ${{ secrets.SECURE_ENV_VAR2 }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Clone Travis branch
+        run: git clone -b travis `git config --get remote.origin.url` target/travis
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11' # Adjust the version as needed
+
+      - name: Build and Deploy
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            mvn clean deploy --settings target/travis/settings.xml
+          else
+            mvn clean verify --settings target/travis/settings.xml
+          fi

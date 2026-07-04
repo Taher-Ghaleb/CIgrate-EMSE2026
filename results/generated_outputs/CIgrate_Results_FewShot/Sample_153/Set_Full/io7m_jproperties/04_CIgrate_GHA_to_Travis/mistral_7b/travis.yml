@@ -1,0 +1,30 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: ${{ env.CODECOV_TOKEN }}
+      files: ./com.io7m.jproperties.core/target/site/jacoco/jacoco.xml
+      fail_ci_if_error: false
+
+notifications:
+  on_success:
+    - name: IRC
+      server: irc.libera.chat
+      port: 6697
+      channel: '#io7m'
+      nickname: github-actions-jproperties
+      message: |
+        [${{ env.GITHUB_REPOSITORY }}] Build ${{ job.status }} - ${{ env.GITHUB_ACTOR }}: ${{ github.event.head_commit.message }} (${{ github.sha }})
+        Details: ${{ env.GITHUB_SERVER_URL }}/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }}

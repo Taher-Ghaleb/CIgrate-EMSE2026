@@ -1,0 +1,16 @@
+language: java
+jdk:
+  - openjdk11
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f ./com.io7m.jproperties.core/target/site/jacoco/jacoco.xml || echo "Codecov upload failed"
+
+after_script:
+  - |
+    echo "[${TRAVIS_REPO_SLUG}] Build ${TRAVIS_TEST_RESULT} - ${TRAVIS_COMMIT_MESSAGE} (${TRAVIS_COMMIT})" | nc -C irc.libera.chat 6697 -i 1 -w 1 -c "NICK github-actions-jproperties" -c "USER github-actions-jproperties 0 * :github-actions-jproperties" -c "JOIN #io7m" -c "PRIVMSG #io7m :Details: https://travis-ci.com/${TRAVIS_REPO_SLUG}/builds/${TRAVIS_BUILD_ID}"
+cache:
+  directories:
+    - '$HOME/.m2/repository'

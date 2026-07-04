@@ -1,0 +1,10 @@
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+script:
+  script:
+    ./gradlew build

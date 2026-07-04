@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{Developer feedback summary for CIgrate pull requests. Statistical significance between directions tested using Chi-square (PR Status), two-proportion z-test (Response Rate), and Mann-Whitney U (Try \#, Rating). No significant differences detected at $\alpha = 0.0125$ (Bonferroni-corrected).}
+\label{tab:rq4-summary}
+\begin{tabular}{lcc}
+\toprule
+Metric & Travis→GHA & GHA→Travis \\
+\midrule
+Total PRs & 15 & 15 \\
+With Reviews & 5 & 6 \\
+PR Status (Open/Closed) & 9/5 & 4/11 ($V=0.42$) \\
+Response Rate & 33.3% & 40.0% \\
+1st Follow-up & 93.3% & 66.7% \\
+Mean Rating (Inferred) & 3.40 & 3.07 \\
+\bottomrule
+\multicolumn{3}{l}{\footnotesize *** $p < 0.001$, ** $p < 0.01$, * $p < 0.0125$ (Bonferroni); $V$ = Cramér's V, $\delta$ = Cliff's Delta, $h$ = Cohen's h} \\
+\multicolumn{3}{l}{\footnotesize \textit{Note}: Sample size is limited (n=15 per direction); interpret with caution.} \\
+\end{tabular}
+\end{table}

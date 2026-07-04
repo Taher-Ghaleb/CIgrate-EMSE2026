@@ -1,0 +1,40 @@
+matrix:
+  language: java
+  os:
+    windows-latest
+    ubuntu-latest
+  java
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path
+        server-id: sonatype-releases
+        draft: TRUE
+        clean: TRUE
+      uses: actions/setup-java@version
+      with: java-version
+      env:
+        github_token: ${{ github.token }}
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+      uses: actions/checkout@version
+      run:
+        rm -f ~/.gradle-2/modules-2.lock\nrm -f ~/.gradle-2/gc.properties\n
+        ./gradlew setupCIWorkspace -S
+
+macos:
+  jdk: openjdk8
+

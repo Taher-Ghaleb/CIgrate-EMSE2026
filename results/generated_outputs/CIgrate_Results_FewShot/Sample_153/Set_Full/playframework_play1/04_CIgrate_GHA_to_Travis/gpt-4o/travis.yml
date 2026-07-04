@@ -1,0 +1,17 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: required
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y ant
+  - ant -version
+
+script:
+  - ant -buildfile ./framework/build.xml test
+
+after_script:
+  - find . -type f -name 'TEST-*.xml' -o -path '*/build/test-results/*' | xargs -I {} cp {} $TRAVIS_BUILD_DIR/
+  # TODO: Implement artifact upload equivalent in Travis CI

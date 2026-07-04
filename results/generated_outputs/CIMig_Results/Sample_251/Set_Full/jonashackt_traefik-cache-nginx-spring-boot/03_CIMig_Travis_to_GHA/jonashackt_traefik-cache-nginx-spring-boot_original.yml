@@ -1,0 +1,22 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run:
+        mvn clean install
+        docker
+
+macos:
+  jdk: oraclejdk8
+

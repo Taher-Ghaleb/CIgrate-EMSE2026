@@ -1,0 +1,42 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+  except:
+    - tags
+pull_requests:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+before_install:
+  - echo "Before install"
+install:
+  - echo "Install"
+before_script:
+  - echo "Before script"
+script:
+  - chmod +x ./.travis/build.sh
+  - ./.travis/build.sh
+  - echo "Running build script"
+  - echo "SECRET_1: $SECRET_1"
+  - echo "SECRET_2: $SECRET_2"
+  - echo "SECRET_3: $SECRET_3"
+  - echo "SECRET_4: $SECRET_4"
+after_success:
+  - echo "After success"
+after_failure:
+  - echo "After failure"
+env:
+  SECRET_1: $SECRET_1
+  SECRET_2: $SECRET_2
+  SECRET_3: $SECRET_3
+  SECRET_4: $SECRET_4

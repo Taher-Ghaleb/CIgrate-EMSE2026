@@ -1,0 +1,35 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  global:
+    - RUNNER_IMAGE=constellationapplication/netbeans-runner:11.3
+    - SONAR_ORGANIZATION=constellation-app
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+
+jobs:
+  include:
+    - stage: build-and-test
+      script:
+        - docker pull "$RUNNER_IMAGE"
+        - docker run --mount "type=bind,source=$TRAVIS_BUILD_DIR,target=$TRAVIS_BUILD_DIR" --mount "type=bind,source=$HOME/.ivy2/cache,target=/root/.ivy2/cache" --workdir "$TRAVIS_BUILD_DIR" "$RUNNER_IMAGE" .travis/run-tests.sh
+        - .travis/sonar.sh
+      after_success:
+        - find "$HOME"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+      deploy:
+        provider: releases
+        api_key: $GITHUB_TOKEN
+        file: dist/constellation.zip
+        skip_cleanup: true
+        on:
+          tags: true
+          repo: constellation-app/constellation
+      after_failure:
+        - curl -X POST -H "Content-Type: application/json" -d '{"text":"Build failed"}' https://webhooks.gitter.im/e/82ac70bdb3f9e144d859

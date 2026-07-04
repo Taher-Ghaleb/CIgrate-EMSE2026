@@ -1,0 +1,53 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - curl -sSL https://github.com/actions/setup-java/releases/download/v4/temurin-8-x86_64.deb -o temurin-8.deb
+  - dpkg -i temurin-8.deb
+  - apt-get update
+  - apt-get install -y postgresql-client
+
+install:
+  - apt-get install -y docker.io
+
+before_script:
+  - echo "Starting PostgreSQL service"
+  - docker run -d --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_HOST_AUTH_METHOD=trust postgres:13
+  - sleep 10
+
+script:
+  - echo "Setting up environment"
+  - export TRAVIS_BUILD_NUMBER=$TRAVIS_BUILD_NUMBER
+  - export CC_TEST_REPORTER_ID=${CC_TEST_REPORTER_ID}
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 >./cc-test-reporter
+  - chmod +x./cc-test-reporter
+  -./cc-test-reporter before-build
+  - psql -c 'create database events;' -U postgres -h 127.0.0.1
+  - chmod +x gradlew
+  -./gradlew clean build jacocoTestReport jacocoFix -PbuildNumber=$TRAVIS_BUILD_NUMBER --scan
+  - docker build --no-cache --pull -t wisvch/events:$TRAVIS_BUILD_NUMBER.
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      echo "Pushing Docker image on master"
+      echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+      docker push wisvch/events:$TRAVIS_BUILD_NUMBER
+    fi
+
+after_success:
+  - echo "Formatting and uploading coverage"
+  - cd src/main/java/
+  -./cc-test-reporter format-coverage -d -t jacoco
+  -./cc-test-reporter upload-coverage -d
+
+deploy:
+  on:
+    branch: master
+  environment:
+    DOCKER_USERNAME: $DOCKER_USERNAME
+    DOCKER_PASSWORD: $DOCKER_PASSWORD
+  script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    - docker push wisvch/events:$TRAVIS_BUILD_NUMBER
+
+notifications:
+  email:
+    on_success:

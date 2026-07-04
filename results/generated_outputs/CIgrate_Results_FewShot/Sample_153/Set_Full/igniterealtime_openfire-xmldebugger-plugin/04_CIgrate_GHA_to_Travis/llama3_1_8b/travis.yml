@@ -1,0 +1,23 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+  - mkdir -p $HOME/.m2 && cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+  - mvn clean verify
+deploy:
+  if: github.event_name == 'push' && github.repository == 'OWNER/REPO'
+  env:
+    matrix:
+      - MAVEN_DEPLOY_USERNAME=$SECRET_1
+      - MAVEN_DEPLOY_PASSWORD=$SECRET_2
+  script:
+    - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+    - mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml
+```
+
+Note that I've assumed that the `SECRET_1` and `SECRET_2` environment variables are already set in the Travis CI environment, and that they contain the Maven deploy username and password respectively. If this is not the case, you will need to modify the script accordingly.

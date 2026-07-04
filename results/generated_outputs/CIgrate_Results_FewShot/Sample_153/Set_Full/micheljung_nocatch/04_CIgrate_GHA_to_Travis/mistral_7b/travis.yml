@@ -1,0 +1,30 @@
+language: java
+jdk: openjdk11
+env:
+  TERM: dumb
+
+script:
+  - chmod +x gradlew
+  - ./gradlew test jacocoTestReport
+
+after_success:
+  - uses: coverallsapp/github-action@v2
+    with:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+      path-to-lcov: build/reports/jacoco/test/jacocoTestReport.xml
+
+deploy:
+  on:
+    branches:
+      - coverity_scan
+  script:
+    - chmod +x gradlew
+    - ./gradlew build
+
+services:
+  - name: coverity-scan
+    image: vapier/coverity-scan-action:v1
+    env:
+      project: micheljung/nocatch
+      email: michel.jung89@gmail.com
+      token: ${{ secrets.COVERITY_SCAN_TOKEN }}

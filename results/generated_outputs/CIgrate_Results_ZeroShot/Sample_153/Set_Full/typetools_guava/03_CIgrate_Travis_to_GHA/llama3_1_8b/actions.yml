@@ -1,0 +1,55 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - '^release.*$'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk8
+          - openjdk11
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+        distribution: temurin
+        jdk-version: ${{ matrix.jdk }}
+    - name: Install dependencies
+      run: |
+        mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f $ROOT_POM
+    - name: Verify
+      run: |
+        travis_wait 60 mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f $ROOT_POM
+    - name: Deploy snapshot
+      run: |
+       ./util/deploy_snapshot.sh
+    - name: Update snapshot docs
+      run: |
+       ./util/update_snapshot_docs.sh
+    - name: Print surefire reports
+      run: |
+       ./util/print_surefire_reports.sh
+    - name: Cache dependencies
+      uses: actions/cache@v4
+        at: cache-maven
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-${{ hashFiles('pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-${{ hashFiles('pom.xml') }}
+    - name: Store secure values
+      store-credentials:
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        token: ${{ secrets.TOKEN }}
+```
+
+Note: The `secure` values in the original Travis CI configuration are stored as secrets in GitHub Actions using the `store-credentials` action. The `cache` section is migrated to use the `actions/cache` action with stable keys. The `branches` section is migrated to use the `branches` keyword in the `on` section. The `jdk` and `matrix` sections are migrated to use the `strategy`

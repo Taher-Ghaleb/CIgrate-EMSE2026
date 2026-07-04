@@ -1,0 +1,46 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JRE6_HOME: /usr/lib/jvm/java-6-openjdk-amd64/jre
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            jdk: '11'
+          - os: ubuntu-latest
+            jdk: '8'
+          - os: ubuntu-latest
+            jdk: '7'
+          - os: macos-latest
+            jdk: '11'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install dependencies on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install wine ant
+      - name: Install dependencies on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ant-optional lib32ncurses5 lib32z1 openjdk-6-jdk
+          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 76F1A20FF987672F
+          sudo add-apt-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ trusty main'
+          sudo apt-get update
+          sudo apt-get install -y --install-recommends winehq-stable
+      - name: Run diagnostics
+        run: ant -diagnostics
+      - name: Build project
+        run: ant all

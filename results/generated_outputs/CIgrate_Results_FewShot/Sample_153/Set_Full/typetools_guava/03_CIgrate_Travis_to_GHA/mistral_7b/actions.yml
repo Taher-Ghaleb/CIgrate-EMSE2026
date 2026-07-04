@@ -1,0 +1,48 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    - name: GITHUB_TOKEN
+      secure: ${{ secrets.GITHUB_TOKEN }}
+    - name: JAVA_8_TOKEN
+      secure: ${{ secrets.JAVA_8_TOKEN }}
+    - name: JAVA_11_TOKEN
+      secure: ${{ secrets.JAVA_11_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ROOT_POM: [pom.xml, android/pom.xml]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+        env:
+          JAVA_HOME: ${{ steps.setup-java.outputs.java-home-8 }}
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+        env:
+          JAVA_HOME: ${{ steps.setup-java.outputs.java-home-11 }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Install dependencies
+        run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f ${{ needs.get_root_pom.outputs.root_pom }} -Dmaven.javadoc.skip=true
+        id: get_root_pom
+        env

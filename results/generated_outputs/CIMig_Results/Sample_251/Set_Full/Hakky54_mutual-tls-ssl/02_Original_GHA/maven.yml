@@ -1,0 +1,87 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        java: [ '11', '17' ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: ${{ matrix.java }}
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build and test - Without Encryption
+        run: mvn clean install -Pwithout-authentication -P'!standalone-client' --no-transfer-progress
+
+      - name: Build and test - With one way authentication
+        run: mvn clean install -Pwith-one-way-authentication -P'!standalone-client' --no-transfer-progress
+
+      - name: Build and test - With two way authentication by trusting root ca
+        run: mvn clean install -Pwith-two-way-authentication-by-trusting-root-ca -P'!standalone-client' --no-transfer-progress
+
+      - name: Build and test - With two way authentication by trusting each other
+        run: mvn clean install -Pwith-two-way-authentication-by-trusting-each-other -P'!standalone-client' --no-transfer-progress
+
+  build-on-windows:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest ]
+        java: [ '11', '17' ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: ${{ matrix.java }}
+
+      - name: Build and test - Without Encryption
+        run: mvn clean install --no-transfer-progress
+
+  code-quality-scan:
+    if: ${{ (github.actor == 'Hakky54') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build, test and quality scan
+        run: mvn clean install sonar:sonar -Pwithout-authentication -P'!standalone-client' -Pjacoco -Dsonar.organization=hakky54 -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }} --no-transfer-progress
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

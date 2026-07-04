@@ -1,0 +1,22 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  chmod +x gradlew\n./gradlew assemble --no-daemon\n
+script:
+  script:
+    yarn run test
+    ./gradlew check --no-daemon
+name: placeholder_Name
+sonarcloud:
+  organization: powsybl-ci-github
+tags: TRUE
+include:
+  if: type in (pull_request, push)
+  stage: Build

@@ -1,0 +1,65 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  MAVEN_USERNAME: $MAVEN_USERNAME
+  MAVEN_PASSWORD: $MAVEN_PASSWORD
+  CODECOV_TOKEN: $CODECOV_TOKEN
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - ~/.sdkman
+
+branches:
+  only:
+    - main
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - if [[ ! -d $HOME/.sdkman/bin/ ]]; then
+    -   rm -rf $HOME/.sdkman
+    -   curl -sL https://get.sdkman.io | bash
+    -   echo "sdkman_auto_answer=true" > $HOME/.sdkman/etc/config
+    -   echo "sdkman_auto_selfupdate=true" >> $HOME/.sdkman/etc/config
+    - fi
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk version
+
+install:
+  - pip install codecov
+
+before_script:
+  - sudo dpkg --purge --force-depends ca-certificates-java || true
+  - sudo apt-get update
+  - sudo apt-get install -y ca-certificates-java
+  - sudo update-ca-certificates -f
+  - chmod +x gradlew
+
+script:
+  - source ./config_build.sh
+  - ./gradlew assemble -DexcludeBenchmark
+  - source ./config_build.sh
+  - ./run_tests.sh
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" = "develop" ]; then
+    - echo "Deploying artifacts to alternative repository (Bintray is shutdown)"
+    - echo "Configure alternative deployment"
+    - fi
+  - if [ "$TRAVIS_BRANCH" = "develop" ]; then
+    - ./gradlew buildDistributions -DexcludeBenchmark
+    - fi
+  - if [ "$TRAVIS_BRANCH" = "main" ] || [ "$TRAVIS_BRANCH" = "develop" ]; then
+    - codecov
+    - fi
+
+deploy:
+  provider: script
+  script:
+    - zulip/github-actions-gitter@v1

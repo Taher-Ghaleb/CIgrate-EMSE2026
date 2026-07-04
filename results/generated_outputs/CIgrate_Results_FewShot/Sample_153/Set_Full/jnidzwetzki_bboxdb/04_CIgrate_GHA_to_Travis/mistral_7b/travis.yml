@@ -1,0 +1,33 @@
+language: java
+sudo: false
+jdk: openjdk8
+services:
+  zookeeper:
+    image: zookeeper:3.9
+    ports:
+      - 2181:2181
+    options:
+      - '--health-cmd "echo stat | nc localhost 2181"'
+      - '--health-interval 10s'
+      - '--health-timeout 5s'
+      - '--health-retries 5'
+
+script:
+  - actions/checkout@v4
+  - |
+    echo -n | openssl s_client -connect scan.coverity.com:443 | \
+    sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | \
+    sudo tee -a /etc/ssl/certs/ca-certificates.crt
+  - |
+    sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" conf/bboxdb.yaml
+    echo "#####################################################################"
+    cat conf/bboxdb.yaml
+    echo "#####################################################################"
+    mkdir -p /tmp/bboxdb/data
+  - mvn test
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: ${{ secrets.CODECOV_TOKEN }}
+      fail_ci_if_error: false

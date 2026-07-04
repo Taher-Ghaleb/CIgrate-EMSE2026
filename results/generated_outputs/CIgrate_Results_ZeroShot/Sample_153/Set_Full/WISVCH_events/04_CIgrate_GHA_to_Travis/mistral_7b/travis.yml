@@ -1,0 +1,50 @@
+language: java
+
+branches:
+  only:
+    - master
+
+deploy:
+  on:
+    tags: true
+
+services:
+  postgres:
+    image: postgres:13
+    env:
+      POSTGRES_USER: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 5432:5432
+    options: >-
+      --health-cmd="pg_isready -U postgres"
+      --health-interval=10s
+      --health-timeout=5s
+      --health-retries=5
+
+before_install:
+  - checkout
+
+install:
+  - name: Set up JDK 8
+    cache: gradle
+    env:
+      TRAVIS_BUILD_NUMBER: $TRAVIS_BUILD_NUMBER
+    script:
+      - |
+        wget https://download.java.net/java/GA/jdk8u281-b08/281/Jdk8u281-b08-linux-x64.tar.gz
+      - tar xzf Jdk8u281-b08-linux-x64.tar.gz
+      - mv jdk1.8.0_281 /usr/local/java
+      - echo 'export JAVA_HOME=/usr/local/java/jdk1.8.0_281' >> ~/.bashrc
+      - echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+      - source ~/.bashrc
+
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+
+script:
+  - ./cc-test-reporter before-build
+  - psql -c 'create database events;' -U postgres -h 127.0.0.1
+  - chmod +x gradlew
+  - ./gradlew clean build

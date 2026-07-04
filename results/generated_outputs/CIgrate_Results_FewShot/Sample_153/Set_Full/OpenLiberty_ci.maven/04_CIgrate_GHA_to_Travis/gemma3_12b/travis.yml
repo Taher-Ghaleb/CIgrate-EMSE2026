@@ -1,0 +1,38 @@
+language: java
+sudo: required
+timeout: 45
+
+install: true
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+env:
+  matrix:
+    - JAVA_VERSION: 8
+      RUNTIME: ol
+      RUNTIME_VERSION: 19.0.0.6
+    - JAVA_VERSION: 8
+      RUNTIME: wlp
+      RUNTIME_VERSION: 19.0.0.3
+    - JAVA_VERSION: 11
+      RUNTIME: ol
+      RUNTIME_VERSION: 19.0.0.6
+    - JAVA_VERSION: 11
+      RUNTIME: wlp
+      RUNTIME_VERSION: 19.0.0.3
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+before_install:
+  - echo "Deleting old .m2 artifacts..."
+  - rm -rf $HOME/.m2/repository/net/wasdev
+  - rm -rf $HOME/.m2/repository/io/openliberty
+
+script:
+  - mvn verify -Ponline-its -Dinvoker.streamLogs=true \
+    -Druntime=${RUNTIME} \
+    -DruntimeVersion=${RUNTIME_VERSION}

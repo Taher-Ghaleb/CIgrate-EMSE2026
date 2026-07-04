@@ -1,0 +1,15 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: SNAPSHOT
+before_install:
+  chmod +x gradlew
+script:
+  script:
+    ./gradlew -q --console plain dependencyInfo
+include:
+  stage: Unit Tests
+all_branches: TRUE

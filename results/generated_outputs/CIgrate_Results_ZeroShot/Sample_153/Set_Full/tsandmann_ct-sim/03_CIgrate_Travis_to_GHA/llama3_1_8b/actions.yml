@@ -1,0 +1,52 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+  pull_request:
+    branches:
+      -'main'
+      - 'feature/*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Oracle Java 8
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/oracle-jdk8
+          key: ${{ runner.os }}-oracle-jdk8-${{ hashFiles('oracle-jdk8-installer*.jar') }}
+          restore-keys: oracle-jdk8-installer*.jar
+      - name: Install Oracle Java 7
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/oracle-jdk7
+          key: ${{ runner.os }}-oracle-jdk7-${{ hashFiles('oracle-jdk7-installer*.jar') }}
+          restore-keys: oracle-jdk7-installer*.jar
+      - name: Install OpenJDK 6
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/openjdk6
+          key: ${{ runner.os }}-openjdk6-${{ hashFiles('openjdk-6*.jar') }}
+          restore-keys: openjdk-6*.jar
+      - name: Install Oracle Java 8
+        run: |
+          apt-get update
+          apt-get install -y oracle-java8-installer
+      - name: Build and deploy
+        run: ant -f make-jar.xml

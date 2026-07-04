@@ -1,0 +1,14 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      run: mvn clean install -Ppedantic
+

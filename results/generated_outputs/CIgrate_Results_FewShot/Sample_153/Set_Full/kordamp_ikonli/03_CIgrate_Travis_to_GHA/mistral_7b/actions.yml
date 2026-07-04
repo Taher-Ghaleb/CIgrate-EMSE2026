@@ -1,0 +1,44 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  TERM: dumb
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk11
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: openjdk11
+      - name: Start Xvfb
+        run: |
+          export DISPLAY=:99.0
+          sh -e /etc/init.d/xvfb start
+      - name: Clean up Gradle caches
+        run: rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+      - name: Check Gradle version
+        run: ./gradlew --version
+      - name: Build
+        run: ./gradlew clean build --console=plain -S --scan
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Cache SonarQube
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.sonar/cache/
+          key: ${{ runner.os }}-sonar-${{ hashFiles('**/pom.xml') }}

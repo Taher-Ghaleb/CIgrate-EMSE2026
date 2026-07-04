@@ -1,0 +1,15 @@
+language: java
+jdk:
+- oraclejdk8
+install: true
+script:
+  - ./gradlew build
+deploy:
+  provider: releases
+  api_key:
+    secure: "********************"
+  file: build/libs/NVCLAnalyticalServices-1.0.0.jar
+  skip_cleanup: true
+  on:
+    repo: AuScope/NVCLAnalyticalServices
+    tags: true

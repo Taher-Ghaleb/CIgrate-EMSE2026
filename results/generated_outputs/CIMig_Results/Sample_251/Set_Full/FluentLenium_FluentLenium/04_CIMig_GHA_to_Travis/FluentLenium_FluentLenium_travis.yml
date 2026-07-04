@@ -1,0 +1,23 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: develop
+before_install:
+  java -version
+  mvn -Pjava11 clean verify jacoco:report --file pom.xml\nmvn -Pjava11 -DrepoToken=$REPO_TOKEN coveralls:report --file pom.xml\n
+  chmod +x examples/quickstart-firefox/gradlew\nchmod +x examples/quickstart-firefox/gradle/wrapper/gradle-wrapper.jar\ncd examples/quickstart-firefox\n./gradlew test build -x test      \n
+script:
+  script:
+    cd examples/spring && mvn clean test -DbrowserName=ie -Dmobile.simulator=false -DuseHub=true -DgridUrl=$BROWSERSTACK_GRID_URL
+    mvn -Pexamples,java11 clean compile
+stage:
+  ☕ 11
+  tests
+include:
+  env: olc_path=ruby
+apt:
+  packages: jdk-8-jdk

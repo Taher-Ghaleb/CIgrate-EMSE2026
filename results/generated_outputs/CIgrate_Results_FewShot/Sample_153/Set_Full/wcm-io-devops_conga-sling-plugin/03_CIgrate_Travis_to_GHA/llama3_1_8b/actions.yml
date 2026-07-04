@@ -1,0 +1,39 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Maven
+        run: mvn -s./.travis.maven-settings.xml clean
+      - name: Install dependencies
+        run: |
+          mvn -s./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install
+          mvn -s./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install -f example
+      - name: Clean up Maven cache
+        run: rm -rf $HOME/.m2/repository/io/wcm
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('.travis.maven-settings.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+```
+
+Note that I've used the `actions/cache` action to cache the Maven repository, and I've also used the `hashFiles` function to generate a unique key for the cache. Additionally, I've removed the `branches` section as it's not necessary in GitHub Actions, and I've kept the `after_success` step to upload the coverage to Codecov.

@@ -1,0 +1,15 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+  - 'maven'
+matrix:
+  allow_failures:
+    - openjdk11
+script:
+  - mvn clean install

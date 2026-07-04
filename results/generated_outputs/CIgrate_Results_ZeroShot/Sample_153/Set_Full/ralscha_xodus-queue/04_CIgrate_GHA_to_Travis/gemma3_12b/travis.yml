@@ -1,0 +1,23 @@
+language: java
+jdk: 8
+env:
+  global:
+    - SONATYPE_USERNAME: ralscha23
+    - secure: ${SONATYPE_PASSWORD} # Assume SONATYPE_PASSWORD is configured in Travis CI settings
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.m2
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+script:
+  - mvn install
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+      python addsettings.py
+      mvn clean deploy -DskipTests=true --settings ~/.m2/mySettings.xml
+    fi

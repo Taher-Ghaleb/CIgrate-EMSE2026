@@ -1,0 +1,30 @@
+language: java
+jdk:
+  - oraclejdk8
+env:
+  - SECRET_1=********************
+  - SECRET_2=********************
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.cache/firebase
+before_install:
+  - openssl aes-256-cbc -K $encrypted_7d07226627da_key -iv $encrypted_7d07226627da_iv -in firebase/firebase-sdk-key.json.enc -out firebase/firebase-sdk-key.json -d
+  - curl -sL https://firebase.tools | bash
+install:
+  - firebase emulators:exec --only auth --project turma-de-elite-app './gradlew test'
+script:
+  - echo "CI passed!"
+deploy:
+  provider: heroku
+  user: turmadelite
+  app: turmadelite-app
+  on:
+    branch: release
+    jdk: oraclejdk8
+  api_key:
+    secure: "********************"

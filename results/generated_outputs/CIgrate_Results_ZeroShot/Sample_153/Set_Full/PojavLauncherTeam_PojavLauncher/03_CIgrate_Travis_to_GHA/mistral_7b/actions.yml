@@ -1,0 +1,53 @@
+name: PojavLauncher Android Build and Deploy
+
+on: [push]
+
+env:
+  global:
+    ANDROID_API_LEVEL: 26
+    ANDROID_BUILD_TOOLS_VERSION: 26.0.0
+    ANDROID_ABI: armeabi-v7a,x86,armeabiv7a
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      android:
+        image: android/sdkplatform27
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          distribution-version: 8
+
+      - name: Install Android SDK
+        run: |
+          yes | sdkmanager "platforms;android-${{ env.ANDROID_API_LEVEL }}"
+          yes | sdkmanager "build-tools;${{ env.ANDROID_BUILD_TOOLS_VERSION }}"
+          yes | sdkmanager "platforms;android-28"
+          yes | sdkmanager "build-tools;28.0.3"
+          yes | sdkmanager "licenses"
+          yes | sdkmanager "licenses;android-sdk-preview-license-52d11cd2"
+          yes | sdkmanager "licenses;android-sdk-license-.+"
+          yes | sdkmanager "licenses;google-gdk-license-.+"
+
+      - name: Setup Gradle
+        uses: actions/setup-node@v4
+        with:
+          node-version: 14
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ANDROID_ABI }}/.gradle/caches/
+          key: ${{ env.ANDROID_ABI }}-gradle-dependencies
+          restore-keys: |
+            ${{ env.ANDROID_ABI }}-grad

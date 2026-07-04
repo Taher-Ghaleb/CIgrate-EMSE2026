@@ -1,0 +1,52 @@
+language: bash
+sudo: required
+dist: xenial
+branches:
+  only:
+    - main
+    - /^release\/.*$/
+    - /^hotfix\/.*$/
+
+env:
+  matrix:
+    - FEDORA: [38, 39, 40]
+  global:
+    fail-fast: false
+
+services:
+  docker: experimental
+
+cache:
+  directories:
+    - docker/cache
+
+before_install:
+  - docker info
+  - docker --version
+
+install:
+  - echo "Skipping install step"
+
+script:
+  - docker pull registry.fedoraproject.org/fedora:${FEDORA}
+  - docker run \
+      --name=container \
+      --detach \
+      -i \
+      -v $(pwd):/root/jss \
+      registry.fedoraproject.org/fedora:${FEDORA}
+  - docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+  - docker exec container dnf copr -y enable @pki/10.6
+  - docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+  - docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+  - docker exec container rpm -Uvh /root/build/jss/RPMS/*
+
+after_success:
+  - echo "Build succeeded"
+
+after_failure:
+  - echo "Build failed"
+
+addons:
+  docker:
+    experimental: true

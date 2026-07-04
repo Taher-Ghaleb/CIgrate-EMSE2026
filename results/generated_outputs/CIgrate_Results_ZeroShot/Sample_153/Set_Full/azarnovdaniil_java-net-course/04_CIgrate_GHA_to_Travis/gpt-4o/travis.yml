@@ -1,0 +1,26 @@
+language: java
+jdk:
+  - openjdk11
+
+cache:
+  directories:
+    - $HOME/.m2
+
+services:
+  - docker
+
+before_install:
+  - docker-compose up -d
+  - until docker-compose exec -T service_name curl -s http://localhost:service_port; do sleep 1; done # Replace with actual service name and port
+
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - mvn clean package
+
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/

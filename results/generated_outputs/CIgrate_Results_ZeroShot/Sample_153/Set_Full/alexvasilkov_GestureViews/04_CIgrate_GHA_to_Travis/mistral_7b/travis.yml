@@ -1,0 +1,68 @@
+language: bash
+
+branches:
+  only:
+    - master
+
+services:
+  - docker
+  - docker-compose
+
+before_install:
+  - checkout
+
+install:
+  - actions/setup-java@v4:
+      distribution: 'temurin'
+      java-version: '11'
+
+  - android-actions/setup-android@v3:
+      api-level: 29
+      build-tools: 28.0.3
+
+cache:
+  directories:
+    - ~/.gradle/caches/
+    - ~/.gradle/wrapper/
+
+before_script:
+  - chmod +x ./gradlew
+
+script:
+  - ./gradlew assembleDebug checkstyle lintDebug --stacktrace
+
+  - if [ -f $HOME/.gradle/caches/modules-2/modules-2.lock ]; then
+      rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+      rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  fi
+
+deploy:
+  on:
+    tags: true
+
+  environment:
+    # Use GitHub Secrets instead of hardcoded values
+    SECRET_KEY_1: ${{ secrets.TRAVIS_SECRET_1 }}
+    SECRET_KEY_2: ${{ secrets.TRAVIS_SECRET_2 }}
+
+  script:
+    - checkout --depth 0
+
+    - actions/setup-java@v4:
+        distribution: 'temurin'
+        java-version: '11'
+
+    - android-actions/setup-android@v3:
+        api-level: 29
+        build-tools: 28.0.3
+
+    - cache:
+        directories:
+          - ~/.gradle/caches/
+          - ~/.gradle/wrapper/
+
+    - chmod +x ./gradlew
+
+    - ./gradlew publishSample --stacktrace
+
+    - if [ -f $HOME/.gradle/caches/modules-2/modules-2.lock ]; then

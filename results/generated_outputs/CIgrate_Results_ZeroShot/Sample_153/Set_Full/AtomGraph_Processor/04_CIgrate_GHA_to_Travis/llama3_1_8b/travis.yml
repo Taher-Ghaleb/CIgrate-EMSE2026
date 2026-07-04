@@ -1,0 +1,35 @@
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -qq raptor2-utils
+
+script:
+  - docker build -t atomgraph/processor.
+  - docker-compose up -d
+  - while! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8080 | grep "404" ; do sleep 1 ; done
+  - while! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8081 | grep "404" ; do sleep 1 ; done
+  - while! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8082 | grep "404" ; do sleep 1 ; done
+  - while! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8083 | grep "404" ; do sleep 1 ; done
+  - while! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8084 | grep "404" ; do sleep 1 ; done
+  - while! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8085 | grep "404" ; do sleep 1 ; done
+  - docker-compose down
+  - docker-compose rm -f
+
+deploy:
+  on:
+    branch: never
+  skip_cleanup: true
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on_success: always
+    on_failure: always
+```
+
+Note: The above configuration is a complete Travis CI configuration YAML file. It includes the necessary sections and keys as per the provided GitHub Actions workflow. The `deploy` section is set to `never` as per the provided configuration, but it's generally recommended to set it to a specific branch or tag. The `notifications` section is also set to send emails on success and failure, but you should replace `your_email@example.com` with your actual email address.

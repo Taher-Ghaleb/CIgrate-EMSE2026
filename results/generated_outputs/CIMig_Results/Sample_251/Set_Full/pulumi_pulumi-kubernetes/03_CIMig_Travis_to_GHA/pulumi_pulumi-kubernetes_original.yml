@@ -1,0 +1,30 @@
+matrix:
+  os:
+    windows-latest
+    ubuntu-latest
+  language: java
+
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+      uses: actions/setup-java@version
+    - name: build with maven-
+      uses: actions/checkout@version
+      run: go run build/make.go\ngo run build/make.go --install\n
+      with: java-version
+
+env:
+  snf4j_skip_test_logging: TRUE
+

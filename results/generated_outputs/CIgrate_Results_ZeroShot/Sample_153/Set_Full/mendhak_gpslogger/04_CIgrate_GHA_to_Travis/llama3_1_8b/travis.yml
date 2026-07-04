@@ -1,0 +1,82 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 11"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-11
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Android SDK components"
+  - apt-get update
+  - apt-get install -y openjdk-11-jdk-headless
+  - apt-get install -y android-sdk-platform-tools
+  - apt-get install -y android-sdk-build-tools
+  - apt-get install -y android-sdk-platform-30
+  - apt-get install -y android-sdk-extras
+  - apt-get install -y gradle
+
+before_script:
+  - echo "Setting up Gradle"
+  - gradle --version
+
+script:
+  - echo "Building debug unit tests"
+  -./gradlew assembleDebugUnitTest
+  - echo "Running unit tests"
+  -./gradlew testDebugUnitTest
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploying to staging"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "Deploying to staging on failure"
+
+deploy:
+  - provider: script
+    script: echo "Deploying to production"
+    on:
+      branch: master
+      tags: true
+
+notifications:
+  email:
+    on:
+      push:
+        branches: master
+      release:
+        tags: true
+
+matrix:
+  include:
+    - os: linux
+      java: temurin-11
+    - os: osx
+      java: temurin-11
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - android-sdk
+      - openjdk-11-jdk-headless
+      - android-sdk-platform-tools
+      - android-sdk-build-tools
+      - android-sdk-platform-30
+      - android-sdk-extras
+      - gradle
+
+branches:
+  only:
+    - master
+  except:
+    - develop

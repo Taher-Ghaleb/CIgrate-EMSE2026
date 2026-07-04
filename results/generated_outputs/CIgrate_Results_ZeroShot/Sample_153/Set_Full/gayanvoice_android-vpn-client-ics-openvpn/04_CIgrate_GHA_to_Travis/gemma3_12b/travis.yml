@@ -1,0 +1,66 @@
+language: java
+jdk: 11
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+    - /^fixup\/.*$/
+    - /^chore\/.*$/
+    - /^docs\/.*$/
+    - /^refactor\/.*$/
+    - /^test\/.*$/
+    - /^ci\/.*$/
+    - /^perf\/.*$/
+    - /^style\/.*$/
+    - /^tooling\/.*$/
+    - /^i18n\/.*$/
+    - /^packaging\/.*$/
+    - /^build\/.*$/
+    - /^dependency\/.*$/
+    - /^security\/.*$/
+    - /^upgrade\/.*$/
+    - /^internal\/.*$/
+    - /^experimental\/.*$/
+    - /^integration\/.*$/
+    - /^data\/.*$/
+    - /^api\/.*$/
+    - /^ui\/.*$/
+    - /^assets\/.*$/
+    - /^config\/.*$/
+    - /^localization\/.*$/
+    - /^performance\/.*$/
+    - /^accessibility\/.*$/
+    - /^optimization\/.*$/
+    - /^maintenance\/.*$/
+    - /^infrastructure\/.*$/
+    - /^monitoring\/.*$/
+    - /^security\/.*$/
+    - /^testing\/.*$/
+    - /^automation\/.*$/
+    - /^deployment\/.*$/
+    - /^operations\/.*$/
+    - /^support\/.*$/
+    - /^documentation\/.*$/
+    - /^reporting\/.*$/
+    - /^analytics\/.*$/
+    - /^machine-learning\/.*$/
+    - /^artificial-intelligence\/.*$/
+    - /^blockchain\/.*$/
+    - /^cloud\/.*$/
+    - /^mobile\/.*$/
+    - /^web\/.*$/
+    - /^desktop\/.*$/
+    - /^embedded\/.*$/
+    - /^iot\/.*$/
+    - /^virtual-reality\/.*$/
+    - /^augmented-reality\/.*$/
+    - /^game-development\/

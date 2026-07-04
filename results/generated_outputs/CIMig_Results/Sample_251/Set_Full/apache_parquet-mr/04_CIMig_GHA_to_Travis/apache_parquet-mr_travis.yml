@@ -1,0 +1,18 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn install --batch-mode -DskipTests=true -Dmaven.javadoc.skip=true -Dsource.skip=true -Djava.version=${{ matrix.java }}\n
+script:
+  script:
+    yarn run test
+    mvn verify --batch-mode javadoc:javadoc -Ptravis,$HADOOP_PROFILE\n
+sudo: FALSE
+include:
+  if: type in (pull_request, push)
+  name: openjdk java 11
+stage: verify

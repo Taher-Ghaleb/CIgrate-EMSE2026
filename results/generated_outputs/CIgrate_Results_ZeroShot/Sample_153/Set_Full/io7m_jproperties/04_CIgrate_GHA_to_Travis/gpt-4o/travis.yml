@@ -1,0 +1,39 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - main
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+services:
+  - docker
+
+before_install:
+  - git clone https://github.com/actions/checkout.git
+  - cd checkout
+  - git checkout v4
+  - cd ..
+
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f ./com.io7m.jproperties.core/target/site/jacoco/jacoco.xml || echo "Codecov did not collect coverage reports"
+
+notifications:
+  irc:
+    channels:
+      - "irc.libera.chat#io7m"
+    template:
+      - "[%{repository_slug}] Build %{result} - %{author}: %{commit_message} (%{commit})"
+      - "Details: %{build_url}"
+    use_notice: true
+    skip_join: true

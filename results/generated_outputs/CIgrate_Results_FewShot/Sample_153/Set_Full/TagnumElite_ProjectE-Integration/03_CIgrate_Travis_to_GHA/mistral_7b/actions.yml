@@ -1,0 +1,48 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['oraclejdk8']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: '8'
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Cache Minecraft dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/minecraft/
+          key: ${{ runner.os }}-minecraft-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Setup Gradle
+        uses: gradle/gradle@v3
+        with:
+          gradle-wrapper-download-url: https://services.gradle.org/distributions/gradle-6.7.1-all.zip
+      - name: Clean up Gradle caches
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+          rm -f $HOME/.gradle/caches/minecraft/deobfedDeps/providedDummy.jar
+          rm -f $HOME/.gradle/caches/minecraft/deobfedDeps/compileDummy.jar
+      - name: Chmod gradlew
+        run: chmod +x gradlew
+      - name: Setup workspace
+        run: ./gradlew setupCIWorkspace -S
+      - name: Build
+        run: ./

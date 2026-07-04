@@ -1,0 +1,59 @@
+language: java
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+script:
+  - checkout
+
+  - id: setup_jdk
+    script: |
+      case "${TRAVIS_OS_NAME}" in
+        linux)
+          if [ "${distribution}" == "zulu" ]; then
+            wget -q -O - https://dl.azure.com/openjdk/redhat/rpm/openjdk-8/x86_64/latest/openjdk-8-latest.rpm | sudo rpm -Uvh -
+            wget -q -O - https://dl.azure.com/openjdk/redhat/rpm/openjdk-9/x86_64/latest/openjdk-9-latest.rpm | sudo rpm -Uvh -
+          elif [ "${distribution}" == "temurin" ]; then
+            apt-get update
+            apt-get install -y openjdk-8-jdk openjdk-9-jdk
+          fi
+        esac
+
+  - id: setup_gradle
+    script: |
+      curl -sSL https://gradle.org/gradle-latest-bin.zip -o gradle-latest.zip
+      unzip gradle-latest.zip
+      mv gradle-${Gradle_VERSION} /usr/local/gradle
+      export GRADLE_HOME=/usr/local/gradle
+      export PATH=$GRADLE_HOME/bin:$PATH
+
+  - id: make_gradlew_executable
+    script: chmod +x gradlew
+
+  - id: check
+    script: ./gradlew check
+
+  - id: run_functional_tests
+    script: ./gradlew runFunctionalTest
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+
+env:
+  global:
+    GRADLE_VERSION:

@@ -1,0 +1,48 @@
+language: java
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - install: |
+      git config --global --add safe.directory '*'
+      git config --global core.autocrlf false
+      git config --global core.filemode false
+
+install:
+  - name: Set up JDK 11
+    cache: gradle
+    script: |
+      wget --quiet https://github.com/adoptium/temurin8-binaries/releases/download/jdk-11.0.15+9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.15_9.tar.gz
+      tar -xzf OpenJDK11U-jdk_x64_linux_hotspot_11.0.15_9.tar.gz -C /usr/local
+      export JAVA_HOME=/usr/local/OpenJDK11U
+      export PATH=$JAVA_HOME/bin:$PATH
+
+  - name: Setup Android SDK
+    script: |
+      wget https://dl.google.com/android/repository/sdk-tools-linux-4333796_latest.zip
+      unzip sdk-tools-linux-4333796_latest.zip
+      export ANDROID_HOME=$HOME/Android/Sdk
+      export PATH=$ANDROID_HOME/tools:$PATH
+      sdkmanager --licenses
+
+  - name: Install Android SDK components
+    script: sdkmanager "platform-tools" "platforms;android-28" "build-tools;29.0.0"
+
+  - name: Make gradlew executable
+    script: chmod +x gradlew
+
+script:
+  - ./gradlew build
+
+deploy:
+  on:
+    tags: true
+  script: |
+    # TODO: Add deploy script

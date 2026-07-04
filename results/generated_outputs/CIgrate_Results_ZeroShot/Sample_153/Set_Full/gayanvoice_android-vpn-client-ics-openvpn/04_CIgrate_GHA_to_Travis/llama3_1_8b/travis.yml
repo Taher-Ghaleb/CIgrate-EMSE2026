@@ -1,0 +1,68 @@
+language: java
+
+before_install:
+  - echo "Installing JDK 11"
+  - apt-get update && apt-get install -y openjdk-11-jdk-headless
+  - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Android SDK"
+  - apt-get update && apt-get install -y curl
+  - curl -sL https://dl-ssl.google.com/android/repository/sdk-tools-linux-4857915.zip -o sdk-tools.zip
+  - unzip sdk-tools.zip
+  - export ANDROID_HOME=$HOME/android-sdk
+  - export PATH=$ANDROID_HOME/tools:$PATH
+  - export PATH=$ANDROID_HOME/platform-tools:$PATH
+
+before_script:
+  - echo "Setting up Android SDK components"
+  -./tools/bin/sdkmanager --install "platform-tools" "platforms;android-28" "build-tools;29.0.0"
+
+script:
+  - echo "Building with Gradle"
+  -./gradlew build
+
+after_success:
+  - echo "Deploying to production"
+  - # TODO: Add deployment script here
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - # TODO: Add deployment script here
+
+deploy:
+  on:
+    tags: true
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - os: ubuntu-latest
+      dist: xenial
+      java: oracle-java8
+    - os: osx
+      dist: xcode10.2
+      java: oracle-java8
+    - os: windows
+      dist: windows2016
+      java: oracle-java8
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on:
+      push:
+        branches:
+          only:
+            - master
+          except:
+            - dev
+      pull_request:
+        branches:
+          only:
+            - master
+          except:
+            - dev

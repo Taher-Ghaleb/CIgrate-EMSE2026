@@ -1,0 +1,30 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+      with:
+        java-version:
+          ${{ matrix.java }}
+          1.8
+        check-latest: TRUE
+      env:
+        snf4j_skip_test_logging: TRUE
+        ci: TRUE
+      with: java-version
+      uses: actions/setup-java@version
+    - name: placeholder_Name
+      uses: actions/checkout@version
+      run:
+        ./check_reproducibility.sh
+        ./gradlew spotlessCheck
+

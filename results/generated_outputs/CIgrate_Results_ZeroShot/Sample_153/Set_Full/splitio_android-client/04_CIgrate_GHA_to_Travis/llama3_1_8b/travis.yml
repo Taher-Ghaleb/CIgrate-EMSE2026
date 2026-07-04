@@ -1,0 +1,92 @@
+language: java
+
+before_install:
+  - echo "Installing JDK 8"
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk
+  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Android SDK"
+  - apt-get update
+  - apt-get install -y curl
+  - curl -sL https://dl-ssl.google.com/android/repository/sdk-tools-linux-4559346.zip -o sdk-tools.zip
+  - unzip sdk-tools.zip
+  - export ANDROID_HOME=$(pwd)/sdk
+  - export PATH=$ANDROID_HOME/tools:$PATH
+  - export PATH=$ANDROID_HOME/platform-tools:$PATH
+
+before_script:
+  - echo "Setting up Android SDK"
+  - echo y | sdkmanager --licenses
+  - echo "Installing Android SDK components"
+  - sdkmanager "build-tools;29.0.2"
+  - sdkmanager "platforms;android-29"
+
+script:
+  - echo "Making gradlew executable"
+  - chmod +x project/gradlew
+  - echo "Running tests"
+  -./gradlew test
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: Add deployment script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: Add deployment script"
+
+deploy:
+  - echo "Deploying to production"
+  - echo "TODO: Add deployment script"
+
+matrix:
+  - java_version: "8"
+    android_version: "29"
+  - java_version: "11"
+    android_version: "30"
+
+services:
+  - docker
+
+addons:
+  - travis-cron
+
+branches:
+  only:
+    - main
+    - dev
+
+notifications:
+  email:
+    on_success: true
+    on_failure: true
+    recipients:
+      - user@example.com
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+continue-on-error:
+  - true
+
+jdk:
+  - openjdk8
+
+git:
+  - 2.30.0
+
+notifications:
+  on_success:
+    email:
+      recipients:
+        - user@example.com
+  on_failure:
+    email:
+      recipients:
+        - user@example.com

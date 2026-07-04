@@ -1,0 +1,51 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  GRADLE_INTEGRATION_TEST_VERSIONS: '5.3,5.6'
+  PUBLISH_SONAR: true
+  GRADLE_INTEGRATION_TEST_VERSIONS_2: '6.0,6.6'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/modules-2/
+            ~/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Install Docker
+        uses: docker/setup-docker@v1
+      - name: Pull Docker images
+        run: |
+          docker pull alfresco/alfresco-content-repository-community:6.0.7-ga
+          docker pull tomcat:7-jre8
+          docker pull hello-world
+          docker pull alpine:edge
+      - name: Run Gradle
+        run: |
+          GRADLE_ARGS="check -i -PintegrationTestGradleVersions=$GRADLE_INTEGRATION_TEST_VERSIONS";
+          if [[ "$PUBLISH_SONAR" == "true" && "$GITHUB_TOKEN" == "ghp_*" ]]; then
+            GRADLE_ARGS="${GRADLE_ARGS} sonarqube -Dsonar.projectKey=xenit-eu_alfresco-docker-gradle-plugin -Dsonar.organization=xenit-eu -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN"
+          fi;
+         ./gradlew $GRADLE_ARGS
+```
+
+Note that I've made the following changes:
+
+* Replaced `language: java` with `runs-on: ubuntu-latest` to specify the runner.
+* Replaced `git: depth: false` with `fetch-depth: 0` to disable shallow cloning.
+* Replaced `addons: apt: packages` with `uses: docker/setup-docker@v1` to install Docker.
+* Replaced `services: - docker` with `uses: docker/setup

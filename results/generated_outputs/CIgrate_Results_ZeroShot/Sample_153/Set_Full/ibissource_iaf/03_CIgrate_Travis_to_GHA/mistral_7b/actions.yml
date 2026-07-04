@@ -1,0 +1,57 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      IBM_API_KEY: ${{ secrets.IBM_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Install Maven
+        run: apt-get update && apt-get install -y maven
+
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Install and Run Tests
+        run: mvn install -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+
+      - name: Upload Code Coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: '**/*.java'
+          branch: ${{ github.ref }}
+
+      - name: Notify via Email
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const core = require('@actions/core');
+            const github = require('@actions/github');
+            try {
+              const octokit = github.rest.rest();
+              const recipients = [
+                'travis-j@ibissource.org',
+                'travis-j2@ibissource.org',
+                'travis-n@ibissource.org',

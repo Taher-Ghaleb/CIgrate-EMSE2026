@@ -1,0 +1,14 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  mvn --batch-mode --update-snapshots verify
+script
+stage: ☕ 11
+directories: ~/.maven-

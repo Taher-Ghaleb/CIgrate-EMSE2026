@@ -1,0 +1,53 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+before_install:
+  - install: $FOO
+
+script:
+  - checkout
+
+  - install:
+      name: Set up JDK 8
+      command: |
+        curl -sSL https://get.temurin.io/temurin/8 | tar xz
+        mv temurin-8 /usr/local/java
+        export JAVA_HOME=/usr/local/java/temurin-8
+        export PATH=$JAVA_HOME/bin:$PATH
+
+  - run: mvn verify javadoc:javadoc -Pcoverage
+
+  - name: Upload coverage to Coveralls
+    command: |
+      curl -s -X POST -H "Content-Type: multipart/form-data" -F "file=@target/site/jacoco/jacoco.xml" -F "service_name=<your_coveralls_service_name>" -F "token=<your_coveralls_token>" https://coveralls.io/api/v1/jobs
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_script:
+  - if [ -f ~/.java_home ]; then export JAVA_HOME=$(cat ~/.java_home); fi
+
+after_success:
+  - run: |
+      if [ -f ~/.java_home ]; then rm ~/.java_home; fi
+      if [ -d ~/.m2/repository ]; then rm -rf ~/.m2/repository; fi
+      if [ -d ~/.gradle ]; then rm -rf ~/.gradle; fi
+      if [ -d $HOME/.npm ]; then rm -rf $HOME/.npm; fi
+
+after_failure:
+  - run: |
+      if [ -f ~/.java_home ]; then rm ~/.java_home; fi
+      if [ -d ~/.m2/repository ]; then rm -rf

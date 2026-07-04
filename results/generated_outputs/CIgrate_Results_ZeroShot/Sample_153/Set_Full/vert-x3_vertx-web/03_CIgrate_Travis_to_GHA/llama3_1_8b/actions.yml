@@ -1,0 +1,67 @@
+name: Java CI/CD
+
+on:
+  push:
+    branches:
+      - master
+      - '^\d+\.\d+$'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk8
+          - openjdk11
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+      - name: Install dependencies
+        run: mvn -q clean verify -B
+      - name: Apollo Link tests
+        if: type!= pull_request
+        run: |
+          cd vertx-web-graphql
+          mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer -Dexec.classpathScope=test > ${GITHUB_WORKSPACE}/ApolloTestsServer.log 2>&1 &
+          echo $! > ${GITHUB_WORKSPACE}/ApolloTestsServer.pid
+          ( tail -f ${GITHUB_WORKSPACE}/ApolloTestsServer.log & ) | grep -q "Apollo tests server started"
+      - name: Run Apollo tests
+        run: |
+          cd tests/apollo
+          npm install
+          npm run test
+      - name: Clean up
+        run: |
+          cat ${GITHUB_WORKSPACE}/ApolloTestsServer.pid | xargs kill -9
+  deploy:
+    runs-on: ubuntu-latest
+    if: type!= pull_request AND env(SONATYPE_NEXUS_USERNAME) IS present
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Deploy to Sonatype's snapshots repository
+        run: bash.github/workflows/deploy.artifacts.sh
+
+env:
+  GITHUB_WORKSPACE: ${{ github.workspace }}
+  SONATYPE_NEXUS_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
+  SONATYPE_NEXUS_PASSWORD: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
+
+cache:
+  key: ${{ runner.toolcache-version }}
+  paths:
+    - ${{

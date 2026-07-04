@@ -1,0 +1,20 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DIST: trusty
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Build and Test
+        run: |
+          cd sshd-shell-spring-boot-starter
+          mvn jacoco:report coveralls:report

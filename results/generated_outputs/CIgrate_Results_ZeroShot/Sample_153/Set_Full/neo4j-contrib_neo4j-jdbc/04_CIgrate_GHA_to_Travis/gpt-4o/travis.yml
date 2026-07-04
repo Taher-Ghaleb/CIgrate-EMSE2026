@@ -1,0 +1,29 @@
+language: java
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+services:
+  # TODO: Add any services if needed
+
+before_install:
+  - echo "Setting up environment"
+
+install:
+  - echo "Installing dependencies"
+
+script:
+  - mvn clean test
+
+# TODO: Uncomment and configure if performance tests are needed
+# after_success:
+#   - mvn clean test -Pperformance-test
+
+# TODO: Add deploy section if needed

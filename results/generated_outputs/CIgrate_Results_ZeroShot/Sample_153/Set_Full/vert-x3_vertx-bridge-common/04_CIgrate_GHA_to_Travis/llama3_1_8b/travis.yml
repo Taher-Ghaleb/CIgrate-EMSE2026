@@ -1,0 +1,81 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+install:
+  - mvn -version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - echo "Building and verifying"
+  - mvn -q clean verify -B
+
+after_success:
+  - echo "Deploying to Sonatype snapshots"
+  - chmod +x.travis.deploy.artifacts.sh
+  - bash.travis.deploy.artifacts.sh
+
+deploy:
+  on:
+    tags: true
+  environment:
+    name: deploy
+    matrix:
+      - JDK_VERSION=8
+      - JDK_VERSION=11
+  before_deploy:
+    - echo "Setting up JDK $JDK_VERSION"
+    - export JAVA_HOME=/usr/lib/jvm/temurin-$JDK_VERSION
+    - export PATH=$JAVA_HOME/bin:$PATH
+  deploy:
+    provider: script
+    script:
+      - echo "Deploying to Sonatype snapshots"
+      - chmod +x.travis.deploy.artifacts.sh
+      - bash.travis.deploy.artifacts.sh
+    on:
+      branch: master
+      tags: true
+    environment:
+      JDK_VERSION: $JDK_VERSION
+
+matrix:
+  include:
+    - JDK_VERSION=8
+    - JDK_VERSION=11
+  allow_failures:
+    - JDK_VERSION=11
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+    recipients:
+      - your_email@example.com
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - "ppa:openjdk/ppa"
+    packages:
+      - openjdk-8-jdk
+      - openjdk-11-jdk
+```
+
+Note: The above configuration is a complete Travis CI configuration that maintains the same semantics as the original GitHub Actions workflow. It includes the necessary lifecycle keys, environment variables, caches, services, and notifications. The `matrix` section is used to specify the different JDK versions to be tested, and the `deploy` section is used to deploy the artifacts to Sonatype snapshots.

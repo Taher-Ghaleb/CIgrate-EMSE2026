@@ -1,0 +1,15 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+
+sudo: false
+install:
+  - gradle
+
+script:
+  - chmod +x gradlew
+  - ./gradlew build integrationTest
+```
+
+This Travis CI configuration maintains the semantics of the GitHub Actions workflow, including the use of multiple JDK versions, the setup of Gradle, making `gradlew` executable, and running the integration tests. The `fail-fast` property from the GitHub Actions workflow is not directly supported in Travis CI, so it has been omitted. Instead, you can achieve similar behavior by using the `matrix.allow_failures` property in the Travis CI configuration. However, since the provided GitHub Actions workflow does not use `matrix.allow_failures`, it is not included in the migration.

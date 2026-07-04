@@ -1,0 +1,72 @@
+language: ubuntu
+
+branches:
+  only:
+    - '**'
+
+tags:
+  only:
+    - '**'
+
+deploy:
+  on:
+    types: [push, pull_request]
+
+matrix:
+  JDK:
+    - temurin/8
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+install:
+  - name: Set up JDK
+    uses: actions/setup-java@v4
+    with:
+      distribution: ${{ matrix.JDK }}
+      cache: maven
+
+script:
+  - mvn package -DskipTests=true
+
+env:
+  SECRET_1: $SECRET_1
+  SECRET_2: $SECRET_2
+  SECRET_3: $SECRET_3
+  SECRET_4: $SECRET_4
+  SECRET_5: $SECRET_5
+
+before_deploy:
+  - if: $GITHUB_EVENT_NAME == 'push' && $GITHUB_REF == 'refs/heads/master'
+    - name: Deploy to Maven repository
+      run: mvn --settings .travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+      env:
+        SECRET_1: $SECRET_1
+        SECRET_2: $SECRET_2
+        SECRET_3: $SECRET_3
+        SECRET_4: $SECRET_4
+        SECRET_5: $SECRET_5
+
+deploy:
+  on:
+    types: [push]
+    tags: true
+
+  permissions:
+    contents: write
+
+  before_install:
+    - install: actions/checkout@v4
+
+  install:
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: ${{ matrix.JDK }}
+        cache: maven
+
+  script:
+    - mvn package -Dskip

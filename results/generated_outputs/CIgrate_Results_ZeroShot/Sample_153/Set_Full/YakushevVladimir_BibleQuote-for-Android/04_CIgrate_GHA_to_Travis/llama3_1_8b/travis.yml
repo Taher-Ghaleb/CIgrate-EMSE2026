@@ -1,0 +1,42 @@
+language: java
+
+before_install:
+  - echo "Installing JDK 8"
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk-headless
+  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Android SDK"
+  - apt-get update
+  - apt-get install -y curl
+  - curl -sL https://dl-ssl.google.com/android/repository/tools_r30.0.3-linux.zip -o tools.zip
+  - unzip tools.zip -d tools
+  - export PATH=$PATH:tools
+  - echo "Installing platform tools"
+  - curl -sL https://dl-ssl.google.com/android/repository/platform-tools_r30.0.3-linux.zip -o platform-tools.zip
+  - unzip platform-tools.zip -d platform-tools
+  - export PATH=$PATH:platform-tools
+  - echo "Installing build tools"
+  - curl -sL https://dl-ssl.google.com/android/repository/build-tools_r30.0.3-linux.zip -o build-tools.zip
+  - unzip build-tools.zip -d build-tools
+  - export PATH=$PATH:build-tools
+  - echo "Installing m2repository"
+  - curl -sL https://dl-ssl.google.com/android/repository/extras-android-m2repository_r30.0.3-linux.zip -o extras-android-m2repository.zip
+  - unzip extras-android-m2repository.zip -d extras-android-m2repository
+  - export PATH=$PATH:extras-android-m2repository
+  - echo "Installing google m2repository"
+  - curl -sL https://dl-ssl.google.com/android/repository/extras-google-m2repository_r30.0.3-linux.zip -o extras-google-m2repository.zip
+  - unzip extras-google-m2repository.zip -d extras-google-m2repository
+  - export PATH=$PATH:extras-google-m2repository
+
+before_script:
+  - echo "Setting up gradle"
+  - curl -sL https://services.gradle.org/distributions/gradle-7.4.1-bin.zip -o gradle.zip
+  - unzip gradle.zip -d ~/.gradle
+  - export GRADLE_HOME=~/.gradle/gradle-7.4.1
+  - export PATH=$GRADLE_HOME/bin:$PATH
+
+script:
+  - echo "Building"

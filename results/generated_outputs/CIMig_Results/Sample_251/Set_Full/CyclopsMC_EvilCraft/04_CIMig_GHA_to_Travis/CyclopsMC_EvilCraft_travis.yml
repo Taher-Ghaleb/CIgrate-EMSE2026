@@ -1,0 +1,30 @@
+sudo: FALSE
+cache:
+  directories:
+    ~/.gradle
+    ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches:
+  except: /^release-.*$/
+before_install:
+  [ \"${travis_pull_request}\" != \"false\" ] || openssl aes-256-cbc -k $encrypted_0ea952e768bd_key -iv $encrypted_0ea952e768bd_iv -in keystore.jks.enc -out keystore.jks -d
+  java -version
+  echo \"RELEASE=true\" >> $GITHUB_ENV
+before_script:
+  jdk_switcher use $jdk
+script:
+  script:
+    yarn run test
+    ./gradlew curseforge -S
+deploy:
+  target-branch: gh-pages
+  github_token: $github_token
+all_branches: TRUE
+sonarcloud:
+  organization: powsybl-ci-github
+include:
+  stage: Build
+  if: type in (pull_request, push)

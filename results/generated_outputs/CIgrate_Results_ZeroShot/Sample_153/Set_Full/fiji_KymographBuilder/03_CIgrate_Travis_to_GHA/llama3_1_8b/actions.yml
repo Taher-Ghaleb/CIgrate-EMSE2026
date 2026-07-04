@@ -1,0 +1,69 @@
+name: Java Build and Deployment
+
+on:
+  push:
+    branches:
+      - master
+      - "/.*-[0-9]+\\..*/"
+  pull_request:
+    branches:
+      - master
+      - "/.*-[0-9]+\\..*/"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ~/.m2/repository/*
+      - name: Install Maven
+        run: |
+          apt-get update && apt-get install -y maven
+      - name: Build and deploy
+        run: |
+          mvn clean package
+          java -jar target/*.jar
+      - name: Deploy to production
+        uses: actions/deploy@v1
+        with:
+          deploy: production
+      - name: Send notification
+        uses: actions/notification@v1
+        with:
+          message: "Deployment successful"
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ~/.m2/repository/*
+      - name: Wait for deployment
+        run: |
+          sleep 10
+      - name: Verify deployment
+        run: |
+          curl http://localhost:8080
+    env:
+      - name: DB_PASSWORD
+        value: ${{ secrets.DB_PASSWORD }}
+      - name: DB_USERNAME
+        value: ${{ secrets.DB_USERNAME }}
+    allow-failures: true

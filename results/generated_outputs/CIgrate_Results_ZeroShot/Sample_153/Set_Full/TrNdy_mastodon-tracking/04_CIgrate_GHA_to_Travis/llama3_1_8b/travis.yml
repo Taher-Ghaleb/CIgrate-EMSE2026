@@ -1,0 +1,51 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - chmod +x build.sh
+  -./build.sh
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: Add deploy script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: Add deploy script"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: echo "TODO: Add deploy script"
+  skip_cleanup: true
+
+matrix:
+  include:
+    - java: '8'
+      cache:'maven'
+      services:
+        - docker-compose
+      addons:
+        - travis-encrypt
+      branch:'master'
+      tag: 'v1.0'
+      allow_failures: true
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com

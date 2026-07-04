@@ -1,0 +1,21 @@
+language: java
+jdk:
+  - oraclejdk8
+install:
+  - curl -o $HOME/.m2/settings.xml https://gist.githubusercontent.com/cryptobot/cf5fbd909c4782aaeeeb7c7f4a1a43da/raw/e60ee486e34ee0c79f89f947abe2c83b4290c6bb/settings.xml
+  - mvn dependency:go-offline -Pdependency-check,coverage,release
+script:
+  - mvn clean test jacoco:report verify -Dsurefire.useFile=false -Pcoverage
+after_success:
+  - curl -o ~/codacy-coverage-reporter-assembly-latest.jar https://oss.sonatype.org/service/local/repositories/releases/content/com/codacy/codacy-coverage-reporter/4.0.1/codacy-coverage-reporter-4.0.1-assembly.jar
+  - $JAVA_HOME/bin/java -jar ~/codacy-coverage-reporter-assembly-latest.jar report -l Java -r target/site/jacoco/jacoco.xml
+deploy:
+  provider: script
+  script: mvn clean versions:set -DnewVersion=$TRAVIS_TAG deploy -DskipTests -Prelease
+  skip_cleanup: true
+  on:
+    tags: true
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"

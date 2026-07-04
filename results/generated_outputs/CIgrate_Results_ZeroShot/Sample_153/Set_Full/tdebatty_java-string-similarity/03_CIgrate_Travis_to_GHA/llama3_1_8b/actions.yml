@@ -1,0 +1,46 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+      - 'feature/*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+          mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
+      - name: Run tests
+        run: |
+          mvn clean cobertura:cobertura coveralls:report
+      - name: Cache dependencies
+        uses: actions/cache@v4
+          at: cache
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies-*
+      - name: Deploy
+        run: |
+          # TODO: Add deploy logic here
+      - name: Send notification
+        run: |
+          # TODO: Add notification logic here

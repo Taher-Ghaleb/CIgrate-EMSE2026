@@ -1,0 +1,28 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        java-version: ${{ matrix.java }}
+      with: java-version
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run:
+        ./gradlew coveralls
+        pip install --user codecov\ncodecov\n
+    check-gradlewrapper:
+    - name: gradle-cmd
+
+macos:
+  jdk: oraclejdk8
+

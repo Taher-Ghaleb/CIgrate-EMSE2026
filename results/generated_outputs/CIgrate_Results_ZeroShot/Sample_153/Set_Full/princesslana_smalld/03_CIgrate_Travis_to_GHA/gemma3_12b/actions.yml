@@ -1,0 +1,42 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  SMALLD_VERSION: "${{ github.sha }}"
+  MAVEN_OPTS: "-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+          - oraclejdk9
+          - openjdk8
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - run: mvn -B verify
+
+  release:
+    if: github.ref =~ ^\d+\.\d+\.\d+$
+    runs-on: ubuntu-latest
+    env:
+      SMALLD_VERSION: $(git describe --dirty --tags)
+      MAVEN_OPTS: "-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: openjdk8
+      - run: mvn -s etc/settings.xml -B versions:set-property deploy -P release
+
+  # TODO: Sonarcloud integration - requires a separate action and configuration.

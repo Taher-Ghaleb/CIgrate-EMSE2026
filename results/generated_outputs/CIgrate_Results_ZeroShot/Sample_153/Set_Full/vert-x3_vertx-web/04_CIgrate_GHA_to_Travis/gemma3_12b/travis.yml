@@ -1,0 +1,60 @@
+language: java
+branches:
+  only:
+    - master
+    - /^[0-9]*\.[0-9]*$/
+install:
+  - echo "Installing dependencies..."
+  - mvn install -DskipTests=true -B
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+matrix:
+  include:
+    - language: java
+      jdk: 8
+      script:
+        - echo "Running tests with JDK 8..."
+        - mvn -q clean verify -B
+        - rm -rf $HOME/.m2/repository/io/vertx/
+    - language: java
+      jdk: 11
+      if: not github.event.pull_request
+      script:
+        - echo "Running tests with JDK 11..."
+        - mvn -q clean verify -B
+        - rm -rf $HOME/.m2/repository/io/vertx/
+    - language: java
+      jdk: 8
+      node: lts
+      script:
+        - echo "Starting Apollo tests server..."
+        - cd vertx-web-graphql
+        - mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer -Dexec.classpathScope=test > ${HOME}/ApolloTestsServer.log 2>&1 &
+        - echo $! > ${HOME}/ApolloTestsServer.pid
+        - ( tail -f ${HOME}/ApolloTestsServer.log & ) | grep -q "Apollo tests server started"
+        - echo "Running Apollo Link tests..."
+        - cd vertx-web-graphql/tests/apollo
+        - npm install
+        - npm run test
+      if_failure:
+        - echo "Server log on failure..."
+        - cat ${HOME}/ApolloTestsServer.log
+      always:
+        - echo "Stopping Apollo tests server..."
+        - cat ${HOME}/ApolloTestsServer.pid | xargs kill -9 || true
+        - rm -rf $HOME/.m2/repository/io/vertx/
+    - language: java
+      jdk: 8
+      if: not github.event.pull_request
+      needs: [apollo_link_tests]
+      script:
+        - echo "Preparing for deployment..."
+        - chmod +x .travis.deploy.artifacts.sh
+        - if [ ! -z ${SONATYPE_NEXUS_USERNAME} ]; then
+            echo "Deploying to Sonatype snapshots..."
+            bash .travis.deploy.artifacts.sh
+          fi
+        - rm -rf $HOME/.m2/repository/io/vertx/

@@ -1,0 +1,63 @@
+language: java
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - export CODECov_TOKEN=${{ env.CODECOV_TOKEN }}
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+script:
+  - checkout
+  - java -version
+  - mvn -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage install
+
+before_script:
+  - export JAVA_HOME=$({{ env.JAVA_HOME }} || java -XshowSettings:properties | grep property=java.home | sed -E 's/.*= (.*)$/\1/')
+
+env:
+  global:
+    - JAVA_HOME=$({{ env.JAVA_HOME }} || java -XshowSettings:properties | grep property=java.home | sed -E 's/.*= (.*)$/\1/')
+
+matrix:
+  java:
+    - openjdk8
+
+  maven:
+    - -Dmaven.test.skip=true
+    - -Dmaven.javadoc.skip=true
+
+install:
+  - actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+
+before_script:
+  - mvn -version
+
+script:
+  - mvn install -B -V -T1 ${MATRIX[java]} ${MATRIX[maven]}
+
+after_success:
+  - codecov/codecov-action@v4
+    with:
+      token: $CODECOV_TOKEN
+      fail_ci_if_error: false
+
+deploy:
+  on:
+    tags: true
+  script:
+    - # TODO: Add deployment script

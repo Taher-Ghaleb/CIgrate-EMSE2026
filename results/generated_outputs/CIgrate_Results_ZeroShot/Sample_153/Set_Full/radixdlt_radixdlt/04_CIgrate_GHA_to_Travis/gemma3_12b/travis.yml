@@ -1,0 +1,89 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  TEST_DURATION: 30s
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+before_install:
+  - echo "Before Install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before Script"
+
+script:
+  - ./gradlew assemble --info
+  - ./gradlew check jacocoTestReport sonarqube --info
+  - ./gradlew integrationTest --info
+
+after_success:
+  - echo "After Success"
+
+after_failure:
+  - echo "After Failure"
+
+jobs:
+  setup:
+    stage: setup
+    script:
+      - echo "Setup Stage"
+    before_install:
+      - echo "Setup Before Install"
+    install:
+      - echo "Setup Install"
+    before_script:
+      - echo "Setup Before Script"
+    script:
+      - ./gradlew assemble --info
+    after_success:
+      - echo "Setup After Success"
+    after_failure:
+      - echo "Setup After Failure"
+
+  check:
+    stage: check
+    dependencies:
+      - setup
+    script:
+      - echo "Check Stage"
+    before_install:
+      - echo "Check Before Install"
+    install:
+      - echo "Check Install"
+    before_script:
+      - echo "Check Before Script"
+    script:
+      - ./gradlew check jacocoTestReport sonarqube --info
+    after_success:
+      - echo "Check After Success"
+    after_failure:
+      - echo "Check After Failure"
+
+  integration:
+    stage: integration
+    dependencies:
+      - setup
+      - check
+    script:
+      - echo "Integration Stage"
+    before_install:
+      - echo "Integration Before Install"
+    install:
+      - echo "Integration Install"
+    before_script:
+      - echo "Integration Before Script"
+    script:
+      - ./gradlew integrationTest --info
+    after_success:
+      - echo "Integration After Success"
+    after_failure:
+      - echo "Integration After Failure"

@@ -1,0 +1,27 @@
+language: java
+jdk:
+  - oraclejdk8
+branches:
+  only:
+    - master
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+matrix:
+  allow_failures:
+    - db_profile: derby
+    - db_profile: mysql
+    - db_profile: postgresql
+script: mvn verify -P$DB_PROFILE
+deploy:
+  provider: script
+  script: mvn clean source:jar javadoc:javadoc deploy -DskipTests --settings travis_settings.xml
+  skip_cleanup: true
+  on:
+    repo: nhl/dflib
+    branch: master

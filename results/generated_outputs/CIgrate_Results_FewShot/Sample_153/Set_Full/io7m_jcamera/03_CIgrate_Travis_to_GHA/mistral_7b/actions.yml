@@ -1,0 +1,53 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  _JAVA_OPTIONS: "-Xms1G -Xmx4G"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['oraclejdk8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: 8
+      - name: Install Oracle Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: 8
+          url: https://download.oracle.com/otn-pub/java/jdk/8u275-b01/jdk-8u275-linux-x64.tar.gz
+          version: '8u275'
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y ${{ env.apt.packages }}
+      - name: Install Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: maven
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Install Maven dependencies
+        run: mvn dependency:resolve
+      - name: Build and verify
+        run: mvn clean verify
+      - name: Notify on success
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { WebClient } = require('@octokit/web-client');
+            const webClient = new WebClient({
+              log: {
+                level: 'silent

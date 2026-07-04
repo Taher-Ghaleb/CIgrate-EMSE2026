@@ -1,0 +1,56 @@
+name: Android Build
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      ANDROID_HOME: ${{ secrets.ANDROID_HOME }}
+      GRADLE_HOME: ${{ secrets.GRADLE_HOME }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Android
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Setup Gradle
+        uses: actions/setup-gradle@v2
+        with:
+          gradle-version: ${{ secrets.GRADLE_VERSION }}
+
+      - name: Setup Android SDK
+        uses: actions/setup-android@v2
+        with:
+          android-sdk-version: ${{ secrets.ANDROID_SDK_VERSION }}
+          android-sdk-components: platform-tools,tools,android-28,build-tools-28.0.3,extra-android-m2repository
+
+      - name: Setup Scripts
+        run: chmod +x gradlew
+
+      - name: Build
+        run: ./gradlew build
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ANDROID_HOME }}/gradle/caches
+          key: ${{ env.GRADLE_HOME }}-${{ hashFiles('**/gradle/caches') }}
+          restore-keys: |
+            ${{ env.GRADLE_HOME }}-${{ hashFiles('**/gradle/caches') }}-*
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-build
+          path: app/build/outputs/apk
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v3
+        if: startsWith(github.ref, 'refs/heads

@@ -1,0 +1,38 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JDBC_URL: ${{ secrets.JDBC_URL }}
+      JDBC_USER: ${{ secrets.JDBC_USER }}
+      JDBC_PASSWORD: ${{ secrets.JDBC_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+
+      - name: Checkout and Clean
+        run: cd Hogajama && mvn clean
+
+      - name: Install Maven
+        run: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+    continue-on-error: true

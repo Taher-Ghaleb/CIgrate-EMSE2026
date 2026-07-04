@@ -1,0 +1,63 @@
+name: Build and CodeCoverage
+
+on:
+  push:
+    branches: [branches-to-filter]
+  pull_request:
+    branches: [branches-to-filter]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    services:
+      - docker
+    strategy:
+      matrix:
+        os: [linux, windows]
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME }}
+      PATH: ${{ secrets.PATH }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Setup Maven
+        run: choco install maven -version 3.6.3
+        if: ${{ matrix.os } === 'windows' }
+
+      - name: Setup Maven cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven
+          restore-keys: |
+            ${{ runner.os }}-maven
+
+      - name: Install Maven
+        if: ${{ matrix.os } === 'linux' }
+        run: C:\\ProgramData\\chocolatey\\lib\\maven\\apache-maven-3.6.3\\bin\\mvn -version
+
+      - name: Setup script
+        run: |
+          export JAVA_HOME=${{ env.JAVA_HOME }}
+          export PATH=${{ env.PATH }}
+
+      - name: Build
+        run: |
+          set -e
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            powershell -C './gradlew.bat build -x test --stacktrace --console=plain --no-daemon'
+          else
+            ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon
+          fi
+
+      - name: Upload CodeCoverage
+        if: ${{ matrix.

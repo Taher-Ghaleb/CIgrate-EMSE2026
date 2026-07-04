@@ -1,0 +1,51 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    - APP_ROOT=$(pwd)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.APP_ROOT }}/.m2/repository
+            ${{ env.APP_ROOT }}/.m2/wrapper
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Clean and build Quarkus JDT extension
+        run: |
+          cd ${{ env.APP_ROOT }}/quarkus.jdt.ext && ./mvnw clean verify
+      - name: Clean and build Quarkus LS extension
+        run: |
+          cd ${{ env.APP_ROOT }}/quarkus.ls.ext/com.redhat.quarkus.ls && ./mvnw clean verify
+      - name: Notify via email
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const core = require('@actions/core');
+            const github = require('@actions/github');
+            try {
+              const octokit = github.rest.octokit({ auth: core.getInput('github-token') });
+              const pull_number = github.context.payload.pull_request?.number;
+              if (pull_number) {
+                octokit.issues.createComment({
+                  owner: github.context.repo.owner,

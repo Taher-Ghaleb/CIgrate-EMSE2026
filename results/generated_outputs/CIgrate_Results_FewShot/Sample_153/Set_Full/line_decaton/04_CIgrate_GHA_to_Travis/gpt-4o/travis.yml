@@ -1,0 +1,17 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+
+install: true
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew build integrationTest
+
+matrix:
+  allow_failures:
+    - jdk: openjdk8
+    - jdk: openjdk11

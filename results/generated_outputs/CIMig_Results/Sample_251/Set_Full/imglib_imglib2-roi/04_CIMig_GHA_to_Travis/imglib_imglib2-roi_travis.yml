@@ -1,0 +1,20 @@
+env: global
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    .travis/PATH-OR-URL
+directories: ~/.maven-
+include:
+  stage: build

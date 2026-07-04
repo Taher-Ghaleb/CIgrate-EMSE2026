@@ -1,0 +1,22 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Run tests and generate coverage
+        run: mvn cobertura:cobertura
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+```
+Note: The `after_success` section in Travis CI is equivalent to the `after_success` section in GitHub Actions, but in GitHub Actions, it's recommended to use the `after_script` section instead.

@@ -1,0 +1,44 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK_VERSIONS: oraclejdk8,oraclejdk7,openjdk7
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ${{ matrix.JDK_VERSIONS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Run Gradle check
+        run:./gradlew check
+      - name: Prepare for deployment
+        run:./gradlew assembleDist
+      - name: Deploy to releases
+        uses: softprops/action-gh-releases@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: false
+          files: build/distributions/ical4j-$RELEASE_VERSION.zip,build/distributions/ical4j-$RELEASE_VERSION.tar.gz
+          skip_cleanup: true
+      - name: Import Sonar certificate
+        run: |
+          sudo keytool -import -alias sonar -keystore $JAVA_HOME/jre/lib/security/cacerts -file sonar_cert.pem -storepass changeit -noprompt
+      - name: Run Sonar reports
+        if: $TRAVIS_PULL_REQUEST == false && $TRAVIS_REPO_SLUG == ical4j/ical4j-connector && $TRAVIS_BRANCH == master
+        run:./gradlew sonarqube
+```
+
+Note: The `RELEASE_VERSION` variable is not defined in the original Travis CI configuration, so I assumed it's a variable that should be set elsewhere in the workflow. If that's not the case, you'll need to define it or modify the workflow accordingly.

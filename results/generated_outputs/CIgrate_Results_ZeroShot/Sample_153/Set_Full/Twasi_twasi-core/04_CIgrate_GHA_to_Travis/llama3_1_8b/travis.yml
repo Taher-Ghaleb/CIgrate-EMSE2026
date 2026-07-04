@@ -1,0 +1,78 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - echo "Running tests and SonarQube analysis"
+  - export SONAR_TOKEN=$SONAR_TOKEN
+  - export SONAR_ORGANIZATION=twasi
+  - mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+
+after_success:
+  - echo "Deploying to production"
+  - mvn clean compile assembly:single deploy
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - mvn clean compile assembly:single deploy
+
+deploy:
+  on:
+    branch: dev
+    if: github.event_name == 'push'
+  environment:
+    name: dev
+    matrix:
+      - JDK_VERSION=8
+  cache:
+    directories:
+      - ~/.m2/repository
+      - ~/.gradle/*
+      - $HOME/.npm
+  services:
+    - docker
+  deploy:
+    provider: docker
+    skip_cleanup: true
+    on:
+      branch: dev
+      if: github.event_name == 'push'
+    environment:
+      name: dev
+    script:
+      - echo "Building and pushing Docker image"
+      - cp.travis.settings.xml $HOME/.m2/settings.xml
+      - mvn clean compile assembly:single docker:build -DpushImage
+    after_deploy:
+      - echo "Deploying to dev"
+      - sed -i "s/LIVE/${{ github.run_number }}/g" pom.xml
+      - cp.travis.settings.xml $HOME/.m2/settings.xml
+      - mvn clean compile assembly:single deploy
+
+notifications:
+  email:
+    on:
+      push:
+        branches:
+          - dev
+        branches-ignore:
+          - main
+      pull_request:
+        branches:
+          - dev
+    on-failure:
+      branches:
+        - dev
+    on-success:
+      branches:
+        - dev

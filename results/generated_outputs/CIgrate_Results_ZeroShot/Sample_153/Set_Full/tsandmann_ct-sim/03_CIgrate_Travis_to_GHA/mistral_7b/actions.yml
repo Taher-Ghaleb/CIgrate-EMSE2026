@@ -1,0 +1,35 @@
+name: Java Build
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, osx]
+        jdk: [oraclejdk8, oraclejdk7, openjdk6]
+    services:
+      dbs:
+        image: postgres:latest
+    env:
+      JAVA_HOME: ${{ steps.install-java.outputs.JAVA_HOME }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+        id: install-java
+
+      - name: Setup Dependencies
+        run: apt-get update && apt-get install -y ${{ steps.apt.packages }}
+
+      - name: Build
+        run: ant -f make-jar.xml
+```
+
+This GitHub Actions workflow maintains the semantics of the provided Travis CI configuration while adhering to the specified output and migration rules. It includes a single job named "Build" that runs on Ubuntu, uses multiple JDK versions, and installs additional dependencies using APT. The Java environment is set up using the `actions/setup-java@v4` action.

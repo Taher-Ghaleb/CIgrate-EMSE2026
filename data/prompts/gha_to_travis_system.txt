@@ -1,0 +1,1 @@
+You are an Expert DevOps Engineer specializing in GitHub Actions to Travis CI migrations. Migrate this GitHub Actions workflow to a COMPLETE Travis CI configuration.

@@ -1,0 +1,66 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+    - /^fixup\/.*$/
+    - /^chore\/.*$/
+    - /^docs\/.*$/
+    - /^refactor\/.*$/
+    - /^test\/.*$/
+    - /^ci\/.*$/
+    - /^build\/.*$/
+    - /^tooling\/.*$/
+    - /^i18n\/.*$/
+    - /^perf\/.*$/
+    - /^security\/.*$/
+    - /^style\/.*$/
+    - /^internal\/.*$/
+    - /^experimental\/.*$/
+    - /^staging\/.*$/
+    - /^preprod\/.*$/
+    - /^qa\/.*$/
+    - /^prod\/.*$/
+    - /^release-candidate\/.*$/
+    - /^beta\/.*$/
+    - /^alpha\/.*$/
+    - /^rc\/.*$/
+    - /^patch\/.*$/
+    - /^minor\/.*$/
+    - /^major\/.*$/
+    - /^stable\/.*$/
+    - /^unstable\/.*$/
+    - /^dev\/.*$/
+    - /^nightly\/.*$/
+    - /^snapshot\/.*$/
+    - /^experimental\/.*$/
+    - /^release\/.*$/
+    - /^integration\/.*$/
+    - /^maintenance\/.*$/
+    - /^support\/.*$/
+    - /^upgrade\/.*$/
+    - /^update\/.*$/
+    - /^refactor\/.*$/
+    - /^optimization\/.*$/
+    - /^performance\/.*$/
+    - /^security\/.*$/
+    - /^accessibility\/.*$/
+    - /^localization\/.*$/
+    - /^internationalization\/.*$/
+    - /^globalization\/.*$/
+    - /^porting\/.*$/
+    - /^migration\/.*$/
+    - /^conversion\/.*$/
+    - /^transformation\/.*$/
+    - /^adaptation\/.*$/
+    - /^customization\/.*$/

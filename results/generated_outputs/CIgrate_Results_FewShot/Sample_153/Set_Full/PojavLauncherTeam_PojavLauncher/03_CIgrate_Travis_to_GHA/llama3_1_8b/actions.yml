@@ -1,0 +1,58 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push]
+
+env:
+  ANDROID_API_LEVEL: 26
+  ANDROID_BUILD_TOOLS_VERSION: 26.0.0
+  ANDROID_ABI: armeabi-v7a
+  ANDROID_ABI_X86: x86
+  ANDROID_ABI_ARMEABI_V7A: armeabi-v7a
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: '8'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "tools"
+          sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION"
+          sdkmanager "platforms;android-$ANDROID_API_LEVEL"
+          sdkmanager "extra;android;m2repository"
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+      - name: Clean Gradle cache
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Make Gradle script executable
+        run: chmod +x gradlew
+      - name: Run build and tests
+        run:./gradlew clean build test
+      - name: Deploy APK
+        uses: softprops/action-release@v1
+        with:
+          api-key: $GITHUB_API_KEY
+          file: $GITHUB_WORKSPACE/app/build/outputs/apk/debug/app-debug.apk
+          skip_cleanup: true
+          name: PojavLauncher_DevBuild-$GITHUB_SHA
+          body: Automatic build of PojavLauncher from the latest source commit ($GITHUB_SHA) built by GitHub Actions on $(date +'%F %T %Z').
+          prerelease: true
+          overwrite: true

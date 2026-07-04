@@ -1,0 +1,59 @@
+language: java
+jdk:
+  - openjdk17
+
+services:
+  - docker
+
+addons:
+  apt:
+    packages:
+      - chromium-browser
+  firefox: latest
+
+env:
+  global:
+    - secure: $ENCRYPTED_7051AC01CF89_KEY
+    - secure: $ENCRYPTED_7051AC01CF89_IV
+    - secure: $CODECOV_TOKEN
+    - secure: $DOCKER_PASSWORD
+    - secure: $DOCKER_LOGIN
+    - secure: $CONNECT_LINE
+    - secure: $UPDATE_COMMAND
+
+before_install:
+  - openssl aes-256-cbc -K $ENCRYPTED_7051AC01CF89_KEY -iv $ENCRYPTED_7051AC01CF89_IV -in ./.travis/id_rsa.enc -out ~/.ssh/id_rsa -d
+  - chmod 600 ~/.ssh/id_rsa
+  - sudo apt-get update
+  - sudo apt-get install -y chromium-browser
+  - chmod +x mvnw
+  - cd docker
+  - docker-compose up -d
+  - cd ..
+  - rm -f ~/.m2/settings.xml
+
+install:
+  - npm install --prefix frontend
+
+script:
+  - java -version
+  - echo "JAVA_HOME: $JAVA_HOME"
+  - DATE_VERSION=$(date +%Y%m%d.%H.%M)
+  - ./mvnw -U -q -Drevision=$DATE_VERSION -P frontend -P jacoco -P docker -P webdriver-chrome -P webdriver-firefox -Dcustom.selenium.headless=true clean install
+  - ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN || true
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
+      echo "Pushing Docker image";
+      echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_LOGIN" --password-stdin;
+      docker push nkonev/blog:latest;
+      ssh -o "BatchMode yes" -o StrictHostKeyChecking=no -q $CONNECT_LINE "$UPDATE_COMMAND";
+    fi
+
+after_failure:
+  - cd docker
+  - docker-compose down
+  - cd ..
+  - rm -rf ~/.m2/repository/com/github/nkonev/blog
+  - rm -rf $TRAVIS_BUILD_DIR/frontend/node_modules/.cache

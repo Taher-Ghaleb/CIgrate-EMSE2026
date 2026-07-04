@@ -1,0 +1,25 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+      uses: actions/setup-java@version
+    - name: Placeholder
+      env:
+        github_token: ${{ github.token }}
+      uses: actions/checkout@version
+      with:
+        clean: TRUE
+      run: gradle-cmd
+
+macos:
+  jdk: openjdk8
+

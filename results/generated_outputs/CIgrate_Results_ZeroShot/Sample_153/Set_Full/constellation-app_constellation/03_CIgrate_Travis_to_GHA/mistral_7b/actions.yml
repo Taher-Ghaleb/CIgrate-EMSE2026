@@ -1,0 +1,65 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Cache .ivy2/cache
+        uses: actions/cache@v4
+        with:
+          key: ivy2-cache
+          path: ${{ runner.workspace }}/.ivy2/cache
+          restore-keys: |
+            ivydata-*.properties
+          actions: v2
+
+      - name: Remove .ivy2/cache
+        run: |
+          find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+
+      - name: Install dependencies
+        run: .travis/run-dependencies.sh
+
+      - name: Run tests
+        run: .travis/run-tests.sh
+
+      - name: SonarCloud
+        uses: sonarsource/sonarcloud-scanner-github-actions@2
+        with:
+          sonarcloud.login: ${{ secrets.SONAR_TOKEN }}
+          sonarcloud.projectKey: constellation-app
+          sonarcloud.projectName: constellation
+          sonarcloud.projectVersion: ${{ github.ref_name }}
+          sonarcloud.sources: .
+          sonarcloud.exclusions: '**/*.java'
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      API

@@ -1,0 +1,19 @@
+language: java
+jdk:
+  - openjdk11
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f ./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml || echo "Codecov upload failed"
+
+notifications:
+  irc:
+    channels:
+      - "irc.libera.chat#io7m"
+    template:
+      - "[%{repository_slug}] Build %{result} - %{author}: %{commit_message} (%{commit})"
+      - "Details: %{build_url}"
+    use_notice: true
+    skip_join: true

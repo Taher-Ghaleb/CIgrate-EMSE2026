@@ -1,0 +1,64 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - master-11
+  pull_request:
+    branches:
+      - master
+      - master-11
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      xvfb:
+        image: ubuntu:latest
+        ports:
+          - 99:99
+        env:
+          DISPLAY: :99.0
+        command: sh -e /etc/init.d/xvfb start
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: '12'
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install Maven
+      run: |
+        if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+          TAG_BRANCH=$(git ls-remote origin | sed -n "\|$TRAVIS_COMMIT\s\+refs/heads/|{s///p}")
+        fi
+        mvn install
+    - name: Build and package
+      run: mvn package -q
+    - name: Deploy to Bintray
+      uses: actions/checkout@v4
+      run: |
+        chmod +x.github/deploy_prepare.sh
+        chmod +x.github/deploy_bintray_central.sh
+       .github/deploy_prepare.sh
+       .github/deploy_bintray_central.sh
+    - name: Deploy to GitHub Releases
+      uses: actions/checkout@v4
+      run: |
+        api_key: $GITHUB_TOKEN
+        file_glob: true
+        file:
+          - javadoc.zip
+          - /**/target/*.jar
+        skip_cleanup: true
+        name: Release $TAG_BRANCH
+        body: See [CHANGELOG.md](https://github.com/$GITHUB_REPOSITORY/blob/$TAG_BRANCH/CHANGELOG.md)
+```
+Note: The `GITHUB_TOKEN` and `GITHUB_REPOSITORY` are environment variables that are automatically set by GitHub

@@ -1,0 +1,46 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['oraclejdk9']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: ${{ matrix.jdk }}
+      - name: Install Maven
+        uses: actions/setup-node@v4
+      - name: Install Maven
+        uses: actions/setup-maven@v3
+      - name: Build, test and generate coverage
+        run: mvn --errors clean verify site
+      - name: Upload coverage to Codecov
+        uses: actions/upload-artifact@v3
+        with:
+          name: jacoco-report
+          path: ./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml
+      - name: Notify on IRC
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const { context } = github;
+            const { chat } = require('@actions/core');
+            const IRC = require('irc');
+            const client = new IRC.Client(context.env.IRC_SERVER, context.env.IRC_CHANNEL, {
+              username: context.repo.owner,
+              password: context.env.IRC_PASSWORD,
+              realName: context.repo.name,
+            });
+            client.on('connected', () => {
+              client.say(context.repo.owner, `:${context.payload.head_ref_ref_name} ${context.payload.action} on ${context.repo.name}`);
+            });
+            client.on('error', (error) => {
+              chat.error(error);
+            });

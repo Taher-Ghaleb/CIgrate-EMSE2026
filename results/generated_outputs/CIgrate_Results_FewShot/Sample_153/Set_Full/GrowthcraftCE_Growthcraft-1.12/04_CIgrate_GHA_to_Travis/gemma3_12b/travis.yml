@@ -1,0 +1,55 @@
+language: java
+sudo: required
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '~/.sonar/cache'
+env:
+  global:
+    - ADB_INSTALL_TIMEOUT: 10
+  matrix:
+    - JAVA_VERSION: '8'
+    - SONAR_TOKEN: $SONAR_TOKEN
+    - SONAR_HOST_URL: https://sonarcloud.io
+    - SONAR_ORGANIZATION: growthcraftce
+branches:
+  only:
+    - master
+  except:
+    - /^(\d+)$/ # Ignore tag branches
+deploy:
+  provider: script
+  script:
+    - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+    -   ./gradlew build
+    -   ./gradlew build
+    -   ./gradlew sonarqube
+    -   ls -la build/libs
+    -   echo "Release build complete"
+    - fi
+  on:
+    tags: true
+jobs:
+  build:
+    script:
+      - chmod +x ./gradlew
+      - ./gradlew setupCIWorkspace -S
+      - ./gradlew build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    before_install:
+      - fetch-depth: 0 # SonarQube needs full history
+    install:
+      - echo "Setting up JDK 8"
+    before_script:
+      - echo "Before script"
+    after_success:
+      - echo "After success"
+  release:
+    if: startsWith(github.ref, 'refs/tags/') && github.repository == 'growthcraftce/REPO_NAME'
+    script:
+      - chmod +x ./gradlew
+      - ./gradlew build
+    before_install:
+      - echo "Setting up JDK 8"
+    after_success:
+      - echo "Release build complete"

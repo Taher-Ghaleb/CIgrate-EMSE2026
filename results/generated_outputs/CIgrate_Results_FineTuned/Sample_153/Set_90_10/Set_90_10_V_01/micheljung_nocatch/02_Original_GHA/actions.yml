@@ -1,0 +1,39 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TERM: dumb
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Build
+      run: ./gradlew test jacocoTestReport && ./gradlew coveralls bintrayUpload
+
+  coverity_scan:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/coverity_scan' || github.head_ref == 'coverity_scan'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Prepend build command
+      run: ./gradlew clean
+
+    - name: Coverity build
+      run: ./gradlew build

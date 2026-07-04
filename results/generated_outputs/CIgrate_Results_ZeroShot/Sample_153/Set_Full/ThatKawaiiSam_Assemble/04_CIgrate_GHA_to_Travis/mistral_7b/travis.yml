@@ -1,0 +1,33 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+  except:
+    - /^hotfix-/
+    - /^feature-/
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+before_install:
+  - install: actions/checkout@v2
+
+script:
+  - |
+    if [[ ${TRAVIS_PULL_REQUEST} == "false" ]]; then
+      export JAVA_HOME=$(which java)
+      export MAVEN_OPTS="-Xmx2048M -XX:MaxPermSize=512m"
+      export GIT_TERMINAL_PROMPPT_ENABLED=false
+      export GIT_TERMINAL_PROMPPT_ONLY=false
+      export GIT_TERMINAL_PROMPPT_USE_ALTERNATE_FG=true
+      export GIT_TERMINAL_PROMPPT_USE_COLOR=true
+      export GIT_TERMINAL_PROMPPT_COLOR_REGEX='\[\033\[32m\]\u\[\033\[m\]@\[\033\[36m\]\h\[\033\[m\] in \[\033\[33m\]\w\[\033\[m\]'
+      export GIT_TERMINAL_PROMPPT_FORMAT='%s'
+      export GIT_TERMINAL_PROMPPT_PREFIX='\[\033[1;32m\]\u@\[\033[1;36m\]\h\[\033[m\] \[\033[1;33m\]\w\[\033[m\] \[\033[1;34m\]\$(__git_ps1)\[\033[m\] '
+      export GIT_TERMINAL_PROMPPT_SUFFIX='\[\033[1;31m\]\$(__git_ps1)\[\033[m\] '
+      export GIT_TERMINAL_PROMPPT_USE_GIT_PS1=true
+      export GIT_TERMINAL

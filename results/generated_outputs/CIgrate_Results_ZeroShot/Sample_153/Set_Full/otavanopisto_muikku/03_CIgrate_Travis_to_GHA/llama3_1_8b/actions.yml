@@ -1,0 +1,47 @@
+name: Java Maven Deployment
+
+on:
+  push:
+    branches:
+      - devel
+  pull_request:
+    branches:
+      - devel
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      openshift:
+        image: openshift/origin
+        ports:
+          - 8080:8080
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y maven
+      - name: Build and deploy
+        run: |
+          mvn install
+          mvn package -f muikku/pom.xml -Popenshift
+          python travis-prepare-maven.py
+          mvn deploy --settings ~/.m2/mySettings.xml
+      - name: Deploy to OpenShift
+        uses: openshift/oc-deploy@v1
+          token: ${{ secrets.OPENSHIFT_TOKEN }}
+          url: https://oodev.io
+          app: muikku
+          namespace: default
+          config-file: muikku/pom.xml
+      - name: Verify deployment
+        run: echo 'Deployed'
+```
+
+Note: The migrated workflow uses the `ubuntu-latest` runner, which is a more modern and secure option than the `jdk` matrix in the original Travis CI configuration. The `services` section is used to run the OpenShift service, and the `actions/checkout@v4` action is used to checkout the code. The `setup-java@v4` action is used to set up Java, and the `install` step is used to install Maven. The `build-and-deploy` job is used to build and deploy the application to OpenShift. The `deploy` step uses the `openshift/oc-deploy@v1` action to deploy the application, and the `verify` step is used to verify that the deployment was successful.

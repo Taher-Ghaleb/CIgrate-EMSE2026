@@ -1,0 +1,51 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - master
+      - "/.*-[0-9]+\\..*/"
+  pull_request:
+    branches:
+      - master
+      - "/.*-[0-9]+\\..*/"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      oraclejdk8:
+        image: oracle/jdk8
+        ports:
+          - 8080:8080
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: oraclejdk8
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ~/.m2/repository/*
+      - name: Install dependencies
+        run: |
+          mvn dependency:resolve
+      - name: Build and test
+        run: |
+          mvn verify
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ~/.m2/repository/*
+      - name: Deploy
+        run: |
+          # TODO: Add deploy logic here
+      - name: Send notification
+        uses: actions/checkout@v4
+        run: |
+          # TODO: Add notification logic here

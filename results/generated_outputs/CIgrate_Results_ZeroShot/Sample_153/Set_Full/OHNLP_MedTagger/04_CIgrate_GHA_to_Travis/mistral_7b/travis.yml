@@ -1,0 +1,55 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - 'v[0-9]+.[0-9]+*'
+
+tags:
+  only: 'v*'
+
+pull_request:
+  branches: [ master ]
+
+env:
+  DEPLOY_KEY: $DEPLOY_KEY
+
+services:
+  - docker
+
+before_install:
+  - export DEPLOY_KEY=$DEPLOY_KEY
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_script:
+  - checkout --depth 0
+
+script:
+  - actions/setup-java@v4 -distribution temurin -java-version '8' -cache maven
+  - mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - ant dist
+
+on_success:
+  - run: |
+      if [ ! -f "MedTagger.zip" ]; then
+        echo "Error: MedTagger.zip not found"
+        exit 1
+      fi
+
+on_success:
+  - name: Create Release and Upload Asset
+    if: startsWith(github.ref, 'refs/tags/')
+    uses: softprops/action-gh-release@v2
+    with:
+      files: MedTagger.zip
+      fail_on_unmatched_files: true
+      draft: false
+      prerelease: false
+    env:
+      GITHUB_TOKEN: $GITHUB_TOKEN

@@ -1,0 +1,26 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  TEST_DIR: code/ingest
+
+script:
+  - actions/checkout@v4
+  - actions/setup-java@v4 -distribution:temurin -java-version:8
+  - gradle/actions/setup-gradle@v4 -cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
+  - run: |
+      if [ -e "$TEST_DIR/gradlew" ]; then
+        chmod +x "$TEST_DIR/gradlew"
+      elif [ -e ./gradlew ]; then
+        chmod +x ./gradlew
+      fi
+      cd $TEST_DIR
+      if [ -e ./gradlew ]; then
+        ./gradlew jacocoTestReport
+      else
+        gradle jacocoTestReport
+      fi
+
+after_success:
+  - codecov/codecov-action@v4 -token:${{ secrets.CODECOV_TOKEN }} -files:./${{ env.TEST_DIR }}/build/reports/jacoco/test/jacocoTestReport.xml -fail_ci_if_error:true -verbose:true

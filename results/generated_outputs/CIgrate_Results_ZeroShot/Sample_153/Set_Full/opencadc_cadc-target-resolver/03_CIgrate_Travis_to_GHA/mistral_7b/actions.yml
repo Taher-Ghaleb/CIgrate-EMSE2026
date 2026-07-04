@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  REGISTRY_HOST: ${{ secrets.REGISTRY_HOST }}
+  VERSION: ${{ github.ref_name }}
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    strategy:
+      matrix:
+        jdk:
+          - java-8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Update and install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker.io curl
+          rm /usr/local/bin/docker-compose
+          curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m) > docker-compose
+          chmod +x docker-compose
+          sudo mv docker-compose /usr/local/bin
+      - name: Checkout and build
+        run: |
+          gradle -i clean build test
+          mkdir docker && cp Dockerfile docker/ && cp build/libs/*.war docker/
+      - name: Build Docker images
+        run: |
+          docker build -t opencadc/cadc-target-resolver:SNAPSHOT -t opencadc/cadc-target-resolver:alpine -t opencadc/cadc-target-resolver:${{ env.VERSION }} -f docker/Docker

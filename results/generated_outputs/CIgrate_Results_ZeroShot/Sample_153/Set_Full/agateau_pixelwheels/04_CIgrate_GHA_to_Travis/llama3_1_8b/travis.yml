@@ -1,0 +1,92 @@
+language: python
+
+before_install:
+  - apt-get update
+  - apt-get install -y default-jdk
+  - apt-get install -y git
+
+install:
+  - pip install -r requirements.txt
+
+before_script:
+  - chmod +x ci/build-docker-image
+  - chmod +x ci/docker-build-game
+
+script:
+  -./ci/build-docker-image
+  -./ci/docker-build-game
+
+after_success:
+  - echo "Build successful"
+
+after_failure:
+  - echo "Build failed"
+
+deploy:
+  on:
+    branch: main
+  skip_cleanup: true
+  provider: script
+  script: bash <(echo "Deploying to production")
+  on:
+    tags: true
+  environment:
+    name: production
+    matrix:
+      - name: prod
+        env: prod
+  cache:
+    directories:
+      - ~/.m2/repository
+      - ~/.gradle/*
+      - $HOME/.npm
+  services:
+    - docker
+  addons:
+    apt:
+      sources:
+        - "ppa:openjdk/ppa"
+  matrix:
+    include:
+      - python3.9
+      - python3.10
+    allow_failures:
+      - python3.9
+  notifications:
+    email:
+      recipients:
+        - "your_email@example.com"
+      on:
+        all: true
+  services:
+    - docker
+  deploy:
+    on:
+      branch: main
+    skip_cleanup: true
+    provider: script
+    script: bash <(echo "Deploying to production")
+    on:
+      tags: true
+    environment:
+      name: production
+      matrix:
+        - name: prod
+          env: prod
+    cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle/*
+        - $HOME/.npm
+    services:
+      - docker
+    addons:
+      apt:
+        sources:
+          - "ppa:openjdk/ppa"
+    matrix:
+      include:
+        - python3.9
+        - python3.10
+      allow_failures:
+        - python3.9

@@ -1,0 +1,27 @@
+\begin{table}[t]
+\centering
+\caption{RQ1 performance: Mean Cosine Similarity and CrystalBLEU scores for CIgrate under zero-shot and few-shot prompting across 153 projects. Significance markers on few-shot rows indicate Wilcoxon signed-rank test results comparing few-shot to zero-shot prompting per model (one-sided, alternative='greater').}
+\label{tab:rq1-performance}
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Model} & \textbf{Prompt} &
+\multicolumn{2}{c}{\textbf{Travis $\rightarrow$ GHA}} &
+\multicolumn{2}{c}{\textbf{GHA $\rightarrow$ Travis}} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6}
+& & \textit{Cosine} & \textit{BLEU} & \textit{Cosine} & \textit{BLEU} \\
+\midrule
+GPT-4o & Zero-shot & 0.74 & 0.54 & 0.54 & 0.39 \\
+GPT-4o & Few-shot & \textbf{0.79*** ($r=0.56$)} & \textbf{0.59*** ($r=0.50$)} & \textbf{0.60*** ($r=0.53$)} & \textbf{0.46*** ($r=0.52$)} \\
+\midrule
+Gemma 3 12B & Zero-shot & 0.66 & 0.44 & 0.36 & 0.26 \\
+Gemma 3 12B & Few-shot & 0.74*** ($r=0.71$) & 0.52*** ($r=0.51$) & 0.49*** ($r=0.60$) & 0.36*** ($r=0.59$) \\
+\midrule
+Mistral 7B & Zero-shot & 0.64 & 0.33 & 0.31 & 0.16 \\
+Mistral 7B & Few-shot & 0.71*** ($r=0.43$) & 0.45*** ($r=0.66$) & 0.42*** ($r=0.48$) & 0.29*** ($r=0.71$) \\
+\midrule
+LLaMA 3.1 8B & Zero-shot & 0.59 & 0.29 & 0.27 & 0.16 \\
+LLaMA 3.1 8B & Few-shot & 0.60 ($r=0.03$) & 0.42*** ($r=0.76$) & 0.26 ($r=-0.01$) & 0.19*** ($r=0.33$) \\
+\bottomrule
+\multicolumn{6}{l}{\footnotesize *** $p < 0.001$, ** $p < 0.01$, * $p < 0.0031$ (Bonferroni-corrected $\alpha$); $r$ = matched-pairs rank-biserial correlation} \\
+\end{tabular}
+\end{table}

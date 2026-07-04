@@ -1,0 +1,48 @@
+language: java
+sudo: false
+env:
+  RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  SONAR_ORGANIZATION: constellation-app
+
+jdk:
+  - openjdk11
+
+script:
+  - docker pull "${RUNNER_IMAGE}"
+  - docker run \
+    --mount "type=bind,source=${GITHUB_WORKSPACE},target=${GITHUB_WORKSPACE}" \
+    --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" \
+    --workdir "${GITHUB_WORKSPACE}" \
+    "${RUNNER_IMAGE}" \
+    .travis/run-tests.sh
+
+after_success:
+  - .travis/sonar.sh
+
+before_script:
+  - actions/checkout@v4
+  - actions/cache@v4 \
+    - path: ~/.ivy2/cache \
+      key: ${{ runner.os }}-ivy-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }} \
+      restore-keys: |
+        ${{ runner.os }}-ivy-
+
+deploy:
+  needs: build-and-test
+  runs-on: ubuntu-latest
+  if: github.repository == 'constellation-app/constellation' && startsWith(github.ref, 'refs/tags/')
+  permissions:
+    contents: write
+  steps:
+    - actions/checkout@v4
+    - actions/download-artifact@v4 \
+      - name: constellation-distribution \
+        path: dist/
+    - uses: softprops/action-gh-release@v2 \
+      - name: Create GitHub Release \
+        files: dist/constellation.zip \
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: zulip/github-actions-gitter@v1 \
+      - name: Send

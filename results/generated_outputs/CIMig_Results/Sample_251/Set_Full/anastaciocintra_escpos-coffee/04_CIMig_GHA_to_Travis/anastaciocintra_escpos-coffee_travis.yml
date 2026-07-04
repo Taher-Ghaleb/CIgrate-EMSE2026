@@ -1,0 +1,13 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  echo -n \"$GPG_SIGNING_KEY\" | base64 --decode | gpg  --batch --import
+  java -version
+  mvn -B clean deploy --file pom.xml -s $GITHUB_WORKSPACE/.ci/settings.xml
+script
+directories: ~/.maven-

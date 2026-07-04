@@ -1,0 +1,48 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+jdk:
+  - temurin9
+  - temurin8
+
+install: true
+
+before_install:
+  - echo no | android create avd --force --name test --target android-21 --abi armeabi-v7a
+  - emulator -avd test -no-skin -no-audio -no-window &
+  - android-wait-for-emulator
+  - adb devices
+  - adb shell input keyevent 82 &
+  - adb shell svc power stayon true
+
+script:
+  - if [ "$TRAVIS_BRANCH"!= "master" ] || [ "$TRAVIS_EVENT_NAME" == "pull_request" ]; then
+      mvn clean verify
+    fi
+
+deploy:
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_EVENT_NAME" == "push" ] && [ "$TRAVIS_REPO_SLUG" == "bootique/bootique-logback" ]; then
+      export MAVEN_USERNAME=$OSSRH_USERNAME
+      export MAVEN_PASSWORD=$OSSRH_PASSWORD
+      mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_EVENT_NAME" == "push" ] && [ "$TRAVIS_REPO_SLUG"!= "bootique/bootique-logback" ]; then
+      mvn clean verify
+    fi
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.sonar/cache'
+
+addons:
+  sonarqube:
+    token:
+      secure: "rFMDGYB3C4EbfS+CJq9lEuCtTmJgz8FmyrBp39P0lo6Zk/LqcuXolJBR2CLU9xkf/0oIOURov6+H6lMLRtmpYl6ZbmgAB+grq/y5ORLvlqccij+9UM19LeO/w8Nf1raOnwpB+V1VAfUx1dNTnxZIJRO/RrhtJDDdb9nWjyU0ua0="
+    branches:
+      - master
+      - develop
+```
+Note that I've used the `if` statements

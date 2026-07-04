@@ -1,0 +1,14 @@
+env: global
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  chmod +x gradlew \n./gradlew clean build\n./gradlew test\n
+script
+apt:
+  packages: jdk-8-jdk

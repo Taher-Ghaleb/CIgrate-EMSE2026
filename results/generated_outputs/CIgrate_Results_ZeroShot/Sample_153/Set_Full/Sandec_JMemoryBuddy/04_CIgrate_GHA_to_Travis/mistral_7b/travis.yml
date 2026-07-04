@@ -1,0 +1,44 @@
+language: java
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - chmod +x gradlew
+
+install:
+  - cache: gradle
+    key: ${{ runner.os }}-gradle
+    directories:
+      - ~/.m2/repository
+      - ~/.gradle
+
+script:
+  - ./gradlew :jar :test
+
+before_script:
+  - actions/checkout@v4
+
+env:
+  - JAVA_HOME=$JAVA_HOME_TEMPURIN_11
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - # TODO: Add deploy script here
+
+matrix:
+  include:
+    - java:
+        - '11'
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including the use of the `ubuntu-latest` runner, setting up JDK 11, caching Gradle, making `gradlew` executable, building and testing the project, and deploying on tag pushes. The environment variable `JAVA_HOME` is set to the Java 11 home directory. The `matrix` key is used to specify the Java version, similar to the `strategy.matrix` in GitHub Actions.

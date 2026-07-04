@@ -1,0 +1,53 @@
+language: android
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - COMPILE_SDK_VERSION=29
+    - EMULATOR_API=22
+    - BUILD_TOOLS_VERSION=28.0.3
+    - ABI=armeabi-v7a
+    - ADB_INSTALL_TIMEOUT=5
+
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-28.0.3
+    - android-29
+    - android-22
+    - extra-android-m2repository
+    - system-images;android-22;default;armeabi-v7a
+    - extra;m2repository;com;android;support;constraint;constraint-layout;1.0.2
+    - extra;m2repository;com;android;support;constraint;constraint-layout-solver;1.0.2
+
+before_install:
+  - yes | sdkmanager "platforms;android-${COMPILE_SDK_VERSION}" "platforms;android-${EMULATOR_API}"
+  - yes | sdkmanager "system-images;android-${EMULATOR_API};default;${ABI}"
+  - echo no | avdmanager create avd --force -n test -k "system-images;android-${EMULATOR_API};default;${ABI}" --abi ${ABI}
+  - emulator -avd test -no-audio -no-window &
+  - adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+  - adb shell input keyevent 82 &
+
+install:
+  - chmod +x gradlew
+
+before_script:
+  - ./gradlew assembleRelease
+
+script:
+  - ./gradlew jacocoTestReport
+  - ./gradlew connectedCheck
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+
+after_failure:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/

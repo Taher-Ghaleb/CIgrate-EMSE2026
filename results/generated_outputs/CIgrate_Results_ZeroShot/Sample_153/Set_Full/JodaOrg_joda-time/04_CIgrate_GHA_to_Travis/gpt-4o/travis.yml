@@ -1,0 +1,36 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.m2
+
+env:
+  global:
+    - SECRET_TOKEN=$SECRET_TOKEN
+
+before_install:
+  - chmod +x ./.github/website.sh
+
+install:
+  - mvn --version
+
+script:
+  - mvn install site -e -B
+
+after_success:
+  - if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$TRAVIS_TAG" =~ ^website ]]; then ./.github/website.sh; fi
+  - if [[ "$TRAVIS_EVENT_TYPE" == "push" && "$TRAVIS_TAG" =~ ^v ]]; then ./.github/website.sh; fi
+
+after_failure:
+  - echo "Build failed"
+
+branches:
+  only:
+    - master
+    - /^v\d+\.\d+\.\d+/
+    - /^website/

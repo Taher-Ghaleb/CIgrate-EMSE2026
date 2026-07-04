@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches:
+      exclude:
+        - gh-pages
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MY_SECRET_1: ${{ secrets.MY_SECRET_1 }}
+      MY_SECRET_2: ${{ secrets.MY_SECRET_2 }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 7
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '7'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - name: Install and run do-publish.sh
+        run: |
+          chmod +x .utility/do-publish.sh
+          ./utility/do-publish.sh

@@ -1,0 +1,43 @@
+language: java
+sudo: required
+dist: trusty
+jdk:
+  - openjdk11
+  - openjdk8
+  - openjdk7
+
+matrix:
+  include:
+    - os: linux
+      jdk: openjdk11
+      env:
+        - JAVA_HOME=/usr/lib/jvm/zulu11
+      script:
+        - sudo apt-get update && sudo apt-get install -y ant
+        - ant -diagnostics
+        - ant
+    - os: linux
+      jdk: openjdk8
+      env:
+        - JAVA_HOME=/usr/lib/jvm/zulu8
+      script:
+        - sudo apt-get update && sudo apt-get install -y ant
+        - ant -diagnostics
+        - ant
+    - os: linux
+      jdk: openjdk7
+      env:
+        - JAVA_HOME=/usr/lib/jvm/zulu7
+      script:
+        - sudo apt-get update && sudo apt-get install -y ant
+        - ant -diagnostics
+        - ant
+    - os: osx
+      jdk: openjdk11
+      env:
+        - JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home
+      script:
+        - brew update
+        - brew install ant
+        - ant -diagnostics
+        - ant

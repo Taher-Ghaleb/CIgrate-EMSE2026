@@ -1,0 +1,50 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  OSSRH_USER: ${{ secrets.OSSRH_USER }}
+  OSSRH_PASS: ${{ secrets.OSSRH_PASS }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2
+
+      - name: Install and run Maven
+        run: |
+          mvn -B dependency:resolve -Dworkspace=true -DlocalRepositoryPath=~/.m2
+          mvn clean install -DskipTests
+
+      - name: Deploy to Nexus if tagged
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft }} && !${{ github.ref_type == 'tag' }}
+        run: |
+          echo "<settings><servers><server><id>ossrh</id><username>${{ env.OSSRH_USER }}</username><password>${{ env.OSSRH_PASS }}</password></server></settings>" > ~/settings.xml
+          if [ -n "${{ github.ref }}" ]; then
+            mvn deploy -DskipTests --settings ~/settings.xml
+          else
+            mvn deploy -DskipTests -Possrh --settings ~/settings.xml
+          fi

@@ -1,0 +1,65 @@
+language: java
+jdk:
+  - '8'
+  - '9'
+env:
+  global:
+    MAVEN_OPTS: -Drevision=${GITHUB_REF_NAME}-SNAPSHOT -Dproperty=revision -DnewVersion=${GITHUB_REF_NAME}-SNAPSHOT -DgenerateBackupPoms=false
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+  except:
+    - /^hotfix\/.*$/
+    - /^feature\/.*$/
+    - /^release\/.*$/
+    - /^fix\/.*$/
+    - /^chore\/.*$/
+    - /^docs\/.*$/
+    - /^test\/.*$/
+    - /^refactor\/.*$/
+    - /^style\/.*$/
+    - /^tooling\/.*$/
+    - /^build\/.*$/
+    - /^ci\/.*$/
+    - /^config\/.*$/
+    - /^data\/.*$/
+    - /^scripts\/.*$/
+    - /^tmp\/.*$/
+    - /^vendor\/.*$/
+    - /^internal\/.*$/
+    - /^integration\/.*$/
+    - /^qa\/.*$/
+    - /^staging\/.*$/
+    - /^dev\/.*$/
+    - /^preprod\/.*$/
+    - /^qa\/.*$/
+    - /^sandbox\/.*$/
+    - /^uat\/.*$/
+    - /^prod\/.*$/
+    - /^master\/.*$/
+    - /^develop\/.*$/
+    - /^release-candidate\/.*$/
+    - /^beta\/.*$/
+    - /^alpha\/.*$/
+    - /^experimental\/.*$/
+    - /^nightly\/.*$/
+    - /^snapshot\/.*$/
+    - /^rc\/.*$/
+    - /^pre-release\/.*$/
+    - /^edge\/.*$/
+    - /^canary\/.*$/
+    - /^stable\/.*$/
+    - /^latest\/.*$/
+    - /^next\/.*$/
+    - /^preview\/.*$/
+    - /^demo\/.*$/
+    - /^test\/.*$/
+    - /^qa\/.*$/
+    - /^staging\/.*$/
+    - /^development\/.*$/
+    -

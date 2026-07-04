@@ -1,0 +1,16 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${{ matrix.mongodb-version }}.tgz\ntar xfz mongodb-linux-x86_64-${{ matrix.mongodb-version }}.tgz\nexport PATH=`pwd`/mongodb-linux-x86_64-${{ matrix.mongodb-version }}/bin:$PATH\nmkdir -p data/db\nmongod --dbpath=data/db &\nmongod --version\n
+  java -version
+  mvn test
+script
+include:
+  stage: tests
+  if: type in (pull_request, push)

@@ -1,0 +1,52 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+  except:
+    - /^hotfix-/
+    - /^feature-/
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+before_install:
+  - install: |
+      git config --global --add safe.directory '*'
+      git config --global user.name "${{ github.actor }}"
+      git config --global user.email "${{ github.actor }}"
+
+install:
+  - name: Checkout code
+    git: shallow: false
+
+  - name: Set up JDK 8
+    addons:
+      name: oracle/java
+      java_home: /usr/lib/jvm/java-8-openjdk-amd64
+
+  - name: Cache Gradle dependencies
+    cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle
+
+  - name: Make Gradle wrapper executable
+    script: chmod +x ./gradlew
+
+script:
+  - ./gradlew build
+
+before_deploy:
+  - name: Create Release and Upload JAR
+    if: github.repository == 'AuScope/NVCLAnalyticalServices' && startsWith(github.ref, 'refs/tags/')
+    addons:
+      name: docker
+      image: docker:latest
+    script: |
+      docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+      docker build -t "${DOCKER_IMAGE}" .
+      docker push "${DOCKER_IMAGE}"

@@ -1,0 +1,47 @@
+language: java
+jdk: 7
+cache:
+  directories:
+    - ~/.m2/repository
+branches:
+  only:
+    - main
+    - develop
+    - release/*
+    - /^feature\/.+$/
+    - /^bugfix\/.+$/
+    - /^hotfix\/.+$/
+    - /^release\/.+$/
+  except:
+    - tags
+notifications:
+  email:
+    recipients:
+      - example@example.com
+    on_success: change
+    on_failure: change
+before_install:
+- "echo 'Before Install'"
+install:
+- "echo 'Install'"
+before_script:
+- "echo 'Before Script'"
+script:
+- mvn test -B
+deploy:
+  provider:
+    Maven:
+      url: https://oss.sonatype.org
+      username: $OSSRH_USER
+      password: $OSSRH_PASS
+  on:
+    tags: true
+  skip_cleanup: true
+  file: settings.xml
+  settings_file: settings.xml
+  type: api
+  api: true
+  servers:
+    ossrh:
+      username: $OSSRH_USER
+      password: $OSSRH_PASS

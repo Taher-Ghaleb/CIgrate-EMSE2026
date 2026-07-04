@@ -1,0 +1,25 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk: openjdk11
+env:
+  matrix:
+    - TERM=dumb DISPLAY=:99.0
+  global:
+    - GRADLE_VERSION=7.3.0
+    - GRADLE_HOME=/usr/local/gradle
+    - GRADLE_OPTS=-Xmx512m
+    - GRADLE_USER_HOME=/tmp/gradle
+    - GRADLE_USER_HOME_DIR=/tmp/gradle
+    - GRADLE_USER_HOME_DISTRIBUTION=/tmp/gradle/distribution
+    - GRADLE_USER_HOME_INIT_SCRIPT=/tmp/gradle/init.gradle
+    - GRADLE_USER_HOME_INIT_SCRIPT_ARGS=--init-script /tmp/gradle/init.gradle
+    - GRADLE_USER_HOME_INIT_SCRIPT_ARGS2=--init-script /tmp/gradle/init.gradle --no-gradle
+    - GRADLE_USER_HOME_INIT_SCRIPT_ARGS3=--init-script /tmp/gradle/init.gradle --no-gradle --no-gradle
+    - GRADLE_USER_HOME_INIT_SCRIPT_ARGS4=--init-script /tmp/gradle/init.gradle --no-gradle --no-gradle --no-gradle
+    - GRADLE_USER_HOME_INIT_SCRIPT_ARGS5=--init-script /tmp/gradle/init.gradle --no-gradle --no-gradle --no-gradle --no-gradle
+    - GRADLE_USER_HOME_INIT_SCRIPT_ARGS6=--init-script /tmp/gradle/init.gradle --no-gradle --no-gradle --no-gradle --no-gradle --no-gradle
+    - GRADLE_USER_HOME_INIT_SCRIPT_ARGS7=--init-script /tmp/gradle/init.gradle --no-gradle --no-gradle --no-gradle --no-gradle --no-gradle --no-gradle
+    - GRADLE_USER_HOME_INIT_SCRIPT_ARGS8=--init-script /tmp/gradle/init.gradle --no-gradle --no-gradle --no-gradle --no-gradle --no-gradle --no-gradle --no-gradle
+    - GRADLE_USER_HOME_INIT_SCRIPT_ARGS9=--init-script /tmp/gradle/init.gradle --no-gradle --no-gradle --no-gradle

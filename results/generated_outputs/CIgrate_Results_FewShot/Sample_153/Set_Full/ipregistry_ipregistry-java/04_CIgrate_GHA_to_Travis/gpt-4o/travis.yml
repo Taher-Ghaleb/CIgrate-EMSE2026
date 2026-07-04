@@ -1,0 +1,21 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+
+matrix:
+  allow_failures:
+    - jdk: openjdk8
+    - jdk: openjdk11
+    - jdk: openjdk17
+
+before_install:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew build --scan -s
+
+cache:
+  directories:
+    - '$HOME/.gradle'

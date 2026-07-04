@@ -1,0 +1,28 @@
+language: java
+jdk:
+  - openjdk11
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.m2
+
+before_install:
+  - echo "Setting up environment"
+
+install:
+  - echo "Installing dependencies"
+
+script:
+  - mvn clean package
+
+after_success:
+  - echo "Build succeeded, uploading artifacts"
+  - # TODO: Implement artifact upload equivalent in Travis CI
+
+branches:
+  only:
+    - main
+    - develop

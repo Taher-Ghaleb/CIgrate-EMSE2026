@@ -1,0 +1,27 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    master
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+    run: mvn clean install -e -B -V -nsu -P run-its -DskipITs -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+macos:
+  jdk: openjdk8
+
+env:
+  ci: TRUE
+
+strategy:
+  fail-fast: FALSE
+

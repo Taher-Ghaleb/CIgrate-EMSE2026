@@ -1,0 +1,44 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.sonar/cache
+            ~/.gradle
+            .gradle
+          key: ${{ runner.os }}-cache-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-cache-
+      - name: Check
+        run: ./gradlew check jacocoTestReport sonarqube --info --refresh-dependencies
+      - name: SonarCloud
+        uses: SonarSource/sonarcloud-github-action@release
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Before cache
+        if: always()
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Cache cleanup
+        if: always()
+        run: |
+          rm -fr $HOME/.m2/repository
+          rm -fr $HOME/.sonar/cache
+          rm -fr .gradle

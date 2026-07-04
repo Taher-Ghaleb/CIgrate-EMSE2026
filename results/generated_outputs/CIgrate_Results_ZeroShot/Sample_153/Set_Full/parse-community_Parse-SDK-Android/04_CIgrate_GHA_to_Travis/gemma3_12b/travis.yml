@@ -1,0 +1,56 @@
+language: java
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+    - /^[0-9]+.[0-9]+.[0-9]+$/
+except:
+  - tags
+
+install:
+  - echo "Installing dependencies..."
+  - sdkmanager --licenses || true
+
+before_script:
+  - echo "Setting up environment..."
+  - chmod +x gradlew
+
+script:
+  - echo "Running tests and generating coverage..."
+  - ./gradlew clean testDebugUnitTest jacocoTestReport
+
+after_success:
+  - echo "Upload coverage to Coveralls..."
+  - if [ "$TRAVIS_BRANCH" = "master" ]; then
+      if [ -n "$COVERALLS_REPO_TOKEN" ]; then
+        ./gradlew coveralls
+      fi
+    fi
+  - echo "Upload coverage to Codecov..."
+  - if [ "$TRAVIS_BRANCH" = "master" ]; then
+    if [ -n "$CODECOV_TOKEN" ]; then
+      codecov -f ./build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml -t $CODECOV_TOKEN
+    fi
+  fi
+
+after_failure:
+  - echo "Upload test results..."
+  - if [ "$TRAVIS_BRANCH" = "master" ]; then
+    - echo "Uploading test results..."
+    - test-results=$(zip -r test-results.zip **/build/reports/tests/** **/build/test-results/**)
+    - echo "Uploading test results..."
+    - curl -F "file=@test-results.zip" "https://codecov.io/uploader/v2/upload?token=$CODECOV_TOKEN&branch=$TRAVIS_BRANCH&build=$TRAVIS_BUILD_NUMBER&commit=$TRAVIS_COMMIT"
+  fi
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.npm
+
+env:
+  global:
+    - COVERALLS_REPO_TOKEN: $COVERALLS_REPO_TOKEN
+    - CODECOV_TOKEN: $CODECOV_TOKEN

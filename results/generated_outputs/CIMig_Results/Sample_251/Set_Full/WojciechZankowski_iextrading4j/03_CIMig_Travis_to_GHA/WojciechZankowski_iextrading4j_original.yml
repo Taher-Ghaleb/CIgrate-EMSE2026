@@ -1,0 +1,38 @@
+matrix:
+  os:
+    ubuntu-latest
+    windows-latest
+  language: java
+  java
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix
+      fail-fast: FALSE
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: java-version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run: bash <(curl -s https://codecov.io/bash)
+    - name: Placeholder
+    run: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar
+
+macos:
+  jdk: oraclejdk8
+

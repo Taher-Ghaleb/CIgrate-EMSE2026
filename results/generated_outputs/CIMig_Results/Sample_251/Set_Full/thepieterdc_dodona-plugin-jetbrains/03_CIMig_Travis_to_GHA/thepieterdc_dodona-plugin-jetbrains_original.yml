@@ -1,0 +1,34 @@
+matrix:
+  language: java
+  os:
+    ubuntu-latest
+    windows-latest
+
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        key
+        java-version: ${{ matrix.java }}
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      env:
+        ci: TRUE
+      run: ./gradlew assemble
+    - name: build with maven-
+
+macos:
+  jdk: oraclejdk8
+

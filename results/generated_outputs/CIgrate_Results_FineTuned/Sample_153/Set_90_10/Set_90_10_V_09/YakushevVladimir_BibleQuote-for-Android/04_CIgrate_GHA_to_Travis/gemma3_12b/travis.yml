@@ -1,0 +1,34 @@
+language: android
+
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-30.0.3
+    - android-30
+    - extra-android-support
+    - extra-android-m2repository
+    - extra-google-m2repository
+
+  licenses:
+    - android-sdk-license-.+
+    - android-sdk-preview-license-.+
+
+jdk:
+  - oraclejdk8
+
+before_install:
+  - chmod +x gradlew
+  - yes | sdkmanager "platforms;android-30"
+
+script:
+  - ./gradlew clean build
+
+after_success:
+  - ./gradlew testDebugUnitTestCoverage coveralls
+
+cache:
+  directories:
+    - $HOME/.m2
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/

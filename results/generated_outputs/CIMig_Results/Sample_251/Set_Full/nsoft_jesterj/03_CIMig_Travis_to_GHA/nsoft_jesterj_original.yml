@@ -1,0 +1,30 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        java-version: 1.8
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/checkout@version
+    - name: placeholder_Name
+      with: java-version
+      run: cd $TEST_DIR &&  gradle jacocoTestReport
+
+macos:
+  jdk: oraclejdk8
+

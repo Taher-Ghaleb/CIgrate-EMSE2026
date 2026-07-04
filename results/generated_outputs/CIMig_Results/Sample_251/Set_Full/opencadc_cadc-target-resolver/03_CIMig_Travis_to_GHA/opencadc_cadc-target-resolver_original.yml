@@ -1,0 +1,36 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      with:
+        java-version:
+          ${{ matrix.java }}
+          1.8
+      env:
+        github_token: ${{ github.token }}
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      uses: actions/checkout@version
+      with: java-version
+      uses: actions/setup-java@version
+    - name: set up jdk 1.8
+      run:
+        if [ \"$(. ./can-deploy.sh)\" = \"DEPLOY\" ]; then echo \"$DOCKER_PASSWORD\" | docker login -u \"$DOCKER_USERNAME\" --password-stdin; docker push opencadc/cadc-target-resolver:alpine; docker push opencadc/cadc-target-resolver:${VERSION}; fi
+        docker
+
+macos:
+  jdk: oraclejdk8
+

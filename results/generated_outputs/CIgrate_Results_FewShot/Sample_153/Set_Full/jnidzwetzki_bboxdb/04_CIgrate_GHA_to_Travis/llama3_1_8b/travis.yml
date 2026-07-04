@@ -1,0 +1,36 @@
+Here is the migrated Travis CI configuration:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+services:
+  zookeeper:
+    image: zookeeper:3.9
+    ports:
+      - 2181:2181
+    options:
+      - --health-cmd "echo stat | nc localhost 2181"
+      - --health-interval 10s
+      - --health-timeout 5s
+      - --health-retries 5
+install:
+  - echo -n | openssl s_client -connect scan.coverity.com:443 | \
+    sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | \
+    sudo tee -a /etc/ssl/certs/ca-certificates.crt
+script:
+  - sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" conf/bboxdb.yaml
+  - echo "#####################################################################"
+  - cat conf/bboxdb.yaml
+  - echo "#####################################################################"
+  - mkdir -p /tmp/bboxdb/data
+  - mvn test
+after_success:
+  - codecov/codecov-action@v4
+    with:
+      token: ${{ secrets.CODECOV_TOKEN }}
+      fail_ci_if_error: false
+```
+
+Note that I've removed the `on` section as it's not necessary in Travis CI, and the `jobs` section is replaced with the `language` and `jdk` sections. The `services` section is used to configure the ZooKeeper service. The `install` section is used to add the Coverity certificate. The `script` section is used to configure BBoxDB for ZooKeeper and run the Maven build and test. The `after_success` section is used to upload the coverage to Codecov.

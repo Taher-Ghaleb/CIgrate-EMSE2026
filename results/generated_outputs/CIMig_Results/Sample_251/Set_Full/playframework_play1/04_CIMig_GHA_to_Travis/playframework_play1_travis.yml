@@ -1,0 +1,16 @@
+env: global
+sudo
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+  python
+before_install:
+  java -version
+install:
+  TRUE
+script:
+  script:
+    ant -buildfile ./framework/build.xml test

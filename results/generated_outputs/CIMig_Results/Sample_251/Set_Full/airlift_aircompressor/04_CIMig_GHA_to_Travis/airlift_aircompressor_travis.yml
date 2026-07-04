@@ -1,0 +1,16 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn install -V -P ci -B -Dtest_java_home=${{ env.test_java_home }}
+  echo \"test_java_home=$JAVA_HOME\" >> $GITHUB_ENV
+script
+sonarcloud:
+  organization: powsybl-ci-github
+directories: ~/.maven-
+include:
+  if: type in (pull_request, push)

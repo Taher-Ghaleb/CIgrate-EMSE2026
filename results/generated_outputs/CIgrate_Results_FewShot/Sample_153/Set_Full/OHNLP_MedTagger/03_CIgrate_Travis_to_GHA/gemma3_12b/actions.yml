@@ -1,0 +1,37 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - master
+      - '/v\\d+\\.\\d+[a-zA-Z-_]+?(\\.\\d+[a-zA-Z-_]+?)/'
+  tag:
+    types: [tag]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Maven Deploy
+        run: mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=${{ secrets.DEPLOY_KEY }}
+      - name: Maven Install
+        run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+      - name: Ant Dist
+        run: ant dist
+  release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/tags/*'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release
+        uses: actions/release@v5
+        with:
+          api_key: ${{ secrets.RELEASE_API_KEY }}
+          file: MedTagger.zip
+          overwrite: true
+          skip_cleanup: true

@@ -1,0 +1,49 @@
+language: java
+jdk: openjdk8
+env:
+  DOCKER_COMPOSE_VERSION: 1.29.2
+  VERSION: ${{ github.sha }}
+  REGISTRY_HOST: proxy.cadc.dao.nrc.ca
+
+script:
+  - actions/checkout@v4
+  - set -euo pipefail
+  - java --version
+  - gradle -v
+  - gradlew --version
+  - gradle -i clean build test
+  - mkdir docker
+  - cp Dockerfile docker/
+  - cp build/libs/*.war docker/
+  - docker build \
+    -t opencadc/cadc-target-resolver:SNAPSHOT \
+    -t opencadc/cadc-target-resolver:alpine \
+    -t opencadc/cadc-target-resolver:${VERSION} \
+    -f docker/Dockerfile docker/
+  - docker --version
+  - docker-compose --version
+  - echo "127.0.0.1 proxy.cadc.dao.nrc.ca" | sudo tee -a /etc/hosts
+  - curl -vL -d 'level=DEBUG' http://proxy.cadc.dao.nrc.ca/cadc-target-resolver/logControl || true
+  - cd integrationTest
+  - gradle -i -b ../build.gradle -Dca.nrc.cadc.reg.client.RegistryClient.host=$REGISTRY_HOST clean intTest
+  - cd integrationTest
+  - docker-compose up -d
+  - sleep 10
+  - docker ps -a
+  - docker-compose logs cadc-target-resolver.cadc.dao.nrc.ca || true
+  - docker-compose logs proxy.cadc.dao.nrc.ca || true
+  - if [ -f ./can-deploy.sh ]; then
+    DEPLOY_STATUS=$(. ./can-deploy.sh)
+    if [ "$DEPLOY_STATUS" = "DEPLOY" ]; then
+      echo "Deploying Docker images..."
+      echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      docker push opencadc/cadc-target-resolver:alpine
+      docker push opencadc/cadc-target-resolver:${VERSION}
+      echo "Deployment successful"
+    else
+      echo "Deployment check returned: $DEPLOY_STATUS - Not deploying."
+    fi
+  else
+    echo "can-deploy.sh not found - skipping deployment"
+  fi
+  - docker-compose down -v

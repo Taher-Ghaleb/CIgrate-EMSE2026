@@ -1,0 +1,61 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK and Maven"
+  - export MAVEN_OPTS="-Drevision=${GITHUB_REF_NAME}-SNAPSHOT -Dproperty=revision -DnewVersion=${GITHUB_REF_NAME}-SNAPSHOT -DgenerateBackupPoms=false"
+
+install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+script:
+  - mvn -B verify
+  - if [ "${GITHUB_REF_NAME}" == "8" ]; then mvn -B sonar:sonar; fi
+
+after_success:
+  - echo "Deploying to SonarCloud"
+  - export SONAR_TOKEN=${SONAR_TOKEN}
+  - export SONAR_ORGANIZATION=${SONAR_ORGANIZATION}
+
+deploy:
+  on:
+    tags: true
+  environment:
+    - SONAR_TOKEN
+    - SONAR_ORGANIZATION
+  script:
+    - mvn -s etc/settings.xml -B versions:set-property deploy -P release
+
+services:
+  - docker-compose
+
+addons:
+  - travis-ci/sonarcloud
+
+branches:
+  only:
+    - main
+  except:
+    - pull_request
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - ianagbip1oti-github@users.noreply.github.com
+
+matrix:
+  allow_failures:
+    - jdk: 8
+  include:
+    - jdk: 8
+      distribution: temurin
+    - jdk: 9
+      distribution: temurin
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm

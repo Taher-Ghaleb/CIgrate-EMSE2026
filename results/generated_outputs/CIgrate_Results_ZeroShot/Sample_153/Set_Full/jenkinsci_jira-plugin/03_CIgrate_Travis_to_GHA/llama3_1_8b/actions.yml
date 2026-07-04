@@ -1,0 +1,57 @@
+name: Java Build and SonarCloud
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - release/*
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      sonarcloud:
+        image: sonarcloud/sonar-scanner-cli
+        options: --organization="warden" --token=$SONAR_CLOUD_TOKEN
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Setup Java 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install Maven
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y maven
+      - name: Build and deploy
+        run: |
+          mvn -Penable-jacoco -Dsonar.projectKey=jenkins-jira-plugin -Dsonar.coverage.jacoco.xmlReportPaths=/home/runner/work/jenkins-jira-plugin/jenkins-jira-plugin/target/site/jacoco/jacoco.xml clean verify coveralls:report sonar:sonar
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2/repository
+          key: ${{ runner.hash }}
+          restore-keys: $HOME/.m2/repository
+      - name: Cache Sonar cache
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.sonar/cache
+          key: ${{ runner.hash }}
+          restore-keys: $HOME/.sonar/cache
+      - name: Remove old cache
+        run: |
+          rm -fr $HOME/.m2/repository/org/jenkins-ci/plugins/jira
+```
+
+Note: I've used the `ubuntu-latest` image as the base image for the workflow, and the `sonarcloud/sonar-scanner-cli` image for the SonarCloud service. I've also used the `temurin` distribution for Java 8 and 11. The `SONAR_CLOUD_TOKEN` secret should be replaced with the actual token from your SonarCloud account.

@@ -1,0 +1,44 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+
+script:
+  -./gradlew assemble --info
+  -./gradlew check jacocoTestReport sonarqube --info
+
+after_success:
+  - upload-artifact name:build path: '**/build/'
+
+before_install:
+  - gradle/setup-gradle@v4
+
+cache:
+  directories:
+    - '$HOME/.gradle'
+
+env:
+  global:
+    - TEST_DURATION=30s
+
+deploy:
+  on:
+    branch: '*'
+  matrix:
+    - job: setup
+      script:
+        -./gradlew assemble --info
+        - upload-artifact name:build path: '**/build/'
+    - job: check
+      needs: setup
+      script:
+        -./gradlew check jacocoTestReport sonarqube --info
+    - job: integration
+      needs: [setup, check]
+      script:
+        -./gradlew integrationTest --info
+```
+
+Note that the `deploy` section is used to define multiple jobs, each with its own script. The `matrix` keyword is used to define the different jobs, and the `needs` keyword is used to specify the dependencies between jobs. The `script` keyword is used to define the script for each job.

@@ -1,0 +1,21 @@
+name: placeholder
+
+on:
+  pull_request: master
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+      uses: actions/checkout@version
+
+image: rabbitmq
+

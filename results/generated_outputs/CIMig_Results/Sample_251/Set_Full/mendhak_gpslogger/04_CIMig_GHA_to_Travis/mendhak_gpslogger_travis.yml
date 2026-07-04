@@ -1,0 +1,18 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew assembleDebugUnitTest -Dpre-dex=false
+apt:
+  packages: jdk-8-jdk
+include:
+  stage: run-unit-tests

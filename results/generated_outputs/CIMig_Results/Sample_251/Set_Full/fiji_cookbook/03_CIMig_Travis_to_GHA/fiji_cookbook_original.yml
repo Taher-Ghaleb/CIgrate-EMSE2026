@@ -1,0 +1,26 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run: .github/PATH-OR-URL
+    - name: Placeholder
+    - name: build with maven-
+
+macos:
+  jdk: oraclejdk8
+
+env:
+  ci: TRUE
+  github_token: ${{ github.token }}
+

@@ -1,0 +1,47 @@
+name: Java Build and Coverage Report
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Install and Build
+        run: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
+
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies
+
+      - name: Run Tests and Generate Coverage Report
+        run: mvn clean cobertura:cobertura coveralls:report
+
+    strategy:
+      matrix:
+        jdk: [11]
+
+workflow:
+  branches:
+    branches:
+      - '*'
+  tags:
+    - '*'

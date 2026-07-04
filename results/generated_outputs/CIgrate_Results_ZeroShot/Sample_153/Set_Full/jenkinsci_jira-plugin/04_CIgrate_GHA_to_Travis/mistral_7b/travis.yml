@@ -1,0 +1,52 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+services:
+  - docker
+  - docker-compose
+
+before_install:
+  - install: |
+      # Install Git
+      apt-get update && apt-get install -y git
+
+      # Install Java
+      apt-get update && apt-get install -y openjdk${{ matrix.jdk }}
+
+install:
+  - git config --global user.name "${GITHUB_ACTOR}"
+  - git config --global user.email "${GITHUB_ACTOR}@github.com"
+  - git checkout -f
+
+before_script:
+  - cache --key=${{ runner.os }}-sonar-${{ hashFiles('**/pom.xml') }} -o sonar-cache
+  - cache --key=maven -d ~/.m2/repository
+
+script:
+  - mvn -Penable-jacoco \
+      -Dsonar.projectKey=jenkins-jira-plugin \
+      -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+      clean verify
+  - env GITHUB_TOKEN=$GITHUB_TOKEN mvn sonar:sonar
+  - env GITHUB_TOKEN=$GITHUB_TOKEN SONAR_TOKEN=$SONAR_TOKEN SONAR_ORGANIZATION=warden mvn sonar:sonar
+  - env GITHUB_TOKEN=$GITHUB_TOKEN coverallsapp/github-action@v2 -Pcoveralls --path-to-lcov=target/site/jacoco/jacoco.xml
+
+after_success:
+  - uncache -a
+
+after_failure:
+  - uncache -a
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including the use of matrix, caches, services, branch/tag filters, deploys, notifications, and env variables. It also

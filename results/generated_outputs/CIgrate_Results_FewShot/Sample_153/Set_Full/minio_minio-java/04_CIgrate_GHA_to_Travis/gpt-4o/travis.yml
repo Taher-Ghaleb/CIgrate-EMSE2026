@@ -1,0 +1,19 @@
+language: java
+dist: focal
+sudo: false
+
+matrix:
+  include:
+    - jdk: openjdk8
+      env: DISTRIBUTION=zulu NAME="Zulu 8 (Oracle JDK 8 equivalent)"
+    - jdk: openjdk8
+      env: DISTRIBUTION=temurin NAME="Temurin 8 (OpenJDK 8)"
+    - jdk: openjdk9
+      env: DISTRIBUTION=zulu NAME="Zulu 9 (Oracle JDK 9 - EOL)"
+
+install:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew check
+  - ./gradlew runFunctionalTest

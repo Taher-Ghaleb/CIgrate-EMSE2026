@@ -1,0 +1,52 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-dependencies
+
+      - name: Clean Maven local repository
+        run: rm -rf ~/.m2/repository/**/*-SNAPSHOT
+
+      - name: Install Maven
+        run: curl -sL https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz | tar xz
+        env:
+          MAVEN_HOME: ${{ env.HOME }}/.m2/wrapper/apache-maven-3.6.3
+        shell: bash
+
+      - name: Configure Maven settings
+        run: ln -s ${{ env.MAVEN_HOME }}/conf/settings.xml ~/.m2/settings.xml
+        shell: bash
+
+      - name: Build and Test
+        run: |
+          cd quarkus.jdt.ext && ./mvnw clean verify
+          cd quarkus.ls.ext/com.redhat.quarkus.ls && ./mvnw clean verify
+        env:
+          MAVEN_OPTS: "-Xms512M -Xmx1024M"
+
+    continue-on-error: true
+
+    # TODO: Add notifications using a modern action

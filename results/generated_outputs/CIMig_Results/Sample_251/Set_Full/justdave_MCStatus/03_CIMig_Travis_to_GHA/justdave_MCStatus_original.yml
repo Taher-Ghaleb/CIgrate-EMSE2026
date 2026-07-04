@@ -1,0 +1,30 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      run:
+        ./gradlew clean test build
+        echo yes | sdkmanager \"platforms;android-${ANDROID_API}
+
+macos:
+  jdk: oraclejdk8
+
+os: linux-latest
+

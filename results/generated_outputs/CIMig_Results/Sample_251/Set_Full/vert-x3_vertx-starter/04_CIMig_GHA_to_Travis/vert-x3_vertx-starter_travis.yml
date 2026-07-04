@@ -1,0 +1,21 @@
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+jdk: jdk8
+branches: master
+script:
+  script:
+    ./gradlew check -i
+after_success:
+  bash <(curl-cmd
+include:
+  stage: tests
+  env: jdk='oracle jdk 8'
+sonarcloud:
+  organization: powsybl-ci-github
+addons:
+  firefox: latest

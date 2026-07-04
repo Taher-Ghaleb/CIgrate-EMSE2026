@@ -1,0 +1,44 @@
+language: java
+sudo: required
+branches:
+  only:
+    - '**'
+  except:
+    - /^$/
+tags: true
+jdk:
+  - openjdk8
+env:
+  global:
+    - SECRET_1: $SECRET_1
+    - SECRET_2: $SECRET_2
+    - SECRET_3: $SECRET_3
+    - SECRET_4: $SECRET_4
+    - SECRET_5: $SECRET_5
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+  - 'maven'
+before_install:
+  - cat /etc/hosts
+  - sudo hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+  - cat /etc/hosts
+jobs:
+  build:
+    script:
+      - mvn package -DskipTests=true
+  deploy-maven:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    script:
+      - mvn --settings .travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+  deploy-pages:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && github.ref == 'refs/heads/master'
+    script:
+      - mvn package -DskipTests=true
+    deploy:
+      provider: pages
+      token: $GITHUB_TOKEN
+      publish_dir: ./target/staging
+      keep_history: true
+      local_dir: ./target/staging

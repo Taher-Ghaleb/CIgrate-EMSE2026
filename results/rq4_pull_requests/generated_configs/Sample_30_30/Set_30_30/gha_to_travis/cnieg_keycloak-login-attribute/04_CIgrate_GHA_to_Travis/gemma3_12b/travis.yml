@@ -1,0 +1,62 @@
+language: java
+jdk: openjdk11
+branches:
+  except:
+    - gh-pages
+env:
+  global:
+    - GITHUB_REF=${TRAVIS_GIT_BRANCH}
+    - MAIN_BRANCH_NAME=main
+    - SEMANTIC_RELEASE_VERSION=19.0.5
+    - SEMANTIC_CHANGELOG_VERSION=6.0.1
+    - SEMANTIC_GIT_VERSION=10.0.1
+    - SEMANTIC_EXEC_VERSION=6.0.3
+cache:
+  directories:
+    - $HOME/.m2
+before_install:
+  - export GPG_TTY=$(tty)
+install:
+  - echo -e "$GPG_PRIVATE_KEY" | base64 --decode | gpg --import
+  - chmod +x mvnw
+before_script:
+  - ./mvnw -B -ntp verify 1>&2
+script:
+  - ./mvnw clean package
+deploy:
+  provider: script
+  script: ./mvnw -s ./.travis.mvnw deploy -DskipTests=true
+  skip_cleanup: true
+  on:
+    tags: true
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+model_output_note:
+Migrate this GitHub Actions workflow to equivalent complete Travis CI configuration and return ONLY the complete .travis.yml maintaining the above OUTPUT and MIGRATION rules:
+
+name: CI
+
+on: [push, pull_request]
+
+env:
+  mainBranchName: main
+  semanticReleaseVersion: 19.0.5
+  semanticChangelogVersion: 6.0.1
+  semanticGitVersion: 10.0.1
+  semanticExecVersion: 6.0.3
+
+jobs:
+  build:
+    runs_on: ubuntu-latest
+    steps:
+      - name: Get branch name
+        run: |
+          echo "GITHUB_BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+      - name: Display branch name
+        run: |
+          echo "Branche : ${{ env.GITHUB_BRANCH }}"
+      - name: Checkout

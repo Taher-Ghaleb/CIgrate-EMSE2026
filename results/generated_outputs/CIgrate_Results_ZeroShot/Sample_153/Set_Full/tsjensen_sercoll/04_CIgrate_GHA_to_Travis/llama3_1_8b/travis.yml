@@ -1,0 +1,61 @@
+language: java
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y openjdk-6-jdk
+
+install:
+  - apt-get install -y default-jdk
+
+script:
+  - java -version
+  - javac -version
+  - javadoc -version
+
+before_script:
+  - export SERCOLL_JDK6_JAVA=/usr/lib/jvm/java-6-openjdk-amd64/bin/java
+  - export SERCOLL_JDK6_JAVAC=/usr/lib/jvm/java-6-openjdk-amd64/bin/javac
+  - export SERCOLL_JDK6_JAVADOC=/usr/lib/jvm/java-6-openjdk-amd64/bin/javadoc
+
+script:
+  - $SERCOLL_JDK6_JAVA -version
+  - $SERCOLL_JDK6_JAVAC -version
+  - $SERCOLL_JDK6_JAVADOC -version
+
+after_success:
+  -./gradlew build
+
+after_failure:
+  -./gradlew build
+
+deploy:
+  on:
+    tags: true
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+
+matrix:
+  include:
+    - java: '8'
+      os: linux
+      dist: ubuntu
+      env:
+        - SERCOLL_JDK6_JAVA=/usr/lib/jvm/java-6-openjdk-amd64/bin/java
+        - SERCOLL_JDK6_JAVAC=/usr/lib/jvm/java-6-openjdk-amd64/bin/javac
+        - SERCOLL_JDK6_JAVADOC=/usr/lib/jvm/java-6-openjdk-amd64/bin/javadoc
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get install -y openjdk-6-jdk
+      install:
+        - apt-get install -y default-jdk
+      script:
+        - $SERCOLL_JDK6_JAVA -version
+        - $SERCOLL_JDK6_JAVAC -version
+        - $SERCOLL_JDK6_JAVADOC -version
+      before_script:
+        - export SERCOLL_JDK6_JAVA=/usr/lib/jvm/java-6-openjdk-amd64/bin/java
+        - export SERCOLL_JDK6_JAVAC=/usr/lib/jvm/java-6-openjdk-amd64/bin/javac
+        - export SERCOLL

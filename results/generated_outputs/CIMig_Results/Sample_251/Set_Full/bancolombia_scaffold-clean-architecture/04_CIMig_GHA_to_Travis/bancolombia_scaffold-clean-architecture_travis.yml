@@ -1,0 +1,21 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  chmod +x gradlew
+  java -version
+script:
+  script:
+    ./gradlew publishPlugins -Pgradle.publish.key=$KEY_GRADLE -Pgradle.publish.secret=$SECRET_GRADLE
+after_success:
+  bash <(curl -s https://codecov.io/bash)
+apt:
+  packages: jdk-8-jdk
+stages:
+  build
+  test

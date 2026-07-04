@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  jdk11:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'gradle'
+      
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      
+      - name: Run check
+        run: ./gradlew check -i
+      
+      - name: Cleanup Gradle Cache
+        if: always()
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+  example:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'gradle'
+      
+      - name: Check if testing is needed
+        id: check
+        run: |
+          if .travis/build_condition.sh ${{ github.event.before }}..${{ github.sha }} examples/example; then
+            echo "Testing"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "NOT testing"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Make gradlew executable
+        if: steps.check.outputs.skip != 'true'
+        run: chmod +x examples/example/gradlew
+      
+      - name: Run example check
+        if: steps.check.outputs.skip != 'true'
+        working-directory: ./examples/example/
+        run: ./gradlew check -i
+      
+      - name: Cleanup Gradle Cache
+        if: always()
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  
+  upload-coverage:
+    needs: [jdk11, example]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4

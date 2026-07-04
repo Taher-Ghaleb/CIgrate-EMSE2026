@@ -1,0 +1,22 @@
+language: java
+jdk: openjdk8
+env:
+  global:
+    - _JAVA_OPTIONS="-Xms1G -Xmx4G"
+
+sudo: false
+
+install: true
+
+script:
+  - mvn clean verify
+
+after_script:
+  - |
+    if [ "$TRAVIS_TEST_RESULT" != "0" ]; then
+      MESSAGE="[${TRAVIS_REPO_SLUG}] Build failed - ${TRAVIS_COMMIT_MESSAGE} (${TRAVIS_COMMIT})"
+    else
+      MESSAGE="[${TRAVIS_REPO_SLUG}] Build passed - ${TRAVIS_COMMIT_MESSAGE} (${TRAVIS_COMMIT})"
+    fi
+    MESSAGE="$MESSAGE Details: https://travis-ci.com/${TRAVIS_REPO_SLUG}/builds/${TRAVIS_BUILD_ID}"
+    echo -e "NICK github-actions-io7m\nUSER github-actions-io7m 0 * :github-actions-io7m\nJOIN #io7m\nPRIVMSG #io7m :$MESSAGE\nQUIT" | nc -C irc.libera.chat 6697

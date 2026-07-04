@@ -1,0 +1,46 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  global:
+    - PROJ_VERSION=9.4.1
+    - PROJ_INSTALL_PREFIX=/usr/local
+
+sudo: required
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y sqlite3 libsqlite3-dev libtiff-dev libcurl4-openssl-dev pkg-config cmake build-essential
+
+cache:
+  directories:
+    - /usr/local
+
+install:
+  - if [ ! -f /usr/local/lib/libproj.so ]; then
+      wget https://download.osgeo.org/proj/proj-${PROJ_VERSION}.tar.gz;
+      tar xf proj-${PROJ_VERSION}.tar.gz;
+      cd proj-${PROJ_VERSION};
+      mkdir build;
+      cd build;
+      cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX};
+      NPROC=$(nproc);
+      make -j${NPROC};
+      sudo make install;
+      cd ../..;
+    fi
+  - sudo ldconfig
+  - export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+  - export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+
+script:
+  - proj --version
+  - pkg-config --modversion proj
+  - mvn clean package
+  - javac -cp target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java
+  - java -cp "target/proj-1.0-SNAPSHOT.jar:example" TransformPoints
+
+after_success:
+  - tar -czf proj-jni-jar.tar.gz target/proj-*.jar
+  - curl -H "Content-Type: application/octet-stream" --data-binary @proj-jni-jar.tar.gz $UPLOAD_URL

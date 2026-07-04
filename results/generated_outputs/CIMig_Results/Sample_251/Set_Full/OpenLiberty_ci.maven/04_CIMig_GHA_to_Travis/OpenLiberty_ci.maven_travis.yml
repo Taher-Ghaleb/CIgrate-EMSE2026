@@ -1,0 +1,19 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  include:
+    os: windows
+    stage: tests
+  addons:
+    firefox: latest
+branches: main
+before_install:
+  java -version
+  mvn verify -Ponline-its -D\"invoker.streamLogs\"=true -Druntime=${{ matrix.RUNTIME }} -DruntimeVersion=\"${{ matrix.RUNTIME_VERSION }}
+script:
+  script:
+    cd C:/ci.ant\nmvn clean install\ncd C:/ci.common\nmvn clean install\n
+    mvn verify -Ponline-its -D\"invoker.streamLogs\"=true -Druntime=${{ matrix.RUNTIME }} -DruntimeVersion=\"${{ matrix.RUNTIME_VERSION }}
+directories: ~/.m2
+sudo: FALSE

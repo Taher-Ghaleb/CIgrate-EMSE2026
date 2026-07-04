@@ -1,0 +1,18 @@
+language: java
+sudo: false
+jdk:
+  - openjdk11
+
+cache:
+  directories:
+    - ~/.m2/repository
+    
+script:
+  - mvn clean install
+  
+after_success:
+  - if [ $TRAVIS_BRANCH = "main" ]; then
+    - echo "Uploading artifacts..."
+    - tar -czvf build-artifacts.tar.gz target/*.jar
+    - echo "Artifacts uploaded."
+    fi

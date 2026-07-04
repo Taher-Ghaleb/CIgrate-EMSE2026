@@ -1,0 +1,30 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      with: java-version
+      with:
+        java-version:
+          ${{ matrix.java }}
+          1.8
+        coveragecommand: gradle-cmd
+      uses: actions/setup-java@version
+    - name: set up jdk 1.8
+      uses: actions/checkout@version
+      run:
+        ./e2e/PATH-OR-URL
+        docker
+
+env:
+  github_token: ${{ github.token }}
+

@@ -1,0 +1,50 @@
+name: Java Build and Deploy
+on:
+  push:
+    branches:
+      - master
+      - '^.*-[0-9]+\\..*$'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      GLOBAL_ENV_VAR_1: ${{ secrets.GLOBAL_ENV_VAR_1 }}
+      GLOBAL_ENV_VAR_2: ${{ secrets.GLOBAL_ENV_VAR_2 }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      - name: Install dependencies
+        run: ./build.sh
+
+      - name: Deploy
+        if: ${{ needs.build.succeeded }}
+        uses: addcharlie/deploy-to-heroku@v3
+        with:
+          app_name: ${{ env.HEROKU_APP_NAME }}
+          api_key: ${{ secrets.HEROKU_API_KEY }}
+```
+
+This GitHub Actions workflow maintains the semantics of the provided Travis CI configuration while adhering to the specified output and migration rules. It includes a single job named "build" that runs on an Ubuntu runner, uses a PostgreSQL service, sets up JDK 8, caches dependencies, installs dependencies using a custom script, and deploys to Heroku if the build is successful. The environment variables and caches are preserved, and modern actions are used where possible.

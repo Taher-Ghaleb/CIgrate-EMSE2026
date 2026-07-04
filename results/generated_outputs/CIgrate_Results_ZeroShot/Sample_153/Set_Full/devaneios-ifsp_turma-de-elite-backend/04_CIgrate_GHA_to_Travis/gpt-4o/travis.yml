@@ -1,0 +1,47 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.gradle/caches
+    - $HOME/.gradle/wrapper
+    - $HOME/.cache/firebase
+    - $HOME/.npm
+
+env:
+  global:
+    - NODE_VERSION=18
+
+matrix:
+  include:
+    - os: linux
+      dist: focal
+
+before_install:
+  - nvm install $NODE_VERSION
+  - nvm use $NODE_VERSION
+  - npm install -g firebase-tools
+  - openssl aes-256-cbc -K $FIREBASE_KEY -iv $FIREBASE_IV -in firebase/firebase-sdk-key.json.enc -out firebase/firebase-sdk-key.json -d
+
+install:
+  - chmod +x gradlew
+
+script:
+  - firebase emulators:exec --only auth --project turma-de-elite-app './gradlew test'
+
+after_success:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+deploy:
+  provider: script
+  script: bash deploy.sh
+  on:
+    branch: release
+    condition: $TRAVIS_EVENT_TYPE = push
+
+# TODO: Implement deploy.sh script to handle Heroku deployment

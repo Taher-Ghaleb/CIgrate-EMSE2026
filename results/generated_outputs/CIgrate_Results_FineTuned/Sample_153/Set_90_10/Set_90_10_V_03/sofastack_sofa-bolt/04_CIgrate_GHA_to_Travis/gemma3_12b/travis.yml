@@ -1,0 +1,19 @@
+language: java
+sudo: false
+jdk:
+  - oraclejdk8
+  - oraclejdk7
+before_install:
+  - echo "Downloading Maven 3.2.5"
+  - wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.zip
+  - unzip -q apache-maven-3.2.5-bin.zip
+  - export PATH=$PATH:`pwd`/apache-maven-3.2.5/bin
+  - cp ./.middleware-common/.travis.settings.xml $HOME/.m2/settings.xml
+  - mvn -version
+install:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+script:
+  - sh ./.middleware-common/check_format.sh
+  - mvn cobertura:cobertura
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

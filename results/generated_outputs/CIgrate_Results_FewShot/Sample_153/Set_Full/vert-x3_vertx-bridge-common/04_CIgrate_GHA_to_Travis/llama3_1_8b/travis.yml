@@ -1,0 +1,41 @@
+Here is the equivalent complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+sudo: false
+install: true
+branches:
+  only:
+    - master
+    - '^[0-9]+.[0-9]+$'
+jobs:
+  test-oraclejdk8:
+    docker:
+      - image: openjdk:8-jdk-alpine
+    script:
+      - mvn -q clean verify -B
+    allow_failure: false
+
+  test-openjdk11:
+    if: github.event_name!= 'pull_request'
+    docker:
+      - image: openjdk:11-jdk-alpine
+    script:
+      - mvn -q clean verify -B
+    allow_failure: false
+
+  deploy:
+    needs: test-oraclejdk8
+    if: github.event_name!= 'pull_request'
+    docker:
+      - image: openjdk:8-jdk-alpine
+    script:
+      - chmod +x.travis.deploy.artifacts.sh
+      - bash.travis.deploy.artifacts.sh
+    allow_failure: false
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that I've used the `docker` keyword to specify the Docker images for each job, and the `script` keyword to specify the commands to run in each job. I've also used the `allow_failure` keyword to specify that the `test-openjdk11` and `deploy` jobs should fail if they encounter any issues.

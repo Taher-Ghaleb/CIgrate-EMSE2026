@@ -1,0 +1,15 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn test -B
+script
+apt:
+  packages: jdk-8-jdk
+tags: TRUE
+directories: ~/.m2

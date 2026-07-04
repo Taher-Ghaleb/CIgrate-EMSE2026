@@ -1,0 +1,38 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['openjdk8', 'openjdk9', 'openjdk11']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Update apt and install graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install graphviz
+      - name: Print Java version
+        run: java -version
+      - name: Build with Gradle
+        run: ./gradlew buildCI --scan --stacktrace --info
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle.kts', '**/build.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Remove module lock and plugin resolution cache
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/

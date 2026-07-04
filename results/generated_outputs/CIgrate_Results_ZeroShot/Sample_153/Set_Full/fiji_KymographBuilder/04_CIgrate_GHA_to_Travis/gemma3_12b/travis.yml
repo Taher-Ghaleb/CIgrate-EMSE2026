@@ -1,0 +1,27 @@
+language: bash
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+  except:
+    - /^$/
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+before_install:
+  - echo "Before install"
+install:
+  - echo "Install"
+before_script:
+  - echo "Before script"
+  - chmod +x ./.travis/build.sh
+script:
+  - echo "Running build script"
+  - SECRET_1=$SECRET_1 && SECRET_2=$SECRET_2 ././.travis/build.sh
+after_success:
+  - echo "After success"
+after_failure:
+  - echo "After failure"

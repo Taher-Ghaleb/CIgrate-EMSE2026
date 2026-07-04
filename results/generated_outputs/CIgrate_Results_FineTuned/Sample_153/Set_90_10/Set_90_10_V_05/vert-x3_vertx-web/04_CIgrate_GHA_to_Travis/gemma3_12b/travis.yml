@@ -1,0 +1,55 @@
+language: java
+
+branches:
+  only:
+  - master
+  - /^\d+\.\d+$/
+
+jobs:
+  include:
+    - stage: test
+      name: "Vert.x 4.3.1 Tests (JDK 8)"
+      jdk: oraclejdk8
+      script:
+        - mvn -q clean verify -B
+    - name: "Vert.x 4.3.1 Tests (JDK 11)"
+      jdk: openjdk11
+      if: type != pull_request
+      script:
+        - mvn -q clean verify -B
+    - name: "Apollo Link Tests"
+      addons:
+        apt:
+          packages:
+          - oracle-java8-installer
+      jdk: oraclejdk8
+      services:
+        - docker
+      before_install:
+        - cd vertx-web-graphql
+        - mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer -Dexec.classpathScope=test > ${HOME}/ApolloTestsServer.log 2>&1 &
+        - ApolloTestsServerPid=$(cat < /proc/self/fd/0)
+        - while ! grep -q "Apollo tests server started" ${HOME}/ApolloTestsServer.log; do sleep 1; done
+      script:
+        - cd tests/apollo
+        - npm install
+        - npm run test
+      after_script:
+        - cat ${HOME}/ApolloTestsServer.log
+      before_cache:
+        - rm -rf $HOME/.m2/repository/io/vertx/
+      cache:
+        directories:
+          - $HOME/.m2
+      after_success:
+        - if [ -n "$TRAVIS_BRANCH" ] && [ "$TRAVIS_BRANCH" = "master" ]; then echo "Apollo tests passed on branch $TRAVIS_BRANCH"; fi
+        - if [ "$TRAVIS_JDK_VERSION" = "oraclejdk8" ]; then echo "Apollo tests passed on JDK 8"; fi
+        - if [ "$TRAVIS_JDK_VERSION" = "openjdk11" ]; then echo "Apollo tests passed on JDK 11"; fi
+        - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then echo "Apollo tests passed on pull request"; fi
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo "Apollo tests passed on pull request"; fi
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo "Apollo tests passed on pull request"; fi
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo "Apollo tests passed on pull request"; fi
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo "Apollo tests passed on pull request"; fi
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo "Apollo tests passed on pull request"; fi
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo "Apollo tests passed on pull request"; fi
+        - if [ "$TRAVIS_PULL_REQUEST"

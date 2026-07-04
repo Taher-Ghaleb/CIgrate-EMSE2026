@@ -1,0 +1,29 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Run Maven test
+        run: |
+          mvn test \
+            -Dhdf5lib-absolute-path=$(pwd)/silo/lib/linux64/libjhdf5.so \
+            --fail-at-end \
+            --batch-mode \
+            -Dmatsim.preferLocalDtds=true
+        env:
+          MAVEN_OPTS: -Xmx2500m
+```
+
+Note that I've used the `run` keyword to specify the Maven command, and the `env` keyword to set the `MAVEN_OPTS` environment variable. I've also used the `$(pwd)` syntax to refer to the current working directory, as in the original Travis CI configuration.

@@ -1,0 +1,48 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'bootique/bootique-logback'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'bootique/bootique-logback'
+
+env:
+  TRAVIS_BRANCH: ${{ github.event.pull_request.base_ref || github.event.push.branch }}
+  TRAVIS_REPO_SLUG: ${{ github.repository_owner }}/${{ github.event.repository }}
+  TRAVIS_REPO_NAME: ${{ github.event.repository }}
+  TRAVIS_COMMIT: ${{ github.sha }}
+  TRAVIS_PULL_REQUEST: ${{ github.event.pull_request.number }}
+  TRAVIS_PULL_REQUEST_BRANCH: ${{ github.event.pull_request.head.ref }}
+  TRAVIS_REPO_OWNER: ${{ github.repository_owner }}
+  TRAVIS_REPO_SLUG: ${{ github.repository_owner }}/${{ github.event.repository }}
+  TRAVIS_BRANCH: ${{ github.event.pull_request.base_ref || github.event.push.branch }}
+  TRAVIS_REPO_NAME: ${{ github.event.repository }}
+  TRAVIS_COMMIT: ${{ github.sha }}
+  TRAVIS_PULL_REQUEST: ${{ github.event.pull_request.number }}
+  TRAVIS_PULL_REQUEST_BRANCH: ${{ github.event.pull_request.head.ref }}
+  TRAVIS_REPO_OWNER: ${{ github.repository_owner }}
+  TRAVIS_REPO_SLUG: ${{ github.repository_owner }}/${{ github.event.repository }}
+  TRAVIS_BRANCH: ${{ github.event.pull_request.base_ref || github.event.push.branch }}
+  TRAVIS_REPO_NAME: ${{ github.event.repository }}
+  TRAVIS_COMMIT: ${{ github.sha }}
+  TRAVIS_PULL_REQUEST: ${{ github.event.pull_request.number }}
+  TRAVIS_PULL_REQUEST_BRANCH: ${{ github.event.pull_request.head.ref }}
+  TRAVIS_REPO_OWNER: ${{ github.repository_owner }}
+  TRAVIS_REPO_SLUG: ${{ github.repository_owner }}/${{ github.event.repository }}
+  TRAVIS_BRANCH: ${{ github.event.pull_request.base_ref || github.event.push.branch }}
+  TRAVIS_REPO_NAME: ${{ github.event.repository }}
+  TRAVIS_COMMIT: ${{ github.sha }}
+  TRAVIS_PULL_REQUEST: ${{ github.event.pull_request.number }}
+  TRAVIS_PULL_REQUEST_BRANCH: ${{ github.event.pull_request.head.ref }}
+  TRAVIS_REPO_OWNER: ${{ github.repository_owner }}
+  TRAVIS_REPO_SLUG: ${{ github.repository_owner }}/${{ github.event.repository }}
+  TRAVIS_BRANCH: ${{ github.event.pull_request.base_ref || github.event.push.branch }}

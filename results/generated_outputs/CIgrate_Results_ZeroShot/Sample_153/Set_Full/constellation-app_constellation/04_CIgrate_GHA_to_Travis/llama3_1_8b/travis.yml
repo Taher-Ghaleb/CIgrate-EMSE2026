@@ -1,0 +1,58 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 11"
+  - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing dependencies"
+  - apt-get update
+  - apt-get install -y default-jdk
+
+script:
+  - echo "Running tests"
+  -./run-tests.sh
+
+after_success:
+  - echo "Deploying to GitHub"
+  -./deploy.sh
+
+after_failure:
+  - echo "Cleaning up Ivy cache"
+  - find ~/.ivy2/cache -name "ivydata-*.properties" -print -delete
+
+deploy:
+  on:
+    tags: true
+  permissions:
+    contents: write
+  before_deploy:
+    - echo "Creating GitHub Release"
+    -./create-release.sh
+  after_deploy:
+    - echo "Sending Gitter notification"
+    -./send-notification.sh
+
+matrix:
+  include:
+    - java_version: 11
+      jdk: openjdk
+      cache: ~/.ivy2/cache
+      artifact: dist/constellation.zip
+      retention-days: 1
+
+services:
+  - docker-compose
+
+addons:
+  - cache:
+      - directories: [~/.ivy2/cache, ~/.gradle/*, $HOME/.npm]
+
+notifications:
+  on_success: always
+  on_failure: always
+  on_error: always
+```
+
+Note: The above configuration is a complete Travis CI configuration YAML file. It includes all the necessary sections and properties as per the provided GitHub Actions workflow. The configuration is based on the provided rules and assumptions.

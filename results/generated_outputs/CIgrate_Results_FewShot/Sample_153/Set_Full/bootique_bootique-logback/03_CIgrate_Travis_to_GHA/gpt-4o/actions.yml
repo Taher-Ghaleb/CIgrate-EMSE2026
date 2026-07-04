@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches-ignore:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [8, 9]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Build and verify
+        run: mvn clean verify
+    if: github.event_name == 'pull_request' || github.ref != 'refs/heads/master'
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'bootique/bootique-logback'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Build, create source and javadoc jars, and deploy
+        run: mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+    env:
+      # TODO: Add secure environment variables here
+      SECURE_VAR1: ${{ secrets.SECURE_VAR1 }}
+      SECURE_VAR2: ${{ secrets.SECURE_VAR2 }}

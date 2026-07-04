@@ -1,0 +1,17 @@
+env: global
+sudo
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+install:
+  export SMALLD_VERSION=\"$(git describe --dirty --tags)-SNAPSHOT\"\nexport MAVEN_OPTS=\"-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false\"\nopenssl aes-256-cbc -d -in etc/codesigning.asc.enc -out etc/codesigning.asc -k $FILE_ENCRYPTION_PASSPHRASE\ngpg --batch --fast-import etc/codesigning.asc\nmvn -s etc/settings.xml -B versions:set-property verify deploy -P release\n
+include:
+  stage: Release
+apt:
+  packages: jdk-8-jdk

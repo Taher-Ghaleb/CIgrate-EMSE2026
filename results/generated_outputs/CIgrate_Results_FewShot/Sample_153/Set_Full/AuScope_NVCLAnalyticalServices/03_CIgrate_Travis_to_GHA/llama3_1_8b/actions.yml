@@ -1,0 +1,33 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Build
+        run:./gradlew build
+      - name: Deploy to GitHub Releases
+        uses: softprops/action-gh-releases@v1
+        with:
+          api-key: ${{ secrets.GITHUB_API_KEY }}
+          file: build/libs/NVCLAnalyticalServices-1.0.0.jar
+          skip-cleanup: true
+          repo: AuScope/NVCLAnalyticalServices
+          tags: true
+```
+
+Note: You need to replace `GITHUB_API_KEY` with your actual GitHub API key.

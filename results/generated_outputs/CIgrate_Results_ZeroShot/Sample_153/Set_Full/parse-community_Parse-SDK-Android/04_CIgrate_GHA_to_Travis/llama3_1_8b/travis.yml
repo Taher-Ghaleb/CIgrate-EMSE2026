@@ -1,0 +1,81 @@
+language: java
+
+before_install:
+  - echo "Installing JDK 8"
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk
+  - update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+  - update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac
+
+install:
+  - echo "Installing Gradle"
+  - curl -s https://services.gradle.org/distributions/gradle-7.4.1/bin/gradle-7.4.1-linux -o gradle
+  - chmod +x gradle
+  -./gradle --version
+
+before_script:
+  - echo "Accepting Android SDK licenses"
+  - yes | sdkmanager --licenses
+
+script:
+  - echo "Installing Android SDK components"
+  - sdkmanager --install "build-tools;30.0.3" "platforms;android-30"
+  - sdkmanager --list_installed
+  - echo "Making gradlew executable"
+  - chmod +x gradlew
+  - echo "Running tests and generating coverage"
+  -./gradlew clean testDebugUnitTest jacocoTestReport
+  - echo "Uploading coverage to Coveralls"
+  -./gradlew coveralls
+  - echo "Uploading coverage to Codecov"
+  -./gradlew codecov
+  - echo "Uploading test results"
+  - actions/upload-artifact@v4
+    with:
+      name: test-results
+      path: |
+        **/build/reports/tests/
+        **/build/test-results/
+      retention-days: 7
+
+deploy:
+  on:
+    tags: true
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+
+matrix:
+  include:
+    - java: '8'
+    - gradle: '7.4.1'
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - 'ppa:openjdk/ppa'
+
+branches:
+  only:
+    - master
+    - '[0-9]+.[0-9]+.[0-9]+'
+
+branches:
+  except:
+    - main
+
+env:
+  COVERALLS_REPO_TOKEN: $COVERALLS_REPO_TOKEN
+  CODE

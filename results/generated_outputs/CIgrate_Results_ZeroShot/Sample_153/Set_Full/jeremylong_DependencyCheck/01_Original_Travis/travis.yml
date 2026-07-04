@@ -1,0 +1,30 @@
+language: java
+jdk: oraclejdk7
+script: 
+  - mvn package -DskipTests=true
+
+env:
+  global:
+  - secure: "********************"
+  - secure: "********************"
+  - secure: "********************"
+  - secure: "********************"
+  - secure: "********************"
+
+before_install:
+
+after_success:
+
+deploy:
+  - provider: script
+    script: mvn --settings .travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+    skip_cleanup: true
+    on:
+      branch: master
+  - provider: pages
+    skip_cleanup: true
+    local_dir: target/staging
+    github_token: $GITHUB_TOKEN
+    on:
+      tags: true
+      branch: master

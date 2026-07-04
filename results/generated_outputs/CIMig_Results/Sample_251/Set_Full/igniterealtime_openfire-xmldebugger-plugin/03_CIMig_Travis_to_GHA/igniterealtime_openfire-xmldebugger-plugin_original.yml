@@ -1,0 +1,28 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+      with:
+        clean: TRUE
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+    run: mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml
+
+env:
+  github_token: ${{ github.token }}
+
+strategy:
+  fail-fast: FALSE
+
+macos:
+  jdk: oraclejdk8
+

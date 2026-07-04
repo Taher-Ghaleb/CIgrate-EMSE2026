@@ -1,0 +1,31 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+addons:
+  sonarqube:
+    token:
+      secure: "your-sonar-token"
+    branches:
+      - master
+      - develop
+script:
+  -./gradlew check --no-daemon --console=plain
+  -./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${{ secrets.SONAR_ORG }} -Dsonar.host.url=${{ secrets.SONAR_HOST }} -Dsonar.login=${{ secrets.SONAR_LOGIN }} -Dsonar.branch.name=${TRAVIS_BRANCH}
+  -./gradlew grid --no-daemon --console=plain -i
+  -./gradlew firefox_headless --no-daemon --console=plain -i
+  -./gradlew chrome_headless --no-daemon --console=plain -i
+cache:
+  directories:
+    - '$HOME/.gradle/caches/modules-2/modules-2.lock'
+    - '$HOME/.gradle/caches/*/plugin-resolution/'
+    - '$HOME/.gradle/caches/'
+after_success:
+  -./.upload_reports.sh
+```
+
+Note: Replace `your-sonar-token` with your actual SonarQube token.

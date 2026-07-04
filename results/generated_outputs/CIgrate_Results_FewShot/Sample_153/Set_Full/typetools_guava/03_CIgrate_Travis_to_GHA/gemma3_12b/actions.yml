@@ -1,0 +1,55 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  ROOT_POM: "pom.xml"
+  JAVA_VERSION: "8" # Default, overridden by matrix
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '11']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install dependencies
+        run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f ${{ env.ROOT_POM }}
+      - name: Verify
+        run: travis_wait 60 mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f ${{ env.ROOT_POM }}
+      - name: Deploy snapshot
+        if: success()
+        run: ./util/deploy_snapshot.sh
+      - name: Update snapshot docs
+        if: success()
+        run: ./util/update_snapshot_docs.sh
+      - name: Print Surefire reports
+        if: failure()
+        run: ./util/print_surefire_reports.sh
+
+    cache:
+      directories:
+      - $HOME/.m2
+
+  android_build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '11']
+    env:
+      ROOT_POM: "android/pom.xml"
+      JAVA_VERSION: "8" # Default, overridden by matrix
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install dependencies

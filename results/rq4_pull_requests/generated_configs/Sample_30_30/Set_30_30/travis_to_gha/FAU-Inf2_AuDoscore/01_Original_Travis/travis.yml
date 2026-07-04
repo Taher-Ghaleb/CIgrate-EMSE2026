@@ -1,0 +1,12 @@
+sudo: required
+dist: trixie
+addons:
+  apt:
+    packages:
+      - bc
+      - parallel
+language: java
+jdk:
+  - openjdk25
+  - oraclejdk25
+script: make verify

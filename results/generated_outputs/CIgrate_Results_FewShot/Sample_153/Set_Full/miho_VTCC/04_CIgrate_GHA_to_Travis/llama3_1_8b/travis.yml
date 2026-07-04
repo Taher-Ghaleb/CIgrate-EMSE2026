@@ -1,0 +1,31 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+install: true
+jdk:
+  - openjdk8
+  - oraclejdk11
+  - openjdk17
+script:
+  - chmod +x gradlew
+  -./gradlew --version
+  -./gradlew clean test
+matrix:
+  include:
+    - os: ubuntu-latest
+      jdk: openjdk8
+    - os: ubuntu-latest
+      jdk: oraclejdk11
+    - os: ubuntu-latest
+      jdk: openjdk17
+    - os: macos-latest
+      jdk: openjdk8
+    - os: macos-latest
+      jdk: oraclejdk11
+    - os: macos-latest
+      jdk: openjdk17
+```
+
+Note that the `fail-fast` property is not directly supported in Travis CI, so it has been omitted. The `matrix` property is used to define the different combinations of operating systems and JDK versions to run the job on. The `script` property contains the commands to be executed for each job.

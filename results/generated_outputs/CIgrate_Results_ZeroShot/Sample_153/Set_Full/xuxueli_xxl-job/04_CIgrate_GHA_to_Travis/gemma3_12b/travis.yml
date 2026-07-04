@@ -1,0 +1,17 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.m2/
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+script:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true
+  - mvn -DskipTests=true clean package

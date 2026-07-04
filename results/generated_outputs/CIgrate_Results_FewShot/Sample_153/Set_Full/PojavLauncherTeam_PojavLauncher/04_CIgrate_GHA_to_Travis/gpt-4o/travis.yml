@@ -1,0 +1,51 @@
+language: android
+jdk: openjdk17
+env:
+  global:
+    - ANDROID_API_LEVEL=33
+    - ANDROID_BUILD_TOOLS_VERSION=33.0.2
+
+branches:
+  only:
+    - main
+    - master
+    - develop
+
+before_install:
+  - yes | sdkmanager --licenses || true
+  - sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION"
+  - sdkmanager "platforms;android-$ANDROID_API_LEVEL"
+  - sdkmanager --list_installed
+
+install:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew clean build
+  - ./gradlew test
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "main" ] || [ "$TRAVIS_BRANCH" == "master" ]; then
+      git tag dev-build-$TRAVIS_BUILD_NUMBER;
+      git push --tags;
+    fi
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file: app/build/outputs/apk/debug/app-debug.apk
+  skip_cleanup: true
+  on:
+    branch: 
+      - main
+      - master
+    tags: false
+  prerelease: true
+  name: "Development Build $TRAVIS_BUILD_NUMBER"
+  body: |
+    Automatic development build of PojavLauncher
+    
+    **Commit:** $TRAVIS_COMMIT
+    **Branch:** $TRAVIS_BRANCH
+    **Build Date:** $(date)
+    **Commit Message:** $(git log -1 --pretty=%B)

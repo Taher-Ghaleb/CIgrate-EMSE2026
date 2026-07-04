@@ -1,0 +1,43 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+env:
+  matrix:
+    - SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+    - SONAR_ORGANIZATION: twasi
+
+addons:
+  maven:
+    version: 3.6.3
+
+script:
+  - mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+
+before_install:
+  - cat $HOME/.m2/settings.xml > $HOME/.m2/settings.xml.bak
+  - echo "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\">" > $HOME/.m2/settings.xml
+  - echo "<servers>" >> $HOME/.m2/settings.xml
+  - echo "  <server>" >> $HOME/.m2/settings.xml
+  - echo "    <id>sonarqube</id>" >> $HOME/.m2/settings.xml
+  - echo "    <username>${{ env.SONAR_TOKEN }}</username>" >> $HOME/.m2/settings.xml
+  - echo "    <password></password>" >> $HOME/.m2/settings.xml
+  - echo "  </server>" >> $HOME/.m2/settings.xml
+  - echo "</settings>" >> $HOME/.m2/settings.xml
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+          cache: 'maven'
+
+      - name: Run tests and Son

@@ -1,0 +1,63 @@
+language: java
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y graphviz
+
+install:
+  - chmod +x gradlew
+
+script:
+  - java -version
+  -./gradlew buildCI --scan --stacktrace --info
+
+after_success:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - 'graphviz'
+
+env:
+  - JAVA_HOME: $HOME/jdk
+  - GRADLE_HOME: $HOME/gradle
+
+matrix:
+  include:
+    - java: 8
+    - java: 9
+    - java: 11
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle/*
+    - $HOME/.npm
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - your_email@example.com
+
+continue-on-error:
+  - true
+
+branches:
+  only:
+    - main
+  except:
+    - pull_request
+```
+
+Note: The above configuration is a complete Travis CI configuration YAML file. It includes all the necessary sections and properties as per the provided GitHub Actions workflow. The configuration is based on the provided rules and maintains the 1 to 1 mapping of GitHub Actions to Travis CI.

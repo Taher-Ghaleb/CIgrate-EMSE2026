@@ -1,0 +1,46 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  TERM: dumb
+  secure: ********************
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Gradle Test, Jacoco, Coveralls, Bintray
+        run: ./gradlew test jacocoTestReport && ./gradlew coveralls bintrayUpload
+  deploy:
+    if: github.ref == 'refs/tags/release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      # TODO: Add deployment steps here
+      - name: "Placeholder for deployment"
+        run: echo "Deployment not implemented"
+
+addons:
+  coverity_scan:
+    project:
+      name: "micheljung/nocatch"
+      description: "Get rid of annoying checked exceptions!"
+    notification_email: michel.jung89@gmail.com
+    build_command_prepend: "./gradlew clean"
+    build_command:   "./gradlew build"
+    branch_pattern: coverity_scan

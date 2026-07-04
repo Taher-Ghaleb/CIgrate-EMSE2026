@@ -1,0 +1,31 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+      with:
+        java-version: 1.8
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      env:
+        ci: TRUE
+      with: command
+      with: command
+      run: mvn --errors clean verify site
+    - name: placeholder_Name
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+

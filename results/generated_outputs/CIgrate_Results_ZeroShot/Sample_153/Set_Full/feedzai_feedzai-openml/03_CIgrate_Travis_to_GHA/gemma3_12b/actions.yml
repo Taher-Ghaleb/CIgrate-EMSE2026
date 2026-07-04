@@ -1,0 +1,41 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  tag:
+    patterns:
+      - '^\d+\.\d+(\.\d+)?(-\S*)?$'
+      - /^hf-.*$/
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Build and Test
+        run: mvn test -B
+      - name: PIT Mutation Testing
+        run: mvn pitmp:run
+      - name: Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+        if: always()
+
+  deploy:
+    if: github.ref_name == 'tags/*'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        run: ./deploy/deploy.sh
+        env:
+          # TODO: Add secrets here if needed
+          # Example:
+          # MY_SECRET: ${{ secrets.MY_SECRET }}

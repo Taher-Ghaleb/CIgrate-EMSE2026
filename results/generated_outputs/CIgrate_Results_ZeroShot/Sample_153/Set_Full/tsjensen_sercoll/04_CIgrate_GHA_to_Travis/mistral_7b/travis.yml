@@ -1,0 +1,42 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get update
+
+install:
+  - actions/checkout@v4
+  - name: Set up JDK 8
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '8'
+
+before_script:
+  - sudo apt-get install -y openjdk-6-jdk
+
+script:
+  - cache:
+      directories:
+        - ~/.gradle
+      key: ${{ os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+      restore-keys: |
+        ${{ os }}-gradle-
+    - ls -a
+    - pwd
+    - ./gradlew clean
+
+deploy:
+  on:
+    tags: true
+
+after_success:
+  deploy:
+    provider: script
+    script: # TODO: Add deployment script

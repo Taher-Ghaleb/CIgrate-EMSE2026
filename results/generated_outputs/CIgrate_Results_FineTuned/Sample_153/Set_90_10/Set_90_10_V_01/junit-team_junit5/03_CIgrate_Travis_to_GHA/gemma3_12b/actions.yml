@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '*'
+      - '!r*'
+  pull_request:
+    branches:
+      - '*'
+      - '!r*'
+
+env:
+  ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.ORG_GRADLE_PROJECT_ossrhUsername }}
+  ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.ORG_GRADLE_PROJECT_ossrhPassword }}
+  GRGIT_USER: ${{ secrets.GRGIT_USER }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        jdk: [temurin@11, temurin@21]
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: ${{ matrix.jdk }}
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches/modules-2
+          ~/.gradle/wrapper/dists
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    - name: Display Gradle version
+      run: ./gradlew --version
+    - name: Build
+      run: ./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+    - name: Coverage
+      if: matrix.os == 'ubuntu-latest'
+      run: ./gradlew --scan --stacktrace --warning-mode=all -PenableJaCoCo build jacocoRootReport
+    - name: Codecov
+      if: matrix.os == 'ubuntu-latest'
+      run: bash <(curl -s https://codecov.io/bash)
+
+  deploy:
+    needs: test
+    if: github.repository == 'junit-team/junit5' && github.ref == 'refs/heads/master' && github.event_name == '

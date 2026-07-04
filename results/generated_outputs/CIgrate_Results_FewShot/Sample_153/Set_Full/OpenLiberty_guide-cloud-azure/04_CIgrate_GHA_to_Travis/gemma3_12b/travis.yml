@@ -1,0 +1,36 @@
+language: bash
+sudo: required
+branches:
+  only:
+    - master
+    - qa
+  except:
+    - /^release\/.*$/
+pull_request:
+  branches:
+    - master
+    - qa
+env:
+  CHANGE_MINIKUBE_NONE_USER: true
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.npm
+    - finish/target
+    - finish/.gradle
+before_install:
+  - unset _JAVA_OPTIONS
+install:
+  - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+  - chmod +x kubectl
+  - sudo ln -s $(pwd)/kubectl /usr/local/bin/kubectl
+  - wget https://github.com/kubernetes/minikube/releases/download/v0.28.2/minikube-linux-amd64 -q -O minikube
+  - chmod +x minikube
+  - sudo ln -s $(pwd)/minikube /usr/local/bin/minikube
+script:
+  - sudo mount --make-rshared /
+  - sudo minikube start --vm-driver=none --bootstrapper=localkube
+  - cd finish
+  - chmod +x ../scripts/travisTest.sh
+  - ../scripts/travisTest.sh

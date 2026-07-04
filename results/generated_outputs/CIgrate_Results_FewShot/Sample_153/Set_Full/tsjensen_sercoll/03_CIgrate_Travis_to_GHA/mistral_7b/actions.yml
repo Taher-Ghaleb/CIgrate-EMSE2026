@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  sercoll_jdk6_java: ${{ runner.os }}-java-6-openjdk
+  sercoll_jdk6_javac: ${{ runner.os }}-java-6-openjdk-javac
+  sercoll_jdk6_javadoc: ${{ runner.os }}-java-6-openjdk-javadoc
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+          cache: 'gradle'
+
+      - name: Install OpenJDK 6
+        run: |
+          apt-get update
+          apt-get install -y openjdk-6-jdk || echo "OpenJDK 6 not available"
+
+      - name: Before install
+        run: |
+          ls -a
+          pwd
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Clean
+        run: ./gradlew clean
+
+      - name: Build
+        run: ./gradlew build

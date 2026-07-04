@@ -1,0 +1,26 @@
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  chmod +x gradlew
+script:
+  script:
+    jdk8
+    ./gradlew jacocoTestReport
+after_success:
+  Codecov
+  python-cmd
+stages:
+  build
+  test
+cache:
+  directories:
+    ~/.gradle
+    ~/.gradle
+    ~/.gradle
+sudo:
+  FALSE
+  TRUE

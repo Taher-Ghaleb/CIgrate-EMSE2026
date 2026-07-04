@@ -1,0 +1,40 @@
+name: Android Build
+
+on:
+  push:
+  pull_request:
+
+env:
+  ANDROID_HOME: /usr/local/android-sdk-28
+  JAVA_HOME: /usr/lib/jvm/temurin-8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Set up Android SDK
+        run: |
+          echo "sdk_root=$ANDROID_HOME" >> $HOME/.gradle/gradle.properties
+          echo "sdk.dir=$ANDROID_HOME" >> $HOME/.gradle/gradle.properties
+      - name: Install Android SDK components
+        run: |
+          sdkmanager --licenses
+          sdkmanager "platform-tools" "tools" "android-28" "build-tools-28.0.3" "extra-android-m2repository"
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build with Gradle
+        run: ./gradlew build
+    cache:
+      path: $HOME/.gradle
+      key: gradle-${{ hash }}
+    # TODO: Notifications (email) - No direct equivalent in GitHub Actions.  Consider using a notification service.
+    # TODO: sudo: false -  Ubuntu runners are already configured to not use sudo.

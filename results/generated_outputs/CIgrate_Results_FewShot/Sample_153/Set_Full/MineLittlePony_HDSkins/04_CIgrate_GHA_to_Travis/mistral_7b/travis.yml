@@ -1,0 +1,29 @@
+language: java
+jdk: openjdk8
+env:
+  global:
+    ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
+
+script:
+  - chmod +x gradlew
+  - ./gradlew check
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - actions/setup-java@v4
+  - gradle/actions/setup-gradle@v4
+
+check:
+  includes:
+    - master
+  script:
+    - ./gradlew check
+
+publish:
+  needs: check
+  if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+  script:
+    - chmod +x gradlew
+    - ./gradlew build publish

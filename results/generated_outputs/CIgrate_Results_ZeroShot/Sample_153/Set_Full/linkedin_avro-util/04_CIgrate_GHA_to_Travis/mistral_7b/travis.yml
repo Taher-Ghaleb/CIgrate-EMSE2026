@@ -1,0 +1,52 @@
+language: java
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    branches:
+      only:
+        - master
+    tags: true
+    types:
+      - release
+
+script:
+  - checkout
+  - setup_java -J-Djava.awt.headless=true -v 8
+  - gradle wrapper --gradle-version 6.5
+  - chmod +x gradlew
+  - ./gradlew clean build javadoc --no-daemon
+
+before_install:
+  - cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle
+
+before_script:
+  - chmod +x gradlew
+
+services:
+  - docker
+
+env:
+  global:
+    BINTRAY_USERNAME: $BINTRAY_USERNAME
+    BINTRAY_API_KEY: $BINTRAY_API_KEY
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - checkout
+    - setup_java -J-Djava.awt.headless=true -v 8
+    - gradle wrapper --gradle-version 6.5
+    - chmod +x gradlew
+    - ./gradlew clean build javadoc --no-daemon
+    - bash -v scripts/publishToBintray.sh

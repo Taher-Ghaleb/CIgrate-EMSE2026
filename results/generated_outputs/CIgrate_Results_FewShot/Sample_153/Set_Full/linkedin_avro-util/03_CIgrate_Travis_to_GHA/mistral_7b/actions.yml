@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - '*'
+  release:
+    types: [published]
+
+env:
+  global:
+    - secure: "${{ secrets.LINKEDIN_AVRO_UTIL_SECRET_1 }}"
+    - secure: "${{ secrets.LINKEDIN_AVRO_UTIL_SECRET_2 }}"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Install Oracle Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y oracle-java8-installer
+      - name: Install and configure Gradle
+        run: |
+          wget -q -O - https://services.gradle.org/distributions/gradle-6.7.1-all.zip | tar xz
+          export GRADLE_HOME=$(pwd)/gradle-6.7.1
+          export PATH=$GRADLE_HOME/bin:$PATH
+      - name: Clean and build
+        run: ./gradlew clean build javadoc --no-daemon

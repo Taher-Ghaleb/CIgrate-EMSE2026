@@ -1,0 +1,20 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: develop
+before_install:
+  java -version
+  ./mvnw -s ./.maven-settings.xml -Pcontinuous-integration -B site:stage scm-publish:publish-scm -Dscmpublish.checkinComment=\"Maven site: ${{ github.repository }}\" -Dusername=${{ secrets.GH_SITE_DEPLOY_USERNAME }} -Dpassword=${{ secrets.GH_SITE_DEPLOY_PAT }}\n
+script:
+  script:
+    ./mvnw -s ./.maven-settings.xml -Pcontinuous-integration -B -U clean deploy site
+Deploy
+directories:
+  ~/.m2/repository
+  ~/.sonar/cache
+local_dir

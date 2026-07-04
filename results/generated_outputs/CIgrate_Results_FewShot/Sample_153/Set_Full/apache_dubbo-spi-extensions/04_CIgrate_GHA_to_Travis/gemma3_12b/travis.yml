@@ -1,0 +1,21 @@
+language: java
+sudo: false
+env:
+  matrix:
+    - java: '8'
+    - java: '11'
+  global:
+    fail_fast: true
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+script:
+  - ./mvnw --batch-mode --no-transfer-progress clean install -DskipTests=false -DskipIntegrationTests=false -Dcheckstyle.skip=false -Drat.skip=false -Dmaven.javadoc.skip=true
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then echo "Skipping tests on main branch"; fi
+  - if [ "$TRAVIS_BRANCH" != "main" ]; then ./mvnw test; fi
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then echo "Skipping coverage upload on main branch"; fi
+  - if [ "$TRAVIS_BRANCH" != "main" ]; then codecov/codecov-action@v4 with: token: $CODECOV_TOKEN fail_ci_if_error: false; fi
+after_failure:
+  - if [ "$TRAVIS_BRANCH" != "main" ]; then echo "Build failed for JDK ${matrix.java}"; fi

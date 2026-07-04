@@ -1,0 +1,26 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '~/.sonar/cache'
+env:
+  matrix:
+    - jdk: openjdk8
+    - jdk: openjdk11
+  global:
+    - GITHUB_TOKEN: $GITHUB_TOKEN
+    - SONAR_TOKEN: $SONAR_TOKEN
+    - SONAR_ORGANIZATION: warden
+script:
+  - mvn -Penable-jacoco -Dsonar.projectKey=jenkins-jira-plugin -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml clean verify
+  - mvn sonar:sonar
+  - coverallsapp/github-action@v2
+    github-token: $GITHUB_TOKEN
+    path-to-lcov: target/site/jacoco/jacoco.xml
+    continue-on-error: true
+  - rm -rf ~/.m2/repository/org/jenkins-ci/plugins/jira

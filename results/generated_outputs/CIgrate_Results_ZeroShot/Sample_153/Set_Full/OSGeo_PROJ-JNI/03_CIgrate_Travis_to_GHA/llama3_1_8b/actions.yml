@@ -1,0 +1,61 @@
+name: PROJ Build and Test
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+  pull_request:
+    branches:
+      -'main'
+      - 'feature/*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: sqlite
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y sqlite3
+      - name: Install PROJ
+        run: |
+          wget https://download.osgeo.org/proj/proj-6.2.1.tar.gz
+          tar xf proj-6.2.1.tar.gz
+          cd proj-6.2.1
+         ./configure
+          NPROC=$(nproc)
+          make -j${NPROC}
+          sudo make install
+      - name: Build PROJ-JNI
+        run: |
+          cd..
+          mvn package
+      - name: Test
+        run: |
+          java --class-path target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java
+      - name: Cache dependencies
+        uses: actions/cache@v4
+          at: cache
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Cache Maven
+        uses: actions/cache@v4
+          at: cache
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-repo-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-repo-
+```
+Note: The above workflow uses the `ubuntu-latest` image, which is the default image for GitHub Actions. If you want to use a different image, you can change it in the `runs-on` line.

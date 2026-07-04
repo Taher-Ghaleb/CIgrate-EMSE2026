@@ -1,0 +1,17 @@
+language: java
+sudo: false
+
+jobs:
+  build:
+    script:
+      - chmod +x gradlew
+      - ./gradlew clean build javadoc --no-daemon
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    script:
+      - chmod +x gradlew
+      - bash -v scripts/publishToBintray.sh
+        env:
+          BINTRAY_USERNAME: $BINTRAY_USERNAME
+          BINTRAY_API_KEY: $BINTRAY_API_KEY

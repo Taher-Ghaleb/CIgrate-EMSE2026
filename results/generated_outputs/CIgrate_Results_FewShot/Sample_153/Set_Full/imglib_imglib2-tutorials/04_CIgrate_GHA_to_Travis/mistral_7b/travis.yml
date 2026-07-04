@@ -1,0 +1,20 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+env:
+  matrix:
+    - SECRET_1=$SECRET_1
+    - SECRET_2=$SECRET_2
+    - SECRET_3=$SECRET_3
+    - SECRET_4=$SECRET_4
+
+script:
+  - chmod +x .travis/build.sh
+  - ./.travis/build.sh
+
+cache:
+  directories:
+    - '.travis/build.sh'
+    - ~/.m2/repository

@@ -1,0 +1,58 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      docker: docker-buildx
+
+    env:
+      PROFILES: headless-mode
+      PROFILES: headless-mode,chrome
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8,11
+
+      - name: Install Geckodriver
+        run: |
+          apt-get update
+          apt-get -y install firefox-geckodriver
+
+      - name: Install Chromedriver
+        uses: actions/setup-node@v4
+        with:
+          node-version: 14
+        run: |
+          npm install -g chromedriver
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-m2
+          path: ${{ env.HOME }}/.m2/repository
+          restore-keys: |
+            ${{ env.HOME }}/.m2/repository/*
+
+      - name: Checkout and build PrimeFaces
+        run: |
+          git clone https://github.com/primefaces/primefaces && cd primefaces && mvn install && cd ..
+          git clone https://github.com/primefaces-extensions/primefaces-selenium && cd primefaces-selenium && mvn install && cd ..
+
+      - name: Install Chromedriver script
+        uses: actions/upload-artifact@v3
+        with:
+          name: install-chromedriver.sh
+          path: .travis/install-chromedriver.sh
+
+      - name: Build and Test
+        run: |
+          ln -s /usr/bin/geckodriver geckodriver
+          source ./.github/workflows/install-chromedriver.sh
+          mvn -B -V clean install -

@@ -1,0 +1,22 @@
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn -B clean install jacoco:report -Pcoverage,dependency-check
+before_script:
+  mvn versions:set --file ./pom.xml -DnewVersion=${GITHUB_REF##*/}
+  shell-cmd
+script:
+  script:
+    mvn -B deploy -Prelease -DskipTests
+after_success:
+  bash <(curl -Ls https://coverage.codacy.com/get.sh)
+directories: ~/.m2/repository
+stage:
+  build and deploy snapshots
+  ☕ 11
+sudo:
+  FALSE
+  TRUE

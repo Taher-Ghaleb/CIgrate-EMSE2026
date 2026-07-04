@@ -1,0 +1,58 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK: openjdk11
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ env.JDK }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-${{ env.JDK }}-
+
+  with-one-way-authentication:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run without authentication
+        env:
+          SKIP_AUTHENTICATION: true
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run with one-way authentication
+        run: mvn clean verify -P with-one-way-authentication
+
+  with-two-way-authentication-by-trusting-each-other:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run with two-way authentication by trusting each other
+        run: mvn clean verify -P with-two-way-authentication-by-trusting-each-other
+
+  with-two-way-authentication-by-trusting-root-ca:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run with two-way authentication by trusting root CA
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+        env:
+          MAV

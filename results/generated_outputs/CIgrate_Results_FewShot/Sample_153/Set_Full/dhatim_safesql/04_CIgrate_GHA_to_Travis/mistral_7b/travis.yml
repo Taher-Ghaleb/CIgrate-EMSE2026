@@ -1,0 +1,49 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+
+script:
+  - mvn test
+
+after_success:
+  - mvn -B jacoco:report coveralls:report
+
+before_install:
+  - env:
+      GPG_SECRET_KEYS: ${{ env.GPG_SECRET_KEYS }}
+      GPG_OWNERTRUST: ${{ env.GPG_OWNERTRUST }}
+    run: |
+      echo "$GPG_SECRET_KEYS" | base64 --decode | gpg --batch --import
+      echo "$GPG_OWNERTRUST" | base64 --decode | gpg --batch --import-ownertrust
+
+install:
+  - uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
+  - uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '8'
+      cache: maven
+
+before_script:
+  - chmod +x .deploy.sh
+
+env:
+  matrix:
+    - GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+    - OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+    - OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+
+script:
+  - ./.deploy.sh

@@ -1,0 +1,34 @@
+matrix:
+  language: java
+  java
+  os:
+    ubuntu-latest
+    windows-latest
+
+name: placeholder
+
+on:
+  pull_request: master
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      env:
+        github_token: ${{ github.token }}
+      with: key
+      uses: actions/setup-java@version
+    - name: Placeholder
+      with:
+        dependencies-cache-enabled: FALSE
+      uses: actions/checkout@version
+    run: mvn -Dmaven.test.skip=true clean source:jar deploy --settings mvn_settings.xml --fail-at-end
+
+macos:
+  jdk: oraclejdk8
+

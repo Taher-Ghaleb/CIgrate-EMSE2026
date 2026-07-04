@@ -1,0 +1,36 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: qa
+before_install:
+  sudo apt-get update -y\nsudo apt-get install -y conntrack\n
+  java -version
+  chmod +x ../scripts/travisTest.sh && sudo ../scripts/travisTest.sh
+before_script:
+  unset _JAVA_OPTIONS
+  cd-cmd
+  chmod-cmd
+script:
+  script:
+    sudo mount --make-rshared /
+    curl-cmd
+    chmod-cmd
+    sudo ln -s $(pwd)/kubectl /usr/local/bin/kubectl
+    wget-cmd
+    chmod-cmd
+    sudo ln -s $(pwd)/minikube /usr/local/bin/minikube
+    sudo minikube start --vm-driver=none --bootstrapper=localkube
+    ../scripts/PATH-OR-URL
+after_success:
+  bash <(curl-cmd
+env: change_minikube_none_user=true
+services: docker images
+include:
+  stage: tests
+packages: jdk-8-jdk
+email:
+  on_failure: always

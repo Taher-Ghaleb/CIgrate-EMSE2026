@@ -1,0 +1,76 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - apt-get update
+  - apt-get install -y maven
+
+script:
+  - mvn install -DskipTests=true -Dgpg.skip=true -B -V
+
+after_success:
+  - echo "Deploying to production"
+  - travis encrypt ${{ secrets.FOO }} > $FOO
+  - travis encrypt ${{ secrets.BAR }} > $BAR
+
+deploy:
+  provider: script
+  on:
+    branch: master
+    tags: true
+  script:
+    - echo "Deploying to production"
+    - travis encrypt ${{ secrets.FOO }} > $FOO
+    - travis encrypt ${{ secrets.BAR }} > $BAR
+  skip_cleanup: true
+
+before_deploy:
+  - echo "Setting up cache"
+  - cache: directories:
+      - $HOME/.m2/repository
+      - $HOME/.gradle
+
+after_failure:
+  - echo "Deployment failed"
+
+notifications:
+  email:
+    on: failure
+    recipients:
+      - user@example.com
+
+matrix:
+  allow_failures: true
+  include:
+    - java: '8'
+      os: linux
+      dist: ubuntu
+      env: FOO=bar
+      cache: directories:
+        - $HOME/.m2/repository
+        - $HOME/.gradle
+      script:
+        - mvn install -DskipTests=true -Dgpg.skip=true -B -V
+      deploy:
+        provider: script
+        on:
+          branch: master
+          tags: true
+        script:
+          - echo "Deploying to production"
+          - travis encrypt ${{ secrets.FOO }} > $FOO
+          - travis encrypt ${{ secrets.BAR }} > $BAR
+        skip_cleanup: true
+
+services:
+  - docker
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - "ppa:certbot/certbot"

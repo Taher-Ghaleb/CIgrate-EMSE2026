@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+env:
+  COMMAND_LINE_TOOLS_VERSION: 7583922
+  ANDROID_HOME: $HOME/android-sdk
+  TARGET_SDK_VERSION: ''
+  BUILD_TOOLS_VERSION: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      
+      - name: Install Android command line tools
+        run: |
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          if [ ! -e $ANDROID_HOME/cmdline-tools/latest ]; then
+            curl -sSL https://dl.google.com/android/repository/commandlinetools-linux-${COMMAND_LINE_TOOLS_VERSION}_latest.zip -o $ANDROID_HOME/cmdline-tools.zip
+            unzip -q $ANDROID_HOME/cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
+            mv $ANDROID_HOME/cmdline-tools/cmdline-tools-* $ANDROID_HOME/cmdline-tools/latest
+          fi
+          echo yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;${BUILD_TOOLS_VERSION}"
+          echo yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-${TARGET_SDK_VERSION}"
+      
+      - name: Extract SDK versions
+        run

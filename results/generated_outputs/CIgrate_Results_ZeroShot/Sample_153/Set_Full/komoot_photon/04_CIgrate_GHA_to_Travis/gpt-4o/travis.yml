@@ -1,0 +1,22 @@
+language: java
+jdk:
+  - 8
+  - 11
+  - 17
+
+matrix:
+  allow_failures:
+    - jdk: 11
+
+cache:
+  directories:
+    - $HOME/.m2
+
+before_install:
+  - echo "Setting up JDK $TRAVIS_JDK_VERSION"
+
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - mvn clean install

@@ -1,0 +1,45 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --privileged
+        env:
+          MAVEN_OPTS: -Xmx1024m
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install Maven
+      run: |
+        apt-get update
+        apt-get install -y maven
+    - name: Build and test
+      run: |
+        mvn clean install -Ppedantic
+    - name: Deploy
+      run: |
+        # TODO: Add deployment steps here
+    - name: Send notification
+      uses: actions/notify@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        message: "Build and test completed successfully"
+      if: always()

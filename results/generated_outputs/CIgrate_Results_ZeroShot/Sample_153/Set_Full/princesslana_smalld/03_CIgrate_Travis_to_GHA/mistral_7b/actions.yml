@@ -1,0 +1,47 @@
+name: Java Build and Release
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - '**'
+
+env:
+  global:
+    SMALLD_VERSION: $(git describe --dirty --tags)-SNAPSHOT
+    MAVEN_OPTS: -Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [oraclejdk8, oraclejdk9, openjdk8]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout settings.xml
+        uses: actions/checkout@v4
+          path: etc/settings.xml
+      - name: Set up Java ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+          with:
+            distribution: temurin
+            java-version: ${{ matrix.jdk }}
+      - name: Install Maven
+        uses: actions/setup-python@v5
+          with:
+            python-version: 3.x
+      - name: Install Maven
+        run: |
+          curl -sL https://dl.bintray.com/apache/maven/maven-3/3.8.3/binaries/apache-maven-3.8.3-bin.tar.gz -o apache-maven-3.8.3-bin.tar.gz
+          tar -xzf apache-maven-3.8.3-bin.gz
+          mv apache-maven-3.8.3 ${{ env.HOME }}/.m2/maven
+          export MAVEN_HOME=${{ env.HOME }}/.m2/maven
+          export PATH=${{ env.HOME }}/.m2/maven/bin:$PATH
+      - name: Before Script
+        if: ${{ not github.event_name == 'pull_request' }}
+        run: |
+          if [ "$

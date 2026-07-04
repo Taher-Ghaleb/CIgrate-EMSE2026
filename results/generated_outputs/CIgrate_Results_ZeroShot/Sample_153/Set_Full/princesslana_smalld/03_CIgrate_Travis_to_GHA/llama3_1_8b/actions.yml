@@ -1,0 +1,62 @@
+name: Java Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - 'v[0-9]+\.[0-9]+\.[0-9]+'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      sonarcloud:
+        image: sonarcloud/sonar-scanner-cli
+        options: --organization="ianagbip1oti-github"
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Extract secrets
+      if: github.event.pull_request == null
+      run: |
+        bash./etc/extract_secrets.sh
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Set up Maven
+      run: |
+        mvn -version
+    - name: Build and verify
+      run: |
+        mvn -B verify
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '9'
+    - name: Build and verify
+      run: |
+        mvn -B verify
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Build and verify
+      run: |
+        mvn -B verify
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Release
+      run: |
+        SMALLD_VERSION=$(git describe --dirty --tags)
+        MAVEN_OPTS="-Drevision=$SMALLD_VERSION -Dproperty=revision -DnewVersion=$SMALLD_VERSION -DgenerateBackupPoms=false"
+        mvn -s etc/settings.xml -B versions:set-property deploy -P release

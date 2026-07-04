@@ -1,0 +1,17 @@
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn compile -B && sh ./tools/check_format.sh && mvn clean test -DisSkipIntegrationTest=true \"-Dtest.logging.level=ERROR
+script
+after_success:
+  Codecov
+  python-cmd
+include:
+  stage: test
+apt:
+  packages: jdk-8-jdk

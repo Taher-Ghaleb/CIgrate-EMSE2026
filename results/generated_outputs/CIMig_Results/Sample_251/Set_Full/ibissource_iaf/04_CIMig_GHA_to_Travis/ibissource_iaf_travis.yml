@@ -1,0 +1,17 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  mvn -B -V -T1 package -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+script
+directories: ~/.maven-
+apt:
+  packages: jdk-8-jdk

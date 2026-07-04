@@ -1,0 +1,55 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # TODO: consider using filters instead of hardcoded branch names
+  pull_request:
+    branches:
+      - main
+      - feature/*
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10.0
+        ports:
+          - 8080:8080
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Build and test
+        run: |
+         ./gradlew build
+      - name: Cache Gradle
+        uses: actions/cache@v4
+          at: gradle-cache
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradlew') }}
+      - name: Cache wrapper
+        uses: actions/cache@v4
+          at: wrapper-cache
+          path: $HOME/.gradle/wrapper/
+          key: ${{ runner.os }}-wrapper-${{ hashFiles('gradlew') }}
+  docker-build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10.0
+        ports:
+          - 8080:8080
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build Docker
+        run: |
+          docker build -t hl7_validator.
+```
+Note: The above workflow uses the `ubuntu-latest` image for the `build-and-test` job, but you can change it to any other image that suits your needs. Also, the `docker-build` job uses the same `docker:20.10.0` image, but you can change it to any other Docker image that you need.

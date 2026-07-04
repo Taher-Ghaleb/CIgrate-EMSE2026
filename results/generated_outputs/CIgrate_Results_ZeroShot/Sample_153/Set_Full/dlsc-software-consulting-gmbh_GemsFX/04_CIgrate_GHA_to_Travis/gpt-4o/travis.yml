@@ -1,0 +1,48 @@
+language: java
+jdk:
+  - openjdk17
+
+env:
+  global:
+    - MAVEN_OPTS=-Xmx2500m
+    - DISPLAY=:99.0
+
+services:
+  - xvfb
+
+cache:
+  directories:
+    - $HOME/.m2
+
+jobs:
+  include:
+    - stage: build
+      script:
+        - git fetch --unshallow
+        - sudo apt-get update && sudo apt-get install -y p7zip-full
+        - mvn package -q
+
+    - stage: deploy
+      if: tag IS present
+      script:
+        - git fetch --unshallow
+        - TAG_BRANCH=$(git ls-remote origin | sed -n "\|${TRAVIS_COMMIT}\s\+refs/heads/|{s///p}")
+        - echo "Tag branch: $TAG_BRANCH"
+        - if [[ "$TAG_BRANCH" =~ ^(master|master-11)$ ]]; then
+            sudo apt-get update && sudo apt-get install -y p7zip-full;
+            chmod +x .github/deploy_prepare.sh;
+            ./.github/deploy_prepare.sh;
+            mvn package -q;
+            JAR_FILES=$(find . -path '*/target/*.jar' -type f);
+            echo "jar_files<<EOF" >> $GITHUB_OUTPUT;
+            echo "$JAR_FILES" >> $GITHUB_OUTPUT;
+            echo "EOF" >> $GITHUB_OUTPUT;
+            echo "Creating GitHub Release";
+            # TODO: Implement GitHub Release creation using Travis CI
+          fi
+
+branches:
+  only:
+    - master
+    - master-11
+    - /^v\d+\.\d+\.\d+.*$/

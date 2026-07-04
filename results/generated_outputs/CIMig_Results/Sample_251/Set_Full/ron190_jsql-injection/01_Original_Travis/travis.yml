@@ -1,0 +1,88 @@
+language: java
+services: docker
+
+git:
+  # Disable shallow clone to send Git blame to Sonar
+  depth: false
+
+jdk: openjdk8
+
+env: TERM=xterm-256color
+
+jobs:
+  include:
+  
+  - env:
+    - JSQL_DOCKERFILE=3.6.3-jdk-8-slim
+    - MAVEN_NASHORN=
+    
+  - env:
+    - JSQL_DOCKERFILE=3.6.3-jdk-11-slim
+    - MAVEN_NASHORN=-Dnashorn.args=--no-deprecation-warning
+    
+  - env:
+    - JSQL_DOCKERFILE=3.6.3-openjdk-14-slim
+    - MAVEN_NASHORN=-Dnashorn.args=--no-deprecation-warning
+
+branches:
+  only:
+  - master
+  
+addons:
+  sonarcloud:
+    organization: ron190-github
+    token:
+      secure: Fi8pYQTRDsIzBBKPTLHcAxkm0l0JcrZZvADbhwWG95lqKgtEtGI0OzWB5nFUBiOu5N20yrMPz/x4BUTyqr61xZiOocB9SH5ya4jqlraIlQW3WPH0enZ7e/g/JmqiAttuhzic7s12XQR5VwvAbG7ZkHa41liJ0nTd8HiLG7TOPep0hVTX/VZ/+K1B0FMJJVsMNMfhDsrtegxLryoeCSuKpwiAXXN2GkTtV2g1o1fxSmFMb0cepC/03Hskfp4ZxnHaY9yQfJISulTuxv9EUy5ecQZj+btf+QB3iNAwNFIE/xC6VeuCSrTJ01kG9w9DvY3W6z9NywxVHL5fJNDHcWsIz6/FpdNZgwxw6hIBQOimSa2/oXrPNyNR/bUyu6kQMFitDXWNxZj56yicqduNc46ni9NjsavCMlTJrdh/MYKB+C8e2IVa11QT988iTZo5C7MjUqUJU4gKBgdcn0jGZb20pxd7/Gtf4uMz7tp9mQRCTXpV6OSE85phwezledPud1f7/TG/QBrzZCL3YTMLhrDLhiratHweitPpr3da2+HrjSkdmunGdyufB+bseJP68ghjG5QpYBakjkJgkGYXd+S/r1NHmsGhbuk3/S0WtoYRhlAaBl3U8c7z8/lBcPhNbkQmfjIMolTjVdK61rQSads1b3kgVcImsux0IxEhUjowqag=
+    
+cache:
+  directories:
+    - $HOME/.m2
+    - $HOME/.sonar/cache
+
+before_script:
+  - |
+    export TERM=xterm-256color
+    env | sort
+    sudo cat /proc/meminfo
+    java -XX:+PrintFlagsFinal -version | grep -iE 'HeapSize|PermSize|ThreadStackSize'
+    
+    mvn clean install -DskipITs -DskipTests dependency:tree --file pom.xml
+    
+    docker-compose -f ./model/src/test/resources/docker/docker-compose.yml build --parallel
+    docker-compose -f ./model/src/test/resources/docker/docker-compose.yml up -d
+    ./model/src/test/resources/docker/healthcheck/healthcheck.sh
+    ./model/src/test/resources/docker/script/buff.sh
+    ./model/src/test/resources/docker/script/verify.sh
+    
+    docker rmi jsql:latest -f
+    docker build -t jsql:latest --build-arg JSQL_DOCKERFILE -f model/src/test/resources/docker/Dockerfile.jsql .
+
+script:
+  - |
+    docker run                                       \
+    -t                                               \
+    --rm                                             \
+    -v "$HOME/.m2":/root/.m2                         \
+    -v "$HOME/.sonar/cache":/root/.sonar/cache       \
+    --network docker_jsql-network                    \
+    -e SONAR_TOKEN                                   \
+    -e CODACY_PROJECT_TOKEN                          \
+    -e CODECOV_TOKEN                                 \
+    -e MAVEN_NASHORN                                 \
+    jsql:latest                                      \
+    ./model/src/test/resources/vnc/execute-on-vnc.sh \
+    bash -c '                                        \
+        java -version                                \
+        && env|sort                                  \
+        && mvn clean verify sonar:sonar              \
+        && (cd view/ ; mvn sonar:sonar)              \
+        && (cd model/ ; mvn sonar:sonar)             \
+        && bash <(curl -s https://codecov.io/bash)             \
+        && bash <(curl -Ls https://coverage.codacy.com/get.sh) \
+    '
+    
+    DOCKER_RUN="$?"
+    echo docker run exit code: $DOCKER_RUN
+    if [ "${DOCKER_RUN}" != "0" ]; then exit 1; fi
+
+  - ./model/src/test/resources/docker/script/verify.sh

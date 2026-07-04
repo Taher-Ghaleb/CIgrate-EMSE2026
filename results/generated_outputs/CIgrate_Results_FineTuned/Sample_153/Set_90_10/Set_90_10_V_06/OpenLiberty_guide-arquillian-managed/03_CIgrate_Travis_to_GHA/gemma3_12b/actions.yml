@@ -1,0 +1,41 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+      - qa
+  pull_request:
+    branches:
+      - master
+      - qa
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Before script
+        run: |
+          unset _JAVA_OPTIONS
+          cd finish
+          chmod +x ../scripts/travisTest.sh
+      - name: Run tests
+        run: |
+          ../scripts/travisTest.sh
+          serverName=$(target/liberty/wlp/bin/server list | cut -d '.' -f2| tr -d '\n');
+          cd target/liberty/wlp/usr/servers/"$serverName"/logs/;
+          repo_name=$(echo "$TRAVIS_REPO_SLUG" | sed -e "s/\//-/g");
+          if [ "$TRAVIS_TEST_RESULT" -eq 0 ]; then result="passed"; else result="failed"; fi;
+          serverlogsarchive="$repo_name-$TRAVIS_BUILD_NUMBER-$result.zip";
+          zip -r "$serverlogsarchive" .;
+          curl -H "$JFROG_TOKEN" -T "$serverlogsarchive" "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -rf $HOME/.gradle

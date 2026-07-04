@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.home }}/.cache
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Test and generate coverage
+        run: mvn clean test jacoco:report coveralls:report
+      - name: Deploy
+        if: github.ref == 'refs/heads/master'
+        run: mvn deploy -Dmaven.test.skip=true --settings .travis.settings.xml
+
+  notifications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email notifications
+        if: always()
+        run: |
+          echo "Sending email notifications..."
+          # TODO: Implement email notification logic

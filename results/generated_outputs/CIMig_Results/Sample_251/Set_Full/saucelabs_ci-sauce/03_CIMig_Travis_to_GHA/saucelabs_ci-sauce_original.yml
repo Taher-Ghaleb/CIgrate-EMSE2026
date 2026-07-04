@@ -1,0 +1,33 @@
+matrix:
+  language: java
+  os:
+    ubuntu-latest
+    windows-latest
+  java
+
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        key
+        java-version: ${{ matrix.java }}
+      with: java-version
+      uses: actions/setup-java@version
+    - name: build with maven-
+      uses: actions/checkout@version
+      run: mvn install -DskipTests=true -Dgpg.skip=true -B -V
+
+macos:
+  jdk: openjdk8
+

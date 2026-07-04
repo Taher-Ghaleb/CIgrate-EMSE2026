@@ -1,0 +1,49 @@
+language: java
+jdk: openjdk21
+install: true
+script:
+  - ./gradlew build sonarqube --info
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.sonar/cache
+    - $HOME/.m2/repository
+before_script:
+  - git fetch --unshallow # Full git log for sonarqube's blame info
+  - git config --global user.email "${GIT_EMAIL_ADDRESS}"
+  - git config --global user.name "${GIT_USER_NAME}"
+  - git submodule update --init --recursive
+  - git ls-remote --heads origin | cut -d '.' -f 1 | sort -n | while read line; do
+      git checkout-name "$line" || echo "No branch named $line found"
+    done
+  - git checkout master
+env:
+  global:
+    - TEST_PG_VERSION="14.20"
+    - GIT_USER_NAME="${GIT_USER_NAME}"
+    - GIT_EMAIL_ADDRESS="${GIT_EMAIL_ADDRESS}"
+matrix:
+  allow_failures:
+    - pg_version: "14.20"
+    - pg_version: "15.15"
+    - pg_version: "16.11"
+    - pg_version: "17.7"
+    - pg_version: "18.1"
+  include:
+    - pg_version="14.20"
+    - pg_version="15.15"
+    - pg_version="16.11"
+    - pg_version="17.7"
+    - pg_version="18.1"
+before_deploy:
+  - git fetch --unshallow # Full git log for sonarqube's blame info
+deploy:
+  provider: script
+  script: echo '{"version":"1.0"}' > $TRAVIS_BUILD_NUMBER
+  skip_cleanup: true
+  on:
+    tags:

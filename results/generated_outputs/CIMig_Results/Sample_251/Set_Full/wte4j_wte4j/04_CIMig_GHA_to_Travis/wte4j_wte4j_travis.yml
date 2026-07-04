@@ -1,0 +1,14 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+script
+deploy:
+  github_token: $github_token
+directories: ~/.maven-

@@ -1,0 +1,30 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path
+        clean: TRUE
+        server-id: sonatype-releases
+        draft: TRUE
+      run: ant testci
+      with:
+        java-version: 1.8
+      with: key
+      with: java-version
+      uses: actions/setup-java@version
+    - name: set up jdk 1.8
+      uses: actions/checkout@version
+
+macos:
+  jdk: oraclejdk8
+
+env:
+  github_token: ${{ github.token }}
+

@@ -1,0 +1,45 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  RUNTIME: ol
+  RUNTIME_VERSION: 19.0.0.6
+  RUNTIME2: wlp
+  RUNTIME_VERSION2: 19.0.0.6
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        RUNTIME: [ol, wlp]
+        RUNTIME_VERSION: [19.0.0.6, 19.0.0.3]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Install ci.common lib
+        run: |
+          git clone https://github.com/OpenLiberty/ci.common.git./ci.common
+          cd./ci.common
+          mvn clean install
+          cd..
+      - name: Run tests
+        run: |
+          travis_wait 30 mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=${{ matrix.RUNTIME }} -DruntimeVersion=${{ matrix.RUNTIME_VERSION }}
+```
+
+Note that I've used the `matrix` strategy to run the job with different combinations of `RUNTIME` and `RUNTIME_VERSION` values. I've also used the `actions/cache` action to cache the Maven repository, and the `travis_wait` command is replaced with a `travis_wait` action is not available in GitHub Actions, so I've used the `run` keyword to execute the command.

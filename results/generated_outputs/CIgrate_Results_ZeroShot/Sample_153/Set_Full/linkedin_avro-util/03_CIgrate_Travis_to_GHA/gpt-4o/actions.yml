@@ -1,0 +1,59 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    env:
+      # these secure values are encrypted for linkedin/avro-util. for use in forked repos, set env vars in your own build - they should win over these (as these wont be decodable in forked builds)
+      SECURE_VAR1: ${{ secrets.SECURE_VAR1 }}
+      SECURE_VAR2: ${{ secrets.SECURE_VAR2 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y oracle-java8-installer
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Clean Gradle cache
+        run: |
+          rm -rvf $HOME/.gradle/caches/journal-*/file-access.bin
+          rm -rvf $HOME/.gradle/caches/*/plugin-resolution/
+          rm -rvf $HOME/.gradle/caches/*/scripts/
+          rm -rvf $HOME/.gradle/caches/*/*.lock
+          sync
+
+      - name: Build with Gradle
+        run: ./gradlew clean build javadoc --no-daemon
+
+  deploy:
+    runs-on: ubuntu-20.04
+    needs: build
+    if: github.event_name == 'push' && (github.ref_type == 'branch' || github.ref_type == 'tag')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Bintray
+        run: bash -v scripts/publishToBintray.sh

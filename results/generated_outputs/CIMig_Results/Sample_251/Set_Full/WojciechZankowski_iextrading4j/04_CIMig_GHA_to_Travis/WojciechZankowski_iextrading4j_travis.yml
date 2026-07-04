@@ -1,0 +1,20 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent package --file pom.xml
+script:
+  script:
+    mvn -B verify sonar:sonar -Dsonar.projectKey=pl.zankowski:iextrading4j -Dsonar.organization=wojciechzankowski-github -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
+deploy:
+  github_token: $github_token
+sonarcloud:
+  token: $sonar_token
+directories: ~/.maven-
+stage: ☕ 11

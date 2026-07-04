@@ -1,0 +1,36 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 8 (minimum viable version)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      
+      - name: Install Apache Ant
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ant
+          ant -version
+      
+      - name: Run tests
+        run: ant -buildfile ./framework/build.xml test
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/TEST-*.xml
+            **/build/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

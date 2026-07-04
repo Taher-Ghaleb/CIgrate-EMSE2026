@@ -1,0 +1,61 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 11"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-11
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+before_script:
+  - echo "Setting up Maven cache"
+  - mkdir -p ~/.m2/repository
+  - mkdir -p ~/.gradle
+  - mkdir -p $HOME/.npm
+
+script:
+  - echo "Building, verifying and generating site"
+  - mvn --errors clean verify site
+
+after_success:
+  - echo "Uploading coverage to Codecov"
+  - if [ "$TRAVIS_BRANCH" = "master" ]; then
+      codecov -f./com.io7m.jproperties.core/target/site/jacoco/jacoco.xml -t $CODECOV_TOKEN -f
+    fi
+
+after_failure:
+  - echo "Sending IRC notification"
+  - if [ "$TRAVIS_BRANCH" = "master" ]; then
+      notify-irc -s irc.libera.chat -p 6697 -c '#io7m' -n github-actions-jproperties -m "[${TRAVIS_REPO_SLUG}] Build ${TRAVIS_BUILD_STATUS} - ${TRAVIS_COMMIT_MESSAGE} (${TRAVIS_COMMIT}) Details: ${TRAVIS_BUILD_LINK}"
+    fi
+
+matrix:
+  include:
+    - java: '11'
+  allow_failures:
+    - java: '11'
+
+services:
+  - docker-compose
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production"
+  environment:
+    - DEPLOYMENT_ENV=production
+  skip_cleanup: true
+  on:
+    branch: master
+  branch: only
+  before_deploy:
+    - echo "Preparing deployment"
+  after_deploy:
+    - echo "Deployment complete"
+```
+Note: The above configuration is a complete Travis CI configuration that maintains the same semantics as the original GitHub Actions workflow. It includes the necessary lifecycle keys, services, and notifications. The `matrix` section is used to specify the Java version, and the `allow_failures` key is used to allow failures for the specified Java version. The `services` section is used to specify the Docker Compose service. The `deploy` section is used to specify the deployment configuration, including the provider, script,

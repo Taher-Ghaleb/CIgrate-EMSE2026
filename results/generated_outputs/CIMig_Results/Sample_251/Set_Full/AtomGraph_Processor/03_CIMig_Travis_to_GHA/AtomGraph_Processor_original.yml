@@ -1,0 +1,23 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: java-version
+    - name: Placeholder
+      with:
+        java-version: ${{ matrix.java }}
+        to: martynas@atomgraph.com
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run:
+        sudo apt-get update
+        docker
+

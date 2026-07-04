@@ -1,0 +1,60 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  tags:
+    regex: '^v.*'
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      GPG_EXECUTABLE: gpg
+      GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
+      GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          path: ${{ runner.home }}/.m2
+
+      - name: Install Maven
+        run: apt-get update && apt-get install -y maven
+
+      - name: Restore Maven Dependencies
+        run: mvn dependency:get -Dworkspace=.
+
+      - name: Build and Test
+        run: mvn -B clean verify
+
+      - name: Generate and Upload Jacoco Reports
+        if: success()
+        run: mvn -B jacoco:report coveralls:report
+
+  deploy:
+    name: Deploy to dhatim/safesql
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    env:
+      GPG_EXECUTABLE: ${{ env.GPG_EXECUTABLE }}
+      GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
+      GPG_OWNERTRUST: ${{ secrets.GPG_

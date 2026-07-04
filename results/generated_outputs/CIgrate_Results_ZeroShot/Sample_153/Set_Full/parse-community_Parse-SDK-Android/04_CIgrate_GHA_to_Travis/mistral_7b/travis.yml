@@ -1,0 +1,48 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - '*[0-9]+.[0-9]+.[0-9]+'
+
+pull_request:
+  branches:
+    - master
+    - '*[0-9]+.[0-9]+.[0-9]+'
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - name: Set up JDK 8
+    script: |
+      wget --quiet https://repo.maven.apache.org/maven2/org/openjdk/jdk8-openjdk/8u322-b0-1/jdk-8u322-linux-x64.tar.gz
+      tar -xzf jdk-8u322-linux-x64.tar.gz -C /usr/local
+      update-alternatives --install /usr/bin/java java /usr/local/jdk8/bin/java 1
+      update-alternatives --install /usr/bin/javac javac /usr/local/jdk8/bin/javac 1
+      update-alternatives --config java
+      update-alternatives --config javac
+
+  - name: Setup Gradle
+    script: |
+      wget --quiet https://services.gradle.org/distributions/gradle-7.3.3-all.zip
+      unzip gradle-7.3.3-all.zip -d ~/.gradle
+      export GRADLE_HOME=~/.gradle
+      export PATH=$PATH:$GRADLE_HOME/bin
+
+  - name: Accept Android SDK licenses
+    script: yes | sdkmanager --licenses || true
+
+  - name: Install Android SDK components
+    script: |
+      sdkmanager --install "build-tools;30.0.3" "platforms;android-30"
+      sdkmanager --list_installed
+
+  - name: Make gradlew executable
+    script: chmod +x gradlew
+
+  - name: Run tests and generate coverage
+    script: ./gradlew

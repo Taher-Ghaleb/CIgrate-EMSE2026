@@ -1,0 +1,27 @@
+language: java
+jdk:
+  - openjdk8
+env:
+  global:
+    MAVEN_OPTS: -Xmx2500m
+
+script:
+  - if [ ! -f silo/lib/linux64/libjhdf5.so ]; then echo "Error: HDF5 library not found at silo/lib/linux64/libjhdf5.so" && exit 1; fi
+  - echo "HDF5 library found: silo/lib/linux64/libjhdf5.so"
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '8'
+      cache: 'maven'
+
+script:
+  - mvn test -Dhdf5lib-absolute-path=$(pwd)/silo/lib/linux64/libjhdf5.so --fail-at-end --batch-mode -Dmatsim.preferLocalDtds=true

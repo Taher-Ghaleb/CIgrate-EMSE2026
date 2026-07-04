@@ -1,0 +1,14 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn -V package --file pom.xml --no-transfer-progress
+script
+include:
+  env: jacoco_skip=true
+directories: ~/.maven-
+sudo: FALSE

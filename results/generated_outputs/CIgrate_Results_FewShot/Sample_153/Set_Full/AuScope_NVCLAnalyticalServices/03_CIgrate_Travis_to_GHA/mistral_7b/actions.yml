@@ -1,0 +1,58 @@
+name: CI and Deploy
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - develop
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Build
+        run: ./gradlew build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: NVCLAnalyticalServices-1.0.0.jar
+          path: build/libs/NVCLAnalyticalServices-1.0.0.jar
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: AuScope/NVCLAnalyticalServices
+          ref: ${{ github.event.pull_request.mergeable_branches[0] }}${ { { github.ref_name } } }
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Checkout deployed artifact
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.mergeable_branches[0] }}${ { { github.ref_name

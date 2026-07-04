@@ -1,0 +1,66 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  DATE_VERSION: ${{ github.run_number }}
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 13
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '13'
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2
+            frontend/node
+            frontend/node_modules
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}-node-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Install Chromium
+        run: sudo apt update && sudo apt install -y chromium-browser
+      - name: Setup Firefox
+        uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: '63.0'
+      - name: Decrypt SSH key
+        run: |
+          openssl aes-256-cbc -K ${{ secrets.ENCRYPTED_7051AC01CF89_KEY }} -iv ${{ secrets.ENCRYPTED_7051AC01CF89_IV }} -in ./.travis/id_rsa.enc -out ~/.ssh/id_rsa -d
+          chmod 600 ~/.ssh/id_rsa
+      - name: Check Java version
+        run: |
+          java -version
+          echo $JAVA_HOME
+      - name: Start Docker Compose services
+        run: (cd docker; docker-compose up -d)
+      - name: Set version
+        run: echo "DATE_VERSION=$(date +%Y%m%d.%H.%M)" >> $GITHUB_ENV
+      - name: Remove Maven settings
+        run: rm ~/.m2/settings.xml || true
+      - name: Build and test
+        run: ./mvnw -U -q -Drevision=$DATE_VERSION -P frontend -P jacoco -P docker -P webdriver-chrome -P webdriver-firefox -Dcustom.selenium.headless=true clean install
+      - name: Stop Docker Compose services
+        run: (cd docker; docker-compose down)
+      - name: Run deploy tests
+        run: ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+      - name: Cleanup
+        run: |
+          rm -rf ~/.m2/repository/com/github/nkonev/blog
+          rm -rf $GITHUB_WORKSPACE/frontend/node_modules/.cache
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+      - name: Push Docker image and deploy
+        if: github.ref == 'refs/heads/master' && success() && github.event_name != 'schedule'
+        run: |
+          echo "Will push docker image"
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_LOGIN }}" --password-stdin
+          docker push nkonev/blog:latest
+          ssh -o "BatchMode yes" -o StrictHostKeyChecking=no -q ${{ secrets.CONNECT_LINE }} ${{ secrets.UPDATE_COMMAND }}

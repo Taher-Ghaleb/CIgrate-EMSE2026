@@ -1,0 +1,41 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+branches:
+  only:
+    - master
+  except:
+    - /^pull\/[0-9]+$/
+notifications:
+  email:
+    recipients:
+      - gr-tig-oss@future.co.jp
+    subject: Build {job.status}: {github.repository}
+jdk:
+  - openjdk8
+
+env:
+  global:
+    COVERALLS_REPO_TOKEN: $COVERALLS_REPO_TOKEN
+
+before_install:
+  - echo no | avdmanager create avd --force --name test --target $ANDROID_TARGET --abi $ANDROID_ABI
+  - emulator -avd test -no-skin -no-audio -no-window &
+  - android-wait-for-emulator
+  - adb devices
+  - adb shell input keyevent 82 &
+  - adb shell svc power stayon true
+
+script:
+  - mvn clean install
+  - mvn jacoco:report coveralls:report
+
+deploy:
+  if: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository == 'OWNER/REPO'
+  script:
+    - mvn deploy -Dmaven.test.skip=true --settings .travis.settings.xml
+
+# TODO: Email notification using dawidd6/action-send-mail equivalent.
+#       Needs configuration of SMTP server details.

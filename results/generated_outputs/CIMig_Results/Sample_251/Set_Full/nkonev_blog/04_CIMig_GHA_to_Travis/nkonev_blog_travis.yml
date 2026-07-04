@@ -1,0 +1,21 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+before_script:
+  mkdir -p ~/.ssh && openssl aes-256-cbc -K ${{ secrets.EncryptedKey }} -iv ${{ secrets.EncryptedIv }} -in ./.secret_keys/id_rsa.enc -out ~/.ssh/id_rsa -d\nchmod 600 ~/.ssh/id_rsa\n\necho \"Will login to docker\" &&\ndocker login -u=\"nkonev\" -p=\"${{ secrets.DockerPassword }}\" &&\necho \"Will push docker image\" &&\ndocker push nkonev/blog:latest &&\necho \"Will deploy blog\" &&\nssh -o \"BatchMode yes\" -o StrictHostKeyChecking=no -q ${{ secrets.ConnectLine }} ${{ secrets.BlogUpdateCommand }}\n
+  wget-cmd
+script
+Deploy
+directories:
+  ~/.m2/repository
+  ~/.sonar/cache
+local_dir
+apt:
+  packages: jdk-6-jdk

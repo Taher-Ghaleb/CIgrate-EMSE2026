@@ -1,0 +1,33 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['9']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 9
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install dependencies
+        run: mvn --errors clean verify site
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash) -f./com.io7m.jproperties.core/target/site/jacoco/jacoco.xml
+      - name: Send notification to IRC
+        uses: d28b3/action-irc-notifier@v1
+        with:
+          server: chat.freenode.net
+          channel: #io7m
+          message: "CI completed successfully"
+```
+
+Note: The `notifications` section in the original Travis CI configuration is mapped to the `actions/checkout@v4` step in the GitHub Actions workflow, which does not have a direct equivalent. However, the `actions/checkout@v4` step is used to checkout the code, and the `d28b3/action-irc-notifier@v1` action is used to send a notification to IRC.

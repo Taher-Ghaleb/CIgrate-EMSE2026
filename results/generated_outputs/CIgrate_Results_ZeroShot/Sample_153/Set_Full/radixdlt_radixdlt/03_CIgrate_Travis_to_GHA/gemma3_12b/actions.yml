@@ -1,0 +1,58 @@
+name: Java Build and Test
+
+on:
+  push:
+  pull_request:
+
+env:
+  TEST_DURATION: 30s
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [openjdk11]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+      - run: ./gradlew check jacocoTestReport sonarqube --info --refresh-dependencies
+        env:
+          SONAR_ORGANIZATION: radixdlt-github
+    cache:
+      key: ${{ runner.os }}-gradle-${{ hash }}
+      paths:
+        - '$HOME/.m2/repository'
+        - '$HOME/.sonar/cache'
+        - '$HOME/.gradle'
+        - '.gradle'
+    continue-on-error: true
+
+  integration:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [openjdk11]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+      - run: ./gradlew integrationTest --refresh-dependencies
+    cache:
+      key: ${{ runner.os }}-gradle-${{ hash }}
+      paths:
+        - '$HOME/.m2/repository'
+        - '$HOME/.sonar/cache'
+        - '$HOME/.gradle'
+        - '.gradle'
+    continue-on-error: true

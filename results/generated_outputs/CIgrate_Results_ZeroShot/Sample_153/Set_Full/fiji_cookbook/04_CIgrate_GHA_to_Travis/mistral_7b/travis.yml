@@ -1,0 +1,48 @@
+name: CI
+
+branches:
+  only:
+    - master
+    - '*'
+
+deploy:
+  on:
+    tags: true
+    branches:
+      - '*-[0-9]*.*'
+      - '*-[0-9]*'
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+before_install:
+  - cache: maven
+    key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+    restore_keys: |
+      ${{ runner.os }}-maven-
+
+language: bash
+
+script:
+  - checkout
+
+  - env:
+      SECRET_1: $SECRET_1
+      SECRET_2: $SECRET_2
+
+  - run: chmod +x .travis/build.sh
+
+  - run: ./.travis/build.sh
+
+before_install:
+  - uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '8'
+
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including branches/tags filters, env variables, caches, and a script to run. The services section uses the docker service, and the before_install section is used to set up the JDK and restore the maven cache. The script section checks out the repository, sets environment variables, makes the build script executable, and runs the build script.

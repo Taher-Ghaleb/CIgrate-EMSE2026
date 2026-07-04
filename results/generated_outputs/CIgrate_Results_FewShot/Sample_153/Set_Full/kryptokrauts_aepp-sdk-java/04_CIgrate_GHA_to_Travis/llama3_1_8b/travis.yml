@@ -1,0 +1,104 @@
+Here is the migrated Travis CI configuration:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+script:
+  - chmod +x travis-install-libsodium.sh
+  -./travis-install-libsodium.sh
+  - echo "PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+  - echo "LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+  - chmod +x gradlew
+  - docker-compose up -d
+  -./gradlew integrationTest
+  -./gradlew build
+  -./gradlew artifactoryPublish -x test \
+    -Dsnapshot=true \
+    -Dbintray.user=${{ secrets.BINTRAY_USER }} \
+    -Dbintray.key=${{ secrets.BINTRAY_KEY }} \
+    -Dbuild.number=${{ github.run_number }}
+  -./gradlew bintrayUpload -x test \
+    -Dbintray.user=${{ secrets.BINTRAY_USER }} \
+    -Dbintray.key=${{ secrets.BINTRAY_KEY }} \
+    -Dbuild.number=${{ github.run_number }}
+  -./gradlew uploadArchives
+deploy:
+  provider: script
+  script: |
+    VERSION=$(./gradlew -q pV)
+    echo "version=$VERSION" >> $GITHUB_OUTPUT
+    echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+   ./gradlew bintrayUpload -x test \
+      -Dbintray.user=${{ secrets.BINTRAY_USER }} \
+      -Dbintray.key=${{ secrets.BINTRAY_KEY }} \
+      -Dbuild.number=${{ github.run_number }}
+   ./gradlew artifactoryPublish -x test \
+      -Dsnapshot=true \
+      -Dbintray.user=${{ secrets.BINTRAY_USER }} \
+      -Dbintray.key=${{ secrets.BINTRAY_KEY }} \
+      -Dbuild.number=${{ github.run_number }}
+   ./gradlew uploadArchives
+  on:
+    push:
+      branches:
+        - dev
+      if: github.event_name == 'push'
+    push:
+      branches:
+        - master
+      if: github.event_name == 'push'
+  on:
+    release:
+      if: github.event_name == 'push'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *'
+  on:
+    schedule:
+      - cron: '0 0 * * *

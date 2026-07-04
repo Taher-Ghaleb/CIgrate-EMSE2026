@@ -1,0 +1,60 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Gradle"
+  - curl -s https://services.gradle.org/distributions/gradle-8.5/gradle-8.5.bin | tar xz
+  - export GRADLE_HOME=$(pwd)/gradle-8.5
+  - export PATH=$GRADLE_HOME/bin:$PATH
+
+before_script:
+  - echo "Setting up Gradle cache"
+  - mkdir -p ~/.gradle/caches
+  - echo "Cache read-only for non-master and non-main branches"
+  - if [ "$TRAVIS_BRANCH"!= "master" ] && [ "$TRAVIS_BRANCH"!= "main" ]; then
+    echo "Cache read-only for non-master and non-main branches"
+    export GRADLE_OPTS="-Dorg.gradle.cache=true"
+  fi
+
+script:
+  - echo "Running tests"
+  -./gradlew test
+  - echo "Building artifacts"
+  -./gradlew build
+  - echo "Uploading test results"
+  - if [ "$TRAVIS_BRANCH" == "master" ] || [ "$TRAVIS_BRANCH" == "main" ]; then
+    echo "Uploading test results to Travis CI"
+    echo "Uploading test results to Travis CI"
+    if [ "$TRAVIS_JOB_NUMBER" == "1" ]; then
+      echo "Uploading test results to Travis CI"
+    fi
+  fi
+
+after_success:
+  - echo "Creating release and uploading artifacts"
+  - if [ "$TRAVIS_BRANCH" == "master" ] || [ "$TRAVIS_BRANCH" == "main" ]; then
+    echo "Creating release and uploading artifacts"
+    echo "Creating release and uploading artifacts"
+    if [ "$TRAVIS_JOB_NUMBER" == "1" ]; then
+      echo "Creating release and uploading artifacts"
+    fi
+  fi
+
+deploy:
+  on:
+    branch: master
+    if: always()
+  provider: releases
+  skip_cleanup: true
+  api_token: $GITHUB_TOKEN
+  on:
+    tags: true
+  if: always()
+  strategy: continuous
+  name: Beta Build $TRAVIS_BUILD_NUMBER
+  description: Automated beta build $TRAVIS_BUILD_NUMBER
+  draft: false

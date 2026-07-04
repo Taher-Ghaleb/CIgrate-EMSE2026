@@ -1,0 +1,68 @@
+name: Android CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      COMPILE_SDK_VERSION: 29
+      EMULATOR_API: 22
+      BUILD_TOOLS_VERSION: 28.0.3
+      ABI: armeabi-v7a
+      ADB_INSTALL_TIMEOUT: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Install Android SDK components
+        run: |
+          sdkmanager --list || true
+          echo yes | sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.2"
+          echo yes | sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout-solver;1.0.2"
+          avdmanager --list || true
+
+      - name: Create and start emulator
+        run: |
+          echo no | android create avd --force -n test -t android-${{ env.EMULATOR_API }} --abi ${{ env.ABI }}
+          emulator -avd test -no-audio -no-window &
+          android-wait-for-emulator
+          adb shell input keyevent 82 &
+
+      - name: Build and test
+        run: |
+          ./gradlew assembleRelease
+          ./gradlew jacocoTestReport
+          ./gradlew connectedCheck
+
+      - name: Upload coverage to Codecov
+        if: success()
+        run: bash <(curl -s https://codecov.io/bash)
+
+    services:
+      emulator:
+        image: circleci/android:api-29
+        options: >-
+          --device generic_x86
+          --network host
+
+    cache:
+      paths:
+        - ${{ runner.os }}-gradle-caches/
+        - ${{ runner.os }}-gradle-wrapper/
+      key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}

@@ -1,0 +1,35 @@
+language: java
+branches:
+  only:
+    - master
+    - /^v[0-9]+\.[0-9]+$/
+  except:
+    - branches: ignore
+tags: true
+env:
+  global:
+    DEPLOY_KEY: $DEPLOY_KEY
+    JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - .gradle
+before_install:
+  - echo "Fetching full history"
+script:
+  - mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - ant dist
+after_success:
+  - if [ "$TRAVIS_TAG" != "null" ]; then
+    - if [ -f "MedTagger.zip" ]; then
+      - echo "MedTagger.zip found"
+      - |
+        gh release create --draft "$TRAVIS_TAG" --prerelease
+        gh release upload "MedTagger.zip" --tag "$TRAVIS_TAG"
+    else
+      - echo "Error: MedTagger.zip not found"
+      - exit 1
+    fi
+  fi

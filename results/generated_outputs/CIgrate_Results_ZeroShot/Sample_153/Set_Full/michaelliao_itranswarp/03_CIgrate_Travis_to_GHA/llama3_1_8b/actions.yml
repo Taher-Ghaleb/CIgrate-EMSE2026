@@ -1,0 +1,66 @@
+name: Java Maven Build
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # TODO: consider using filters instead of explicit branch names
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --always-chown-logs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+          mvn --version
+          mvn dependency:resolve
+      - name: Build and package
+        run: |
+          mvn clean package
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies-*
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+          at: cache-maven-repo
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-repo-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-repo-*
+    after_success:
+      - name: Deploy to production
+        uses: deploy-action@v1
+          token: ${{ secrets.ACCESS_TOKEN }}
+          owner: ${{ github.actor }}
+          repo: ${{ github.repository }}
+          branch: ${{ github.branch }}
+          deploy-action: deploy-production
+          commit-message: Automated deployment
+          commit-author: GitHub Actions
+          commit-email: ${{ github.actor }}@github.com
+          deploy-environment: production
+          deploy-once: true
+    after_failure:
+      - name: Send notification
+        uses: notify-action@v1
+          token: ${{ secrets.NOTIFICATION_TOKEN }}
+          message: Automated build failed
+          title: Build failed
+          level: error

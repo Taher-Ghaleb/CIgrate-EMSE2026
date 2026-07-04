@@ -1,0 +1,104 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: 'maven'
+      
+      - name: Cache Node modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node
+            frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+      
+      - name: Install Chromium
+        run: sudo apt-get update && sudo apt-get install -y chromium-browser
+      
+      - name: Setup Firefox
+        uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: 'latest'
+      
+      - name: Decrypt SSH key
+        run: |
+          mkdir -p ~/.ssh
+          openssl aes-256-cbc \
+            -K ${{ secrets.ENCRYPTED_7051AC01CF89_KEY }} \
+            -iv ${{ secrets.ENCRYPTED_7051AC01CF89_IV }} \
+            -in ./.travis/id_rsa.enc \
+            -out ~/.ssh/id_rsa -d
+          chmod 600 ~/.ssh/id_rsa
+      
+      - name: Check Java version
+        run: |
+          java -version
+          echo "JAVA_HOME: $JAVA_HOME"
+      
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+      
+      - name: Start Docker Compose services
+        run: |
+          cd docker
+          docker-compose up -d
+      
+      - name: Set version
+        run: echo "DATE_VERSION=$(date +%Y%m%d.%H.%M)" >> $GITHUB_ENV
+      
+      - name: Remove Maven settings
+        run: rm -f ~/.m2/settings.xml
+      
+      - name: Build and test
+        run: |
+          ./mvnw -U -q -Drevision=$DATE_VERSION \
+            -P frontend -P jacoco -P docker \
+            -P webdriver-chrome -P webdriver-firefox \
+            -Dcustom.selenium.headless=true \
+            clean install
+      
+      - name: Stop Docker Compose services
+        if: always()
+        run: |
+          cd docker
+          docker-compose down
+      
+      - name: Run deploy tests
+        run: ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+      
+      - name: Cleanup cache
+        if: always()
+        run: |
+          rm -rf ~/.m2/repository/com/github/nkonev/blog
+          rm -rf $GITHUB_WORKSPACE/frontend/node_modules/.cache
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+      
+      - name: Push Docker image and deploy
+        if: |
+          github.ref == 'refs/heads/master' && 
+          success() && 
+          github.event_name == 'push'
+        run: |
+          echo "Pushing Docker image"
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_LOGIN }}" --password-stdin
+          docker push nkonev/blog:latest
+          ssh -o "BatchMode yes" -o StrictHostKeyChecking=no -q \
+            ${{ secrets.CONNECT_LINE }} "${{ secrets.UPDATE_COMMAND }}"

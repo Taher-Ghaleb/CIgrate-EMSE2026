@@ -1,0 +1,62 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - apt-get update
+  - apt-get install -y maven
+
+script:
+  - mvn install -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      echo "Deploying to production"
+      - curl -X POST \
+        https://codecov.io/bitbucket/ \
+        -H "Content-Type: application/json" \
+        -d '{"commit_sha": "$TRAVIS_COMMIT", "branch": "$TRAVIS_BRANCH", "service_name": "my-service", "build": "passed"}'
+    fi
+
+after_failure:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      echo "Deploying to production"
+      - curl -X POST \
+        https://codecov.io/bitbucket/ \
+        -H "Content-Type: application/json" \
+        -d '{"commit_sha": "$TRAVIS_COMMIT", "branch": "$TRAVIS_BRANCH", "service_name": "my-service", "build": "failed"}'
+    fi
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - "ppa:certbot/certbot"
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle
+    - $HOME/.npm
+
+matrix:
+  allow_failures:
+    - java-8
+  include:
+    - java-8
+
+env:
+  - JAVA_HOME=/usr/lib/jvm/temurin-8
+  - CODECOV_TOKEN=${CODECOV_TOKEN}
+```
+
+Note: The above configuration is a complete Travis CI configuration YAML file. It includes all the necessary sections and properties as per the provided GitHub Actions workflow. The configuration includes the `language` property, `script` section, `before_install`, `install`, `after_success`, `after_failure`, `deploy`, `services`, `addons`, `cache`, and `matrix` sections. The `env` section is also included to set the `JAVA_HOME` and `CODECOV_TOKEN` environment variables.

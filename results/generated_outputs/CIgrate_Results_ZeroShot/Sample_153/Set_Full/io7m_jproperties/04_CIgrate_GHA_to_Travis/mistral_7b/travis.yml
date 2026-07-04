@@ -1,0 +1,69 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+  - docker-compose
+
+before_install:
+  - install: |
+      # Install Git
+      apt-get update && apt-get install -y git
+
+      # Install Java 11
+      wget --quiet https://download.java.net/java/GA/jdk11/8/GPL/openjdk-11+28_linux-x64_bin.tar.gz
+      tar -xzf openjdk-11+28_linux-x64_bin.tar.gz -C /usr/local
+      export JAVA_HOME=/usr/local/openjdk-11+28
+      export PATH=$JAVA_HOME/bin:$PATH
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+script:
+  - mvn --errors clean verify site
+
+before_script:
+  - mvn -B -DskipTests clean verify
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - feature/*
+      - bugfix/*
+  pull_request:
+    branches:
+      - master
+      - develop
+      - feature/*
+      - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - git tag -a ${GITHUB_REF#refs/tags/} -m "Release ${GITHUB_REF#refs/tags/}"
+    - git push origin --tags
+
+notifications:
+  on_success:
+    - email:
+        recipients:
+          - your.email@example.com
+        message: "Build succeeded for ${GITHUB_REF#refs/heads/}"
+
+    on_failure:
+      - slack:
+          url: "https://hooks.slack.com/services/XXXXXXXX/XXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX"
+          channel: "#your-slack-channel

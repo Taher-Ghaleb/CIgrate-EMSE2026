@@ -1,0 +1,21 @@
+approach,setting,migration_direction,label,yaml_valid_pct,linter_pass_pct,n_files,notes
+CIMig,rule-based,travis_to_gha,CIMig,5.6,0.0,153,Paper Table tab:linting-results (curated 153-project subset)
+CIMig,rule-based,gha_to_travis,CIMig,6.0,6.0,153,Paper Table tab:linting-results
+gpt-4o,zero-shot,travis_to_gha,GPT-4o (zero-shot),99.4,88.2,153,Paper Table tab:linting-results
+gpt-4o,zero-shot,gha_to_travis,GPT-4o (zero-shot),94.8,94.8,153,Paper Table tab:linting-results
+gpt-4o,few-shot,travis_to_gha,GPT-4o (few-shot),99.4,90.9,153,Paper Table tab:linting-results
+gpt-4o,few-shot,gha_to_travis,GPT-4o (few-shot),96.1,96.1,153,Paper Table tab:linting-results
+gemma3_12b,zero-shot,travis_to_gha,Gemma 3 12B (zero-shot),98.7,58.8,153,Paper Table tab:linting-results
+gemma3_12b,zero-shot,gha_to_travis,Gemma 3 12B (zero-shot),77.8,77.8,153,Paper Table tab:linting-results
+gemma3_12b,few-shot,travis_to_gha,Gemma 3 12B (few-shot),91.5,58.2,153,Paper Table tab:linting-results
+gemma3_12b,few-shot,gha_to_travis,Gemma 3 12B (few-shot),76.5,76.5,153,Paper Table tab:linting-results
+gemma3_12b,fine-tuned,travis_to_gha,Gemma 3 12B (fine-tuned),100.0,89.3,150,10-fold CV held-out evaluations
+gemma3_12b,fine-tuned,gha_to_travis,Gemma 3 12B (fine-tuned),97.3,97.3,150,10-fold CV held-out evaluations
+mistral_7b,zero-shot,travis_to_gha,Mistral 7B (zero-shot),52.9,13.7,153,Paper Table tab:linting-results
+mistral_7b,zero-shot,gha_to_travis,Mistral 7B (zero-shot),60.1,60.1,153,Paper Table tab:linting-results
+mistral_7b,few-shot,travis_to_gha,Mistral 7B (few-shot),86.3,42.5,153,Paper Table tab:linting-results
+mistral_7b,few-shot,gha_to_travis,Mistral 7B (few-shot),69.9,69.9,153,Paper Table tab:linting-results
+llama3_1_8b,zero-shot,travis_to_gha,Llama 3.1 8B (zero-shot),28.1,14.4,153,Paper Table tab:linting-results
+llama3_1_8b,zero-shot,gha_to_travis,Llama 3.1 8B (zero-shot),24.2,24.2,153,Paper Table tab:linting-results
+llama3_1_8b,few-shot,travis_to_gha,Llama 3.1 8B (few-shot),2.0,1.3,153,Paper Table tab:linting-results
+llama3_1_8b,few-shot,gha_to_travis,Llama 3.1 8B (few-shot),0.7,0.7,153,Paper Table tab:linting-results

@@ -1,0 +1,50 @@
+language: java
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+branches:
+  only:
+    - main
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - echo "Before Install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before Script"
+
+script:
+  - chmod +x gradlew
+  - ./gradlew build
+
+after_success:
+  - echo "After Success"
+
+after_failure:
+  - echo "After Failure"
+
+jobs:
+  build-and-test:
+    stage: build
+    script:
+      - echo "Build and Test"
+    
+  docker-build:
+    dependencies:
+      - build-and-test
+    stage: deploy
+    script:
+      - echo "Docker Build"
+      - docker build -t hl7_validator .

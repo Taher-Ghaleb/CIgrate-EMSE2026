@@ -1,0 +1,57 @@
+language: android
+jdk:
+  - oraclejdk8
+android:
+  components:
+    - tools
+    - build-tools-28.0.3
+    - android-28
+    - extra-material
+    - extra-google-google-play-services
+    - extra-android-support
+script: ./gradlew assembleDebug publishAllPublicationsToMavenCentral
+before_install:
+  - nvm install 10
+  - nvm use 10
+  - gem install cocoapods
+  - pod install
+  - chmod +x gradlew
+after_success:
+  - echo $TRAVIS_SECURE_MVN_USERNAME | base64 --decode > $HOME/.gradle/wrapper/agent/gradle_wrapper_args.txt
+  - echo $TRAVIS_SECURE_MVN_PASSWORD | base6x4 --decode >> $HOME/.gradle/wrapper/agent/gradle_wrapper_args.txt
+  - echo $TRAVIS_SECURE_MVN_SIGNING_KEY | base64 --decode > $HOME/.gradle/wrapper/agent/gradle_wrapper_args.txt
+  - echo $TRAVIS_SECURE_MVN_SIGNING_KEY_ID | base64 --decode >> $HOME/.gradle/wrapper/agent/gradle_wrapper_args.txt
+  - echo $TRAVIS_SECURE_MVN_SIGNING_KEY_PASSWORD | base64 --decode >> $HOME/.gradle/wrapper/agent/gradle_wrapper_args.txt
+deploy:
+  provider: script
+  script: ./gradlew publishAllPublicationsToMavenCentral
+  skip_cleanup: true
+  on:
+    all_branches: true
+notifications:
+  email: false
+modeline
+edited: true
+version: 1.0
+modeline
+edited: true
+version: 1.0
+name: Android CI
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+      - '.github/**'
+      - '.idea/**'
+      - '!.github/workflows/**'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build debug APK
+    runs_on: ubuntu-latest
+    steps:
+      - name:

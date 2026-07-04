@@ -1,0 +1,30 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Install and build
+        run: mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+      - name: Deploy
+        uses: softprops/action-release@v1
+        with:
+          api-key: ${{ secrets.TRAVIS_GITHUB_RELEASE_KEY }}
+          file: target/release.jar
+          skip-cleanup: true
+          on: tags
+```
+
+Note: Replace `********************` with your actual Travis encrypted GitHub release key.

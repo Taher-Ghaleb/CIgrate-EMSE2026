@@ -1,0 +1,19 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  mvn --batch-mode --show-version clean test
+script
+apt:
+  packages: jdk-6-jdk
+directories: ~/.m2/repository
+stage: ☕ 11
+sonarcloud:
+  organization: powsybl-ci-github

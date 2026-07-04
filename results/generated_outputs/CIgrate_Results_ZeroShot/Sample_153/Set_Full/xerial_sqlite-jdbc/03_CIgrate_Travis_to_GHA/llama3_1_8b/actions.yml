@@ -1,0 +1,44 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y maven
+      - name: Build and deploy
+        run: |
+          mvn clean package
+          mvn deploy
+      - name: Send notification
+        uses: actions/notify@v2
+          name: Build and deploy completed
+          email: ${{ secrets.EMAIL }}
+          message: Build and deploy completed
+      - name: Allow failure
+        continue-on-error: true

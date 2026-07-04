@@ -1,0 +1,26 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Run gradlew
+        run:./gradlew
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platform-tools"
+          sdkmanager "build-tools;29.0.0"
+          sdkmanager "platforms;android-28"
+```
+
+Note: I've used the `sdkmanager` command to install the required Android SDK components, as it is the recommended way to install and manage Android SDK components.

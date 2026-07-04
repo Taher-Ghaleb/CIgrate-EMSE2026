@@ -1,0 +1,32 @@
+language: android
+jdk: openjdk8
+sudo: required
+
+branches:
+  except:
+    - gh-pages
+
+before_install:
+  - yes | sdkmanager --licenses || true
+
+android:
+  components:
+    - platform-tools
+    - tools
+    - android-23
+    - build-tools-23.0.3
+    - extra-android-support
+    - extra-android-m2repository
+  licenses:
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew clean build
+
+cache:
+  directories:
+    - $HOME/.gradle

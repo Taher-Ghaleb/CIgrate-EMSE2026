@@ -1,0 +1,91 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'gradle'
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      
+      - name: Install codecov
+        run: pip install codecov
+      
+      - name: Cache SDKMAN
+        uses: actions/cache@v4
+        with:
+          path: ~/.sdkman
+          key: ${{ runner.os }}-sdkman-${{ hashFiles('**/*.java') }}
+          restore-keys: |
+            ${{ runner.os }}-sdkman-
+      
+      - name: Setup SDKMAN
+        run: |
+          if [[ ! -d $HOME/.sdkman/bin/ ]]; then
+            rm -rf $HOME/.sdkman
+            curl -sL https://get.sdkman.io | bash
+            echo "sdkman_auto_answer=true" > $HOME/.sdkman/etc/config
+            echo "sdkman_auto_selfupdate=true" >> $HOME/.sdkman/etc/config
+          fi
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk version
+      
+      - name: Update CA certificates
+        run: |
+          sudo dpkg --purge --force-depends ca-certificates-java || true
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates-java
+          sudo update-ca-certificates -f
+      
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+      
+      - name: Assemble
+        run: |
+          source ./config_build.sh
+          ./gradlew assemble -DexcludeBenchmark
+      
+      - name: Run tests
+        run: |
+          source ./config_build.sh
+          ./run_tests.sh
+      
+      - name: Build distributions
+        if: success()
+        run: ./gradlew buildDistributions -DexcludeBenchmark
+      
+      - name: Upload coverage to Codecov
+        if: success()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+      
+      - name: Deploy artifacts
+        if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        run: |
+          # Deploy to alternative repository (Bintray is shutdown)
+          # Could use Maven Central, GitHub Packages, or JFrog Artifactory
+          echo "Bintray shutdown - configure alternative deployment"
+      
+      - name: Send Gitter notification
+        if: always()
+        uses: zulip/github-actions-gitter@v1
+        with:
+          webhook-url: https://webhooks.gitter.im/e/31a671345ecfdce18046
+          status: ${{ job.status }}

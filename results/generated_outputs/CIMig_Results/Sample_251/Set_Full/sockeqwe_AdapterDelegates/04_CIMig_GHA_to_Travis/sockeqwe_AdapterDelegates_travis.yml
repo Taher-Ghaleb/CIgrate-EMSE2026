@@ -1,0 +1,16 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew build --stacktrace
+include:
+  if: type in (pull_request, push)
+stage:
+  ☕ 11
+  Build

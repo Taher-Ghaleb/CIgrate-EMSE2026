@@ -1,0 +1,49 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  TEST_DIR: code/ingest
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
+      
+      - name: Make gradlew executable
+        run: |
+          if [ -e "$TEST_DIR/gradlew" ]; then
+            chmod +x "$TEST_DIR/gradlew"
+          elif [ -e ./gradlew ]; then
+            chmod +x ./gradlew
+          fi
+      
+      - name: Run tests and generate coverage report
+        run: |
+          cd $TEST_DIR
+          if [ -e ./gradlew ]; then
+            ./gradlew jacocoTestReport
+          else
+            gradle jacocoTestReport
+          fi
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./${{ env.TEST_DIR }}/build/reports/jacoco/test/jacocoTestReport.xml
+          fail_ci_if_error: true
+          verbose: true

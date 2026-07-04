@@ -1,0 +1,38 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+  except:
+    - release/*
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+install:
+  - name: Set up JDK 8
+    script: |
+      curl -sL https://cdn.jsdelivr.net/gh/adoptopenjdk/jdk8-upstream-binaries/latest/jdk-8u*linux-x64.tar.gz | tar xz
+      export JAVA_HOME=$(pwd)/jdk-8*
+      export PATH=$JAVA_HOME/bin:$PATH
+
+cache:
+  directories:
+    - ~/.m2/repository
+
+before_script:
+  - key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+
+script:
+  - mvn -B -nsu verify
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - # TODO: Add deploy script here

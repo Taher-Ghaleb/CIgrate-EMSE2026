@@ -1,0 +1,13 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew build

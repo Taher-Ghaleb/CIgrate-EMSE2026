@@ -1,0 +1,31 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+script:
+  - chmod +x.travis/build.sh
+  -./.travis/build.sh
+  - echo $SECRET_1
+  - echo $SECRET_2
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+env:
+  global:
+    - SECRET_1: $SECRET_1
+    - SECRET_2: $SECRET_2
+addons:
+  cache:
+    - maven
+```
+
+Note that in Travis CI, the `cache` directive is used to cache the Maven repository, and the `env` directive is used to set environment variables. The `branches` directive is used to specify the branches that the job should run on. The `script` directive is used to specify the commands to run in the job.

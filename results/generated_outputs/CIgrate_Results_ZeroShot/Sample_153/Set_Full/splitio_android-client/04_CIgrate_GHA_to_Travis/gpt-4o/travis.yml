@@ -1,0 +1,23 @@
+language: android
+jdk:
+  - openjdk8
+
+android:
+  components:
+    - build-tools-29.0.2
+    - android-29
+
+before_install:
+  - yes | sdkmanager --licenses || true
+
+install:
+  - chmod +x project/gradlew
+
+script:
+  - cd project
+  - ./gradlew test
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/

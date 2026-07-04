@@ -1,0 +1,45 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Cache Maven repository
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-m2-
+
+    - name: Before install
+      run: |
+        rm -rf $HOME/.m2/repository/io/vlingo
+        cp .travis/settings.xml $HOME/.m2/settings.xml
+        mvn deploy:help versions:help help:help
+
+    - name: Build
+      run: mvn install -PTravisCI
+
+    - name: Deploy (tag)
+      if: startsWith(github.ref, 'refs/tags/')
+      run: mvn deploy -DskipTests
+
+    - name: Deploy (master branch)
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      run: mvn deploy -DskipTests
+
+    - name: After deploy (tag)
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        chmod u+x .travis/trigger_deps.sh
+        .travis/trigger_deps.sh
+
+    - name: Before cache
+      if: always()
+      run: rm -rf $HOME/.m2/repository/io/vlingo

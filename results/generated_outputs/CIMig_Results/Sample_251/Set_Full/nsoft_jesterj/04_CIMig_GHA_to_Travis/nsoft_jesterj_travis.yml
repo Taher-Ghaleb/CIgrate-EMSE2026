@@ -1,0 +1,16 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  chmod +x gradlew
+  java -version
+script:
+  script:
+    ./gradlew jacocoTestReport
+apt:
+  packages: jdk-8-jdk

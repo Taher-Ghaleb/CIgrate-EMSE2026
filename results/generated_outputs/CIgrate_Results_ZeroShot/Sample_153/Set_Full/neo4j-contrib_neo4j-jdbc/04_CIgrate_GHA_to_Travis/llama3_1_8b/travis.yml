@@ -1,0 +1,85 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - echo "Running tests"
+  - mvn clean test
+
+after_success:
+  - echo "Deploying to production"
+  - mvn deploy
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - mvn deploy
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: mvn deploy
+  skip_cleanup: true
+  on:
+    branch: master
+  branch: master
+  environment:
+    name: production
+    matrix:
+      - java_version: 8
+        jdk: temurin
+  cache:
+    directories:
+      - ~/.m2/repository
+      - ~/.gradle/*
+      - $HOME/.npm
+  services:
+    - docker
+  before_install:
+    - apt-get update
+    - apt-get install -y maven
+  install:
+    - mvn --version
+  before_script:
+    - echo "Setting up JDK 8"
+    - export JAVA_HOME=/usr/lib/jvm/temurin-8
+    - export PATH=$JAVA_HOME/bin:$PATH
+  script:
+    - echo "Running tests"
+    - mvn clean test
+  after_success:
+    - echo "Deploying to production"
+    - mvn deploy
+  after_failure:
+    - echo "Deploying to production on failure"
+    - mvn deploy
+  deploy:
+    on:
+      tags: true
+    provider: script
+    script: mvn deploy
+    skip_cleanup: true
+  matrix:
+    allow_failures:
+      - java_version: 8
+        jdk: temurin
+  notifications:
+    email:
+      on:
+        push:
+          branches:
+            - master
+        pull_request:
+          branches:
+            - master

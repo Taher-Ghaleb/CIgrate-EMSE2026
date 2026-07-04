@@ -1,0 +1,48 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+        cache: 'maven'
+
+    - name: Clone CI tooling
+      run: git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+
+    - name: Install Maven settings
+      run: mkdir -p $HOME/.m2 && cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+
+    - name: Build and test
+      run: mvn clean verify
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.repository == 'OWNER/REPO'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+        cache: 'maven'
+
+    - name: Clone CI tooling
+      run: git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+
+    - name: Deploy to repository
+      env:
+        SECRET_1: ${{ secrets.MAVEN_DEPLOY_USERNAME }}
+        SECRET_2: ${{ secrets.MAVEN_DEPLOY_PASSWORD }}
+      run: mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml

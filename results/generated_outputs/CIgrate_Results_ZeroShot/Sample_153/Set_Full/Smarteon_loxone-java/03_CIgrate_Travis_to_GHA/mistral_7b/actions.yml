@@ -1,0 +1,60 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+env:
+  global:
+    BUILD_CONDITION_SCRIPT: |
+      if ${{ secrets.BUILD_CONDITION_SCRIPT }} $GITHUB_REF examples/example; then
+        echo "Testing"
+      else
+        echo "NOT testing" && exit 0
+      fi
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker-db:
+        image: postgres:latest
+    strategy:
+      matrix:
+        jdk: [openjdk11]
+
+    env:
+      JAVA_HOME: ${{ runner.os == 'linux' ? '${{ secrets.JAVA_HOME }}' : '${{ runner.os }}' }}/openjdk-11
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os }}/.gradle/caches/
+          key: ${{ runner.os }}-gradle-dependencies
+          restore-keys: |
+            ${{ runner.os }}-gradle-dependencies
+
+      - name: Cache Gradle wrapper
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os }}/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-wrapper
+          restore-keys: |
+            ${{ runner.os }}-gradle-wrapper
+
+      - name: Remove Gradle cache files
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+      - name: Build and Test
+        working-directory: examples/example
+        run: |
+          ./grad

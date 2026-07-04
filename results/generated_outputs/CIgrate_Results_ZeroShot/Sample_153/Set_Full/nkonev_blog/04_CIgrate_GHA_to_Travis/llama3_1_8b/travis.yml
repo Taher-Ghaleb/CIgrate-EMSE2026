@@ -1,0 +1,84 @@
+language: python
+
+before_install:
+  - apt-get update
+  - apt-get install -y chromium-browser
+  - apt-get install -y firefox
+
+install:
+  - apt-get install -y default-jdk
+  - apt-get install -y maven
+  - apt-get install -y nodejs
+  - apt-get install -y npm
+
+before_script:
+  - mkdir -p ~/.ssh
+  - openssl aes-256-cbc \
+    -K $FOO \
+    -iv $BAR \
+    -in./.travis/id_rsa.enc \
+    -out ~/.ssh/id_rsa -d
+  - chmod 600 ~/.ssh/id_rsa
+
+script:
+  - java -version
+  - echo "JAVA_HOME: $JAVA_HOME"
+  - chmod +x mvnw
+  - cd docker
+  - docker-compose up -d
+  - echo "DATE_VERSION=$(date +%Y%m%d.%H.%M)" >> env
+  - rm -f ~/.m2/settings.xml
+  -./mvnw -U -q -Drevision=$DATE_VERSION \
+    -P frontend -P jacoco -P docker \
+    -P webdriver-chrome -P webdriver-firefox \
+    -Dcustom.selenium.headless=true \
+    clean install
+  -./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+  - rm -rf ~/.m2/repository/com/github/nkonev/blog
+  - rm -rf $GITHUB_WORKSPACE/frontend/node_modules/.cache
+
+after_success:
+  - codecov/codecov-action@v4:
+    on:
+      push:
+        branches: [ master ]
+    with:
+      token: $CODECOV_TOKEN
+      fail_ci_if_error: false
+
+after_failure:
+  - if: always()
+    run: |
+      echo "Pushing Docker image"
+      echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_LOGIN}" --password-stdin
+      docker push nkonev/blog:latest
+      ssh -o "BatchMode yes" -o StrictHostKeyChecking=no -q \
+        ${CONNECT_LINE} "${UPDATE_COMMAND}"
+
+matrix:
+  include:
+    - java: '17'
+      dist: temurin
+      cache: maven
+    - nodejs: 'latest'
+      cache: node_modules
+      restore-keys: $runner.os-node-
+  allow_failures: true
+
+services:
+  - chromium
+  - firefox
+
+addons:
+  - cache:
+      - path: frontend/node
+        key: $runner.os-node-${hashFiles('frontend/package-lock.json')}
+      - path: frontend/node_modules
+        key: $runner.os-node-${hashFiles('frontend/package-lock.json')}
+      restore-keys: $runner.os-node-
+
+deploy:
+  on:
+    tags: true
+  environment:
+    - DOCKER_LOGIN

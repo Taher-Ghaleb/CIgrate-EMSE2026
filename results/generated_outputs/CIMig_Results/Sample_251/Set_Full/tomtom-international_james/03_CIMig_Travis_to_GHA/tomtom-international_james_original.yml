@@ -1,0 +1,25 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      uses: actions/checkout@version
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: build with maven-
+      run:
+        chmod +x ./gradlew
+        gradle clean build shadowJar
+
+env:
+  snf4j_skip_test_logging: TRUE
+

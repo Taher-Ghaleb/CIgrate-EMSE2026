@@ -1,0 +1,55 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+env:
+  JDK: oraclejdk8
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JDK }}
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies
+
+      - name: Install and run tests
+        run: |
+          mvn -B clean test
+
+      - name: Upload coverage report
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: target/site/jacoco/index.html
+
+    continue-on-error: true
+
+workflow:
+  branches:
+    master:
+      jobs:
+        build-and-test:
+          strategy:
+            matrix:
+              JDK: [oraclejdk8]

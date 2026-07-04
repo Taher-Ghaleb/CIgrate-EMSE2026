@@ -1,0 +1,59 @@
+name: Android Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - feature/*
+
+env:
+  global:
+    ANDROID_NDK_HOME: ${{ secrets.ANDROID_NDK_HOME }}
+    ANDROID_SDK_HOME: ${{ secrets.ANDROID_SDK_HOME }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Checkout Android SDK and NDK
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ secrets.ANDROID_SDK_HOME }}
+          path: ${{ secrets.ANDROID_SDK_HOME }}
+
+      - name: Checkout NDK
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ secrets.ANDROID_NDK_HOME }}
+          path: ${{ secrets.ANDROID_NDK_HOME }}
+
+      - name: Set up Android SDK and NDK
+        run: |
+          export ANDROID_HOME=${{ secrets.ANDROID_SDK_HOME }}
+          export PATH=${{ secrets.ANDROID_SDK_HOME}}/tools:$PATH
+          export NDK_HOME=${{ secrets.ANDROID_NDK_HOME }}
+          export PATH=${NDK_HOME}/bin:$PATH
+
+      - name: Install Android Platform Tools and Build Tools
+        run: |
+          android list sdk --ext --all
+          android list platform --ext --all
+          android list build-tools --ext --all
+          android update sdk --no-ui --all --filter android-17,build-tools-25
+          android list sdk --ext --all
+
+      - name: Install Android Components

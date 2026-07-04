@@ -1,0 +1,38 @@
+language: java
+dist: trusty
+sudo: false
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.sonar/cache/
+    - $HOME/.gradle
+    - ./ .gradle
+
+jobs:
+  include:
+    - stage: check
+      script: ./gradlew check jacocoTestReport sonarqube --info --refresh-dependencies
+      addons:
+        sonarcloud:
+          organization: "kaklakariada-github"
+          token:
+            secure: "********************"
+    - stage: integration
+      script: ./gradlew integrationTest --refresh-dependencies
+      addons:
+        sonarcloud:
+          organization: "kaklakariada-github"
+          token:
+            secure: "********************"
+
+stages:
+  - check
+  - integration
+
+env:
+  global:
+    - TEST_DURATION=30s

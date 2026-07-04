@@ -1,0 +1,24 @@
+name: Docker Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        FEDORA: [27, 28]
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install
+      run: |
+        docker pull registry.fedoraproject.org/fedora:${{ matrix.FEDORA }}
+        docker run --name=container --detach -i -v $(pwd):/root/jss registry.fedoraproject.org/fedora:${{ matrix.FEDORA }}
+        docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+        docker exec container dnf copr -y enable @pki/10.6
+        docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+        docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+
+    - name: Script
+      run: docker exec container rpm -Uvh /root/build/jss/RPMS/*

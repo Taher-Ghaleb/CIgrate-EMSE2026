@@ -1,0 +1,25 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: java-version
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run:
+        mvn verify --batch-mode --show-version --settings .travis.settings.xml
+        echo nothing to install
+
+macos:
+  jdk: openjdk8
+

@@ -1,0 +1,60 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - feature/* 
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+          - oraclejdk9
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: ${{ matrix.jdk }}
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y default-jdk
+    - name: Build and deploy
+      run: |
+        # TODO: Use a more modern tool like Maven or Gradle
+        mvn clean package
+    - name: Cache dependencies
+      uses: actions/cache@v4
+        at: cache
+        key: ${{ runner.os }}-jdk-${{ matrix.jdk }}
+        restore-keys: |
+          ${{ runner.os }}-jdk-${{ matrix.jdk }}
+    - name: Deploy
+      run: |
+        # TODO: Use a more modern tool like Docker Compose
+        docker-compose up -d
+    - name: Wait for deployment
+      run: |
+        # TODO: Use a more modern tool like Docker Compose
+        docker-compose wait
+    - name: Deploy to production
+      run: |
+        # TODO: Use a more modern tool like Docker Compose
+        docker-compose push
+    - name: Send notification
+      run: |
+        # TODO: Use a more modern tool like GitHub Actions' built-in notification
+        echo "Deployment successful" | mail -s "Deployment successful" ${{ secrets.EMAIL }}

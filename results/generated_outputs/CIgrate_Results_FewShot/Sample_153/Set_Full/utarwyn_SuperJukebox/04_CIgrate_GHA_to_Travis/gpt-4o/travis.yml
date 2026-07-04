@@ -1,0 +1,19 @@
+language: java
+jdk: openjdk8
+sudo: false
+
+env:
+  global:
+    - SONAR_ORGANIZATION=utarwyn-github
+    - secure: $SONAR_TOKEN
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.sonar/cache'
+
+install: true
+
+script:
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then mvn clean verify sonar:sonar -Pcoverage -Dsonar.organization=$SONAR_ORGANIZATION; fi
+  - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then mvn clean install; fi

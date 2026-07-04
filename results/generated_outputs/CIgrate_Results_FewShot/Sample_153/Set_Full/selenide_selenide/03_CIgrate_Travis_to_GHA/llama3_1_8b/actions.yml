@@ -1,0 +1,56 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  SONAR_ORG: ${{ secrets.SONAR_ORG }}
+  SONAR_HOST: ${{ secrets.SONAR_HOST }}
+  SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+  TRAVIS_BRANCH: ${{ github.event.pull_request.branch }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 99999
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Install Chrome and Firefox
+        uses: actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+      - name: Install Firefox
+        uses: actions/setup-firefox@v1
+        with:
+          firefox-version: latest
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradlew') }}
+          restore-keys: ${{ runner.os }}-gradle-
+      - name: Install dependencies
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Run check
+        run:./gradlew check --no-daemon --console=plain
+      - name: Run SonarQube
+        if: type!= pull_request
+        run:./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${SONAR_ORG} -Dsonar.host.url=${SONAR_HOST} -Dsonar.login=${SONAR_LOGIN} -Dsonar.branch.name=${TRAVIS_BRANCH}
+      - name: Run Grid
+        run:./gradlew grid --no-daemon --console=plain -i
+      - name: Run Firefox
+        run:./gradlew firefox_headless --no-daemon --console=plain -i
+      - name: Run Chrome
+        run:./gradlew chrome_headless --no-daemon --console=plain -i
+      - name: Upload reports
+        run:./upload_reports.sh
+      - name: Send

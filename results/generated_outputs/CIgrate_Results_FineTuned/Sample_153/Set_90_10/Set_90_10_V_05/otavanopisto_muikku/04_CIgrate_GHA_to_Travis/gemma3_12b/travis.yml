@@ -1,0 +1,21 @@
+language: java
+jdk:
+  - openjdk7
+  - oraclejdk7
+before_install:
+  - unset GEM_PATH
+script:
+  - mvn install
+after_success:
+  - mvn package -f muikku/pom.xml -Popenshift
+  - python travis-prepare-maven.py
+  - mvn deploy --settings ~/.m2/mySettings.xml
+deploy:
+  provider: script
+  script: echo 'Starting deployment'
+  skip_cleanup: true
+  on:
+    branch: devel
+    all_branches: true
+after_deploy:
+  - echo 'Deployed'

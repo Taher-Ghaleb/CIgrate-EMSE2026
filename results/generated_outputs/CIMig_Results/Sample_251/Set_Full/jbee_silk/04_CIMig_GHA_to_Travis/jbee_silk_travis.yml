@@ -1,0 +1,19 @@
+notifications: email
+env: global
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+after_success:
+  bash <(curl-cmd
+sudo: FALSE
+addons:
+  firefox: latest
+apt:
+  packages: jdk-6-jdk

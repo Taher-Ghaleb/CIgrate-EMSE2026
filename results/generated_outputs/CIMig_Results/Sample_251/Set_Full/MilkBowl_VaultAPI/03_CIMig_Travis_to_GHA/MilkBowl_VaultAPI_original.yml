@@ -1,0 +1,30 @@
+with:
+  distribution: zulu
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: java-version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/checkout@version
+      env:
+        github_token: ${{ github.token }}
+    - name: Placeholder
+
+uses: actions/setup-java@version
+

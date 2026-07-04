@@ -1,0 +1,9 @@
+language: java
+jdk:
+  - oraclejdk9
+script:
+  - mvn --errors clean verify site
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -f ./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml
+notifications:
+  irc: "chat.freenode.net#io7m"

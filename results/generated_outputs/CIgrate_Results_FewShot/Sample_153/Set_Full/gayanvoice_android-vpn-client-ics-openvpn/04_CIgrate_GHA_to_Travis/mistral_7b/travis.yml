@@ -1,0 +1,23 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+
+env:
+  global:
+    GRADLE_CACHE: true
+
+addons:
+  android:
+    components:
+      - platform-tools
+      - platforms:android-28
+      - build-tools:29.0.0
+
+script:
+  - actions/checkout@v4
+  - actions/setup-java@v4 -distribution:temurin -java-version:11 -cache:gradle
+  - android-actions/setup-android@v3
+  - chmod +x gradlew
+  - ./gradlew build

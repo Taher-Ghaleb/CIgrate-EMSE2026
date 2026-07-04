@@ -1,0 +1,47 @@
+env:
+  global:
+  - secure: "********************"
+  - secure: "********************"
+  - JAVA_HOME=/home/travis/openjdk11
+sudo: false
+dist: trusty
+cache:
+  directories:
+  - "$HOME/.gradle"
+  - $HOME/.sdkman
+language: java
+jdk:
+- openjdk11
+
+notifications:
+  webhooks:
+    urls: https://webhooks.gitter.im/e/31a671345ecfdce18046
+    on_success: change
+    on_failure: always
+    on_start: never
+
+before_install:
+- "[[ -d /home/travis/.sdkman/ ]] && [[ -d /home/travis/.sdkman/bin/ ]] || rm -rf /home/travis/.sdkman/"
+- curl -sL https://get.sdkman.io | bash
+- echo sdkman_auto_answer=true > $HOME/.sdkman/etc/config
+- echo sdkman_auto_selfupdate=true >> $HOME/.sdkman/etc/config
+- source "/home/travis/.sdkman/bin/sdkman-init.sh"
+- pip install --user codecov
+- sudo dpkg --purge --force-depends ca-certificates-java
+- sudo apt-get install ca-certificates-java
+- sudo update-ca-certificates -f
+install:
+- "source ./config_build.sh && ./gradlew assemble -DexcludeBenchmark"
+script: "source ./config_build.sh && ./run_tests.sh"
+after_success:
+- "./gradlew buildDistributions -DexcludeBenchmark"
+- codecov
+deploy:
+  provider: bintray
+  file: "bintray.json"
+  user: "jbachorik"
+  key:
+    secure: "********************"
+  on:
+    branch: develop
+    condition: ${TRAVIS_JDK_VERSION} == openjdk11

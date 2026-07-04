@@ -1,0 +1,51 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies..."
+  - apt-get update && apt-get install -y default-jdk
+
+install:
+  - echo "Installing Gradle..."
+  - curl -s https://get.sdkman.io | sh && source $HOME/.sdkman/bin/sdkman-init.sh && sdk install gradle 7.4
+  - export GRADLE_HOME=$HOME/.sdkman/candidates/gradle/current
+  - export PATH=$GRADLE_HOME/bin:$PATH
+
+script:
+  - echo "Building with Gradle..."
+  -./gradlew build
+
+after_success:
+  - echo "Deploying..."
+  - echo "Deploying to production..."
+
+deploy:
+  - echo "Deploying to production..."
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+
+branches:
+  only:
+    - main
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+
+cache:
+  directories:
+    - $HOME/.gradle
+    - $HOME/.m2/repository
+
+services:
+  - docker
+
+addons:
+  apt:
+    sources:
+      - 'temurin-upstream temurin'
+
+jdk:
+  - temurin8

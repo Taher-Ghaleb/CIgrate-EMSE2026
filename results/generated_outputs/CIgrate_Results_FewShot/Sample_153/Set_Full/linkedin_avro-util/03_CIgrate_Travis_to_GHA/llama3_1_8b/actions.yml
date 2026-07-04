@@ -1,0 +1,52 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  secure: "********************"
+  secure: "********************"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: '8'
+      - name: Install Oracle JDK 8
+        uses: actions/apt@v3
+        with:
+          packages: oracle-java8-installer
+      - name: Clean Gradle cache
+        run: |
+          rm -rvf $HOME/.gradle/caches/journal-*/file-access.bin
+          rm -rvf $HOME/.gradle/caches/*/plugin-resolution/
+          rm -rvf $HOME/.gradle/caches/*/scripts/
+          rm -rvf $HOME/.gradle/caches/*/*.lock
+          sync
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            $HOME/.gradle/caches/
+            $HOME/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradlew') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Build and generate javadoc
+        run:./gradlew clean build javadoc --no-daemon
+      - name: Deploy to Bintray
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BINTRAY_TOKEN }}
+        run: |
+          bash -v scripts/publishToBintray.sh
+```
+
+Note: You need to replace `********************` with your actual secure values. Also, you need to set `BINTRAY_TOKEN` as a secret in your GitHub repository settings.

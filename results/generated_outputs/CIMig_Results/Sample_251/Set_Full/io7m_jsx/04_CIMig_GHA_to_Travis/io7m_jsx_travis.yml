@@ -1,0 +1,15 @@
+env: global
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: develop
+before_install:
+  java -version
+  mvn --errors clean verify site
+script
+include:
+  stage: Build

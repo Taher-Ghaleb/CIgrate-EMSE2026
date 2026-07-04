@@ -1,0 +1,33 @@
+language: scala
+cache:
+  directories:
+    - ~/.ivy2/cache
+    - ~/.sbt
+    - ~/.cache/coursier
+  key: ${RUNNER_OS}-sbt-${hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala')}
+  restore_keys:
+    - ${RUNNER_OS}-sbt-
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+    - tags
+deploy:
+  on:
+    tags: true
+before_install:
+  - "echo 'Before Install'"
+install:
+  - "echo 'Install'"
+before_script:
+  - "echo 'Before Script'"
+script:
+  - sbt compile test
+after_success:
+  - "echo 'After Success'"
+after_failure:
+  - "echo 'After Failure'"

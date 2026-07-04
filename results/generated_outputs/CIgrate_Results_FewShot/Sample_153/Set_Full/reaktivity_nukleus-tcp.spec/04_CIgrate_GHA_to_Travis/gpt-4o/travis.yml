@@ -1,0 +1,14 @@
+language: java
+jdk:
+  - openjdk8
+
+branches:
+  except:
+    - /^release\/.*$/
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+script:
+  - mvn -B -nsu verify

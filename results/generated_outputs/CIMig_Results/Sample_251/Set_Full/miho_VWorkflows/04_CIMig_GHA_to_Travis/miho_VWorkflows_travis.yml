@@ -1,0 +1,16 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  include:
+    os: windows
+    if: type in (pull_request, push)
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew clean build -S

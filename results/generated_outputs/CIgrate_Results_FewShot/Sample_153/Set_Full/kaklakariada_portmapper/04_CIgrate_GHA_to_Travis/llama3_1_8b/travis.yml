@@ -1,0 +1,32 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk11
+install: true
+cache:
+  directories:
+    - '$HOME/.gradle'
+    - '$HOME/.sonar/cache'
+script:
+  -./gradlew clean check sonarqube --info --stacktrace --warning-mode all
+  - chmod +x gradlew
+before_install:
+  - chmod +x gradlew
+env:
+  global:
+    - GITHUB_TOKEN: $GITHUB_TOKEN
+    - SONAR_TOKEN: $SONAR_TOKEN
+    - SONAR_ORGANIZATION: kaklakariada-github
+addons:
+  sonarqube:
+    token:
+      secure: $SONAR_TOKEN
+    branches:
+      - master
+      - develop
+```
+
+Note that I've assumed that the `GITHUB_TOKEN` and `SONAR_TOKEN` secrets are already configured in your Travis CI environment. If not, you'll need to create them and update the `.travis.yml` file accordingly.

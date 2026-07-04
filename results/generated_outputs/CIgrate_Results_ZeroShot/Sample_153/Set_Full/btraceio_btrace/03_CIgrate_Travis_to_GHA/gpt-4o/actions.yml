@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-16.04
+    env:
+      JAVA_HOME: /home/runner/openjdk11
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 11
+
+    - name: Cache Gradle and SDKMAN
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ github.workspace }}/.gradle
+          ${{ github.workspace }}/.sdkman
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+    - name: Install dependencies
+      run: |
+        [[ -d /home/runner/.sdkman/ ]] && [[ -d /home/runner/.sdkman/bin/ ]] || rm -rf /home/runner/.sdkman/
+        curl -sL https://get.sdkman.io | bash
+        echo sdkman_auto_answer=true > $HOME/.sdkman/etc/config
+        echo sdkman_auto_selfupdate=true >> $HOME/.sdkman/etc/config
+        source "/home/runner/.sdkman/bin/sdkman-init.sh"
+        pip install --user codecov
+        sudo dpkg --purge --force-depends ca-certificates-java
+        sudo apt-get install ca-certificates-java
+        sudo update-ca-certificates -f
+
+    - name: Build
+      run: source ./config_build.sh && ./gradlew assemble -DexcludeBenchmark
+
+    - name: Test
+      run: source ./config_build.sh && ./run_tests.sh
+
+    - name: Build Distributions
+      if: success()
+      run: ./gradlew buildDistributions -DexcludeBenchmark
+
+    - name: Upload coverage to Codecov
+      if: success()
+      run: codecov
+
+    - name: Deploy to Bintray
+      if: github.ref == 'refs/heads/develop' && matrix.jdk == 'openjdk11'
+      env:
+        BINTRAY_USER: jbachorik
+        BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
+      run: |
+        curl -T "bintray.json" -u$BINTRAY_USER:$BINTRAY_KEY "https://api.bintray.com/content/..."
+
+  notifications:
+    webhooks:
+      urls: https://webhooks.gitter.im/e/31a671345ecfdce18046
+      on_success: change
+      on_failure: always
+      on_start: never

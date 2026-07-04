@@ -1,0 +1,46 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - dev
+notifications:
+  email:
+    recipients:
+      -
+    on_success: change
+    on_failure: change
+before_install:
+-
+install:
+-
+before_script:
+-
+script:
+  - mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+  - cp .travis.settings.xml $HOME/.m2/settings.xml
+  - mvn clean compile assembly:single -DskipTests
+  - mvn clean compile assembly:single docker:build -DpushImage
+  - sed -i "s/LIVE/${TRAVIS_BUILD_NUMBER}/g" pom.xml
+  - mvn clean compile assembly:single deploy
+  
+matrix:
+  allow_failures: true
+  include:
+    - java: 8
+      jdk: 8
+      
+  
+deploy:
+  provider:
+    script:
+      - cp .travis.settings.xml $HOME/.m2/settings.xml
+      - mvn clean compile assembly:single deploy
+      -
+    on:
+      tags: true
+      branch: dev

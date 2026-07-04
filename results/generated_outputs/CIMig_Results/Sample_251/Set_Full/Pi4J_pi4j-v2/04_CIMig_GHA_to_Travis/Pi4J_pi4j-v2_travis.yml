@@ -1,0 +1,18 @@
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  sudo apt-get install -qq --yes tree git build-essential file curl wget maven gcc
+  java -version
+  mvn clean install -Drelease-build
+script
+directories: ~/.maven-
+stage: ☕ 11

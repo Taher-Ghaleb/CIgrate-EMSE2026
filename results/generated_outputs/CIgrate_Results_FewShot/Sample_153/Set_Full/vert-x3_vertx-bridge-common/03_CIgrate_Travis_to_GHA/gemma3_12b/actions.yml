@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches:
+      only:
+        - master
+        - /^\d+\.\d+$/
+  pull_request:
+    branches:
+      only:
+        - master
+        - /^\d+\.\d+$/
+
+jobs:
+  build:
+    stage: test
+    name: "OracleJDK 8"
+    jdk: oraclejdk8
+    script: mvn -q clean verify -B
+  build:
+    if: type != 'pull_request'
+    name: "OpenJDK 11"
+    jdk: openjdk11
+    script: mvn -q clean verify -B
+  deploy:
+    stage: deploy
+    name: "Deploy to Sonatype's snapshots repository"
+    if: type != 'pull_request'
+    script: bash .travis.deploy.artifacts.sh

@@ -1,0 +1,20 @@
+language: java
+branches:
+  only:
+  - master
+tags: true
+
+install:
+  - mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - ant dist
+
+create_release:
+  - if [ -n "$TRAVIS_TAG" ]; then
+    gh release create $TRAVIS_TAG --title $TRAVIS_TAG --prerelease=false;
+    gh release upload $TRAVIS_TAG target/MedTagger.zip --name MedTagger.zip;
+    fi
+
+env:
+  global:
+    - secure: "********************"

@@ -1,0 +1,27 @@
+language: java
+sudo: false
+jdk:
+  - oraclejdk8
+before_install:
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce curl
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m) > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - echo "127.0.0.1 proxy.cadc.dao.nrc.ca" | sudo tee -a /etc/hosts
+install:
+  - gradle -i clean build test
+script:
+  - mkdir docker && cp Dockerfile docker/ && cp build/libs/*.war docker/ && docker build -t opencadc/cadc-target-resolver:SNAPSHOT -t opencadc/cadc-target-resolver:alpine -t opencadc/cadc-target-resolver:${VERSION} -f docker/Dockerfile docker/
+  - cd integrationTest
+  - docker-compose up -d
+  - docker ps -a
+  - docker-compose logs cadc-target-resolver.cadc.dao.nrc.ca
+  - docker-compose logs proxy.cadc.dao.nrc.ca
+  - curl -vL -d 'level=DEBUG' http://proxy.cadc.dao.nrc.ca/cadc-target-resolver/logControl
+  - gradle -i -b ../build.gradle -Dca.nrc.cadc.reg.client.RegistryClient.host=$REGISTRY_HOST clean intTest
+  - cd ../ && rm -rf docker
+after_success:
+  - if [ "$(. ./can-deploy.sh)" = "DEPLOY" ]; then echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin; docker push opencadc/cadc-target-resolver:alpine; docker push opencadc/cadc-target-resolver:${VERSION}; fi
+  - if [ "$(. ./can-deploy.sh)" != "DEPLOY" ]; then echo "Not deploying."; fi
+env:

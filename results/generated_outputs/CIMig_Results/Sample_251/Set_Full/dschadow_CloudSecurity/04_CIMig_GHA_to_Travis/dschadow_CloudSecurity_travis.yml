@@ -1,0 +1,16 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: develop
+before_install:
+  java -version
+  mvn -B package --file pom.xml
+script
+stage:
+  Build
+  ☕ 11
+directories: ~/.maven-

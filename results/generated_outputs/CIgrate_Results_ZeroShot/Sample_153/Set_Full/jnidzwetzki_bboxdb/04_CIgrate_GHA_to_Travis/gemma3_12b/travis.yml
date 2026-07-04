@@ -1,0 +1,42 @@
+language: java
+jdk:
+  - 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+services:
+  zookeeper:
+    image: zookeeper:3.9
+    ports:
+      - "2181:2181"
+    options: >
+      --health-cmd "echo stat | nc localhost 2181"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+branches:
+  only:
+    - main
+    - develop
+    - /^(\([0-9]+|[a-z0-9\-]+)\/.*)/
+script:
+  - mvn test
+  - |
+    echo -n | openssl s_client -connect scan.coverity.com:443 | \
+    sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | \
+    sudo tee -a /etc/ssl/certs/ca-certificates.crt
+  - |
+    sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" conf/bboxdb.yaml
+    echo "#####################################################################"
+    cat conf/bboxdb.yaml
+    echo "#####################################################################"
+    mkdir -p /tmp/bboxdb/data
+after_success:
+  - if [ $TRAVIS_BRANCH == "main" || $TRAVIS_BRANCH == "develop" ]; then
+      - echo "Codecov upload"
+      - if [[ -n "${CODECOV_TOKEN}" ]]; then
+          - curl -L https://codecov.io/bash | ./codecov -t "${CODECOV_TOKEN}"
+        fi
+    fi

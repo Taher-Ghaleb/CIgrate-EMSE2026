@@ -1,0 +1,61 @@
+name: Java Build and SonarCloud Analysis
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - release/*
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      sonarcloud:
+        image: sonarcloud/sonar-scanner-cli:latest
+        options: --no-init-cache
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: $HOME/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y maven
+      - name: Build and deploy
+        run: |
+         ./mvnw clean verify
+      - name: SonarCloud analysis
+        uses: sonarcloud/sonar-scanner-cli@v1
+          with:
+            scanner: sonar-scanner
+            server: $SONAR_HOST_URL
+            login: $SONAR_TOKEN
+            extra-properties: |
+              sonar.java.binaries=target/classes
+              sonar.java.test.binaries=target/test-classes
+      - name: Send notification
+        uses: actions/notification@v1
+          with:
+            name: SonarCloud analysis
+            description: SonarCloud analysis completed
+            state: success
+            url: $SONAR_HOST_URL
+            target_url: $SONAR_HOST_URL
+            notify: true
+```
+
+Note: The above YAML is a complete migrated workflow from the given Travis CI configuration. It includes all the required elements such as jobs, services, steps, and notifications. The `jdk` and `notifications` sections have been migrated to the corresponding GitHub Actions elements. The `cache` section has been migrated to use the `actions/cache` action. The `services` section has been migrated to use the `sonarcloud` service. The `script` section has been migrated to use the `run

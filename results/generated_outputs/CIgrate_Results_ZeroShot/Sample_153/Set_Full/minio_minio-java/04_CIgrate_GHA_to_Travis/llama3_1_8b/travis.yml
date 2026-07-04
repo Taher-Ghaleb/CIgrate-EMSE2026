@@ -1,0 +1,72 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK and Gradle"
+
+install:
+  - apt-get update
+  - apt-get install -y default-jdk
+  - apt-get install -y gradle
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  -./gradlew check
+  -./gradlew runFunctionalTest
+
+after_success:
+  - echo "Build successful"
+
+after_failure:
+  - echo "Build failed"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production"
+  on:
+    branch: never
+  environment:
+    name: production
+    matrix:
+      - name: Production
+        JDK_VERSION: 8
+        DISTRIBUTION: zulu
+        NAME: Zulu 8 (Oracle JDK 8 equivalent)
+      - name: Production
+        JDK_VERSION: 8
+        DISTRIBUTION: temurin
+        NAME: Temurin 8 (OpenJDK 8)
+      - name: Production
+        JDK_VERSION: 9
+        DISTRIBUTION: zulu
+        NAME: Zulu 9 (Oracle JDK 9 - EOL)
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+  - wait
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - your_email@example.com
+
+matrix:
+  allow_failures:
+    - JDK_VERSION: 9
+      DISTRIBUTION: zulu
+      NAME: Zulu 9 (Oracle JDK 9 - EOL)
+```
+
+Note: The above configuration is a complete Travis CI configuration that maintains the same semantics as the original GitHub Actions workflow. It includes the necessary lifecycle keys, services, and notifications. The `matrix` section is used to specify the different JDK versions and distributions, and the `cache` section is used to cache the necessary directories. The `services` section is used to specify the services and wait loops. The `notifications` section is used to specify the email notifications.

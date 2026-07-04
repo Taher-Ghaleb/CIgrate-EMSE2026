@@ -1,0 +1,41 @@
+language: java
+sudo: false
+install: true
+addons:
+  sonarqube:
+    token: ${{ secrets.SONAR_TOKEN }}
+    branches:
+      - master
+      - develop
+
+jdk:
+  - openjdk8
+  - oraclejdk9
+
+env:
+  MAVEN_OPTS: -Drevision=${{ github.ref_name }}-SNAPSHOT -Dproperty=revision -DnewVersion=${{ github.ref_name }}-SNAPSHOT -DgenerateBackupPoms=false
+
+script:
+  - mvn -B verify
+
+before_script:
+  - bash ./etc/extract_secrets.sh
+
+matrix:
+  include:
+    - jdk: '8'
+      distribution: temurin
+    - jdk: '9'
+      distribution: temurin
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    types: [release]
+  if: startsWith(github.ref, 'refs/tags/') && github.ref_name != '' && contains(github.ref_name, '.')
+  script:
+    - mvn -s etc/settings.xml -B versions:set-property deploy -P release

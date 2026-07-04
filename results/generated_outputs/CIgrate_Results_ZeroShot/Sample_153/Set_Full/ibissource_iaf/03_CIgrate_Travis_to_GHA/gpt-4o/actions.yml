@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-16.04
+    strategy:
+      matrix:
+        jdk: [8]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Install dependencies
+        run: echo 'Skipping separate install phase'
+      - name: Build with Maven
+        run: mvn install -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+
+  notifications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email notifications
+        run: |
+          echo "Sending email notifications to:"
+          echo "travis-j@ibissource.org"
+          echo "travis-j2@ibissource.org"
+          echo "travis-n@ibissource.org"
+          echo "travis-p@ibissource.org"
+          echo "travis-g@ibissource.org"
+        # TODO: Implement email sending logic

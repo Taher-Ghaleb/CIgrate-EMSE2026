@@ -1,0 +1,50 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK_VERSION: '8'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JDK_VERSION }}
+      - name: Clean Maven cache
+        run: |
+          rm -rf $HOME/.m2/repository/**/*-SNAPSHOT
+      - name: Cache Maven and wrapper
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Build and test Quarkus
+        run: |
+          cd quarkus.jdt.ext
+         ./mvnw clean verify
+          cd..
+      - name: Build and test LS
+        run: |
+          cd quarkus.ls.ext/com.redhat.quarkus.ls
+         ./mvnw clean verify
+      - name: Send notifications
+        uses: dbrgn/send-email-action@v1
+        with:
+          to: 'your-email@example.com'
+          subject: 'CI Build Result'
+          body: 'The build has completed.'
+```
+
+Note: Replace `'your-email@example.com'` with your actual email address.

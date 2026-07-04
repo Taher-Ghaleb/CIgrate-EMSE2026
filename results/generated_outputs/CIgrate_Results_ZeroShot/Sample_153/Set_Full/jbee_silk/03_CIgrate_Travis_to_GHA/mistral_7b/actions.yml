@@ -1,0 +1,47 @@
+name: Java Build
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME_8 }}
+      JAVA_HOME_9: ${{ secrets.JAVA_HOME_9 }}
+
+    strategy:
+      matrix:
+        java: [JAVA_HOME, JAVA_HOME_9]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - name: Install Ant
+        run: apt-get update && apt-get install -y ant
+
+      - name: Build
+        run: ant
+
+    continue-on-error: true
+
+workflow:
+  branches:
+    include:
+      - master
+      - develop
+    exclude:
+      - '**/*'
+  tags:
+    include:
+      - 'v*'

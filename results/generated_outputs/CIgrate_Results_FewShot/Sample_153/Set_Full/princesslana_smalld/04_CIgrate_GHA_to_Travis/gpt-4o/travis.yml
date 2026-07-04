@@ -1,0 +1,31 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk9
+
+env:
+  global:
+    - MAVEN_OPTS="-Drevision=${TRAVIS_BRANCH}-SNAPSHOT -Dproperty=revision -DnewVersion=${TRAVIS_BRANCH}-SNAPSHOT -DgenerateBackupPoms=false"
+    - secure: $SONAR_TOKEN
+    - SONAR_ORGANIZATION=ianagbip1oti-github
+
+matrix:
+  include:
+    - jdk: openjdk8
+      env: SONAR=true
+  allow_failures:
+    - jdk: openjdk9
+
+before_install:
+  - bash ./etc/extract_secrets.sh
+
+script:
+  - mvn -B verify
+  - if [ "$SONAR" = "true" ]; then mvn -B sonar:sonar; fi
+
+deploy:
+  provider: script
+  script: bash ./etc/extract_secrets.sh && mvn -s etc/settings.xml -B versions:set-property deploy -P release
+  on:
+    tags: true
+    condition: "$TRAVIS_TAG =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$"

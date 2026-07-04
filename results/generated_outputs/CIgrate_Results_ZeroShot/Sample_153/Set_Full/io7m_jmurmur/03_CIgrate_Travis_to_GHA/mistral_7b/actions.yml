@@ -1,0 +1,67 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches: [master]
+    tags: true
+  pull_request:
+    branches: [master]
+
+env:
+  JAVA_VERSION: oraclejdk9
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+
+      - name: Install Maven
+        run: apt-get update && apt-get install -y maven
+
+      - name: Checkout and build
+        run: mvn --errors clean verify site
+
+      - name: Upload code coverage
+        uses: actions/upload-artifact@v2
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/jacoco.xml
+
+      - name: Download code coverage report
+        uses: actions/download-artifact@v2
+        with:
+          name: jacoco-report
+
+      - name: Upload code coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: jacoco-report/*.xml
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const core = require('@actions/core');
+            const github = require('@actions/github');
+            try {
+              const octokit = github.rest.constructRestObject(core.getInput

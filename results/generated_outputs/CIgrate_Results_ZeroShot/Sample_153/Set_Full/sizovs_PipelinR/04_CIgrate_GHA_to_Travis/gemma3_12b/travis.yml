@@ -1,0 +1,70 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+script:
+  - chmod +x gradlew
+  - ./gradlew build jacocoTestReport
+  - >
+    if [ -z "$TRAVIS_BRANCH" ] || [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean test
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "develop" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ]; then
+      ./gradlew clean build
+    fi

@@ -1,0 +1,22 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+env:
+  global:
+    - GPG_SKIP=true
+    - COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
+script:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
+  - mvn clean cobertura:cobertura coveralls:report
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

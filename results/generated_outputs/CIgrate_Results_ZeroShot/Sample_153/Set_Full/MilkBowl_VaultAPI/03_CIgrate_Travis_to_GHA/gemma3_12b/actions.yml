@@ -1,0 +1,29 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+    branches:
+      except:
+        - gh-pages
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [ openjdk7 ]
+    env:
+      global:
+        - secure: "********************"
+        - secure: "********************"
+        - secure: "********************"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - run: .utility/do-publish.sh
+      - name: After Success
+        if: always()
+        run: echo "After success step completed" # TODO: Replace with original after_success logic

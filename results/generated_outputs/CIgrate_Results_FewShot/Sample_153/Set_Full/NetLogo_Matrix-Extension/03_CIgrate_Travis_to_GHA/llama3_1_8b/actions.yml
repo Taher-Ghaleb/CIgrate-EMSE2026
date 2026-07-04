@@ -1,0 +1,40 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Cache SBT and Ivy
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ivy2
+            ~/.sbt/boot
+            ~/.sbt/launchers
+          key: ${{ runner.os }}-sbt-ivy-${{ hashFiles('**/build.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-ivy-
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Scala
+        run: |
+          echo "scalaVersion := \"2.11.7\"" >> build.sbt
+      - name: Install dependencies
+        run: sbt update
+      - name: Compile
+        run: sbt compile
+      - name: Test
+        run: sbt test
+```
+Note that I've used the `actions/cache` action to cache the SBT and Ivy directories, and the `hashFiles` function to generate a unique key for the cache. I've also used the `runner.os` variable to make the cache key platform-specific.

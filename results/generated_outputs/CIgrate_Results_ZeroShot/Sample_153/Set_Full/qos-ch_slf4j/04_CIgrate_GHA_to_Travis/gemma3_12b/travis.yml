@@ -1,0 +1,56 @@
+language: java
+jdk: 11
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.m2
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+script:
+  - mvn clean install
+  - mvn package
+  - mvn verify
+  - mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+  - mvn jacoco:report
+  - mvn coveralls:report
+  - mvn checkstyle:checkstyle
+  - mvn findbugs:spotbugs
+  - mvn javadoc:javadoc
+  - mvn compiler:compile
+  - mvn compiler:testCompile
+  - mvn compiler:test
+  - mvn dependency:go-offline
+  - mvn dependency:resolve
+  - mvn dependency:tree
+  - mvn install
+  - mvn test
+  - mvn sonar:sonar
+  - mvn sonar:aggregate
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeAnalysis
+  - mvn sonar:skipSonarQubeAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeAnalysis
+  - mvn sonar:skipSonarQubeAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeAnalysis
+  - mvn sonar:skipSonarQubeAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeAnalysis
+  - mvn sonar:skipSonarQubeAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeAnalysis
+  - mvn sonar:skipSonarQubeAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis
+  - mvn sonar:skipSonarQubeNodejsAnalysis

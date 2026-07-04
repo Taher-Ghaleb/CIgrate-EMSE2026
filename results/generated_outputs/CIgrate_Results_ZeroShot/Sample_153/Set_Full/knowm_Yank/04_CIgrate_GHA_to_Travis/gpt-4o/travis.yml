@@ -1,0 +1,23 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - develop
+
+env:
+  global:
+    - MAVEN_USERNAME=$MAVEN_USERNAME
+    - MAVEN_PASSWORD=$MAVEN_PASSWORD
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+before_install:
+  - git clone -b travis https://x-access-token:$GITHUB_TOKEN@github.com/$TRAVIS_REPO_SLUG.git target/travis
+
+script:
+  - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then mvn clean verify --settings target/travis/settings.xml; fi
+  - if [ "$TRAVIS_EVENT_TYPE" == "push" ] && [ "$TRAVIS_BRANCH" == "develop" ]; then mvn clean deploy --settings target/travis/settings.xml; fi

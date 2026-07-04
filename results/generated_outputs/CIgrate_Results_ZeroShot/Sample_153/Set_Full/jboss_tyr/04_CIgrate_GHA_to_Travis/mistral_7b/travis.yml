@@ -1,0 +1,76 @@
+language: ubuntu
+
+branches:
+  include:
+    - master
+    - feature/*
+    - bugfix/*
+    - hotfix/*
+    - release/*
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_script:
+  - export GIT_STRATEGY=include
+
+script:
+  - git config --global --add safe.directory '*'
+  - git config --global core.autocrlf false
+  - git config --global core.filemode false
+  - git config --global core.sparsecheckout true
+  - git checkout -f
+  - git checkout -- .gitignore
+  - git checkout -- .travis.yml
+  - git checkout -- .github/workflows/*
+  - git checkout -- .
+  - git pull origin $TRAVIS_BRANCH
+
+install:
+  - java -version
+  - mvn -version
+
+before_script:
+  - java -Xms512M -Xmx512M -XX:MaxPermSize=256M -jar /usr/share/java/gradle-6.5.1-all.jar --version
+
+script:
+  - ./gradlew clean build
+
+after_success:
+  deploy:
+    provider: script
+    script: ./deploy.sh
+
+after_failure:
+  deploy:
+    provider: script
+    script: ./deploy.sh
+
+env:
+  global:
+    - GITHUB_TOKEN
+    - JIRA_TOKEN
+    - SLACK_TOKEN
+    - AWSAccessKeyId
+    - AWSSecretAccessKey
+
+matrix:
+  include:
+    - java:
+        - '8'
+    - git:
+        - '2.23.0'
+
+matrix:
+  allow_failures:
+    - jdk: '8'
+      git: '2.23.0'

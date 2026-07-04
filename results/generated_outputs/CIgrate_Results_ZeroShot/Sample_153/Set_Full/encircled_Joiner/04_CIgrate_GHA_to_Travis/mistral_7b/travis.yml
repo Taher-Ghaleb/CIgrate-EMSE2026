@@ -1,0 +1,42 @@
+language: ubuntu
+
+branches:
+  include:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+script:
+  - env:
+      JAVA_HOME: $({{ env.HOME }}/.sdkman/candidates/java/current)
+  - before_script: sdk install java 8.0.275
+  - script: sdk use java 8.0.275
+  - script: mvn install -P eclipse --settings .mvn/settings.xml
+
+before_install:
+  - cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle
+        - $HOME/.npm
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: $CODECOV_TOKEN
+      fail_ci_if_error: false
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - docker-compose up --build
+    - # TODO: Add wait loop for docker-compose

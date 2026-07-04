@@ -1,0 +1,18 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew assembleDebug checkstyle lintDebug --stacktrace\n
+apt:
+  packages: jdk-8-jdk
+stage:
+  Build
+  build and deploy snapshots

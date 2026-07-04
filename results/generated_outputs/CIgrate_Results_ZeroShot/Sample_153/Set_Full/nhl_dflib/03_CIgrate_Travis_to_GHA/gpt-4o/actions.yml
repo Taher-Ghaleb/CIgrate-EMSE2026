@@ -1,0 +1,42 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [8]
+        db_profile: [derby, mysql, postgresql]
+    env:
+      secure_1: ${{ secrets.SECURE_1 }}
+      secure_2: ${{ secrets.SECURE_2 }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+      - name: Run Maven verify
+        run: mvn verify -P${{ matrix.db_profile }}
+
+  deploy:
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository == 'nhl/dflib'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 8
+      - name: Deploy
+        run: mvn clean source:jar javadoc:javadoc deploy -DskipTests --settings travis_settings.xml

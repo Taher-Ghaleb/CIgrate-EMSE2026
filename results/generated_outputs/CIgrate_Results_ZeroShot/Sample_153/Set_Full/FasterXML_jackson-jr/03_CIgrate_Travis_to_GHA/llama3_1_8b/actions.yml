@@ -1,0 +1,60 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - master
+      - "2.13"
+  pull_request:
+    branches:
+      - master
+      - "2.13"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Setup Java 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y maven
+      - name: Build and test
+        run: |
+          mvn -B clean verify
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Deploy
+        run: |
+          # TODO: Add deploy logic here
+      - name: Send notification
+        uses: actions/notify@v2
+        with:
+          title: Build and test completed
+          message: The build and test completed successfully.

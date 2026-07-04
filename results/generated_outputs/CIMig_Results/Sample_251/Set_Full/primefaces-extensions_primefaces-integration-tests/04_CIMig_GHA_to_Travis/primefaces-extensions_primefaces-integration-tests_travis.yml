@@ -1,0 +1,16 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  mvn -B -V clean install -Pheadless-mode
+script:
+  script:
+    cd primefaces && mvn install && cd ..
+directories: ~/.m2
+name: placeholder_Name

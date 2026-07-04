@@ -1,0 +1,29 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+script:
+  - export JAVA_HOME=$(/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/bin/java -version | awk '{print $3}' && echo $JAVA_HOME)
+  - export MAVEN_OPTS="-Xmx2048M -XX:MaxPermSize=512m"
+  - export COBERTURA_REPORT_FILE=target/site/cobertura.xml
+
+install:
+  - cache: directories - [ ~/.m2/repository, ~/.gradle, $HOME/.npm ]
+  - if [ -f ~/.m2/settings.xml ]; then mv ~/.m2/settings.xml ~/.m2/settings.xml.bak; fi
+  - if [ -f ~/.gradle/gradle.properties ]; then mv ~/.gradle/gradle.properties ~/.gradle/gradle.properties.bak; fi
+  - if [ -f ~/.npmrc ]; then mv ~/.npmrc ~/.npmrc.bak; fi
+  - if [ -f ~/.npmrc ]; then echo "registry=https://registry.npmjs.org/" > ~/.npmrc; fi
+  - if [ -f ~/.npmrc ]; then echo "always-auth=true" >> ~/.npmrc; fi
+  - if [ -f ~/.npmrc ]; then echo "email=your-email@example.com" >> ~/.npmrc; fi
+  - if [ -f ~/.npmrc ]; then echo "username=your-username" >> ~/.npmrc; fi
+  - if [ -f ~/.npmrc ]; then chmod 600 ~/.npmrc; fi
+  - if [ -f ~/.m2/settings.xml ]; then curl -s https://raw.githubusercontent.com/your-username/your-repo/master/.m2

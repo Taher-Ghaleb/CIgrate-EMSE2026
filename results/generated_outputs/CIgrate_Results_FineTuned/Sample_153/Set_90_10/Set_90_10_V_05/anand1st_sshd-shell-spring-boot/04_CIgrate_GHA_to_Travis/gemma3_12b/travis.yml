@@ -1,0 +1,5 @@
+language: java
+sudo: false
+script:
+  - cd sshd-shell-spring-boot-starter
+  - mvn jacoco:report coveralls:report

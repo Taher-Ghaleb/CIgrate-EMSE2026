@@ -1,0 +1,45 @@
+name: Java Build and Codecov
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JDBC_URL: ${{ secrets.JDBC_URL }}
+      JDBC_USER: ${{ secrets.JDBC_USER }}
+      JDBC_PASSWORD: ${{ secrets.JDBC_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Install Gradle
+        uses: gradle/gradle@v4
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle
+          key: ${{ runner.os }}-gradle
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
+      - name: Build and Test
+        run: ./gradlew build jacocoTestReport
+
+      - name: Upload Codecov Report
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.merged_at }}
+        run: |
+          curl -s -X POST -H "Content-Type: application/json" -d '{"key": "${{ secrets.CODECOV_TOKEN }}"}' https://app.codecov.io/api/v1/projects/${{ secrets.CODECOV_PROJECT_ID }}/pipeline-statuses/create
+          curl -s -X POST -H "Content-Type: application/json" -d '{"key": "${{ secrets.CODECOV_TOKEN }}"}' https://app.codecov.io/api/v1/reports/upload -F file=build/jacoco/test/jacoco.xml

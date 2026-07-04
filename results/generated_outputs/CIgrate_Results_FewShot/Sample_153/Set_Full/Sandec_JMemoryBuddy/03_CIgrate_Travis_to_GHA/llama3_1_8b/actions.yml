@@ -1,0 +1,25 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK_VERSION: '11'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JDK_VERSION }}
+      - name: Run Gradle
+        run:./gradlew :jar :test
+```
+
+Note: The `os` key in the Travis CI configuration is not directly equivalent to a GitHub Actions workflow. However, the `runs-on` key in the GitHub Actions workflow can be used to specify the operating system to run the workflow on. In this case, I've used `ubuntu-latest` as the default operating system, but you can change it to `windows-latest` or `macos-latest` if needed.

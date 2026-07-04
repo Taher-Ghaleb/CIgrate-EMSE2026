@@ -1,0 +1,54 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  TRAVIS_BUILD_NUMBER: ${{ github.run_id }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ github.event_name }}-${{ github.ref }}-${{ github.sha }}
+      - name: Build and package
+        run: mvn clean compile assembly:single
+      - name: Upload coverage to SonarCloud
+        uses: sonarsource/sonarcloud-scanner-maven@4.1.0.1000
+        with:
+          sonarcloud.login: ${{ secrets.SONAR_TOKEN }}
+          sonarcloud.projectKey: twasi
+          sonarcloud.projectName: ${{ github.repository }}
+          sonarcloud.projectVersion: ${{ github.ref }}
+          maven: true
+          maven.settingsXml: ${{ secrets.SONAR_SETTINGS }}
+
+  tests:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout with Jacoco agent
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ github.event_name }}-${{ github.ref }}-${{ github.sha }}

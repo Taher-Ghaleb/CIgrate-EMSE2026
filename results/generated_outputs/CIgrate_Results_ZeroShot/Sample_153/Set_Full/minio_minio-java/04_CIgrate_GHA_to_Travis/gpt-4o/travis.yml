@@ -1,0 +1,35 @@
+language: java
+
+matrix:
+  include:
+    - jdk: openjdk8
+      env: DISTRIBUTION=zulu
+      name: "Zulu 8 (Oracle JDK 8 equivalent)"
+    - jdk: openjdk8
+      env: DISTRIBUTION=temurin
+      name: "Temurin 8 (OpenJDK 8)"
+    - jdk: openjdk9
+      env: DISTRIBUTION=zulu
+      name: "Zulu 9 (Oracle JDK 9 - EOL)"
+  allow_failures:
+    - jdk: openjdk9
+      env: DISTRIBUTION=zulu
+
+before_install:
+  - chmod +x gradlew
+
+install:
+  - ./gradlew assemble
+
+script:
+  - ./gradlew check
+  - ./gradlew runFunctionalTest
+
+cache:
+  directories:
+    - $HOME/.gradle
+
+branches:
+  only:
+    - main
+    - develop

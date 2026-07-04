@@ -1,0 +1,28 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - sercoll_jdk6_java=/usr/lib/jvm/java-6-openjdk-amd64/bin/java
+    - sercoll_jdk6_javac=/usr/lib/jvm/java-6-openjdk-amd64/bin/javac
+    - sercoll_jdk6_javadoc=/usr/lib/jvm/java-6-openjdk-amd64/bin/javadoc
+
+sudo: required
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y openjdk-6-jdk
+
+cache:
+  directories:
+    - '$HOME/.gradle'
+
+script:
+  - ls -a
+  - pwd
+  - ./gradlew clean
+
+branches:
+  only:
+    - master

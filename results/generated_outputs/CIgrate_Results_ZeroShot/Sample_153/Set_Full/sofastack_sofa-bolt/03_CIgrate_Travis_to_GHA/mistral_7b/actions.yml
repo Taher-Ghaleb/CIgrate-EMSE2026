@@ -1,0 +1,53 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME_8 }}
+      PATH: ${{ secrets.JAVA_HOME_8 }}/bin:$PATH
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Set up Maven
+        run: |
+          echo "Downloading Maven 3.2.5"
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.zip
+          unzip -q apache-maven-3.2.5-bin.zip
+          export M2_HOME=$(pwd)/apache-maven-3.2.5
+          export PATH=$M2_HOME/bin:$PATH
+          cp ./.middleware-common/.travis.settings.xml $HOME/.m2/settings.xml
+          mvn -version
+
+      - name: Build and Test
+        run: |
+          mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+          sh ./.middleware-common/check_format.sh
+          mvn cobertura:cobertura
+
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: '**/*.xml'
+
+workflow:
+  branches:
+    branches: [travis-branch]
+    tags: [travis-tag]
+```
+
+This GitHub Actions workflow maintains the semantics of the original Travis CI configuration while

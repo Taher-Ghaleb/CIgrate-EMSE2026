@@ -1,0 +1,24 @@
+language: java
+sudo: false
+env:
+  _JAVA_OPTIONS: "-Xms1G -Xmx4G"
+
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - ~/.m2/repository
+
+script:
+  - mvn clean verify
+
+after_success:
+  - rectalogic/notify-irc@v2
+    server: irc.libera.chat
+    port: 6697
+    channel: '#io7m'
+    nickname: github-actions-io7m
+    message: |
+      [${{ github.repository }}] Build ${{ job.status }} - ${{ github.actor }}: ${{ github.event.head_commit.message }} (${{ github.sha }})
+      Details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

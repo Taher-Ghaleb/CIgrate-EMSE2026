@@ -1,0 +1,29 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  components: tools
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    tools
+    extra-android-maven-repository
+branches: master
+before_install:
+  java -version
+after_success:
+  bash <(curl-cmd
+  if [ \"$JDK_MAJOR_VERSION\" == \"7\" ]; then export MAVEN_OPTS=\"-Xmx512m -XX:MaxPermSize=128m\"; fi\n${{env.MVN_CMD}} verify -Possrh -Dgpg.skip=true\n
+apt:
+  packages: jdk-6-jdk
+directories: ~/.maven-
+include:
+  stage: Build
+env:
+  global
+  skip_release=true
+sonarcloud:
+  organization: powsybl-ci-github

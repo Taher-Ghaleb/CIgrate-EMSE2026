@@ -1,0 +1,38 @@
+matrix:
+  language: java
+  os:
+    ubuntu-latest
+    windows-latest
+
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        key
+        java-version: ${{ matrix.java }}
+      with:
+        java-version: 1.8
+      uses: actions/setup-java@version
+      with: java-version
+      uses: actions/checkout@version
+      run: python addsettings.py
+    - name: placeholder_Name
+
+macos:
+  jdk: oraclejdk8
+

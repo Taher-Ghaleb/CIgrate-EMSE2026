@@ -1,0 +1,25 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk11
+    env:
+      MAVEN_OPTS: -Dmaven.repo.local=$HOME/.m2/repository
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+      - run: mvn clean install
+    cache:
+      key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      path: $HOME/.m2/repository

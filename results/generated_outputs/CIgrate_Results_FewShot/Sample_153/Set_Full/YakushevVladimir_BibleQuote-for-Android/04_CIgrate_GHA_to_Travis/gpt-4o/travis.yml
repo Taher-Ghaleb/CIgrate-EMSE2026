@@ -1,0 +1,28 @@
+language: android
+jdk: openjdk8
+
+sudo: required
+
+before_install:
+  - chmod +x gradlew
+
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-30.0.3
+    - android-30
+    - extra-android-m2repository
+    - extra-google-m2repository
+    - extra-android-support
+  licenses:
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
+
+script:
+  - ./gradlew clean build
+  - ./gradlew testDebugUnitTestCoverage coveralls
+
+cache:
+  directories:
+    - $HOME/.gradle

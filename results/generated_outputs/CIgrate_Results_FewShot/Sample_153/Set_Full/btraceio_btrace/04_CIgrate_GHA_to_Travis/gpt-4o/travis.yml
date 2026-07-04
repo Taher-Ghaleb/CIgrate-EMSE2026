@@ -1,0 +1,55 @@
+language: java
+jdk:
+  - openjdk11
+
+python:
+  - "3.6"
+
+env:
+  global:
+    - CODECOV_TOKEN=$CODECOV_TOKEN
+    - MAVEN_USERNAME=$MAVEN_USERNAME
+    - MAVEN_PASSWORD=$MAVEN_PASSWORD
+
+cache:
+  directories:
+    - $HOME/.sdkman
+    - $HOME/.gradle
+
+before_install:
+  - curl -sL https://get.sdkman.io | bash
+  - echo "sdkman_auto_answer=true" > $HOME/.sdkman/etc/config
+  - echo "sdkman_auto_selfupdate=true" >> $HOME/.sdkman/etc/config
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk version
+  - sudo dpkg --purge --force-depends ca-certificates-java || true
+  - sudo apt-get update
+  - sudo apt-get install -y ca-certificates-java
+  - sudo update-ca-certificates -f
+  - chmod +x gradlew
+  - pip install codecov
+
+script:
+  - source ./config_build.sh
+  - ./gradlew assemble -DexcludeBenchmark
+  - source ./config_build.sh
+  - ./run_tests.sh
+  - ./gradlew buildDistributions -DexcludeBenchmark
+
+after_success:
+  - codecov || true
+
+deploy:
+  provider: script
+  script: echo "Bintray shutdown - configure alternative deployment"
+  on:
+    branch: develop
+    condition: $TRAVIS_EVENT_TYPE = push
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/31a671345ecfdce18046
+    on_success: always
+    on_failure: always
+    on_start: never

@@ -1,0 +1,15 @@
+language: java
+sudo: false
+services:
+  docker:
+    image: docker:latest
+    options: --privileged
+cache:
+  directories:
+    - '$HOME/.gradle/caches'
+    - '$HOME/.gradle/wrapper'
+jdk:
+  - openjdk8
+script:
+  - chmod +x ./gradlew
+  - ./gradlew clean build

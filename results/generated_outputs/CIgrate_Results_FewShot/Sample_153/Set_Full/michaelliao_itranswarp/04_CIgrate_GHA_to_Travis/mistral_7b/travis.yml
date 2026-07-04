@@ -1,0 +1,17 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+script:
+  - mvn clean package
+
+after_success:
+  - actions/upload-artifact@v4 \
+    name: package \
+    path: target/*.jar

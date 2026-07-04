@@ -1,0 +1,27 @@
+language: java
+cache:
+  directories:
+    - ~/.gradle
+branches:
+  only:
+    - main
+    - develop
+    - release/*
+    - hotfix/*
+    - feature/*
+    - bugfix/*
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    options: "--health-cmd \"rabbitmq-diagnostics -q ping\" --health-interval 10s --health-timeout 5s --health-retries 5"
+before_install:
+  - "export JAVA_HOME=$(/usr/libexec/java_home)"
+install:
+  - chmod +x gradlew
+before_script:
+  - echo "Setting up JDK 8"
+script:
+  - ./gradlew --stacktrace build

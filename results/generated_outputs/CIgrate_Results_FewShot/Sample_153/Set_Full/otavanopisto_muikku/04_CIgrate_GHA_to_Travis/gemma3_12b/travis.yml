@@ -1,0 +1,28 @@
+language: java
+branches:
+  only:
+    - devel
+  except:
+    - /^(\d+)$/
+sudo: required
+env:
+  global:
+    - GEM_PATH=
+jdk:
+  - oraclejdk7
+  - openjdk7
+install: true
+script:
+  - unset GEM_PATH
+  - mvn install
+  - mvn package -f muikku/pom.xml -Popenshift
+  - python travis-prepare-maven.py
+  - mvn deploy --settings ~/.m2/mySettings.xml
+deploy:
+  on:
+    tags: false
+    branch: devel
+  if: github.ref == 'refs/heads/devel' && github.event_name == 'push'
+  script:
+    - echo 'Starting deployment'
+    - echo 'Deployed'

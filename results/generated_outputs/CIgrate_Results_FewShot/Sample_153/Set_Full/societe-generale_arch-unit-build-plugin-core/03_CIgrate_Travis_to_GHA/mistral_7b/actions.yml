@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - develop
+
+env:
+  global:
+    - name: OSSRH_JIRA_USERNAME
+      secure: ${{ secrets.OSSRH_JIRA_USERNAME }}
+    - name: OSSRH_JIRA_PASSWORD
+      secure: ${{ secrets.OSSRH_JIRA_PASSWORD }}
+    - name: GPG_KEY_NAME
+      secure: ${{ secrets.GPG_KEY_NAME }}
+    - name: GPG_PASSPHRASE
+      secure: ${{ secrets.GPG_PASSPHRASE }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['openjdk8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Build and test
+        run: mvn verify
+      - name: Generate coverage and code analysis reports
+        run: mvn clean test jacoco:report coveralls:report
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare release properties
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Import GPG keys
+        run: |
+          echo ${{ secrets.GPG_SECRET_KEYS }} | base64 --decode | gpg --import
+          echo ${{ secrets.GPG_OWNERTRUST }} | base64

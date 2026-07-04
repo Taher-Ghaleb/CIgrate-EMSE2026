@@ -1,0 +1,46 @@
+name: Android CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.m2
+          ~/.gradle/caches/
+          ~/.gradle/wrapper/
+        key: ${{ runner.os }}-android-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-android-
+
+    - name: Install Android components
+      run: |
+        sdkmanager "tools" "platform-tools" "build-tools;30.0.3" "platforms;android-30" "extras;android;m2repository" "extras;google;m2repository" "extras;android;support"
+        yes | sdkmanager --licenses
+
+    - name: Before install
+      run: |
+        chmod +x gradlew
+        yes | sdkmanager "platforms;android-30"
+
+    - name: Build
+      run: ./gradlew clean build
+
+    - name: Test coverage
+      run: ./gradlew testDebugUnitTestCoverage coveralls

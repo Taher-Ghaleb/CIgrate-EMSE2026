@@ -1,0 +1,60 @@
+language: java
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y ant
+
+script:
+  - ant -buildfile./framework/build.xml test
+
+after_success:
+  - if: always()
+    deploy:
+      provider: script
+      script: |
+        if [ -f "TEST-*.xml" ]; then
+          echo "Uploading test results..."
+          curl -X POST \
+          https://example.com/upload-test-results \
+          -H 'Content-Type: application/json' \
+          -d '{"test_results": "**/TEST-*.xml", "**/build/test-results/"}'
+        fi
+
+after_failure:
+  - if: always()
+    deploy:
+      provider: script
+      script: |
+        if [ -f "TEST-*.xml" ]; then
+          echo "Uploading test results..."
+          curl -X POST \
+          https://example.com/upload-test-results \
+          -H 'Content-Type: application/json' \
+          -d '{"test_results": "**/TEST-*.xml", "**/build/test-results/"}'
+        fi
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: temurin
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com
+
+branches:
+  only:
+    - main
+    - feature/*

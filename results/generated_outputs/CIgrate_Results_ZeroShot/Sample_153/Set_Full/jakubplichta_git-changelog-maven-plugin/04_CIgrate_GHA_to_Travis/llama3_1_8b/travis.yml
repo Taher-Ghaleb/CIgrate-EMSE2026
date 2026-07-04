@@ -1,0 +1,64 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y default-jdk
+  - apt-get install -y maven
+
+install:
+  - mvn --version
+  - mvn dependency:resolve
+
+before_script:
+  - echo "Setting up Maven cache"
+  - mkdir -p ~/.m2/repository
+  - echo "Cache directory set"
+
+script:
+  - mvn verify javadoc:javadoc -Pcoverage
+
+after_success:
+  - echo "Deploying to Coveralls"
+  - coverallsapp/github-action:
+      github-token: $GITHUB_TOKEN
+      path-to-lcov: target/site/jacoco/jacoco.xml
+
+after_failure:
+  - echo "Deploying to Coveralls on failure"
+  - coverallsapp/github-action:
+      github-token: $GITHUB_TOKEN
+      path-to-lcov: target/site/jacoco/jacoco.xml
+
+deploy:
+  on:
+    tags: true
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: temurin
+      cache:'maven'
+  allow_failures: true
+
+services:
+  - docker-compose
+
+addons:
+  services:
+    - docker-compose
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    on_error: true
+```
+
+Note: The above configuration is a complete Travis CI configuration YAML file. It maintains the 1 to 1 mapping of the provided GitHub Actions workflow and includes all the necessary sections and properties.

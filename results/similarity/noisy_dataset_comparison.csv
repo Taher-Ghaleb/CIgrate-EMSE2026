@@ -1,0 +1,19 @@
+approach,setting,migration_direction,cosine,crystal_bleu,notes
+CIMig,rule-based,travis_to_gha,0.49,0.18,Paper Table tab:noisy-comparison (251 projects)
+CIMig,rule-based,gha_to_travis,0.35,0.13,Paper Table tab:noisy-comparison
+gpt-4o,zero-shot,travis_to_gha,0.65,0.33,Paper Table tab:noisy-comparison
+gpt-4o,zero-shot,gha_to_travis,0.43,0.20,Paper Table tab:noisy-comparison
+gpt-4o,few-shot,travis_to_gha,0.66,0.37,Paper Table tab:noisy-comparison
+gpt-4o,few-shot,gha_to_travis,0.47,0.24,Paper Table tab:noisy-comparison
+gemma3_12b,zero-shot,travis_to_gha,0.62,0.31,Paper Table tab:noisy-comparison
+gemma3_12b,zero-shot,gha_to_travis,0.36,0.17,Paper Table tab:noisy-comparison
+gemma3_12b,few-shot,travis_to_gha,0.61,0.31,Paper Table tab:noisy-comparison
+gemma3_12b,few-shot,gha_to_travis,0.36,0.18,Paper Table tab:noisy-comparison
+mistral_7b,zero-shot,travis_to_gha,0.61,0.26,Paper Table tab:noisy-comparison
+mistral_7b,zero-shot,gha_to_travis,0.31,0.14,Paper Table tab:noisy-comparison
+mistral_7b,few-shot,travis_to_gha,0.61,0.27,Paper Table tab:noisy-comparison
+mistral_7b,few-shot,gha_to_travis,0.32,0.14,Paper Table tab:noisy-comparison
+llama3_1_8b,zero-shot,travis_to_gha,0.62,0.29,Paper Table tab:noisy-comparison
+llama3_1_8b,zero-shot,gha_to_travis,0.33,0.15,Paper Table tab:noisy-comparison
+llama3_1_8b,few-shot,travis_to_gha,0.63,0.32,Paper Table tab:noisy-comparison
+llama3_1_8b,few-shot,gha_to_travis,0.34,0.19,Paper Table tab:noisy-comparison

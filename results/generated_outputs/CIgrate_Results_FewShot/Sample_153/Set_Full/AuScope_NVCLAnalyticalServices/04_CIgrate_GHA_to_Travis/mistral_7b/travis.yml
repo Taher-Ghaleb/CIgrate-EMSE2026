@@ -1,0 +1,40 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: false
+install: true
+addons:
+  github-release:
+    api_key: ${{ secrets.GITHUB_TOKEN }}
+
+script:
+  - chmod +x ./gradlew
+  - ./gradlew build
+
+on:
+  branches:
+    only:
+      - master
+      - develop
+  tags:
+    only:
+      - 'AuScope/NVCLAnalyticalServices'
+
+before_script:
+  - actions/checkout@v4
+
+cache:
+  directories:
+    - '$HOME/.gradle'
+
+deploy:
+  provider: github-release
+  api_key: ${{ secrets.GITHUB_TOKEN }}
+  on:
+    tags:
+      only:
+        - 'AuScope/NVCLAnalyticalServices'
+  skip_cleanup: true
+  file: build/libs/*.jar
+  args: --tag-name ${{ github.ref }} --upload-all

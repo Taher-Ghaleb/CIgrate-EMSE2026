@@ -1,0 +1,19 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - SONATYPE_USERNAME=ralscha23
+    - SONATYPE_PASSWORD
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+script:
+  - mvn install
+
+after_success:
+  - python addsettings.py
+  - mvn clean deploy -DskipTests=true --settings ~/.m2/mySettings.xml

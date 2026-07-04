@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Update apt and install libxml2-utils
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get install -y libxml2-utils
+      
+      - name: Build plugins.xml
+        run: ./buildpluginsxml.sh
+      
+      - name: Send notifications on success
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server: smtp.gmail.com
+          port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          to: sean.stuckless@gmail.com,usjusjoken@gmail.com
+          subject: Build Success
+          body: |
+            Build on ${{ github.repository }} successful.
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref }}
+            Run ID: ${{ github.run_id }}
+          from: ${{ secrets.EMAIL_FROM }}
+          
+      - name: Send notifications on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server: smtp.gmail.com
+          port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          to: sean.stuckless@gmail.com,usjusjoken@gmail.com
+          subject: Build Failure
+          body: |
+            Build on ${{ github.repository }} failed.
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref }}
+            Run ID: ${{ github.run_id }}
+          from: ${{ secrets.EMAIL_FROM }}model

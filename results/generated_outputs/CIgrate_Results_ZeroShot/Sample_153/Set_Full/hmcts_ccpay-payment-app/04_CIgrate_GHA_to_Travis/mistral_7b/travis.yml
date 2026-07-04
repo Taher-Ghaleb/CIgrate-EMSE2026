@@ -1,0 +1,49 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+install:
+  - name: Set up JDK 8
+    script: |
+      wget --quiet https://repo.maven.apache.org/maven2/adoptopenjdk/8-jdk/8u275-b01/adoptopenjdk8u275-b01-hotspot.tar.gz
+      tar -xzf adoptopenjdk8u275-b01-hotspot.tar.gz
+      export JAVA_HOME=$(pwd)/adoptopenjdk-8u275-b01
+      export PATH=$JAVA_HOME/bin:$PATH
+      export MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew build
+
+before_deploy:
+  - ./gradlew jacocoTestReport
+
+deploy:
+  on:
+    tags: true
+  script:
+    - ./gradlew jacocoTestReport
+  environment:
+    - CODECOV_TOKEN: $CODECOV_TOKEN
+  only:
+    - tags
+  deploy:
+    provider: script
+    script: |
+      curl -s -X POST -H "Travis-CI: $TRAVIS_COMMIT" -H "Content-Type: application/json" -d '{"branch": "master", "name": "Travis CI", "repo_url": "https://github.com/your-username/your-repo.git", "commit": "your-commit-hash", "revision": "your-commit-hash", "coverage_file": "jacoco.xml", "data": "your-codecov-token"}' https://app.codecov.io/pipelines/new
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.

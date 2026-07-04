@@ -1,0 +1,44 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Set up cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2
+          restore-keys: ${{ runner.os }}-m2
+      - name: Before cache cleanup
+        run: rm -rf $HOME/.m2/repository/org/joda/time
+      - name: Install Maven
+        run: mvn --version
+      - name: Build and test
+        run: mvn install site -e -B
+      - name: Deploy website (tag = website)
+        if: ${{ github.event_name == 'push' && github.ref =~ ^refs/tags/website.*$ && github.event.tag != null && env.TRAVIS_JDK_VERSION == "oraclejdk8" }}
+        run: |
+          chmod +x ./.github/website.sh
+          ./.github/website.sh
+      - name: Deploy website (tag = v*)
+        if: ${{ github.event_name == 'push' && github.ref =~ ^refs/tags/v.*$ && github.event.tag != null && env.TRAVIS_JDK_VERSION == "oraclejdk8" && github.event.pull_request == null }}
+        run: |
+          chmod +x ./.github/website.sh
+          ./.github/website.sh
+    env:
+      global:
+        secure: "********************"

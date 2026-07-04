@@ -1,0 +1,68 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+  - docker-compose
+
+before_install:
+  - install: |
+      # Install Git
+      apt-get update && apt-get install -y git
+
+      # Install Java 11
+      wget --quiet https://download.java.net/java/GA/jdk11/8/GPL/openjdk-11+28_linux-x64_bin.tar.gz
+      tar -xzf openjdk-11+28_linux-x64_bin.tar.gz -C /usr/local
+      export PATH=/usr/local/openjdk-11/bin:$PATH
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_script:
+  - git config --global user.name "github-actions-jsx"
+  - git config --global user.email "github-actions-jsx@io7m.com"
+
+script:
+  - mvn --errors clean verify site
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - feature/*
+      - bugfix/*
+  pull_request:
+    branches:
+      - master
+      - develop
+      - feature/*
+      - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - git tag -a ${GITHUB_REF#refs/tags/} -m "Release ${GITHUB_REF#refs/tags/}"
+    - git push origin --tags
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: $CODECOV_TOKEN
+      files: ./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml
+      fail_ci_if_error: false
+
+notifications:
+  on_success:
+    - type

@@ -1,0 +1,57 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+script:
+  - echo "Building and installing"
+  - mvn clean install -DskipTests=false
+
+after_success:
+  - echo "Running checkstyle"
+  - mvn checkstyle:check
+
+after_success:
+  - echo "Uploading build artifacts"
+  - mkdir -p build-artifacts
+  - cp -r target/*.jar target/*.war build-artifacts/
+  - cd build-artifacts
+  - if [ -f *.jar ]; then
+    echo "Uploading build artifacts"
+    mvn deploy:deploy-file -Dfile=*.jar -Durl=file:///${TRAVIS_BUILD_DIR}/build-artifacts -DpomFile=target/pom.xml
+  fi
+
+after_success:
+  - echo "Uploading test results"
+  - mkdir -p test-results
+  - cp -r target/surefire-reports/ target/failsafe-reports/ test-results/
+  - cd test-results
+  - if [ -f *.xml ]; then
+    echo "Uploading test results"
+    mvn deploy:deploy-file -Dfile=*.xml -Durl=file:///${TRAVIS_BUILD_DIR}/test-results -DpomFile=target/pom.xml
+  fi
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production"
+    - mvn deploy:deploy-file -Dfile=*.jar -Durl=file:///${TRAVIS_BUILD_DIR}/build-artifacts -DpomFile=target/pom.xml
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+    recipients:
+      - your_email@example.com
+```
+
+Note: The above configuration uses the `script` section to run the commands, as there is no direct equivalent to the `steps` section in Travis CI. The `before_install` section is used to set up the JDK and Maven, the `install` section is used to install Maven, the `script` section is used to build and install the project, the `after_success` section is used to run checkstyle and upload build artifacts, and the `deploy` section is

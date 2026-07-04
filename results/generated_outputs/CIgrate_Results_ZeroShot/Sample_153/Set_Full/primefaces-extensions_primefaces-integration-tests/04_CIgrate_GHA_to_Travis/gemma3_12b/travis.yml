@@ -1,0 +1,67 @@
+language: java
+jdk:
+  - 11
+  - 17
+env:
+  global:
+    - FOO: ${FOO} # Assume configured
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/primefaces-install
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+  except:
+    - tags
+    - /^(\([0-9]+|[a-z0-9])+\)$/
+    - /^release\/.*$/
+    - /^hotfix\/.*$/
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^chore\/.*$/
+    - /^docs\/.*$/
+    - /^refactor\/.*$/
+    - /^test\/.*$/
+    - /^ci\/.*$/
+    - /^build\/.*$/
+    - /^tooling\/.*$/
+    - /^dependencies\/.*$/
+    - /^scripts\/.*$/
+    - /^config\/.*$/
+    - /^i18n\/.*$/
+    - /^localization\/.*$/
+    - /^assets\/.*$/
+    - /^static\/.*$/
+    - /^content\/.*$/
+    - /^images\/.*$/
+    - /^videos\/.*$/
+    - /^audio\/.*$/
+    - /^fonts\/.*$/
+    - /^data\/.*$/
+    - /^logs\/.*$/
+    - /^tmp\/.*$/
+    - /^cache\/.*$/
+    - /^backup\/.*$/
+    - /^archive\/.*$/
+    - /^staging\/.*$/
+    - /^production\/.*$/
+    - /^development\/.*$/
+    - /^qa\/.*$/
+    - /^testing\/.*$/
+    - /^integration\/.*$/
+    - /^system\/.*$/
+    - /^performance\/.*$/
+    - /^security\/.*$/
+    - /^compliance\/.*$/
+    - /^accessibility\/.*$/
+    - /^usability\/.*$/
+    - /^design\/.*$/
+    - /^architecture\/.*$/
+    - /^infrastructure\/.*$/
+    - /^operations\/.*$/
+    - /^monitoring\/.*$/
+    - /^alerting\/.*$/
+    - /^reporting\/.*$/

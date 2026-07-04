@@ -1,0 +1,14 @@
+Here is the complete Travis CI configuration (.travis.yml) for the given GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+before_install:
+  - curl -s https://raw.githubusercontent.com/maven/maven-3/master/maven-3.8.6-bin.tar.gz | tar -xvf - -C $HOME
+  - export M3_HOME=$HOME/maven-3.8.6
+  - export PATH=$M3_HOME/bin:$PATH
+  - curl -s https://raw.githubusercontent.com/maven/maven-3/master/maven-3.8.6/conf/maven.settings.xml | sed's/<mirrorOf>.*<\/mirrorOf>/<mirrorOf>central<\/mirrorOf>/g' >./.travis.maven-settings.xml
+  - curl -s https://raw.githubusercontent.com/maven/maven-3/master/maven-3.8.6/conf/maven.settings.xml | sed's/<localRepository>.*<\/localRepository>/<localRepository>$HOME/.m2/repository<\/localRepository>/g' >>./.travis.maven-settings.xml
+  - curl -s https://raw.githubusercontent.com/maven/maven-3/master/maven-3.8.6/conf/logging/maven-logging.xml | sed's/<configuration>.*<\/configuration>/<configuration><logger name="org.apache.maven" level="INFO" additivity="false"><appender-ref ref="console"/><appender-ref ref="file"/></logger><logger name="org.apache.maven.plugins" level="INFO" additivity="false"><appender-ref ref="console"/><appender-ref ref="file"/></logger><logger name="org.apache.maven.plugins.buildskipplugin" level="INFO" additivity="false"><appender-ref ref="console"/><appender-ref ref="file"/></logger><logger name="org.apache.maven.plugins.buildskipplugin.skip" level="INFO" additivity="false"><appender-ref ref="console"/><appender-ref ref="file"/></logger><logger name="org.apache.maven.plugins.buildskipplugin.skip.skip" level="INFO" additivity="false"><appender-ref ref="console"/><appender-ref ref="file"/></logger><logger name="org.apache.maven.plugins.buildskipplugin.skip.skip.skip" level="INFO" additivity="false"><appender-ref ref="console"/><appender-ref ref="file"/></logger><logger name="org.apache.maven.plugins.buildskipplugin.skip.skip.skip.skip"

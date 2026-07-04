@@ -1,0 +1,48 @@
+name: Java Build and Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CHROME_BIN: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 99999
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Add apt repositories
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libappindicator1 fonts-liberation
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.sonar/cache
+          key: gradle-${{ hash }}
+      - name: Check
+        run: ./gradlew check --no-daemon --console=plain
+      - if: type != 'pull_request'
+        name: Check + Sonar
+        run: ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${{ secrets.SONAR_ORG }} -Dsonar.host.url=${{ secrets.SONAR_HOST }} -Dsonar.login=${{ secrets.SONAR_LOGIN }} -Dsonar.branch.name=${{ github.ref_name }}
+      - name: Grid
+        run: ./gradlew grid --no-daemon --console=plain -i
+      - name: Firefox
+        run: ./gradlew firefox_headless --no-daemon --console=plain -i
+      - name: Chrome
+        run: ./gradlew chrome_headless --no-daemon --console=plain -i
+      - name: Upload Reports
+        run: "./.upload_reports.sh" # TODO: Implement report upload logic
+
+  # TODO: Implement slack notifications using a suitable action.
+  # notifications:
+  #   slack:
+  #     rooms:
+  #       secure: "********************"

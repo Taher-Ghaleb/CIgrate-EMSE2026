@@ -1,0 +1,69 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build_nonmaster_jdk9:
+    if: github.ref != 'refs/heads/master' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 9
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '9'
+    - name: Build
+      run: mvn clean verify
+
+  build_nonmaster_jdk8:
+    if: github.ref != 'refs/heads/master' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Build
+      run: mvn clean verify
+
+  build_master_push_jdk9:
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 9
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '9'
+    - name: Build
+      run: mvn clean verify
+
+  deploy_master_repo_specific_jdk8:
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository == 'bootique/bootique-logback'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Deploy
+      run: mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+
+  build_master_push_other_repo_jdk8:
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository != 'bootique/bootique-logback'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Build
+      run: mvn clean verify

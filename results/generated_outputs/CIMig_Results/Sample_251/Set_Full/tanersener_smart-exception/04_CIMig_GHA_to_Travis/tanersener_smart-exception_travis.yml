@@ -1,0 +1,19 @@
+cache:
+  directories: ~/.maven-
+env: global
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: main
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew clean build
+after_success:
+  bash <(curl-cmd
+stage: ☕ 11
+apt:
+  packages: jdk-6-jdk

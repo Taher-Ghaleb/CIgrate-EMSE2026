@@ -1,0 +1,32 @@
+language: java
+branches:
+  only:
+    - master
+    - /^[0-9]+.[0-9]+$/
+pull_requests:
+  only:
+    - master
+    - /^[0-9]+.[0-9]+$/
+
+jobs:
+  test-oraclejdk8:
+    jdk: openjdk8
+    script:
+      - mvn -q clean verify -B
+
+  test-openjdk11:
+    jdk: openjdk11
+    if: github.event_name != 'pull_request'
+    script:
+      - mvn -q clean verify -B
+
+  deploy:
+    needs: test-oraclejdk8
+    if: github.event_name != 'pull_request'
+    script:
+      - chmod +x .travis.deploy.artifacts.sh
+      - bash .travis.deploy.artifacts.sh
+    jdk: openjdk8
+    cache:
+      directories:
+        - '$HOME/.m2/repository'

@@ -1,0 +1,22 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches:
+  except: /^docker-cmd
+before_install:
+  java -version
+before_script:
+  psql -c \"alter user postgres with password 'postgres';\"
+script:
+  script:
+    ./gradlew clean build jacocoTestReport jacocoFix --scan
+after_success:
+  bash <(curl-cmd
+services: docker/login-action@v1
+include:
+  stage: docker/setup-buildx-action@v1
+  env: db=postgres

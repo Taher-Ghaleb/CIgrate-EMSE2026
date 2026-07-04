@@ -1,0 +1,40 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.cache'
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y gcc-arm-linux-gnueabihf
+
+script:
+  - echo "Architecture: $(uname -m)"
+  - echo "Java Home: $JAVA_HOME"
+  - java -version
+  - mvn -version
+  - mvn clean install -Drelease-build
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      - echo "Uploading build artifacts..."
+      - if [ -n "$TRAVIS_JOB_ID" ]; then
+          - echo "Uploading artifacts for job $TRAVIS_JOB_ID..."
+          - actions/upload-artifact@v4
+          with:
+            name: build-artifacts
+            path: |
+              **/target/*.jar
+              **/target/*.war
+            retention-days: 7
+      fi
+    fi
+```
+
+Note that I've used the `if` statement to check if the branch is `master` before uploading the build artifacts, as per the GitHub Actions workflow. I've also used the `actions/upload-artifact` action to upload the artifacts, as it is not a built-in Travis CI action.

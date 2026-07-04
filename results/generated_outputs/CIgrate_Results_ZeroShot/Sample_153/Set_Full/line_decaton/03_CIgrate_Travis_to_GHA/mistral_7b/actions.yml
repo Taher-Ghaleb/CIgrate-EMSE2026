@@ -1,0 +1,51 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME_8 }}
+      JAVA_HOME_11: ${{ secrets.JAVA_HOME_11 }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+          cache: gradle
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+          cache: gradle
+
+      - name: Checkout and Clean Gradle Cache
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+      - name: Build and Test
+        run: ./gradlew build integrationTest
+
+strategy:
+  matrix:
+    jdk: [JAVA_HOME, JAVA_HOME_11]
+
+workflow:
+  env:
+    JAVA_HOME_8: ${{ secrets.ORACLEJDK8 }}
+    JAVA_HOME_11: ${{ secrets.OPENJDK11 }}
+```
+
+This GitHub Actions workflow preserves the semantics of the Travis CI configuration, including the use of multiple JDKs, caching of Gradle dependencies, and services for databases. It also uses modern actions for setting up Java, checkout, and caching. The workflow is triggered on both push and pull request events.

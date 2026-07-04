@@ -1,0 +1,39 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [ openjdk8, openjdk11 ]
+    env:
+      PROFILES: headless-mode
+      PROFILES_CHROME: headless-mode,chrome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install Firefox Geckodriver
+        run: sudo apt-get -y install firefox-geckodriver
+      - name: Clone Primefaces
+        run: git clone https://github.com/primefaces/primefaces && cd primefaces && mvn install && cd ..
+      - name: Clone Primefaces Selenium
+        run: git clone https://github.com/primefaces-extensions/primefaces-selenium && cd primefaces-selenium && mvn install && cd ..
+      - name: Link Geckodriver
+        run: ln -s /usr/bin/geckodriver geckodriver
+      - name: Install Chromedriver
+        run: source .travis/install-chromedriver.sh # TODO: Implement chromedriver installation using actions/setup-chrome
+      - name: Maven Build
+        run: mvn -B -V clean install -P${{ env.PROFILES }}
+    cache:
+      key: ${{ runner.os }}-m2
+      path: ~/.m2/repository
+    addons:
+      apt:
+        update: true

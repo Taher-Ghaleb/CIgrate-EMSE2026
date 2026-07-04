@@ -1,0 +1,28 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  android
+  addons:
+    firefox: latest
+jdk: jdk8
+android
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew assembleRelease
+deploy:
+  api_key: $github_token
+  file_glob: TRUE
+apt:
+  packages: jdk-8-jdk
+stages:
+  Build
+  test
+sonarcloud:
+  organization: powsybl-ci-github
+include:
+  if: type in (pull_request, push)

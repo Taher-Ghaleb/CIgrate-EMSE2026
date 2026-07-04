@@ -1,0 +1,44 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - master
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+before_install:
+  - sudo apt-get update -qq
+
+install:
+  - sudo apt-get install -y gcc-arm-linux-gnueabihf
+
+before_script:
+  - echo "Architecture: $(uname -m)"
+  - echo "Java Home: $JAVA_HOME"
+  - java -version
+  - mvn -version
+
+script:
+  - mvn clean install -Drelease-build
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" = "master" ]; then
+    - echo "Uploading build artifacts..."
+    - |
+      if [ -d "target" ]; then
+        mkdir -p build/artifacts
+        cp **/target/*.jar build/artifacts/
+        cp **/target/*.war build/artifacts/
+      else
+        echo "No target directory found."
+      fi
+    - echo "Artifacts uploaded."
+  fi
+
+# TODO: Upload artifacts using Travis CI's built-in mechanisms.  This is a placeholder.

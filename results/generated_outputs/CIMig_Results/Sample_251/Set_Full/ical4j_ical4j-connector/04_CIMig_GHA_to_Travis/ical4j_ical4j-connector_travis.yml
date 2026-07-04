@@ -1,0 +1,11 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+script
+stage: ☕ 11

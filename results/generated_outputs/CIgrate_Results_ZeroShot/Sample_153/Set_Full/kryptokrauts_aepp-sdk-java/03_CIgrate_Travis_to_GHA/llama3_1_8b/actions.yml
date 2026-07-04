@@ -1,0 +1,59 @@
+name: Java Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      - name: gradle
+        image: gradle:oraclejdk8
+        env:
+          GRADLE_OPTS: -Xmx512m
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches
+          key: ${{ runner.os }}-gradle-${GITHUB_SHA}-cache
+          restore-keys: ${{ runner.os }}-gradle-cache
+      - name: Install Gradle
+        run: |
+         ./travis-install-libsodium.sh
+          export PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH
+          export LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH
+      - name: Build and test
+        run: |
+          docker-compose up -d
+         ./gradlew integrationTest
+         ./gradlew build
+      - name: Publish snapshot
+        if: github.event.pull_request == null
+        run: |
+         ./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$GITHUB_RUN_NUMBER
+      - name: Release
+        if: github.event.pull_request == null && github.event.ref =='refs/heads/master'
+        run: |
+         ./gradlew bintrayUpload -x test -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$GITHUB_RUN_NUMBER
+          VERSION=$(./gradlew -q pV)
+          TAG="v$VERSION"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "github-actions@github.com"
+          git tag $TAG
+      - name: Deploy
+        if: github.event.pull_request == null && github.event.ref =='refs/heads/master'
+        uses: actions/deploy@v1
+        with:
+          provider: releases
+          api-key: ${{ secrets.API_KEY }}
+          body: "Please take a look

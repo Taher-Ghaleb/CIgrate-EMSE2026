@@ -1,0 +1,55 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+      - master-11
+  tag:
+    ignore: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TAG_BRANCH: ${{ github.event.ref }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 12
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '12'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Package
+        run: mvn package -q
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/tags/master' || github.ref == 'refs/tags/master-11' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/master-11'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare Deploy
+        run: chmod +x .github/deploy_prepare.sh && .github/deploy_prepare.sh
+      - name: Deploy to Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x .github/deploy_bintray_central.sh && .github/deploy_bintray_central.sh
+        # TODO: Implement release creation using GitHub CLI or a dedicated action.
+      - name: Upload Javadoc
+        uses: actions/upload-artifact@v3
+        with:
+          name: javadoc
+          path: javadoc.zip
+      - name: Upload JAR
+        uses: actions/upload-artifact@v3
+        with:
+          name: jar
+          path: target/*.jar

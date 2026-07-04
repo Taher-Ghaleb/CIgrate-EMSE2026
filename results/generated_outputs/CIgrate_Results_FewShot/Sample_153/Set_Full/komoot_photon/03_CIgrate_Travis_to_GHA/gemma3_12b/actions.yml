@@ -1,0 +1,28 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['openjdk8', 'oraclejdk9']
+      fail_fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+        if: matrix.jdk == 'openjdk8'
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '9'
+        if: matrix.jdk == 'oraclejdk9'
+      - name: Build and test
+        run: mvn clean test
+        continue-on-error: true

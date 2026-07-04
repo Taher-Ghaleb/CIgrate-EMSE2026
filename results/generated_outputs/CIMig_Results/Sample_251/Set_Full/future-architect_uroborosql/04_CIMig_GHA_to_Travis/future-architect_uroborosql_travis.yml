@@ -1,0 +1,16 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn --batch-mode --update-snapshots --no-transfer-progress verify jacoco:report
+script:
+  script:
+    mvn --no-transfer-progress -DrepoToken=${{ secrets.COVERALL_REPO_SECRET }} coveralls:report
+include:
+  stage: Build
+directories: ~/.maven-

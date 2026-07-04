@@ -1,0 +1,17 @@
+env: global
+cache:
+  directories: ~/.gradle
+sudo: FALSE
+language:
+  components: tools
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    tools
+    extra-android-maven-repository
+branches: master
+deploy:
+  github_token: $github_token

@@ -1,0 +1,30 @@
+language: java
+sudo: required
+env:
+  matrix:
+    - JDK=8
+    - ANDROID_TARGET=android-23
+
+jdk:
+  - openjdk8
+
+addons:
+  android:
+    components:
+      - platform-tools
+      - tools
+      - platforms;android-23
+      - build-tools;23.0.3
+      - extras;android;support
+      - extras;android;m2repository
+
+script:
+  - chmod +x gradlew
+  - ./gradlew clean build
+
+before_install:
+  - actions/checkout@v4
+
+cache:
+  directories:
+    - '$HOME/.gradle'

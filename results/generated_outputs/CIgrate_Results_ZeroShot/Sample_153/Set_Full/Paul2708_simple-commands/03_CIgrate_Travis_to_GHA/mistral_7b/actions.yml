@@ -1,0 +1,37 @@
+name: Java Build and Checkstyle
+on: [push, pull_request]
+
+jobs:
+  build_and_check:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Install and check Maven
+        run: |
+          curl -sL https://apache.org/dist/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz | tar xz
+          PATH=$PATH:$(pwd)/apache-maven-3.8.6/bin
+
+      - name: Build and Checkstyle
+        run: mvn clean install checkstyle:check

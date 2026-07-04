@@ -1,0 +1,13 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn test --fail-at-end --batch-mode -Dmatsim.preferLocalDtds=true
+script
+directories: ~/.m2
+stage: ☕ 11

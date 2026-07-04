@@ -1,0 +1,48 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  RUNTIME: ${{ random(RUNTIME) }}
+  RUNTIME_VERSION: ${{ random(RUNTIME_VERSION) }}
+
+jobs:
+  build:
+    runs-on: ubuntu-${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.os }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.os }}-${{ env.RUNTIME_VERSION }}
+      - name: Cache Maven artifacts
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ env.RUNTIME }}-${{ env.RUNTIME_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-m2-${{ env.RUNTIME }}-
+      - name: Install ci.common lib
+        uses: actions/checkout@v4
+        with:
+          path: ./ci.common
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install ci.common
+        run: |
+          git clone https://${{ secrets.GITHUB_TOKEN }}:x-oauth-basic@github.com/OpenLiberty/ci.common.git ./ci.common
+          cd ./ci.common
+          mvn clean install
+          cd ..
+      - name: Run tests
+        run: mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=${{ env.RUNTIME }} -DruntimeVersion=${{ env.RUNTIME_VERSION }}
+      - name: Wait for tests to complete
+        uses: actions/wait-for@v4
+        with:
+          polling_interval: 10s
+          timeout_minutes: 30
+          timeout_

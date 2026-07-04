@@ -1,0 +1,83 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ master ]
+    
+env:
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+jobs:
+  build:
+    name: Run tests on Docker
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [
+          3.6.3-jdk-8-slim,
+          3.6.3-jdk-11-slim,
+          3.6.3-openjdk-14-slim,
+          3.6.3-openjdk-15,
+          3.6.3-openjdk-16
+        ]
+
+    steps:
+    
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        # Disable shallow clone to send Git blame to Sonar
+        fetch-depth: 0
+    
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    
+    - name: Set Maven dependencies cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-
+              
+    - name: Install Maven dependencies, build and start databases Docker images
+      env:
+        JSQL_DOCKERFILE: ${{ matrix.jdk }}
+      run: |
+        mvn clean install -DskipITs -DskipTests dependency:tree --file pom.xml
+        docker-compose -f ./model/src/test/resources/docker/docker-compose.yml build --parallel
+        docker-compose -f ./model/src/test/resources/docker/docker-compose.yml up -d
+        ./model/src/test/resources/docker/healthcheck/healthcheck.sh
+        ./model/src/test/resources/docker/script/buff.sh
+        ./model/src/test/resources/docker/script/verify.sh
+        docker rmi jsql:latest -f
+        docker build -t jsql:latest --build-arg JSQL_DOCKERFILE -f model/src/test/resources/docker/Dockerfile.jsql .
+        docker run                                         \
+          -t                                               \
+          --rm                                             \
+          -v "$HOME/.m2":/root/.m2                         \
+          -v "$HOME/.sonar/cache":/root/.sonar/cache       \
+          --network docker_jsql-network                    \
+          -e SONAR_TOKEN                                   \
+          -e CODACY_PROJECT_TOKEN                          \
+          -e CODECOV_TOKEN                                 \
+          -e MAVEN_NASHORN                                 \
+          jsql:latest                                      \
+          ./model/src/test/resources/vnc/execute-on-vnc.sh \
+          bash -c '                                        \
+            java -version                                  \
+            && mvn clean verify sonar:sonar                \
+            && (cd view/ ; mvn sonar:sonar)                \
+            && (cd model/ ; mvn sonar:sonar)               \
+            && bash <(curl -s https://codecov.io/bash)             \
+            && bash <(curl -Ls https://coverage.codacy.com/get.sh) \
+          '
+        
+        DOCKER_RUN="$?"
+        echo docker run exit code: $DOCKER_RUN
+        if [ "${DOCKER_RUN}" != "0" ]; then exit 1; fi
+        
+    - name: Verify database Docker containers statistics
+      run: |
+        ./model/src/test/resources/docker/script/verify.sh

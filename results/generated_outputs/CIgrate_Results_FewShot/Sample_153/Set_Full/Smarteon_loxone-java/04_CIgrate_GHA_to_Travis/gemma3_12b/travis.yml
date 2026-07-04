@@ -1,0 +1,35 @@
+language: java
+branches:
+  only:
+    - master
+  except:
+    - paths:
+      - ".travis/"
+      - "examples/*"
+sudo: required
+cache:
+  directories:
+    - '$HOME/.gradle/caches'
+    - '$HOME/.gradle/wrapper'
+jobs:
+  jdk11:
+    script:
+      - chmod +x gradlew
+      - ./gradlew check -i
+  example:
+    script:
+      - ./gradlew check -i
+    before_script:
+      - |
+        if .travis/build_condition.sh ${{ github.event.before }}..${{ github.sha }} examples/example; then
+          echo "Testing"
+          echo "skip=false"
+        else
+          echo "NOT testing"
+          echo "skip=true"
+        fi
+    if: steps.check.outputs.skip != 'true'
+  upload-coverage:
+    if: always()
+    script:
+      - bash <(curl -s https://codecov.io/bash)

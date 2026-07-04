@@ -1,0 +1,40 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+      - "/.*-[0-9]+\\..*/"
+  pull_request:
+    branches:
+      - master
+      - "/.*-[0-9]+\\..*/"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # TODO: Add secure environment variables here
+    strategy:
+      matrix:
+        jdk: [oraclejdk8]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Run build script
+        run: .travis/build.sh

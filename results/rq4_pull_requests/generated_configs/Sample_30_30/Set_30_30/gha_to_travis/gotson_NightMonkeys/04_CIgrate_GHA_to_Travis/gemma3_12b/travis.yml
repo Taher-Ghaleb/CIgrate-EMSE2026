@@ -1,0 +1,108 @@
+language: java
+
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk22
+
+os:
+  - linux
+  - osx
+  - windows
+
+before_install:
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update
+      brew install webp jpeg-xl libheif
+      export LD_LIBRARY_PATH=$HOME/.linuxbrew/lib:$LD_LIBRARY_PATH
+      export JAVA_LIBRARY_PATH=$HOME/.linuxbrew/lib:$JAVA_LIBRARY_PATH
+    fi
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+      $env:GITHUB_PATH += "$env:GITHUB_WORKSPACE\test-libraries\windows\x64\;"
+    fi
+
+install:
+  - ./gradlew build
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.m2/repository
+    - $HOME/.npm
+
+before_script:
+  - ./gradlew setupDeps
+
+script:
+  - ./gradlew build
+
+after_success:
+  - bash < <(curl -s https://codecov.io/bash)
+
+after_failure:
+  - bash < <(curl -s https://codecov.io/bash)
+
+addons:
+  apt:
+    packages:
+      - docker-ce-curl
+  docker:
+    compose:
+      script: docker-compose up -d
+      wait: 30s
+      restart: always
+  homebrew:
+    update: true
+    tap:
+      caarlos0/homebrew-tap: git
+      homebrew/cask: git
+      homebrew/core: git
+      homebrew/dns-tap: git
+      homebrew/git-tap: git
+      homebrew/java: git
+      homebrew/jenkins-tap: git
+      homebrew/metal-tap: git
+      homebrew/php: git
+      homebrew/redis-tap: git
+      homebrew/ruby-tap: git
+      homebrew/spark-tap: git
+      homebrew/tap: git
+      homebrew/usb-tap: git
+      homebrew/wine-tap: git
+      homebrew/xmp-tap: git
+      homebrew/zsh-tap: git
+    cask:
+      svu: caarlos0/tap/svu
+
+before_deploy:
+  - ./gradlew setupDeps
+  - echo "VERSION_NEXT=`svu next`" > gradle.properties
+  - echo "version=${{ needs.version.outputs.version_next }}" > gradle.properties
+  - git config --global user.name "gotson"
+  - git config --global user.email "gotson@gotson.github.com"
+
+deploy:
+  provider: script
+  script: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+  skip_cleanup: true
+  on:
+    tags: true
+  env:
+    global:
+      secure:
+        - secure: "********************"
+        - secure: "********************"
+        - secure: "********************"
+        - secure: "********************"
+  before_deploy:
+    - git fetch --unshallow
+    - git config --global user.name "gotson"
+    - git config --global user.email "gotson@gotson.github.com"
+    - git commit -m "chore(release): ${{ needs.version.outputs.version_next }} [skip ci]"

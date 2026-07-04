@@ -1,0 +1,38 @@
+matrix:
+  os:
+    windows-latest
+    ubuntu-latest
+  language: java
+  java
+
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+    - name: placeholder_Name
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/checkout@version
+  - name: placeholder_Name
+
+env:
+  github_token: ${{ github.token }}
+
+include:
+  utplsql_version: develop
+
+slack-workflow-status:
+  if: always()
+

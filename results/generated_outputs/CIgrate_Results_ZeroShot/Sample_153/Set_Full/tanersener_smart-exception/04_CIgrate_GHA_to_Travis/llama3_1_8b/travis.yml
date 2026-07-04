@@ -1,0 +1,58 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies..."
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - echo "Installing Gradle..."
+  - curl -s https://get.sdkman.io | sh
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install gradle 7.4
+
+before_script:
+  - echo "Setting up environment..."
+  - export GRADLE_HOME=/usr/local/sdkman/candidates/gradle/7.4
+  - export PATH=$GRADLE_HOME/bin:$PATH
+  - export JAVA_HOME=/usr/lib/jvm/temurin-11
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - echo "Building project..."
+  - chmod +x gradlew
+  -./gradlew clean build
+
+after_success:
+  - echo "Deploying to production..."
+  - echo "TODO: Add deployment script"
+
+after_failure:
+  - echo "Deploying to production on failure..."
+  - echo "TODO: Add deployment script"
+
+deploy:
+  on:
+    tags: true
+
+matrix:
+  include:
+    - java: '11'
+      gradle: '7.4'
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.gradle/caches/modules-2
+    - ~/.gradle/caches/*/plugin-resolution
+    - ~/.gradle/caches/modules-2/modules-2.lock
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - your_email@example.com

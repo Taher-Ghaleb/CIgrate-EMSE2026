@@ -1,0 +1,34 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.cache/Maven/wrapper
+jdk:
+  - '7-custom'
+  - '8'
+  - '11'
+  - '17'
+env:
+  matrix:
+    - jdk: '7-custom'
+    - jdk: '8'
+    - jdk: '11'
+    - jdk: '17'
+  global:
+    - JAVA_HOME: /usr/lib/jvm/java-7-oracle
+    - PATH: "/usr/lib/jvm/java-7-oracle/bin:$PATH"
+    - MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Xmx512m -XX:MaxPermSize=128m"
+before_install:
+  - if [ "$TRAVIS_JAVA_VERSION" == "7-custom" ]; then
+      wget https://s3.amazonaws.com/d2fbee19-5fe2-425f-ae11-cd25b35dc99a/jdk-7u80-linux-x64.tar.gz -O /tmp/jdk-7u80-linux-x64.tar.gz
+      tar xzf /tmp/jdk-7u80-linux-x64.tar.gz -C /tmp
+      sudo mv /tmp/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle
+      curl -q -L -C - https://238dj3282as03k369.s3-us-west-1.amazonaws.com/UnlimitedJCEPolicyJDK7.zip -o /tmp/UnlimitedJCEPolicyJDK7.zip
+      sudo unzip -oj -d "/usr/lib/jvm/java-7-oracle/jre/lib/security" /tmp/UnlimitedJCEPolicyJDK7.zip \*/\*.jar
+      rm /tmp/UnlimitedJCEPolicyJDK7.zip
+    fi
+script:
+  - echo "Building with JDK ${TRAVIS_JAVA_VERSION}"
+  - if [ "$TRAVIS_

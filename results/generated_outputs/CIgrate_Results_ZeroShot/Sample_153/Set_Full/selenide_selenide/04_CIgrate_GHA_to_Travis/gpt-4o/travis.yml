@@ -1,0 +1,90 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+env:
+  global:
+    - CHROME_BIN=/usr/bin/google-chrome
+
+cache:
+  directories:
+    - $HOME/.gradle/caches
+    - $HOME/.gradle/wrapper
+
+jobs:
+  include:
+    - name: Check
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get install -y libappindicator1 fonts-liberation
+      install:
+        - chmod +x gradlew
+      script:
+        - ./gradlew check --no-daemon --console=plain
+      after_success:
+        - ./.upload_reports.sh
+      before_cache:
+        - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+        - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+    - name: Check Sonar
+      if: type != pull_request
+      env:
+        - TRAVIS_BRANCH=$TRAVIS_BRANCH
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get install -y libappindicator1 fonts-liberation
+      install:
+        - chmod +x gradlew
+      script:
+        - ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=$SONAR_ORG -Dsonar.host.url=$SONAR_HOST -Dsonar.login=$SONAR_LOGIN -Dsonar.branch.name=$TRAVIS_BRANCH
+      after_success:
+        - ./.upload_reports.sh
+      before_cache:
+        - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+        - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+    - name: Grid
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get install -y libappindicator1 fonts-liberation
+      install:
+        - chmod +x gradlew
+      script:
+        - ./gradlew grid --no-daemon --console=plain -i
+      after_success:
+        - ./.upload_reports.sh
+      before_cache:
+        - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+        - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+    - name: Firefox
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get install -y libappindicator1 fonts-liberation
+      install:
+        - chmod +x gradlew
+      script:
+        - ./gradlew firefox_headless --no-daemon --console=plain -i
+      after_success:
+        - ./.upload_reports.sh
+      before_cache:
+        - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+        - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+    - name: Chrome
+      before_install:
+        - sudo apt-get update
+        - sudo apt-get install -y libappindicator1 fonts-liberation
+      install:
+        - chmod +x gradlew
+      script:
+        - ./gradlew chrome_headless --no-daemon --console=plain -i
+      after_success:
+        - ./.upload_reports.sh
+      before_cache:
+        - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+        - rm -fr $HOME/.gradle/caches/*/plugin-resolution/

@@ -1,0 +1,30 @@
+language: java
+sudo: required
+branches:
+  except:
+    - gh-pages
+pull_request:
+  branches_ignore:
+    - gh-pages
+
+cache:
+  directories:
+    - ~/.gradle
+    - ~/.m2/repository
+
+before_install:
+  - cat /etc/hosts
+  - sudo hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+  - cat /etc/hosts
+
+install:
+  - sdkmanager "platform-tools" "tools"
+  - sdkmanager "platforms;android-23"
+  - sdkmanager "build-tools;23.0.3"
+  - sdkmanager "extras;android;support"
+  - sdkmanager "extras;android;m2repository"
+
+script:
+  - chmod +x gradlew
+  - ./gradlew clean build

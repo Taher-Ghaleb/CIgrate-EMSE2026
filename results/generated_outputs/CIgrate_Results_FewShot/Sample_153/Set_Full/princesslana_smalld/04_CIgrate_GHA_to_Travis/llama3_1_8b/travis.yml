@@ -1,0 +1,61 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+  - oraclejdk9
+env:
+  matrix:
+    - MAVEN_OPTS=-Drevision=${TRAVIS_BRANCH}-SNAPSHOT -Dproperty=revision -DnewVersion=${TRAVIS_BRANCH}-SNAPSHOT -DgenerateBackupPoms=false
+  global:
+    - SONAR_TOKEN=${SONAR_TOKEN}
+    - SONAR_ORGANIZATION=ianagbip1oti-github
+
+sudo: required
+
+before_install:
+  - bash./etc/extract_secrets.sh
+
+install:
+  - mvn -B verify
+
+script:
+  - mvn -B sonar:sonar
+
+deploy:
+  on:
+    tags: true
+  if: startsWith(TRAVIS_BRANCH,'refs/tags/') && TRAVIS_BRANCH!= '' && contains(TRAVIS_BRANCH, '.')
+  before_deploy:
+    - mvn -s etc/settings.xml -B versions:set-property deploy -P release
+  deploy:
+    provider: script
+    script:
+      - mvn -s etc/settings.xml -B deploy -P release
+    on:
+      branch: never
+    environment:
+      MAVEN_OPTS: -Drevision=${TRAVIS_BRANCH} -Dproperty=revision -DnewVersion=${TRAVIS_BRANCH} -DgenerateBackupPoms=false
+```
+
+Note that I've used the following mappings:
+
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.event_name` -> `TRAVIS_EVENT_NAME`
+- `github.ref` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` -> `TRAVIS_BRANCH`
+- `github.ref_name` ->

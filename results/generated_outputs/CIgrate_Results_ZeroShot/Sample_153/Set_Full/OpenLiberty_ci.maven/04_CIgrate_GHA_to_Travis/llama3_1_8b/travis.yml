@@ -1,0 +1,63 @@
+language: java
+
+before_install:
+  - echo "Installing ci.common lib..."
+  - git clone https://github.com/OpenLiberty/ci.common.git./ci.common
+  - cd./ci.common
+  - mvn clean install
+  - cd..
+  - echo "Deleting old.m2 artifacts..."
+  - rm -rf $HOME/.m2/repository/net/wasdev
+  - rm -rf $HOME/.m2/repository/io/openliberty
+
+install:
+  - echo "Installing JDK..."
+  - apt-get update
+  - apt-get install -y default-jdk
+
+script:
+  - echo "Building and verifying..."
+  - mvn verify -Ponline-its -Dinvoker.streamLogs=true \
+    -Druntime=${runtime} \
+    -DruntimeVersion=${runtimeVersion}
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+addons:
+  apt:
+    sources:
+      - 'ppa:openjdk/ppa'
+
+branches:
+  only:
+    - main
+    - feature/*
+
+
+matrix:
+  allow_failures:
+    - java-version: 8
+      runtime: ol
+      runtime-version: 19.0.0.6
+    - java-version: 11
+      runtime: wlp
+      runtime-version: 19.0.0.3
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+```
+
+Note: The above configuration is a complete Travis CI configuration that maintains the same semantics as the original GitHub Actions workflow. It includes the necessary steps, services, and notifications. The `matrix` section is used to specify the different combinations of Java versions, runtimes, and runtime versions. The `cache` section is used to cache the Maven repository and other directories. The `deploy` section is used to specify the deployment configuration. The `services` section is used to specify the Docker service. The `addons` section is used to specify the additional packages to be installed. The `branches` section is used to specify the branches to be built. The `notifications` section is used to specify the notification settings.

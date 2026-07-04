@@ -1,0 +1,24 @@
+cache:
+  directories: ~/.gradle
+provider
+api_key:
+  secure: token
+sudo: FALSE
+language:
+  java
+  include:
+    os: windows
+  addons:
+    firefox: latest
+before_install:
+  java -version
+script:
+  script:
+    ant -noinput -buildfile build.xml -Dfreecol.version=$FREECOL_VERSION winCompleteInstaller\n
+after_success:
+  bash <(curl-cmd
+deploy:
+  skip_cleanup: TRUE
+stage:
+  ☕ 11
+  tests

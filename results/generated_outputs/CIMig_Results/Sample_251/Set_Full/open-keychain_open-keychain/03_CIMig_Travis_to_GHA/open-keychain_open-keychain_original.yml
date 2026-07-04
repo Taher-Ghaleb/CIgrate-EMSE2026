@@ -1,0 +1,20 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      uses: actions/setup-java@version
+      with: java-version
+      run: ./gradlew --stacktrace connectedFdroidDebugAndroidTest -i
+      with:
+        java-version: ${{ matrix.java }}
+    - name: build with maven-
+      uses: actions/checkout@version
+

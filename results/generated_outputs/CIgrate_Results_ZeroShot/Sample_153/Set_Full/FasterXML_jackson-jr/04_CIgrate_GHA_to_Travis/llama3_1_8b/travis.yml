@@ -1,0 +1,57 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK"
+  - export JAVA_HOME=/usr/lib/jvm/temurin
+
+script:
+  - mvn -B clean verify
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: Add deploy script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: Add deploy script"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: echo "TODO: Add deploy script"
+  skip_cleanup: true
+
+matrix:
+  include:
+    - jdk: 8
+    - jdk: 11
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker
+
+branches:
+  only:
+    - master
+    - "2.13"
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on_success: always
+    on_failure: always

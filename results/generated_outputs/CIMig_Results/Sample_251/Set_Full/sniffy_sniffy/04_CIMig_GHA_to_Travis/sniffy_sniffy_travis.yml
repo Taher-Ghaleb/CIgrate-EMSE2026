@@ -1,0 +1,17 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  mvn -B package jacoco:report coveralls:report sonar:sonar -U --file pom.xml
+script
+apt:
+  packages: jdk-8-jdk
+directories: ~/.maven-

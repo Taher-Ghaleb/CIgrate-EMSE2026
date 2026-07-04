@@ -1,0 +1,17 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+
+matrix:
+  allow_failures:
+    - jdk: openjdk11
+  fast_finish: false
+
+script:
+  - mvn clean install
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

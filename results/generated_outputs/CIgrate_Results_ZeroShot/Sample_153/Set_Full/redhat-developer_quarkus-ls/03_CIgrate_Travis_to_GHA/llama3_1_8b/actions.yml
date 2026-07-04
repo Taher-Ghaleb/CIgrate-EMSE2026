@@ -1,0 +1,60 @@
+name: Java Quarkus Build
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      quarkus:
+        image: quay.io/quarkus/ubi-quarkus:20.05-java11
+        env:
+          - name: MAVEN_OPTS
+            value: "-Dquarkus.log.level=DEBUG"
+          - name: MAVEN_SKIP_TESTS
+            value: "true"
+          - name: MAVEN_SKIP_SOURCES
+            value: "true"
+          - name: MAVEN_SKIP_SOURCES_TEST
+            value: "true"
+          - name: MAVEN_SKIP_SOURCES_JAR
+            value: "true"
+          - name: MAVEN_SKIP_SOURCES_JAR_TEST
+            value: "true"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: $HOME/.m2/repository/*
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install Maven
+        run: |
+          curl -fsSL https://get.maven.org/maven3/binaries/apache-maven-3.8.6-bin.tar.gz | tar -xz -C /tmp
+          export MAVEN_HOME=/tmp/apache-maven-3.8.6
+          export PATH=$MAVEN_HOME/bin:$PATH
+      - name: Build and test
+        run: |
+          cd quarkus.jdt.ext &&./mvnw clean verify && cd..
+          cd quarkus.ls.ext/com.redhat.quarkus.ls &&./mvnw clean verify
+      - name: Cache Maven wrapper
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2/wrapper
+          key: ${{ runner.os }}-maven-wrapper-${{ hashFiles('**/mvnw') }}
+          restore-keys: $HOME/.m2/wrapper/*
+      - name: Send notification
+        uses: actions/notification@v

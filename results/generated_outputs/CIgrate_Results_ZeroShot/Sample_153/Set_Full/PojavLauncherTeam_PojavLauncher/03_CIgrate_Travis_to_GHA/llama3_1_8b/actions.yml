@@ -1,0 +1,62 @@
+name: PojavLauncher Android Build
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - feature/*
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      android-emulator:
+        image: android/android-emulator:latest
+        privileged: true
+        ports:
+          - 5554:5554
+          - 5555:5555
+          - 5556:5556
+    env:
+      ANDROID_API_LEVEL: 26
+      ANDROID_BUILD_TOOLS_VERSION: 26.0.0
+      ANDROID_ABI: armeabi-v7a
+      ANDROID_ABI: x86
+      ANDROID_ABI: armeabi-v7a
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: '8'
+    - name: Setup Android
+      uses: actions/setup-android@v4
+        android-version: '26'
+    - name: Install Android SDK
+      run: |
+        yes | sdkmanager "platforms;android-26"
+        yes | sdkmanager "build-tools;26.0.0"
+        yes | sdkmanager "platforms;android-28"
+        yes | sdkmanager "build-tools;28.0.3"
+    - name: Install Gradle
+      run: |
+        curl -sL https://services.gradle.org/distributions/gradle-7.4.1/bin/gradle-7.4.1-linux-x86_64.zip -o gradle.zip
+        unzip gradle.zip -d gradle
+        export PATH=$PATH:./gradle/bin
+    - name: Cache Gradle
+      uses: actions/cache@v4
+        at: cache
+        path: $HOME/.gradle/caches/
+        key: ${{ runner.os }}-gradle-${{ hashFiles('gradle-wrapper.jar') }}
+    - name: Clean Gradle cache
+      run: |
+        rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+    - name: Build and test
+      run: |
+       ./gradlew clean build
+       ./gradlew test

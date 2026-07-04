@@ -1,0 +1,19 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  mvn clean install -DskipITs -DskipTests dependency:tree --file pom.xml\ndocker-compose -f ./model/src/test/resources/docker/docker-compose.yml build --parallel\ndocker-compose -f ./model/src/test/resources/docker/docker-compose.yml up -d\n./model/src/test/resources/docker/healthcheck/healthcheck.sh\n./model/src/test/resources/docker/script/buff.sh\n./model/src/test/resources/docker/script/verify.sh\ndocker rmi jsql:latest -f\ndocker build -t jsql:latest --build-arg JSQL_DOCKERFILE -f model/src/test/resources/docker/Dockerfile.jsql .\ndocker run                                         \\\n  -t                                               \\\n  --rm                                             \\\n  -v \"$HOME/.m2\":/root/.m2                         \\\n  -v \"$HOME/.sonar/cache\":/root/.sonar/cache       \\\n  --network docker_jsql-network                    \\\n  -e SONAR_TOKEN                                   \\\n  -e CODACY_PROJECT_TOKEN                          \\\n  -e CODECOV_TOKEN                                 \\\n  -e MAVEN_NASHORN                                 \\\n  jsql:latest                                      \\\n  ./model/src/test/resources/vnc/execute-on-vnc.sh \\\n  bash -c '                                        \\\n    java -version                                  \\\n    && mvn clean verify sonar:sonar                \\\n    && (cd view/ ; mvn sonar:sonar)                \\\n    && (cd model/ ; mvn sonar:sonar)               \\\n    && bash <(curl -s https://codecov.io/bash)             \\\n    && bash <(curl -Ls https://coverage.codacy.com/get.sh) \\\n  '\n\nDOCKER_RUN=\"$?\"\necho docker run exit code: $DOCKER_RUN\nif [ \"${DOCKER_RUN}\" != \"0\" ]; then exit 1; fi\n
+script
+sonarcloud:
+  token: $sonar_token
+directories: ~/.m2/repository
+apt:
+  packages: jdk-8-jdk

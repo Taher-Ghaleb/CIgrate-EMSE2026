@@ -1,0 +1,57 @@
+language: java
+jdk:
+  - openjdk11
+
+python:
+  - "3.6"
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.gradle
+    - $HOME/.sdkman
+
+env:
+  global:
+    - CODECOV_TOKEN
+    - MAVEN_USERNAME
+    - MAVEN_PASSWORD
+
+before_install:
+  - curl -sL https://get.sdkman.io | bash
+  - echo "sdkman_auto_answer=true" > $HOME/.sdkman/etc/config
+  - echo "sdkman_auto_selfupdate=true" >> $HOME/.sdkman/etc/config
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk version
+  - sudo dpkg --purge --force-depends ca-certificates-java || true
+  - sudo apt-get update
+  - sudo apt-get install -y ca-certificates-java
+  - sudo update-ca-certificates -f
+
+install:
+  - pip install codecov
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  - source ./config_build.sh
+  - ./gradlew assemble -DexcludeBenchmark
+  - source ./config_build.sh
+  - ./run_tests.sh
+  - ./gradlew buildDistributions -DexcludeBenchmark
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+  - if [ "$TRAVIS_BRANCH" == "develop" ] && [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
+      echo "Bintray shutdown - configure alternative deployment";
+    fi
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/31a671345ecfdce18046
+    on_success: always
+    on_failure: always

@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - JAVA_HOME: /home/runner/openjdk11
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SDKMAN
+        run: |
+          [ -d ~/.sdkman ] && [ -d ~/.sdkman/bin ] || rm -rf ~/.sdkman/
+          curl -sL https://get.sdkman.io | bash
+          echo 'sdkman_auto_answer=true' > ~/.sdkman/etc/config
+          echo 'sdkman_auto_selfupdate=true' >> ~/.sdkman/etc/config
+          source ~/.sdkman/bin/sdkman-init.sh
+      - name: Install dependencies
+        run: |
+          pip install --user codecov
+          sudo apt-get install ca-certificates-java
+          sudo update-ca-certificates -f
+      - name: Install SDKMAN packages
+        run: sdk install java 11.0.x
+
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - 11.0.x
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout .sdkman
+        uses: actions/checkout@v4
+          path: .sdkman
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          with:
+            distribution: temurin
+            java-version: ${{ matrix.jdk }}
+      - name: Cache Gradle and SDKMAN
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle
+            ~/.sdkman
+          key: ${{ runner.os }}-gradle-sdkman-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-sdkman-

@@ -1,0 +1,17 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+
+script:
+  - chmod +x mvnw
+  - mvn -version
+  - mvn -B -U -Possrh clean verify
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+This Travis CI configuration maintains the semantics of the GitHub Actions workflow, including the use of multiple JDK versions, caching of Maven dependencies, and the `mvn` command to build and verify the project. The `fail-fast` property from the GitHub Actions workflow is not directly supported in Travis CI, so it has been omitted. Instead, the matrix strategy is used to run the script for multiple JDK versions. The `chmod +x mvnw` command is used to make the `mvnw` executable, and the `mvn -version` command is used to check the Maven version. The `mvn -B -U -Possrh clean verify` command is used to build and verify the project. The Maven cache is maintained using the `cache` directive in the Travis CI configuration.

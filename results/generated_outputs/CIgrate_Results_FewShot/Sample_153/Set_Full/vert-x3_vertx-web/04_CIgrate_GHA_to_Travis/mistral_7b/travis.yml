@@ -1,0 +1,63 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+
+env:
+  matrix:
+    - JDK_VERSION: 8
+    - JDK_VERSION: 11
+
+script:
+  - mvn -q clean verify -B
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: ${{ env.JDK_VERSION }}
+      cache: 'maven'
+
+before_script:
+  - if: $GITHUB_EVENT_NAME != 'pull_request'
+    run: rm -rf $HOME/.m2/repository/io/vertx/
+
+deploy:
+  if: $GITHUB_EVENT_NAME != 'pull_request'
+  env:
+    SONATYPE_NEXUS_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
+    SONATYPE_NEXUS_PASSWORD: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
+  script:
+    - chmod +x .travis.deploy.artifacts.sh
+    - bash .travis.deploy.artifacts.sh
+
+apollo_link_tests:
+  matrix:
+    - JDK_VERSION: 8
+  services:
+    - docker
+  before_install:
+    - actions/checkout@v4
+  install:
+    - actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.JDK_VERSION }}
+        cache: 'maven'
+    - actions/setup-node@v4
+      with:
+        node-version: 'lts/*'
+  script:
+    - cd vertx-web-graphql
+    - mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer -Dexec.classpathScope=test > ${HOME}/ApolloTestsServer.log 2>&1 &
+    - echo $! > ${HOME}/ApolloTestsServer.pid
+    - ( tail -f ${HOME}/ApolloTestsServer.log & ) | grep -q "Apollo tests server started"
+    - cd vertx-web-graphql/tests/apollo
+    - npm install
+    - npm run test
+    - cat ${HOME}/ApolloTestsServer.log
+    - cat ${

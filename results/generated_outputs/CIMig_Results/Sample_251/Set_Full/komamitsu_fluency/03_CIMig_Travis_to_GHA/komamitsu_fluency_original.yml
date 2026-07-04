@@ -1,0 +1,25 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/checkout@version
+    - name: Placeholder
+    - name: Placeholder
+      run: ./gradlew check --debug --stacktrace --info
+      id: gradle
+
+macos:
+  jdk: openjdk8
+

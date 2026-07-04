@@ -1,0 +1,19 @@
+sudo: FALSE
+cache:
+  directories:
+    ~/.jdk
+    ~/.gradle-2
+    ~/.gradle-3
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+script:
+  script:
+    jdk8
+    ./gradlew clean build jacocoTestReport
+allow_failures:
+  name: openjdk 11

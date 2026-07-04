@@ -1,0 +1,51 @@
+language: java
+
+before_install:
+  - echo "Downloading Maven 3.2.5"
+  - wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.zip
+  - unzip -q apache-maven-3.2.5-bin.zip
+  - echo "$PWD/apache-maven-3.2.5/bin" >> PATH
+  - cp./.middleware-common/.travis.settings.xml ~/.m2/settings.xml
+  - $PWD/apache-maven-3.2.5/bin/mvn -version
+
+install:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - sh./.middleware-common/check_format.sh
+  - mvn cobertura:cobertura
+
+after_success:
+  - if [ "$TRAVIS_JDK" == "8" ]; then
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cobertura:cobertura
+      - mvn cob

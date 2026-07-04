@@ -1,0 +1,34 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+
+script:
+  - mvn test
+
+after_success:
+  - chmod +x.utility/do-publish.sh
+  -.utility/do-publish.sh
+
+env:
+  global:
+    - SECRET_1: $SECRET_1
+    - SECRET_2: $SECRET_2
+    - SECRET_3: $SECRET_3
+
+branches:
+  only:
+    - master
+
+notifications:
+  email:
+    on_success: false
+    on_failure: false
+    on_commit: true
+    recipients:
+      - user@example.com
+```
+
+Note that the `on` section in the original GitHub Actions workflow has been replaced with `branches` and `notifications` in the Travis CI configuration. The `if` condition in the original workflow has been replaced with the `after_success` section in the Travis CI configuration. The `env` section in the original workflow has been replaced with the `env` section in the Travis CI configuration.

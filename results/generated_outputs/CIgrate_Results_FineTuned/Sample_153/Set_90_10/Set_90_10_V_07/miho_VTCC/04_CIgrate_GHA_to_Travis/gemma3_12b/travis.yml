@@ -1,0 +1,12 @@
+language: java
+sudo: false
+os:
+  - linux
+  - osx
+jdk:
+  - oraclejdk8
+  - oraclejdk9
+before_install:
+  - sh ./gradlew --version
+script:
+  - sh ./gradlew clean test

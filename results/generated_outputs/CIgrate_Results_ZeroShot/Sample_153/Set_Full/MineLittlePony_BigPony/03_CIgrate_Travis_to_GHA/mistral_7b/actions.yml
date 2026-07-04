@@ -1,0 +1,57 @@
+name: Java Build and Publish
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        postgres:
+          image: postgres:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4 with { distribution: 'temurin', java-version: '8' }
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os }}/.gradle/caches/
+          key: ${{ runner.os }}-gradle-dependencies
+          restore-keys: |
+            ${{ runner.os }}-gradle-dependencies
+      - name: Check
+        run: ./gradlew check
+
+  publish:
+    needs: check
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        postgres:
+          image: postgres:latest
+    env:
+      ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4 with { distribution: 'temurin', java-version: '8' }
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os }}/.gradle/caches/
+          key: ${{ runner.os }}-gradle-dependencies
+          restore-keys: |
+            ${{ runner.os }}-gradle-dependencies
+      - name: Publish
+        run: ./gradlew build publish
+```
+
+This GitHub Actions workflow preserves the semantics of the Travis CI configuration, including the use of caches, services, branch filters, and deploy steps. It also uses modern actions for setting up the

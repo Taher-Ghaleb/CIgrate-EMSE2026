@@ -1,0 +1,48 @@
+language: java
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+    - /^hf-.*$/
+  except:
+    - /^release\/.*$/
+deploy:
+  on:
+    tags: true
+  provider:
+    script: chmod +x deploy/deploy.sh
+    commands: ./deploy/deploy.sh
+  jdk: openjdk8
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+env:
+  CODECOV_TOKEN: $CODECOV_TOKEN
+
+before_install:
+  - echo "Before Install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before Script"
+
+script:
+  - mvn test -B
+  - mvn pitmp:run
+
+after_success:
+  - if [ $TRAVIS_BRANCH == "master" ]; then
+      curl -L https://codecov.io/bash | bash
+    fi
+  - echo "After Success"
+
+after_failure:
+  - echo "After Failure"

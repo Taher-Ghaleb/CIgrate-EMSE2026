@@ -1,0 +1,39 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+    branches:
+      - master
+
+env:
+  MAVEN_OPTS: -Dorg.slf4j.simpleMappin=true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [openjdk11]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - name: Build with authentication
+        if: ${{ env.AUTHENTICATION == 'without-authentication' }}
+        run: mvn clean verify -P without-authentication
+      - name: Build with one-way authentication
+        if: ${{ env.AUTHENTICATION == 'with-one-way-authentication' }}
+        run: mvn clean verify -P with-one-way-authentication
+      - name: Build with two-way authentication by trusting each other
+        if: ${{ env.AUTHENTICATION == 'with-two-way-authentication-by-trusting-each-other' }}
+        run: mvn clean verify -P with-two-way-authentication-by-trusting-each-other
+      - name: Build with two-way authentication by trusting root ca
+        if: ${{ env.AUTHENTICATION == 'with-two-way-authentication-by-trusting-root-ca' }}
+        run: mvn clean verify -P with-two-way-authentication-by-trusting-root-ca

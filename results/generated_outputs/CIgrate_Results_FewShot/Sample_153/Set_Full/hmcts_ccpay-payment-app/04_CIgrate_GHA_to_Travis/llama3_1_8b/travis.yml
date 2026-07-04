@@ -1,0 +1,24 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - chmod +x gradlew
+  -./gradlew build
+  -./gradlew jacocoTestReport
+cache:
+  directories:
+    - '$HOME/.gradle'
+addons:
+  codecov:
+    token:
+      secure: "your_secret_codecov_token"
+    branches:
+      - master
+      - develop
+```
+
+Note: Replace `"your_secret_codecov_token"` with your actual Codecov token.

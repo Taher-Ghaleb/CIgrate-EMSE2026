@@ -1,0 +1,38 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push::
+    branches-ignore:
+      main
+      master
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+      uses: actions/setup-java@version
+      with: java-version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      env:
+        github_token: ${{ github.token }}
+      with:
+        java-version: ${{ matrix.java }}
+        draft: TRUE
+    - name: build with maven-
+      uses: actions/checkout@version
+      run:
+        mvn -B jacoco:report coveralls:report
+        echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+
+macos:
+  jdk: oraclejdk8
+

@@ -1,0 +1,71 @@
+language: java
+sudo: false
+jdk:
+  - openjdk11
+  - oraclejdk11
+  - openjdk-ea
+
+script:
+  - actions/checkout@v4
+  - actions/setup-java@v4
+    with:
+      distribution: ${{ matrix.java == 'openjdk-ea' && 'oracle' || 'temurin' }}
+      java-version: ${{ matrix.java }}
+  - gradle/actions/setup-gradle@v4
+  - run: chmod +x gradlew
+  - run: ./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+
+branches:
+  only:
+    - master
+
+matrix:
+  include:
+    - os: ubuntu-latest
+      java: '11'
+    - os: macos-latest
+      java: '11'
+    - os: ubuntu-latest
+      java: 'ea'
+
+before_script:
+  - if: matrix.java == 'ea'
+    run: echo "Oracle JDK" > /etc/java-version
+
+deploy:
+  on:
+    push:
+      branches:
+        - master
+  if: github.repository == 'junit-team/junit5' && github.ref == 'refs/heads/master' && github.event_name == 'push'
+  script:
+    - actions/checkout@v4
+    - actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '11'
+    - gradle/actions/setup-gradle@v4
+    - run: chmod +x gradlew
+    - run: ./gradlew --scan publish -x check
+      env:
+        ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.OSSRH_USERNAME }}
+        ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.OSSRH_PASSWORD }}
+
+coverage:
+  on:
+    push:
+      branches:
+        - master
+    pull_request:
+      branches:
+        - master
+  script:
+    - actions/checkout@v4
+    - actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '11'
+    - gradle/actions/setup-gradle@v4
+    - run: chmod +x gradlew
+    - run: ./gradlew --scan --stacktrace --warning-mode=all -PenableJaCoCo build jacocoRootReport
+    - uses: codecov/codecov-action@v4

@@ -1,0 +1,16 @@
+env: global
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew assemble --warning-mode all

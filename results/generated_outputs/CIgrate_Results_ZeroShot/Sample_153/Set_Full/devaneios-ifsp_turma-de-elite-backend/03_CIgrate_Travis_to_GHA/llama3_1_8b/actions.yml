@@ -1,0 +1,66 @@
+name: Java App Deployment
+
+on:
+  push:
+    branches:
+      - release
+  pull_request:
+    branches:
+      - release
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    services:
+      heroku:
+        image: heroku/heroku-16-jessie
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          FOO: ${{ secrets.FOO }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Decrypt environment variables
+        run: |
+          openssl aes-256-cbc -K $encrypted_7d07226627da_key -iv $encrypted_7d07226627da_iv
+          -in firebase/firebase-sdk-key.json.enc -out firebase/firebase-sdk-key.json -d
+      - name: Install Firebase tools
+        run: |
+          curl -sL https://firebase.tools | bash
+      - name: Run tests
+        run: |
+          firebase emulators:exec --only auth --project turma-de-elite-app './gradlew test'
+      - name: Cache Gradle
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Cache Firebase
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.cache/firebase
+          key: ${{ runner.hash }}
+      - name: Cache Gradle wrapper
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/wrapper
+          key: ${{ runner.hash }}
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.hash }}
+      - name: Deploy to Heroku
+        uses: heroku/deploy-heroku@v1
+        with:
+          api-key: ${{ secrets.API_KEY }}
+          app-name: turma-de-elite
+          strategy: git
+          skip-cleanup: true
+```
+
+Note: The `encrypted_7d07226627da_key` and `encrypted_7d07226627da_iv`

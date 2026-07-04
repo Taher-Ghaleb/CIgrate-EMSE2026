@@ -1,0 +1,46 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+    strategy:
+      matrix:
+        jdk: [oraclejdk8]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Install and test
+        run: |
+          mvn clean install -DskipTests -B -V
+          mvn test
+
+      - name: Check code format
+        run: sh ./tools/check_format.sh
+
+      - name: Upload code coverage
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+        uses: codecov/sonar-github-action@2
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          owner: your-github-username
+          repo: your-repository-name
+          token: ${{ secrets.COVERAGE_TOKEN }}
+          branch: ${{ github.ref }}
+          service: codecov
+          coverage-file: 'target/site/jacoco.xml'
+          fail-on-error: false

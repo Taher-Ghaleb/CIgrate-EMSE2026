@@ -1,0 +1,83 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies..."
+  - apt-get update && apt-get install -y default-jdk
+
+install:
+  - echo "Installing Gradle..."
+  - curl -fsSL https://get.grype.io | sh
+  - grype install gradle
+
+before_script:
+  - echo "Setting up Gradle wrapper..."
+  - chmod +x./gradlew
+
+script:
+  - echo "Building with Gradle..."
+  -./gradlew build
+
+after_success:
+  - echo "Creating Release and Uploading JAR..."
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      if [ "$TRAVIS_TAG"!= "" ]; then
+        echo "Uploading JAR to GitHub Release..."
+        gh-release upload --repo AuScope/NVCLAnalyticalServices --tag $TRAVIS_TAG --name build/libs/*.jar
+      fi
+    fi
+
+deploy:
+  on:
+    tags: true
+  environment:
+    GITHUB_TOKEN: $GITHUB_TOKEN
+  script:
+    - gh-release create --repo AuScope/NVCLAnalyticalServices --tag $TRAVIS_TAG --name build/libs/*.jar
+  on:
+    push:
+      branches:
+        only:
+          - master
+  on:
+    pull_request:
+      branches:
+        only:
+          - master
+  allow_failures:
+    - master
+  cache:
+    directories:
+      - ~/.gradle/
+  services:
+    - docker
+  matrix:
+    include:
+      - java: '8'
+    allow_failures:
+      - java: '8'
+  notifications:
+    email:
+      on_success: false
+      on_failure: true
+  services:
+    - docker
+  addons:
+    apt:
+      sources:
+        - 'ppa:deadsnakes/ppa'
+  before_install:
+    - echo "Installing dependencies..."
+    - apt-get update && apt-get install -y default-jdk
+  install:
+    - echo "Installing Gradle..."
+    - curl -fsSL https://get.grype.io | sh
+    - grype install gradle
+  before_script:
+    - echo "Setting up Gradle wrapper..."
+    - chmod +x./gradlew
+  script:
+    - echo "Building with Gradle..."
+    -./gradlew build
+  after_success:
+    - echo "Creating Release and Uploading JAR..."
+    - if [ "$TRAVIS_BRANCH" == "master" ]; then

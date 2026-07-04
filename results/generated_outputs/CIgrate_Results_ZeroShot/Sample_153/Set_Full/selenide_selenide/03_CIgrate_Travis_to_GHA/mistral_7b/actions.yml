@@ -1,0 +1,49 @@
+name: Java Build and Test
+
+on: [push, pull_request]
+
+env:
+  CHROME_BIN: /usr/bin/google-chrome
+  SONAR_ORG: ${{ secrets.SONAR_ORG }}
+  SONAR_HOST: ${{ secrets.SONAR_HOST }}
+  SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker: docker-latest
+      database: mysql
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          cache: gradle-local
+
+      - name: Setup Gradle Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os }}:${{ runner.os }}-${{ runner.arch }}/.gradle/caches/
+          key: ${{ runner.os }}-${{ runner.arch }}:gradle
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}:gradle
+
+      - name: Setup Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libappindicator1 fonts-liberation
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+      - name: Install and Run Tests
+        run: ./gradlew check --no-daemon --console=plain
+        name: Check
+
+      - name: Check + Sonar
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${SONAR_ORG} -Dsonar.host.url=${SONAR_HOST} -Dsonar.login=${SONAR_LOGIN} -Dsonar.branch.name

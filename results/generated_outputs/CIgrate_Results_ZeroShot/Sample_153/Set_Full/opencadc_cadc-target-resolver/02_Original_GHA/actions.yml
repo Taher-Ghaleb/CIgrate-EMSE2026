@@ -1,0 +1,114 @@
+name: Java CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  DOCKER_COMPOSE_VERSION: 1.29.2
+  VERSION: ${{ github.sha }}
+  REGISTRY_HOST: proxy.cadc.dao.nrc.ca
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '8'
+    
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
+    
+    - name: Add hosts entry
+      run: echo "127.0.0.1 proxy.cadc.dao.nrc.ca" | sudo tee -a /etc/hosts
+    
+    - name: Verify docker-compose installation
+      run: |
+        docker --version
+        docker-compose --version
+    
+    - name: Build and test
+      run: gradle -i clean build test
+    
+    - name: Build Docker images
+      run: |
+        mkdir docker
+        cp Dockerfile docker/
+        cp build/libs/*.war docker/
+        docker build \
+          -t opencadc/cadc-target-resolver:SNAPSHOT \
+          -t opencadc/cadc-target-resolver:alpine \
+          -t opencadc/cadc-target-resolver:${VERSION} \
+          -f docker/Dockerfile docker/
+    
+    - name: Start integration test services
+      run: |
+        cd integrationTest
+        docker-compose up -d
+        
+        # Wait for services to be ready
+        echo "Waiting for services to start..."
+        sleep 10
+        
+        docker ps -a
+    
+    - name: Check service logs
+      if: always()
+      run: |
+        cd integrationTest
+        echo "=== cadc-target-resolver logs ==="
+        docker-compose logs cadc-target-resolver.cadc.dao.nrc.ca || true
+        echo "=== proxy logs ==="
+        docker-compose logs proxy.cadc.dao.nrc.ca || true
+    
+    - name: Configure log level
+      run: |
+        curl -vL -d 'level=DEBUG' http://proxy.cadc.dao.nrc.ca/cadc-target-resolver/logControl || echo "Log configuration failed, continuing..."
+    
+    - name: Run integration tests
+      env:
+        REGISTRY_HOST: ${{ env.REGISTRY_HOST }}
+      run: |
+        cd integrationTest
+        gradle -i -b ../build.gradle -Dca.nrc.cadc.reg.client.RegistryClient.host=$REGISTRY_HOST clean intTest
+    
+    - name: Stop integration test services
+      if: always()
+      run: |
+        cd integrationTest
+        docker-compose down -v || true
+    
+    - name: Cleanup
+      if: always()
+      run: rm -rf docker
+    
+    - name: Deploy Docker images
+      if: success() && github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        if [ -f ./can-deploy.sh ]; then
+          DEPLOY_STATUS=$(. ./can-deploy.sh)
+          if [ "$DEPLOY_STATUS" = "DEPLOY" ]; then
+            echo "Deploying Docker images..."
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            docker push opencadc/cadc-target-resolver:alpine
+            docker push opencadc/cadc-target-resolver:${VERSION}
+            echo "Deployment successful"
+          else
+            echo "Deployment check returned: $DEPLOY_STATUS - Not deploying."
+          fi
+        else
+          echo "can-deploy.sh not found - skipping deployment"
+        fi

@@ -1,0 +1,46 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - run: docker pull alfresco/alfresco-content-repository-community:6.0.7-ga && docker pull tomcat:7-jre8 && docker pull hello-world && docker pull alpine:edge
+
+script:
+  - chmod +x gradlew
+  - GRADLE_ARGS="check -i -PintegrationTestGradleVersions=$GRADLE_INTEGRATION_TEST_VERSIONS"
+  - if [ "$PUBLISH_SONAR" == "true" ] && [ -n "$SONAR_TOKEN" ]; then
+      GRADLE_ARGS="${GRADLE_ARGS} sonarqube -Dsonar.projectKey=xenit-eu_alfresco-docker-gradle-plugin -Dsonar.organization=xenit-eu -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN"
+    fi
+  - ./gradlew $GRADLE_ARGS
+
+before_install:
+  - run: rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
+install:
+  - uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
+
+matrix:
+  include:
+    - GRADLE_INTEGRATION_TEST_VERSIONS: '5.3,5.6'
+      PUBLISH_SONAR: 'true'
+    - GRADLE_INTEGRATION_TEST_VERSIONS: '6.0,6.6'
+      PUBLISH_SONAR: 'false'
+
+env:
+  - name: GRADLE_INTEGRATION_TEST_VERSIONS
+    ${{ matrix.GRADLE_INTEGRATION_TEST_VERSIONS }}
+  - name: PUBLISH_SONAR
+    ${{ matrix.PUBLISH_SONAR }}
+  - name: SONAR_TOKEN

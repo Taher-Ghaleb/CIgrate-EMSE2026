@@ -1,0 +1,42 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  TERM: dumb
+  COVERITY_SCAN_PROJECT_NAME: "micheljung/nocatch"
+  COVERITY_SCAN_PROJECT_DESCRIPTION: "Get rid of annoying checked exceptions!"
+  COVERITY_SCAN_NOTIFICATION_EMAIL: michel.jung89@gmail.com
+  COVERITY_SCAN_BUILD_COMMAND_PREPEND: "./gradlew clean"
+  COVERITY_SCAN_BUILD_COMMAND: "./gradlew build"
+  COVERITY_SCAN_BRANCH_PATTERN: coverity_scan
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Set up Coverity Scan
+        uses: coverity-actions/coverity-scan@v1
+        with:
+          project-name: ${{ env.COVERITY_SCAN_PROJECT_NAME }}
+          project-description: ${{ env.COVERITY_SCAN_PROJECT_DESCRIPTION }}
+          notification-email: ${{ env.COVERITY_SCAN_NOTIFICATION_EMAIL }}
+          build-command-prepend: ${{ env.COVERITY_SCAN_BUILD_COMMAND_PREPEND }}
+          build-command: ${{ env.COVERITY_SCAN_BUILD_COMMAND }}
+          branch-pattern: ${{ env.COVERITY_SCAN_BRANCH_PATTERN }}
+      - name: Run tests and coverage
+        run:./gradlew test jacocoTestReport &&./gradlew coveralls bintrayUpload
+```
+Note that I've used the `coverity-actions/coverity-scan` action to set up Coverity Scan, and passed the required environment variables to it. I've also kept the `deploy` section as it is, since it's not clear how to migrate it to GitHub Actions.

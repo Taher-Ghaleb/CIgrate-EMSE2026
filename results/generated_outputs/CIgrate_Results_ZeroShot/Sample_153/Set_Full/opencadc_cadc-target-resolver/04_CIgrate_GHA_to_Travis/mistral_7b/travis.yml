@@ -1,0 +1,78 @@
+language: ubuntu
+
+branches:
+  only:
+    - main
+    - master
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+env:
+  DOCKER_COMPOSE_VERSION: 1.29.2
+  VERSION: ${{ github.sha }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  REGISTRY_HOST: proxy.cadc.dao.nrc.ca
+
+services:
+  - docker:
+      - docker:latest
+      - docker-compose: ${{ env.DOCKER_COMPOSE_VERSION }}
+
+before_install:
+  - run: echo "127.0.0.1 proxy.cadc.dao.nrc.ca" | sudo tee -a /etc/hosts
+
+script:
+  - run: |
+      docker --version
+      docker-compose --version
+
+  - uses: actions/checkout@v4
+
+  - name: Set up JDK 8
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '8'
+
+  - name: Setup Gradle
+    uses: gradle/actions/setup-gradle@v4
+    with:
+      cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
+
+  - name: Build and test
+    run: gradle -i clean build test
+
+  - name: Build Docker images
+    run: |
+      mkdir docker
+      cp Dockerfile docker/
+      cp build/libs/*.war docker/
+      docker build \
+        -t opencadc/cadc-target-resolver:SNAPSHOT \
+        -t opencadc/cadc-target-resolver:alpine \
+        -t opencadc/cadc-target-resolver:${VERSION} \
+        -f docker/Dockerfile docker/
+
+  - name: Start integration test services
+    run: |
+      cd integrationTest
+      docker-compose up -d
+
+      # Wait for services to be ready
+      echo "Waiting for services to start..."
+      sleep 10
+
+      docker ps -a
+
+  - name: Check service logs
+    if: always()
+    run: |
+      cd integrationTest
+      echo "=== cadc-target-resolver logs ==="
+      docker-compose logs cadc-target-resolver.cadc.dao.nrc.ca || true
+      echo "=== proxy logs ==="
+      docker-compose logs proxy.cadc.

@@ -1,0 +1,33 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_OPTS: -Dorg.slf4j.simpleMappping=true
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk11
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+      - name: Maven Build
+        run: mvn clean install
+      - name: Send Email Notification
+        if: always()
+        uses: dawidd6/action-send-email@v3
+        with:
+          to: notification@qos.ch
+          subject: Build Status - ${{ github.event.pull_request.number || github.sha }}
+          body: |
+            Build for ${{ github.event.pull_request.number || github.sha }} on ${{ github.repository }} has completed.
+            Status: ${{ job.status }}
+          from: github.com # TODO: Replace with a valid email address

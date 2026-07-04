@@ -1,0 +1,52 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+addons:
+  android:
+    components:
+        - platform-tools
+        - build-tools-28.0.3
+        - platforms;android-28
+        - extra-android-support
+        - extra-android-m2repository
+    licenses:
+        - 'android-sdk-preview-license-52d11cd2'
+        - 'android-sdk-license-.+'
+        - 'google-gdk-license-.+'
+script:
+  - chmod +x gradlew
+  -./gradlew clean build --stacktrace
+deploy:
+  if: startsWith(github.ref,'refs/tags/') && github.repository == 'gotify/android'
+  needs: build
+  on:
+    branch: 'none'
+  jobs:
+    - name: Release
+      if: startsWith(github.ref,'refs/tags/') && github.repository == 'gotify/android'
+      runs-on: ubuntu-latest
+      script:
+        - chmod +x gradlew
+        -./gradlew clean assembleRelease --stacktrace
+        - openssl aes-256-cbc -K "$KEYSTORE_KEY" -iv "$KEYSTORE_IV" \
+          -in gotify-release-key.jks.enc -out gotify-release-key.jks -d
+        - jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+          -keystore gotify-release-key.jks \
+          -storepass "$STOREPASS" -keypass "$KEYPASS" \
+          app/build/outputs/apk/release/app-release-unsigned.apk gotify-release-key
+        - jarsigner -verify app/build/outputs/apk/release/app-release-unsigned.apk
+        - "${ANDROID_HOME}/build-tools/28.0.3/zipalign" -v 4 \
+          app/build/outputs/apk/release/app-release-unsigned.apk \
+          app/build/outputs/apk/release/Gotify.apk
+      env:
+        KEYSTORE_KEY: ${{ secrets.KEYSTORE_ENCRYPTION_KEY }}
+        KEYSTORE_IV: ${{ secrets.KEYSTORE_ENCRYPTION_IV }}
+        STOREPASS: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEYPASS: ${{ secrets.KEY_PASSWORD }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+Note that I've used the `deploy` section to create a separate job for the release

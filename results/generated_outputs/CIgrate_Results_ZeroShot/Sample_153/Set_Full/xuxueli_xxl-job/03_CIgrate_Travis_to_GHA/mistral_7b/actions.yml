@@ -1,0 +1,46 @@
+name: Java Build and Package
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JDBC_URL: ${{ secrets.JDBC_URL }}
+      JDBC_USER: ${{ secrets.JDBC_USER }}
+      JDBC_PASSWORD: ${{ secrets.JDBC_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Install Maven
+        run: |
+          curl -sL https://apache.org/dist/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz -o apache-maven.tar.gz
+          tar -xzf apache-maven.tar.gz
+          mv apache-maven-3.8.6 /usr/local/maven
+          export M2_HOME=/usr/local/maven
+          export PATH=$PATH:$M2_HOME/bin
+
+      - name: Install PostgreSQL JDBC driver
+        run: |
+          wget https://jdbc.postgresql.org/download/postgresql-42.2.20.jar -O postgresql-42.2.20.jar
+          mv postgresql-42.2.20.jar /usr/local/maven/lib/
+          export MAVEN_OPTS="-Djava.class.path

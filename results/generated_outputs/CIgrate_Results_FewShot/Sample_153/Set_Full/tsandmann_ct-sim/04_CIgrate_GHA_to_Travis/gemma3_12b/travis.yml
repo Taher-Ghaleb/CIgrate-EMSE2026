@@ -1,0 +1,9 @@
+language: java
+sudo: false
+os:
+  - ubuntu-latest
+  - macos-latest
+jdk:
+  - openjdk8
+script:
+  - ant -f make-jar.xml

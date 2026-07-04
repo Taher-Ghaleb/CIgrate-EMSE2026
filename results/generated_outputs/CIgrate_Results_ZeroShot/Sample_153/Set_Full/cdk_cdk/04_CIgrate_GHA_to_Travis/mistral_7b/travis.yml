@@ -1,0 +1,48 @@
+language: java
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker:
+      - image: openjdk:11
+
+before_install:
+  - cache: maven
+
+install:
+  - cache: directories:
+      - ~/.m2/repository
+      - ~/.gradle
+      - $HOME/.npm
+      - $HOME/.cache/jest
+
+script:
+  - mvn clean verify
+
+before_script:
+  - export GIT_TERMINAL_PROMPPT_ENABLED=0
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - git tag -a v$TRAVIS_TAG -m "Release $TRAVIS_TAG"
+    - git push origin v$TRAVIS_TAG
+
+    # TODO: Add deployment script here
+
+matrix:
+  include:
+    - java:
+        - openjdk:8
+        - openjdk:11
+        - openjdk:17
+      os: linux
+      cache: maven
+  allow_failures:
+    - java: openjdk:8

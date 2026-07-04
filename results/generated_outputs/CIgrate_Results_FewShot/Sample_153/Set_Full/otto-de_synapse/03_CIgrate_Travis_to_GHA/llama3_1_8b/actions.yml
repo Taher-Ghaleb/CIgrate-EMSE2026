@@ -1,0 +1,43 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  AWS_ACCESS_KEY_ID: localstack
+  AWS_SECRET_ACCESS_KEY: localstack
+  AWS_DEFAULT_REGION: eu-central-1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      localstack:
+        image: localstack/localstack
+        ports:
+          - 4568:4568
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install AWS CLI
+        run: |
+          pip install --user awscli
+          export PATH=$PATH:$HOME/.local/bin
+      - name: Test reachability of localstack kinesis
+        run: |
+         ./gradlew startLocalStack
+          aws --endpoint-url=http://localhost:4568 kinesis list-streams
+         ./gradlew stopLocalStack
+      - name: Run tests
+        run:./gradlew check
+      - name: Generate Jacoco report
+        run:./gradlew jacocoRootReport
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)

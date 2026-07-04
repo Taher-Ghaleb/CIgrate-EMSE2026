@@ -1,0 +1,58 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: ${{ runner.os == 'linux' ? '$(which java)' : '' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk13
+
+    services:
+      docker
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update and install dependencies
+        run: sudo apt update && sudo apt install -y chromium-browser
+
+      - name: Decrypt SSH key
+        run: |
+          openssl aes-256-cbc -K $encrypted_7051ac01cf89_key -iv $encrypted_7051ac01cf89_iv -in ./.travis/id_rsa.enc -out ~/.ssh/id_rsa -d
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Set Java version
+        run: java -version; echo $JAVA_HOME
+
+      - name: Install Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Install Node.js and dependencies
+        run: npm ci
+
+      - name: Cache Maven, Node.js, and Node.js dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2
+            frontend/node
+            frontend/node_modules
+          key: ${{ runner.os }}-maven-node-${{ hashFiles('**/pom.xml') }}-${{ runner.os }}-node-${{ hashFiles('package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+            ${{ runner.os }}-node-
+
+      - name: Build, test, and generate coverage
+        run: |
+          DATE_VERSION

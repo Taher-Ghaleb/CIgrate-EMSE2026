@@ -1,0 +1,54 @@
+name: CI
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+script:
+  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" $DOCKER_REGISTRY
+  - docker build -t $DOCKER_REGISTRY/my-image:${TRAVIS_TAG:-latest} .
+  - docker push $DOCKER_REGISTRY/my-image:${TRAVIS_TAG:-latest}
+
+language: bash
+
+before_install:
+  - export JAVA_HOME=$(brew --prefix)/opt/openjdk${{ matrix.jdk }}
+
+matrix:
+  os: [osx, linux]
+  jdk: [8, 11, 17]
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+
+install:
+  - yarn install
+
+script:
+  - yarn test
+
+before_script:
+  - chmod +x gradlew
+
+env:
+  global:
+    - GIT_STRATEGY: none
+    - DOCKER_USERNAME: $DOCKER_USERNAME
+    - DOCKER_PASSWORD: $DOCKER_PASSWORD
+    - DOCKER_REGISTRY: $DOCKER_REGISTRY
+
+# TODO: Add a script to handle Git version

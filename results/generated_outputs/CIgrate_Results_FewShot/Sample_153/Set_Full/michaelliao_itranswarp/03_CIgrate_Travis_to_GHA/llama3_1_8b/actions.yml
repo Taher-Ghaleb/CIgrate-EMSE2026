@@ -1,0 +1,27 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install Maven
+        run: |
+          curl -fLo maven "https://releases.sonatype.org/service/local/artifact/maven/redirect?g=org/apache/maven/apache-maven&r=3.8.6&c=apache-maven-3.8.6-bin.tar.gz"
+          tar -xvf apache-maven-3.8.6-bin.tar.gz
+          export M2_HOME=/home/runner/apache-maven-3.8.6
+          export PATH=$M2_HOME/bin:$PATH
+      - name: Run Maven
+        run: mvn -DskipTests=true clean package
+```
+Note: The above workflow assumes that the Maven version is 3.8.6. If you want to use a different version, you can replace it in the `curl` command.

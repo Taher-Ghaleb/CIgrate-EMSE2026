@@ -1,0 +1,29 @@
+before_cache: rm -f ~/.gradle-2/modules-2.lock
+env:
+  global:
+    OBJ-NODE:
+      secure: token
+    OBJ-NODE:
+      secure: token
+notifications: email
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+jdk: jdk8
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew test
+after_success:
+  bash <(curl-cmd
+addons:
+  firefox: latest
+include:
+  if: type in (pull_request, push)
+  os: windows
+stage: ☕ 11

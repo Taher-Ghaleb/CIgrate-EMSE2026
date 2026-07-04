@@ -1,0 +1,39 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Download Maven settings
+        run: curl -o $HOME/.m2/settings.xml https://gist.githubusercontent.com/cryptobot/cf5fbd909c4782aaeeeb7c7f4a1a43da/raw/e60ee486e34ee0c79f89f947abe2c83b4290c6bb/settings.xml
+      - name: Download dependencies
+        run: mvn dependency:go-offline -Pdependency-check,coverage,release
+      - name: Build and test
+        run: mvn clean test jacoco:report verify -Dsurefire.useFile=false -Pcoverage
+      - name: Download Codacy coverage reporter
+        run: curl -o ~/codacy-coverage-reporter-assembly-latest.jar https://oss.sonatype.org/service/local/repositories/releases/content/com/codacy/codacy-coverage-reporter/4.0.1/codacy-coverage-reporter-4.0.1-assembly.jar
+      - name: Upload coverage to Codacy
+        run: $JAVA_HOME/bin/java -jar ~/codacy-coverage-reporter-assembly-latest.jar report -l Java -r target/site/jacoco/jacoco.xml
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+      - name: Deploy release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: mvn clean versions:set -DnewVersion=${{ github.ref_name }} deploy -DskipTests -Prelease
+      - name: Sync to Maven Central
+        if: startsWith(github.ref, 'refs/tags/')
+        run: echo '{"close": "1"}' | curl -X POST -u cryptobot:${{ secrets.BINTRAY_API_KEY }} https://api.bintray.com/maven_central_sync/cryptomator/maven/dokany-nio-adapter/versions/${{ github.ref_name }}

@@ -1,0 +1,25 @@
+before_cache:
+  rm -fr ~/.gradle*/plugin-resolution/
+  rm -f ~/.gradle-2/modules-2.lock
+notifications: email
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+jdk: jdk8
+branches: main
+before_install:
+  java -version
+  mvn -B package --file pom.xml
+script
+after_success:
+  bash <(curl-cmd
+directories: ~/.maven-
+env:
+  global
+  adoptopenjdk=11
+apt:
+  packages: jdk-6-jdk

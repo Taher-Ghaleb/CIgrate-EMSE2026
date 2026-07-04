@@ -1,0 +1,43 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME }}
+      BUILD_COVERAGE: ${{ if(eq(github.ref_type, 'pull_request'), github.ref_protected && github.ref_protected.allowed_to_merge == 'code_owner', 'true') }}
+
+    strategy:
+      matrix:
+        jdk: [temurin-8, temurin-11, temurin-17, openjdk-8, openjdk-11, openjdk-17]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Set up Maven
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Install Maven
+        run: |
+          if [[ "${matrix.jdk}" == "openjdk-*" ]]; then
+            wget https://s3.amazonaws.com/d2fbee19-5fe2-425f-ae11-cd25b35dc99a/apache-maven-3.6.3-bin.tar.gz -O /tmp/apache-maven-3.6.3-bin.tar.gz
+            tar xvfz /tmp/apache-maven-3.6.3-bin.tar.gz -C /tmp
+            mv /tmp/apache-maven-3.6.3 /usr/local/apache-maven
+            export M2_HOME=/usr/local/apache-maven
+            export PATH=$M2_HOME/bin:$PATH
+          else

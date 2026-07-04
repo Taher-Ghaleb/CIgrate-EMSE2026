@@ -1,0 +1,45 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        jdk: ['8', '11']
+        profiles: ['headless-mode', 'headless-mode,chrome']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Install Firefox GeckoDriver
+        run: sudo apt-get update && sudo apt-get -y install firefox-geckodriver
+      - name: Clone and install PrimeFaces
+        run: |
+          git clone https://github.com/primefaces/primefaces
+          cd primefaces
+          mvn install
+          cd ..
+      - name: Clone and install PrimeFaces Selenium
+        run: |
+          git clone https://github.com/primefaces-extensions/primefaces-selenium
+          cd primefaces-selenium
+          mvn install
+          cd ..
+      - name: Setup GeckoDriver symlink
+        run: ln -s /usr/bin/geckodriver geckodriver
+      - name: Install ChromeDriver
+        run: source .travis/install-chromedriver.sh
+      - name: Build and install
+        run: mvn -B -V clean install -P${{ matrix.profiles }}

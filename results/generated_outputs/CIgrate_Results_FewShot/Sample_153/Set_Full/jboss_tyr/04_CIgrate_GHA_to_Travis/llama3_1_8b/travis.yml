@@ -1,0 +1,15 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - oraclejdk8
+install: true
+script:
+  - mvn clean install
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that the `cache` section is used to cache the Maven repository, which is equivalent to the `cache:'maven'` option in the GitHub Actions workflow.

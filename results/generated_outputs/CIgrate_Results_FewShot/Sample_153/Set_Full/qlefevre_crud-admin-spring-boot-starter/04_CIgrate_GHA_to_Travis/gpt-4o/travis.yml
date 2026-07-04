@@ -1,0 +1,21 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+
+install: true
+
+script:
+  - mvn --version
+  - mvn clean verify
+
+after_script:
+  - if [ -d "target/surefire-reports" ]; then
+      mkdir -p artifacts/test-results-jdk${TRAVIS_JDK_VERSION};
+      cp -r target/surefire-reports/* artifacts/test-results-jdk${TRAVIS_JDK_VERSION}/;
+    fi
+
+cache:
+  directories:
+    - $HOME/.m2

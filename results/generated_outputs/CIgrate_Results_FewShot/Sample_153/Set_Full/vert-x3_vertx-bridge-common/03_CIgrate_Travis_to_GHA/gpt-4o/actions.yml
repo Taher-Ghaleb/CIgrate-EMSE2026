@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - /^\d+\.\d+$/
+  pull_request:
+    branches:
+      - master
+      - /^\d+\.\d+$/
+
+jobs:
+  test_oraclejdk8:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up OracleJDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Run tests
+        run: mvn -q clean verify -B
+
+  test_openjdk11:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up OpenJDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Run tests
+        run: mvn -q clean verify -B
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Sonatype's snapshots repository
+        run: bash .travis.deploy.artifacts.sh
+
+notifications:
+  email:
+    recipients:
+      - vertx3-ci@googlegroups.com
+    on_success: always
+    on_failure: always

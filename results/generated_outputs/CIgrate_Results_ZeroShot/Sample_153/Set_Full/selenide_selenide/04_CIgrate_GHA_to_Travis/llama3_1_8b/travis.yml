@@ -1,0 +1,56 @@
+language: java
+
+services:
+  chrome:
+    image: selenium/standalone-chrome
+  firefox:
+    image: selenium/standalone-firefox
+
+before_install:
+  - apt-get update
+  - apt-get install -y libappindicator1 fonts-liberation
+
+install:
+  - apt-get install -y chromium-browser
+
+script:
+  -./gradlew check --no-daemon --console=plain
+  -./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${SONAR_ORG} -Dsonar.host.url=${SONAR_HOST} -Dsonar.login=${SONAR_LOGIN} -Dsonar.branch.name=${TRAVIS_BRANCH}
+  -./gradlew grid --no-daemon --console=plain -i
+  -./gradlew firefox_headless --no-daemon --console=plain -i
+  -./gradlew chrome_headless --no-daemon --console=plain -i
+
+after_success:
+  -./.upload_reports.sh
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/modules-2
+    - $HOME/.gradle/caches/*/plugin-resolution/
+    - $HOME/.m2/repository
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: 'temurin'
+    - java-version: '11'
+      distribution: 'adopt'
+    - java-version: '17'
+      distribution: 'adopt'
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:./deploy.sh
+  environment:
+    - secure: $SONAR_ORG
+    - secure: $SONAR_HOST
+    - secure: $SONAR_LOGIN
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+    recipients:
+      - your_email@example.com

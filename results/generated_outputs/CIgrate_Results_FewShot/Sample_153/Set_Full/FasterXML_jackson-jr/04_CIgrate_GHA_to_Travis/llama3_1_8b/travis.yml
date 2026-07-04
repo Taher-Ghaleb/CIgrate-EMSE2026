@@ -1,0 +1,19 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - oraclejdk11
+install: true
+matrix:
+  include:
+    - jdk: openjdk8
+    - jdk: oraclejdk11
+fail-fast: false
+script:
+  - mvn -B clean verify
+```
+
+Note that I've used the `matrix` keyword to define the matrix of JDK versions, and the `include` keyword to specify the individual JDK versions. I've also used the `script` keyword to define the script that will be executed, which in this case is the `mvn -B clean verify` command.

@@ -1,0 +1,52 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: |
+      # Install Git
+      - apt-get update -q
+      - apt-get install -q git
+
+      # Set up JDK 8
+      - wget --quiet https://download.java.net/java/GA/jdk8/8u271/bin/linux/x64/jdk-8u271-linux-x64.tar.gz
+      - tar -xzf jdk-8u271-linux-x64.tar.gz -C ~
+      - export JAVA_HOME=~/jdk1.8.0_271
+      - export PATH=$JAVA_HOME/bin:$PATH
+
+      # Cache Gradle
+      - cache --directories ~/.gradle
+
+script:
+  - chmod +x gradlew
+  - ./gradlew build
+
+before_deploy:
+  - install: |
+      # Install Docker Compose
+      - curl -L https://github.com/docker/compose/releases/download/1.27.4/docker-compose-Linux-x86_64 -o /usr/local/bin/docker-compose
+      - chmod +x /usr/local/bin/docker-compose
+
+      # Wait for Docker Compose
+      - sleep 5
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - docker-compose up --build
+
+# TODO: Add notifications if needed

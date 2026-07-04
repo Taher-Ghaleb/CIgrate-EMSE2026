@@ -1,0 +1,37 @@
+language: java
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.gradle/caches
+branches:
+  only:
+    - main
+    - develop
+    - /^(\([0-9]+|[a-zA-Z0-9._-]+)\)$/
+    - /^feature\/.+$/
+    - /^bugfix\/.+$/
+    - /^hotfix\/.+$/
+    - /^release\/.+$/
+matrix:
+  allow_failures: true
+  fast_finish: true
+  java:
+    - 8
+    - 9
+    - 11
+before_install:
+  - sudo apt-get update
+install:
+  - sudo apt-get install -y graphviz
+before_script:
+  - chmod +x gradlew
+  - java -version
+script:
+  - ./gradlew buildCI --scan --stacktrace --info
+after_failure:
+  - echo "Build failed. Check the logs for details."
+  - exit 1
+after_success:
+  - echo "Build succeeded."
+  - exit 0

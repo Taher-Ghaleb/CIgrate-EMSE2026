@@ -1,0 +1,44 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Cache Maven repository
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+
+    - name: Install
+      run: mvn --version
+
+    - name: Build
+      run: mvn install site -e -B
+
+    - name: Before cache
+      if: always()
+      run: rm -rf $HOME/.m2/repository/org/joda/time
+
+    - name: Website script on website tags
+      if: startsWith(github.ref, 'refs/tags/website')
+      run: |
+        chmod +x ./.github/website.sh
+        ./.github/website.sh
+
+    - name: Website script on release tags
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+      run: |
+        chmod +x ./.github/website.sh
+        ./.github/website.sh

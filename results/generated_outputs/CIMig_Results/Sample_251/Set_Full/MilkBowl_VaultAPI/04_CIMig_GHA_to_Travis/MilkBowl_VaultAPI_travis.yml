@@ -1,0 +1,14 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn -B package --file pom.xml
+script
+directories: ~/.maven-
+apt:
+  packages: jdk-8-jdk

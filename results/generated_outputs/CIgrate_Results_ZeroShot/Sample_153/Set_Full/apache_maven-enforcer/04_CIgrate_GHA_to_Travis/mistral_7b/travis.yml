@@ -1,0 +1,37 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+services:
+  - docker:
+      - image: openjdk:11
+
+before_install:
+  - cache: maven
+
+cache:
+  directories:
+    - ~/.m2/repository
+
+script:
+  - mvn verify -Prun-its
+
+before_script:
+  - export GIT_STRATEGY=include
+
+env:
+  - name: GIT_TAG_NAME
+    from_env: GITHUB_REF
+    if: startsWith(GITHUB_REF, 'refs/tags/')
+  - name: GIT_BRANCH
+    from_env: GITHUB_REF
+    if: startsWith(GITHUB_REF, 'refs/heads/')
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - # TODO: Add deploy script here

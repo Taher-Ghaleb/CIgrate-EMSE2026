@@ -1,0 +1,23 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+env:
+  matrix:
+    - SONATYPE_USERNAME=ralscha23
+    - SONATYPE_PASSWORD=$SONATYPE_PASSWORD
+install: true
+script:
+  - mvn install
+after_success:
+  - python addsettings.py
+  - mvn clean deploy -DskipTests=true --settings ~/.m2/mySettings.xml
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that I've maintained the above OUTPUT and MIGRATION rules.

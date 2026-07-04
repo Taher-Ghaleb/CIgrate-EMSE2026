@@ -1,0 +1,71 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - export MAVEN_HOME=/usr/share/maven
+  - export PATH=$MAVEN_HOME/bin:$PATH
+
+script:
+  - echo "Running build script"
+  - export SECRET_1=$SECRET_1
+  - export SECRET_2=$SECRET_2
+  - chmod +x.travis/build.sh
+  -./travis/build.sh
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: Add deploy script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: Add deploy script"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: echo "TODO: Add deploy script"
+  skip_cleanup: true
+
+matrix:
+  include:
+    - java-version: '8'
+      os: linux
+      dist: ubuntu
+    - java-version: '11'
+      os: linux
+      dist: ubuntu
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com
+
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+
+continue-on-error:
+  - matrix.allow_failures: true

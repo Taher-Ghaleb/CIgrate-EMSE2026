@@ -1,0 +1,53 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: |
+      # Install Git
+      - apt-get update -y
+      - apt-get install -y git
+
+      # Set up JDK 8
+      - wget --quiet https://download.java.net/java/GA/jdk8/8u271/bin/linux/x64/jdk-8u271-linux-x64.tar.gz
+      - tar -xzf jdk-8u271-linux-x64.tar.gz -C ~
+      - export JAVA_HOME=~/jdk1.8.0_271
+      - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - cache: gradle
+    key: gradle
+    directories:
+      - ~/.gradle
+
+script:
+  - chmod +x gradlew
+  - ./gradlew assemble
+
+before_deploy:
+  - deploy:
+      on:
+        tags: true
+      script:
+        - git tag -a $TRAVIS_TAG -m "Deploying to production"
+        - git push origin $TRAVIS_TAG
+
+after_success:
+  - deploy:
+      on:
+        branches:
+          - master
+      script:
+        - git push origin --tags

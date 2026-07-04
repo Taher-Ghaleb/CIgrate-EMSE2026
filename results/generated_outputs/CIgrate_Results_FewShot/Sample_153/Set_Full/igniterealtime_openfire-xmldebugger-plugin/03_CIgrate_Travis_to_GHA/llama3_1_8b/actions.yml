@@ -1,0 +1,37 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Clone ci-tooling repository
+        run: |
+          git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+      - name: Configure Maven settings
+        run: |
+          cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+      - name: Deploy
+        run: |
+          mvn deploy --settings $HOME/.m2/settings.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy (second deployment)
+        run: |
+          mvn deploy --settings $HOME/.m2/settings.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOYMENT_TOKEN: ${{ secrets.DEPLOYMENT_TOKEN }}
+```
+
+Note: I have added two separate deploy steps to accommodate the two separate deployments mentioned in the original Travis CI configuration. The `GITHUB_TOKEN` and `DEPLOYMENT_TOKEN` secrets are assumed to be available in the GitHub Actions workflow.

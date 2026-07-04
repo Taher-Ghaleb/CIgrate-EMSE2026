@@ -1,0 +1,24 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  mvn --batch-mode --update-snapshots install
+  rm -rf ~/.m2/repository/io/vlingo
+  cp .travis/settings.xml ~/.maven-.xml
+script:
+  script:
+    mvn --batch-mode -DskipTests deploy
+Deploy
+apt:
+  packages: jdk-8-jdk
+directories: ~/.m2
+local_dir
+include:
+  stage: Build
+before_cache: rm -rf ~/.maven-

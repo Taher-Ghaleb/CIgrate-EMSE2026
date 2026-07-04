@@ -1,0 +1,34 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  ANDROID_HOME: $ANDROID_HOME
+  JAVA_HOME: $JAVA_HOME
+
+cache:
+  directories:
+    - ~/.android/build-cache
+    - ~/.m2/repository
+    - $HOME/.gradle/caches
+
+before_install:
+  - export JAVA_HOME
+  - export ANDROID_HOME
+  - mkdir -p $ANDROID_HOME/sdk
+
+install:
+  - sdkmanager --licenses > /dev/null # Accept all licenses
+  - sdkmanager "platform-tools"
+  - sdkmanager "build-tools;30.0.3"
+  - sdkmanager "platforms;android-30"
+  - sdkmanager "extras;android;m2repository"
+  - sdkmanager "extras;google;m2repository"
+
+before_script:
+  - chmod +x gradlew
+  - ./gradlew --version
+
+script:
+  - ./gradlew assembleDebugUnitTest
+  - ./gradlew testDebugUnitTest

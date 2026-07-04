@@ -1,0 +1,20 @@
+language: java
+jdk: 11
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.mcache
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+script:
+  - mvn clean package
+  - echo "Build and test complete."
+  # TODO: Upload build artifacts - Travis CI doesn't have a direct equivalent to actions/upload-artifact.  Consider using a deployment service or manual artifact retrieval.
+after_success:
+  - echo "Build succeeded."

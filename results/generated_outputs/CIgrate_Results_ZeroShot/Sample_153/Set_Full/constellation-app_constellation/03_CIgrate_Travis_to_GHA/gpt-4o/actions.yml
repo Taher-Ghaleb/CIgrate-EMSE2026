@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags: '*'
+  pull_request:
+    branches:
+      - master
+
+env:
+  RUNNER_IMAGE: "constellationapplication/netbeans-runner:11.3"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-20.04
+    services:
+      docker:
+        image: docker:latest
+        options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        run: |
+          docker pull "${{ env.RUNNER_IMAGE }}"
+          docker run --mount "type=bind,source=${{ github.workspace }},target=${{ github.workspace }}" --mount "type=bind,source=${{ runner.temp }}/ivy2/cache,target=/root/.ivy2/cache" --workdir "${{ github.workspace }}" "${{ env.RUNNER_IMAGE }}" .travis/run-tests.sh
+
+      - name: Run SonarQube analysis
+        run: .travis/sonar.sh
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Clean Ivy cache
+        run: find "${{ runner.temp }}/ivy2/cache" -name "ivydata-*.properties" -print -delete
+
+      - name: Cache Ivy2
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/ivy2/cache
+          key: ${{ runner.os }}-ivy2-cache
+
+  deploy:
+    runs-on: ubuntu-20.04
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          files: dist/constellation.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    runs-on: ubuntu-20.04
+    if: always()
+    steps:
+      - name: Send notifications
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            curl -X POST -H "Content-Type: application/json" -d '{"status": "success"}' https://webhooks.gitter.im/e/82ac70bdb3f9e144d859
+          else
+            curl -X POST -H "Content-Type: application/json" -d '{"status": "failure"}' https://webhooks.gitter.im/e/82ac70bdb3f9e144d859

@@ -1,0 +1,57 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - 'release*'
+
+deploy:
+  on:
+    push:
+      branches:
+        - master
+      tags: true
+    pull_request:
+      branches:
+        - master
+        - 'release*'
+
+before_install:
+  - install: actions/checkout@v4
+
+script:
+  - run: chmod +x util/*.sh
+  - run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f ${{ matrix.root_pom }}
+  - run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f ${{ matrix.root_pom }}
+
+before_script:
+  - uses: actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: ${{ matrix.java }}
+      cache: 'maven'
+
+matrix:
+  java: [ '8', '11' ]
+  root_pom: [ 'pom.xml', 'android/pom.xml' ]
+
+before_install:
+  - run: chmod +x util/*.sh
+
+after_success:
+  - name: After success
+    if: ${{ not $TRAVIS_TEST_RUN }}
+    script: util/print_surefire_reports.sh
+
+after_failure:
+  - name: After failure
+    if: failure()
+    script: util/print_surefire_reports.sh
+
+deploy:
+  depends_on: build
+  if: ${{ $TRAVIS_BRANCH == 'master' || startsWith(github.ref, 'refs/heads/release') }}
+  script:
+    - env:
+        SECRET_1: ${{ env.SECRET_1 }}
+        SE

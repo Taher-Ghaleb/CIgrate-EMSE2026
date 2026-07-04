@@ -1,0 +1,55 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - '^r\\d.*$'
+    paths:
+      - .
+  pull_request:
+    branches:
+      - '^r\\d.*$'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:latest
+
+    env:
+      ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.ORG_GRADLE_PROJECT_ossrhUsername }}
+      ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.ORG_GRADLE_PROJECT_ossrhPassword }}
+      GRGIT_USER: ${{ secrets.GRGIT_USER }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          java-version-update-automatically: false
+
+      - name: Set up Gradle
+        uses: actions/setup-gradle@v5
+
+      - name: Clean Gradle cache
+        run: rm -f $HOME/.gradle/caches/*/*.lock
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches/modules-2 $HOME/.gradle/wrapper/dists
+          key: ${{ runner.os }}-gradle-${{ env.JAVA_VERSION }}-${{ hashFiles('**/build.gradle') }}
+
+      - name: Display Gradle, Groovy, JVM and other versions
+        run: ./gradlew --version
+
+      - name: Test
+        run: ./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+
+      - name: Coverage
+        if: github.event_name == 'push' && repo == 'junit-team/junit5' && branch == 'master'
+        run: |

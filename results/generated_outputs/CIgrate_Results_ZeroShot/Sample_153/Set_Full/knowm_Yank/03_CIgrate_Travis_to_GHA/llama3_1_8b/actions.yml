@@ -1,0 +1,64 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('target/travis/settings.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          apt-get update && apt-get install -y maven
+      - name: Build and deploy
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            mvn clean deploy --settings target/travis/settings.xml
+          else
+            mvn clean verify --settings target/travis/settings.xml
+          fi
+      - name: Cache Maven settings
+        uses: actions/cache@v4
+        with:
+          path: target/travis/settings.xml
+          key: ${{ runner.os }}-maven-settings-${{ hashFiles('target/travis/settings.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-settings-
+      - name: Notify
+        uses: actions/notify@v2
+        with:
+          title: Java Build and Deploy
+          message: |
+            Build and deploy completed successfully.
+          level: success
+
+env:
+  workflow:
+    - name: FOO
+      value: ${{ secrets.FOO }}
+    - name: BAR
+      value: ${{ secrets.BAR }}

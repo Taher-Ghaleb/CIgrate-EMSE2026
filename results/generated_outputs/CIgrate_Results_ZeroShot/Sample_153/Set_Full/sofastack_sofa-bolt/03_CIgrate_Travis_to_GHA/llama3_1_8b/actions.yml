@@ -1,0 +1,50 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - '*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          java-version: '11'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.zip
+          unzip -q apache-maven-3.2.5-bin.zip
+          export M2_HOME=$PWD/apache-maven-3.2.5
+          export PATH=$M2_HOME/bin:$PATH
+          cp./.middleware-common/.travis.settings.xml $HOME/.m2/settings.xml
+          mvn -version
+      - name: Install dependencies
+        run: mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+      - name: Check format
+        run: sh./.middleware-common/check_format.sh
+      - name: Run tests with Cobertura
+        run: mvn cobertura:cobertura
+      - name: Upload Cobertura report
+        uses: codecov/codecov-action@v2
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: target/site/cobertura/cobertura.xml
+```
+
+Note: The `CODECOV_TOKEN` secret should be replaced with your actual Codecov token.

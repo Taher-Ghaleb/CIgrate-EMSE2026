@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    tags: true
+  pull_request:
+    branches:
+      - master
+
+env:
+  JAVA_HOME: ${{ env.JAVA_HOME }}
+  RELEASE_VERSION: 1.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '7']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Gradle Check
+        run: ./gradlew check
+      - name: Assemble Distribution
+        run: ./gradlew assembleDist
+      - name: Import Sonar Certificate
+        run: sudo keytool -import -alias sonar -keystore $JAVA_HOME/jre/lib/security/cacerts -file sonar_cert.pem -storepass changeit -noprompt
+      - name: Run SonarQube Analysis
+        if: ${{ github.event_name != 'pull_request' && github.repository == 'ical4j/ical4j-connector' && github.ref == 'refs/heads/master' }}
+        run: ./gradlew sonarqube
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/tags/*' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release
+        uses: actions/release@v5
+        with:
+          api_key: ${{ secrets.RELEASE_API_KEY }}
+          file: |
+            build/distributions/ical4j-${{ env.RELEASE_VERSION }}.zip
+            build/distributions/ical4j-${{ env.RELEASE_VERSION }}.tar.gz
+          skip_cleanup: true

@@ -1,0 +1,41 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  except:
+    - '*-[0-9]+.*'
+    - '*-[0-9]+.[0-9]+.[0-9]+'
+pull:
+  except:
+    - '*-[0-9]+.*'
+    - '*-[0-9]+.[0-9]+.[0-9]+'
+before_install:
+-
+install:
+-
+before_script:
+-
+script:
+  - mvn -s ./.travis.maven-settings.xml clean
+  - mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install
+  - mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install -f example
+after_success:
+  -
+after_failure:
+  -
+deploy:
+  on:
+    tags: true
+  provider:
+    # TODO: Codecov provider configuration
+    codecov:
+      token: $CODECOV_TOKEN # Assume configured
+  skip_cleanup: true
+  
+env:
+  global:
+    - FOO: $FOO # Assume configured

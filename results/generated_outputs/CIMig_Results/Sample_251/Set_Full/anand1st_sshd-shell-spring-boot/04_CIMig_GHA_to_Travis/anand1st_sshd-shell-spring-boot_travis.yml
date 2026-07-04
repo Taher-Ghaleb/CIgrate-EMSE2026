@@ -1,0 +1,15 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn --batch-mode --update-snapshots test jacoco:report
+  echo \"Job triggered by ${{ github.event_name }} event.
+script:
+  script:
+    mvn coveralls:report --define repoToken=${{ secrets.COVERALL_REPO_TOKEN }}
+directories: ~/.maven-
+stage: ☕ 11

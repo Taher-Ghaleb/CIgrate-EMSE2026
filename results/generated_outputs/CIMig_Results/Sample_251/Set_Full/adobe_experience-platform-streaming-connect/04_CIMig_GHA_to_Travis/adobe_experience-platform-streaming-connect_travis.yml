@@ -1,0 +1,18 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  chmod +x gradlew
+script:
+  script:
+    ./gradlew clean build
+include:
+  stage: build

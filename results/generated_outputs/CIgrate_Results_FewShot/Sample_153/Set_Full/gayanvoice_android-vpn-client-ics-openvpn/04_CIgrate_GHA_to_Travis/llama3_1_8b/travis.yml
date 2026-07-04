@@ -1,0 +1,19 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk: openjdk11
+sudo: false
+install: true
+cache: gradle
+android:
+  components:
+    - platform-tools
+    - android-28
+    - build-tools-29.0.0
+script:
+  - chmod +x gradlew
+  -./gradlew build
+```
+
+Note that I've used the `java` language and `openjdk11` as the JDK version, as specified in the GitHub Actions workflow. I've also used the `cache` directive to cache the Gradle cache, as specified in the workflow. The `android` section is used to specify the Android SDK components to be installed, and the `script` section is used to run the Gradle build command.

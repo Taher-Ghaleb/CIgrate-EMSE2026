@@ -1,0 +1,45 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  SMALLD_VERSION: ${{ github.sha }}
+  MAVEN_OPTS: '-Drevision=${{ env.SMALLD_VERSION }} -Dproperty=revision -DnewVersion=${{ env.SMALLD_VERSION }} -DgenerateBackupPoms=false'
+
+stages:
+  - build
+  - release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    stage: build
+    strategy:
+      matrix:
+        jdk: ['oraclejdk8', 'oraclejdk9', 'openjdk8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Maven Verify
+        run: mvn -B verify
+
+  release:
+    runs-on: ubuntu-latest
+    stage: release
+    if: github.ref =~ ^refs\/tags\/\\d+\\.\\d+\\.\\d+$
+    env:
+      SMALLD_VERSION: $(git describe --dirty --tags)
+      MAVEN_OPTS: '-Drevision=${{ env.SMALLD_VERSION }} -Dproperty=revision -DnewVersion=${{ env.SMALLD_VERSION }} -DgenerateBackupPoms=false'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Maven Release
+        run: mvn -s etc/settings.xml -B versions:set-property deploy -P release
+
+addons:
+  sonarcloud:
+    organization: "ianagbip1oti-github"
+    token: ${{ secrets.SONAR_TOKEN }} # TODO: Add SonarCloud token secret

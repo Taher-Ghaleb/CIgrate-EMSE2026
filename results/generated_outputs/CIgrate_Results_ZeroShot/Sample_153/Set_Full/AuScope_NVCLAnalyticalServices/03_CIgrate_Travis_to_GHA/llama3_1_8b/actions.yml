@@ -1,0 +1,54 @@
+name: NVCLAnalyticalServices
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+         ./gradlew install
+      - name: Build and test
+        run: |
+         ./gradlew build
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}-${GITHUB_RUN_NUMBER}
+          restore-keys: |
+            ~/.gradle/caches
+      - name: Deploy
+        uses: actions/deploy-java-jar@v1
+        with:
+          api-key: ${{ secrets.API_KEY }}
+          file: build/libs/NVCLAnalyticalServices-1.0.0.jar
+          skip-cleanup: true
+      - name: Wait for deployment
+        run: |
+          sleep 10
+      - name: Notify
+        uses: actions/notify@v1
+        with:
+          title: NVCLAnalyticalServices deployment
+          message: Deployment successful
+          level: success

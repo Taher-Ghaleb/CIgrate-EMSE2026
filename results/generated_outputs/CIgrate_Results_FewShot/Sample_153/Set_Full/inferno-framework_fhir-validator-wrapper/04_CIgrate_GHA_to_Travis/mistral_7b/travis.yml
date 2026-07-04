@@ -1,0 +1,49 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: false
+install: true
+addons:
+  docker: docker
+
+env:
+  matrix:
+    - JDK_CACHE=gradle
+
+script:
+  - actions/checkout@v4
+  - chmod +x gradlew
+  - ./gradlew build
+
+before_install:
+  - actions/setup-java@v4
+
+cache:
+  directories:
+    - '$HOME/.gradle'
+
+after_success:
+  - actions/upload-artifact@v4
+    name: gradle-build
+    path: build/
+
+jobs:
+  build-and-test:
+    strategy: matrix
+    matrix:
+      JDK_CACHE: ${{ env.JDK_CACHE }}
+    steps:
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Build and test with Gradle
+        run: ./gradlew build
+
+  docker-build:
+    needs: build-and-test
+    steps:
+      - actions/checkout@v4
+      - actions/download-artifact@v4
+        name: gradle-build
+        path: build/
+      - docker build -t hl7_validator .

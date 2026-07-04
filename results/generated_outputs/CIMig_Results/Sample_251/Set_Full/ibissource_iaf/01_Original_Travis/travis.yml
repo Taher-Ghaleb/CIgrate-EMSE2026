@@ -1,0 +1,25 @@
+dist: trusty
+language: java
+jdk:
+  - openjdk8
+
+install: echo 'Skipping separate install phase'
+
+script:
+  - mvn install -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+
+cache:
+  directories:
+  - $HOME/.m2
+
+notifications:
+  email:
+    recipients:
+      - travis-j@ibissource.org
+      - travis-j2@ibissource.org
+      - travis-n@ibissource.org
+      - travis-p@ibissource.org
+      - travis-g@ibissource.org
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

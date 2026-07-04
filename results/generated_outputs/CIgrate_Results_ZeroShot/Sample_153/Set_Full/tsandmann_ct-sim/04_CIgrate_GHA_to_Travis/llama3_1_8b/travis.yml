@@ -1,0 +1,80 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-$JAVA_VERSION
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing dependencies"
+  - apt-get update
+  - apt-get install -y ant
+
+before_script:
+  - echo "Setting up environment"
+
+script:
+  - ant -f make-jar.xml
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploying to staging"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "Deploying to staging on failure"
+
+deploy:
+  - provider: script
+    on:
+      branch: main
+      tags: true
+    script: echo "Deploying to production"
+    on:
+      branch: main
+      tags: true
+    script: echo "Deploying to staging"
+
+notifications:
+  email:
+    recipients:
+      - user@example.com
+
+matrix:
+  include:
+    - os: ubuntu-latest
+      java: 8
+    - os: macos-latest
+      java: 8
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - 'ppa:openjdk/ppa'
+
+branches:
+  only:
+    - main
+  except:
+    - main
+
+jdk:
+  version: 8
+
+git:
+  version: 2.30.0
+
+continue-on-error:
+  - true
+
+allow_failures:
+  - true

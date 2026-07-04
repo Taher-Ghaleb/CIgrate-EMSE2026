@@ -1,0 +1,22 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+  key: ${RUNNER_OS}-gradle-${TRAVIS_COMMIT}
+  restore_keys:
+    - ${RUNNER_OS}-gradle-
+services:
+  docker:
+    image: docker:latest
+    options: --privileged
+before_install:
+  - echo "Before install"
+install:
+  - echo "Install"
+before_script:
+  - echo "Before script"
+  - chmod +x ./gradlew
+script:
+  - ./gradlew clean build

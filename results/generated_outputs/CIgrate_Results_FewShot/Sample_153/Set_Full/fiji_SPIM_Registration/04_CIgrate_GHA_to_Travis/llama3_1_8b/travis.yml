@@ -1,0 +1,32 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+script:
+  - chmod +x.travis/build.sh
+  -./.travis/build.sh
+  - echo $SECRET_1
+  - echo $SECRET_2
+  - echo $SECRET_3
+  - echo $SECRET_4
+env:
+  global:
+    - SECRET_1: $SECRET_1
+    - SECRET_2: $SECRET_2
+    - SECRET_3: $SECRET_3
+    - SECRET_4: $SECRET_4
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that the `cache` section is used to cache the Maven repository, and the `env` section is used to set the environment variables. The `script` section is used to run the build script and print the secret variables.

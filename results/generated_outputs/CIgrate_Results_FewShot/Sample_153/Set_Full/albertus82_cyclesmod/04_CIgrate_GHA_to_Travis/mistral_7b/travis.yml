@@ -1,0 +1,41 @@
+language: java
+sudo: false
+jdk:
+  - zulu11
+  - zulu8
+  - zulu7
+
+env:
+  global:
+    matrix:
+      - OS=linux
+      - JDK=11
+      - JDK_ALIAS=zulu11
+      - OS=linux
+      - JDK=8
+      - JDK_ALIAS=zulu8
+      - OS=linux
+      - JDK=7
+      - JDK_ALIAS=zulu7
+      - OS=macos
+      - JDK=11
+      - JDK_ALIAS=zulu11
+
+script:
+  - ant -diagnostics
+  - ant
+
+matrix:
+  include:
+    - OS=linux JDK=$JDK JDK_ALIAS=$JDK_ALIAS
+    - OS=macos JDK=$JDK JDK_ALIAS=$JDK_ALIAS
+
+before_script:
+  - linux: sudo apt-get update && sudo apt-get install -y ant
+  - macos: brew update && brew install ant
+
+before_install:
+  - linux:
+      - if [ $JDK = 7 ]; then ant -diagnostics; fi
+      - ant
+    - macos: ant -diagnostics

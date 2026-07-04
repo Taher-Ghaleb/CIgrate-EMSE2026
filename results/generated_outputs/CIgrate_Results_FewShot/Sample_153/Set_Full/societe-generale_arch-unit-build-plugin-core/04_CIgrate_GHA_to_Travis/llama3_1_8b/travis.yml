@@ -1,0 +1,42 @@
+Here is the equivalent complete Travis CI configuration:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+env:
+  matrix:
+    - OSSRH_JIRA_USERNAME=$OSSRH_JIRA_USERNAME
+    - OSSRH_JIRA_PASSWORD=$OSSRH_JIRA_PASSWORD
+    - GPG_KEY_NAME=$GPG_KEY_NAME
+    - GPG_PASSPHRASE=$GPG_PASSPHRASE
+    - GPG_SECRET_KEYS=$GPG_SECRET_KEYS
+    - GPG_OWNERTRUST=$GPG_OWNERTRUST
+install: true
+script:
+  - mvn verify
+  - mvn clean test jacoco:report coveralls:report
+deploy:
+  on:
+    tags: true
+  if: startsWith(github.ref,'refs/tags/')
+  needs: build
+  env:
+    matrix:
+      - OSSRH_JIRA_USERNAME=$OSSRH_JIRA_USERNAME
+      - OSSRH_JIRA_PASSWORD=$OSSRH_JIRA_PASSWORD
+      - GPG_KEY_NAME=$GPG_KEY_NAME
+      - GPG_PASSPHRASE=$GPG_PASSPHRASE
+      - GPG_SECRET_KEYS=$GPG_SECRET_KEYS
+      - GPG_OWNERTRUST=$GPG_OWNERTRUST
+  before_deploy:
+    - release/createReleaseProperties.sh
+    - echo $GPG_SECRET_KEYS | base64 --decode | gpg --import
+    - echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
+    - gpg -v --keyserver hkp://p80.pool.sks-keyservers.net:80 --refresh-keys
+    - gpg -v --list-keys
+  script:
+    - mvn -X release:perform --settings release/mvnsettings.xml -Darguments="-DskipTests"
+```
+
+Note that I've assumed that the `GPG_SECRET_KEYS` and `GPG_OWNERTRUST` secrets are base64 encoded, so I've added the `base64 --decode` command to decode them before passing them to `gpg`.

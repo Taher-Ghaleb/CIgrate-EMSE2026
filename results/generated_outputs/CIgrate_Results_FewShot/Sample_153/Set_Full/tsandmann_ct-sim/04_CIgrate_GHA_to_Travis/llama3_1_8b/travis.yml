@@ -1,0 +1,19 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+install: true
+jdk:
+  - openjdk8
+matrix:
+  include:
+    - os: ubuntu-latest
+      java: openjdk8
+    - os: macos-latest
+      java: openjdk8
+script:
+  - ant -f make-jar.xml
+```
+
+Note that the `strategy.matrix` section in the GitHub Actions workflow is equivalent to the `matrix` section in Travis CI, where we specify the different combinations of `os` and `java` versions. In Travis CI, we use the `include` keyword to specify the different matrix combinations.

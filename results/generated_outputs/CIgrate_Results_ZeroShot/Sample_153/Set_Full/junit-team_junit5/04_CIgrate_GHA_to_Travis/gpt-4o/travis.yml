@@ -1,0 +1,63 @@
+language: java
+
+matrix:
+  include:
+    - os: linux
+      dist: focal
+      jdk: openjdk11
+    - os: osx
+      osx_image: xcode12.5
+      jdk: openjdk11
+    - os: linux
+      dist: focal
+      jdk: oraclejdk-ea
+  allow_failures:
+    - jdk: oraclejdk-ea
+
+branches:
+  except:
+    - /^r[0-9].*/
+
+cache:
+  directories:
+    - $HOME/.gradle
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y graphviz; fi
+
+install:
+  - chmod +x gradlew
+
+before_script:
+  - ./gradlew --version
+
+script:
+  - ./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+
+jobs:
+  include:
+    - stage: coverage
+      jdk: openjdk11
+      script:
+        - ./gradlew --scan --stacktrace --warning-mode=all -PenableJaCoCo build jacocoRootReport
+      after_success:
+        - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
+
+    - stage: deploy
+      if: branch = master AND type = push
+      jdk: openjdk11
+      script:
+        - ./gradlew --scan publish -x check
+      env:
+        - ORG_GRADLE_PROJECT_ossrhUsername=$OSSRH_USERNAME
+        - ORG_GRADLE_PROJECT_ossrhPassword=$OSSRH_PASSWORD
+
+    - stage: update-documentation
+      if: branch = master AND type = push
+      jdk: openjdk11
+      script:
+        - chmod +x ./src/publishDocumentationSnapshotOnlyIfNecessary.sh
+        - ./src/publishDocumentationSnapshotOnlyIfNecessary.sh
+      env:
+        - GRGIT_USER=$GRGIT_USER

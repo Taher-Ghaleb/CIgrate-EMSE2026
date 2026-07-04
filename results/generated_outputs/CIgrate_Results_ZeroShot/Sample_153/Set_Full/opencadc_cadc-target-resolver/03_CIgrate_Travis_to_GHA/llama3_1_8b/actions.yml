@@ -1,0 +1,57 @@
+name: Java CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - '*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      proxy:
+        image: docker:20.10
+        ports:
+          - 80:80
+        env:
+          - name: REGISTRY_HOST
+            value: ${{ secrets.REGISTRY_HOST }}
+          - name: DOCKER_USERNAME
+            value: ${{ secrets.DOCKER_USERNAME }}
+          - name: DOCKER_PASSWORD
+            value: ${{ secrets.DOCKER_PASSWORD }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '8'
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce curl
+      - name: Install Docker Compose
+        run: |
+          curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+          chmod +x docker-compose
+          sudo mv docker-compose /usr/local/bin
+      - name: Build and push Docker image
+        run: |
+          gradle -i clean build test
+          mkdir docker && cp Dockerfile docker/ && cp build/libs/*.war docker/ && docker build -t opencadc/cadc-target-resolver:SNAPSHOT -t opencadc/cadc-target-resolver:alpine -t opencadc/cadc-target-resolver:${VERSION} -f docker/Dockerfile docker/
+      - name: Run integration tests
+        run: |
+          cd integrationTest
+          docker-compose up -d
+          docker ps -a
+          docker-compose logs cadc-target-resolver.cadc.dao.nrc.ca
+          docker-compose logs proxy.cadc.dao.nrc.ca
+          curl -vL -d 'level=DEBUG' http://proxy.cadc.dao.nrc.ca/cadc-target-resolver/logControl
+          gradle -i -b../build.gradle -Dca.nrc.cadc.reg.client.RegistryClient.host=$REGISTRY_HOST clean intTest
+      - name: Clean up
+        run: |
+          cd

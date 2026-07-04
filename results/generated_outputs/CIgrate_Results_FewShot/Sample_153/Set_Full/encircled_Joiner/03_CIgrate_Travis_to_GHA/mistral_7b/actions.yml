@@ -1,0 +1,29 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Maven
+        uses: actions/setup-node@v4
+      - name: Install Maven
+        run: npm install -g maven
+      - name: Install project dependencies
+        run: mvn dependency:install -P eclipse
+      - name: Build and test
+        run: mvn install -P eclipse
+      - name: Upload coverage to Codecov
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+        env:
+          CODECOV_TOKEN: 096c9f99-8956-4429-84af-c12f09980218
+        run: bash <(curl -s https://codecov.io/bash)

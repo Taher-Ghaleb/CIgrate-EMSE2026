@@ -1,0 +1,34 @@
+language: java
+script: mvn install
+before_install:
+  - unset GEM_PATH
+jdk:
+  - oraclejdk7
+  - openjdk7
+
+branches:
+  only:
+    - devel
+
+env:
+  global:
+    - secure: "CB9V3CmnZRuNapNI8QYEO+tawsvqgEqLOM1FoIjHiPf2bMdmjud0dwcQWNuiMJzWR0FJaARvqQWmndP7SePNUaeIkkRoGJ0InmIrXwWtvGq/YKdxEWC8JpMxeONjKNZ6w1LhtRHpHKDxa9P1EgvyDMtg9pPIgDtoab86lXCK+2A="
+    - secure: "HCRUaOrwfMQQgtlFI5iKEa1CAKmf9R6GgifIpIjgLERgzxTzn3hJQkR9GvVpqB5Vo/50mCQM07LI6wB/Q9yI5b9d3M4Ey9RJebRRiHSvUyoOG8/tYHmZ8rphDVqInJSFDDcjHkGWI4KbPCe9cFvIuXhqWKensUEOl9WDFKDl4Uw="  
+
+after_success:
+  - mvn package -f muikku/pom.xml -Popenshift
+  - python travis-prepare-maven.py
+  - mvn deploy --settings ~/.m2/mySettings.xml
+before_deploy: "echo 'Starting deployment'"
+deploy:
+  provider: openshift
+  user: 
+    secure: "GQJ9pnxqprCV2LK7zdjK2rXIQtACGLAmkXPx3XSO6YRE/kRlkmyKxP7ys3SsNfaXjvxvL/c9aADpaaMIqHlkUz5ZTqFB6FO0lopN39ap6G9wEJxxTJ7Q8e+1oKIekg935+/bgc5XhkitAvs0VhZoUJv4g7z0ISduV1ec+lVmafM="
+  password:
+    secure: "GcYgFF+d3nzXyYQyMIdn2Q15T4qEwaVwbOj1T5Vj1D2BBGylQZuTg2e3jBHoPCl6MRhejivDn27zz9k9ZDWY4l/9Tw84jH4fRXRWsCaay+CfpJ63GWK6Hpd4u0B8FkdLizsEFg/VRD9YR4mac5mxI6A/mlV5wd7J130SqVN9pV0="
+  app: muikku
+  domain: oodev
+  on:
+    jdk: openjdk7
+    branch: devel
+after_deploy: "echo 'Deployed'"

@@ -1,0 +1,30 @@
+language: java
+sudo: required
+env:
+  global:
+    secure: ${OSSRH_JIRA_USERNAME}
+    secure: ${OSSRH_JIRA_PASSWORD}
+    secure: ${GPG_KEY_NAME}
+    secure: ${GPG_PASSPHRASE}
+jdk:
+  - openjdk8
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+branches:
+  only:
+    - main
+    - /^release\/.*$/
+script:
+  - mvn verify
+  - mvn clean test jacoco:report coveralls:report
+deploy:
+  on:
+    tags: true
+  needs: build
+  script:
+    - echo ${GPG_SECRET_KEYS} | base64 --decode | gpg --import
+    - echo ${GPG_OWNERTRUST} | base64 --decode | gpg --import-ownertrust
+    - gpg -v --keyserver hkp://p80.pool.sks-keyservers.net:80 --refresh-keys
+    - gpg -v --list-keys
+    - mvn -X release:perform --settings release/mvnsettings.xml -Darguments="-DskipTests"

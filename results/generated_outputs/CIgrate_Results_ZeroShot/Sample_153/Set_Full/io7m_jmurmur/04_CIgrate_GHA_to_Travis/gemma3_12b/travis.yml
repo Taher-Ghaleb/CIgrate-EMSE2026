@@ -1,0 +1,65 @@
+language: java
+jdk:
+  - openjdk11
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+branches:
+  only:
+    - main
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - echo "Before Install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before Script"
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" = "main" ]; then
+      echo "Deploying to production..."
+      # TODO: Deploy to production
+    fi
+  - if [ "$TRAVIS_BRANCH" = "develop" ]; then
+      echo "Deploying to staging..."
+      # TODO: Deploy to staging
+    fi
+
+  - if [ "$TRAVIS_BRANCH" = "main" || "$TRAVIS_BRANCH" = "develop" ]; then
+    - echo "Sending IRC notification..."
+    - |
+      curl -s -u "github-actions-jmurmur:irc.libera.chat" \
+        "irc.libera.chat:6697/channel/io7m" \
+        -d "nick=github-actions-jmurmur" \
+        -d "user=github-actions-jmurmur" \
+        -d "group=github-actions-jmurmur" \
+        -d "message=Build $TRAVIS_BUILD_STATUS: $TRAVIS_REPO_SLUG ($TRAVIS_COMMIT)"
+  fi
+
+  - if [ "$TRAVIS_BRANCH" = "main" ]; then
+    - echo "Uploading coverage to Codecov..."
+    - curl -L https://codecov.io/bash | bash -s --with-token $CODECOV_TOKEN
+  fi
+
+after_failure:
+  - echo "After Failure"
+
+deploy:
+  provider:
+    script:
+      - echo "Deploying..."
+    on:
+      tags: true

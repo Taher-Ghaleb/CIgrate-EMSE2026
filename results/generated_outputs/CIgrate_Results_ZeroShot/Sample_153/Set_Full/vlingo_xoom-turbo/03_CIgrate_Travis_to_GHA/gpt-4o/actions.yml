@@ -1,0 +1,76 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 11
+
+    - name: Remove vlingo repository
+      run: rm -rf $HOME/.m2/repository/io/vlingo
+
+    - name: Copy Maven settings
+      run: cp .travis/settings.xml $HOME/.m2/settings.xml
+
+    - name: Maven help
+      run: mvn deploy:help versions:help help:help
+
+    - name: Build with Maven
+      run: mvn install -PTravisCI
+
+    - name: Cache Maven repository
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+  deploy:
+    runs-on: ubuntu-20.04
+    needs: build
+    if: github.event_name == 'release' || github.ref == 'refs/heads/master'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 11
+
+    - name: Deploy
+      run: mvn deploy -DskipTests
+
+    - name: Trigger dependencies
+      if: github.event_name == 'release'
+      run: |
+        chmod u+x .travis/trigger_deps.sh
+        .travis/trigger_deps.sh
+
+  notify:
+    runs-on: ubuntu-20.04
+    if: always()
+
+    steps:
+    - name: Send Slack notification
+      # TODO: Implement Slack notification using a GitHub Action
+      run: echo "Slack notification would be sent here."

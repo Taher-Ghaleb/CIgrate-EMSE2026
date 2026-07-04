@@ -1,0 +1,33 @@
+language: java
+
+jdk:
+  - 8
+  - 11
+  - 17
+
+cache:
+  directories:
+    - $HOME/.m2
+
+before_install:
+  - echo "Setting up JDK $TRAVIS_JDK_VERSION"
+
+install:
+  - mvn --version
+
+script:
+  - mvn clean verify
+
+after_success:
+  - echo "Build succeeded"
+
+after_failure:
+  - echo "Build failed"
+
+branches:
+  only:
+    - main
+    - develop
+
+notifications:
+  email: false

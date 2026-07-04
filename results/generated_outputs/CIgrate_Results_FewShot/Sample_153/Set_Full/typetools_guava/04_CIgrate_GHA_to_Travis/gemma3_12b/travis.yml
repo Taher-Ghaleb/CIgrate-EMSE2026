@@ -1,0 +1,39 @@
+language: java
+sudo: required
+timeout: 60
+
+env:
+  matrix:
+    - java: '8'
+      root_pom: 'pom.xml'
+    - java: '11'
+      root_pom: 'pom.xml'
+    - java: '8'
+      root_pom: 'android/pom.xml'
+    - java: '11'
+      root_pom: 'android/pom.xml'
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+script:
+  - chmod +x util/*.sh
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f ${{ matrix.root_pom }}
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f ${{ matrix.root_pom }}
+
+after_failure:
+  - util/print_surefire_reports.sh
+
+deploy:
+  if: $TRAVIS_BRANCH == 'master' || $TRAVIS_BRANCH =~ ^release
+  script:
+    - chmod +x util/*.sh
+    - util/deploy_snapshot.sh
+    - util/update_snapshot_docs.sh
+  jdk: openjdk8
+  env:
+    global:
+      secure: ${SECRET_1}
+      secure: ${SECRET_2}
+      secure: ${SECRET_3}

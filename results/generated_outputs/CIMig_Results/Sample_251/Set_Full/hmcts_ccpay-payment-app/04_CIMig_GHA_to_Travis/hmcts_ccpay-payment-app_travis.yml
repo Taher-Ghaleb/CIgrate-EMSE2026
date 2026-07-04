@@ -1,0 +1,24 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  chmod +x gradlew
+  java -version
+script:
+  script:
+    ./gradlew codeCoverageReport
+after_success:
+  bash <(curl -s https://codecov.io/bash)
+directories:
+  ~/.gradle
+  ~/.gradle
+  ~/.maven-
+  ~/.gradle-3
+  ~/.gradle-2
+  ~/.jdk
+stage: ☕ 11

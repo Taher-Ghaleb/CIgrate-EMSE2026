@@ -1,0 +1,50 @@
+language: java
+
+branches:
+  only:
+    - main
+    - coverity_scan
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+jobs:
+  build:
+    before_install:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+    install:
+      - uses: gradle/actions/setup-gradle@v4
+
+    script:
+      - chmod +x gradlew
+      - ./gradlew test jacocoTestReport
+      - uses: coverallsapp/github-action@v2 \
+          with:
+            github-token: $GITHUB_TOKEN
+            path-to-lcov: build/reports/jacoco/test/jacocoTestReport.xml
+            continue-on-error: true
+
+  coverity-scan:
+    if: $GITHUB_REF == 'refs/heads/coverity_scan'
+    before_install:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+    install:
+      - uses: gradle/actions/setup-gradle@v4
+    script:
+      - chmod +x gradlew
+      - ./gradlew build
+    addons:
+      coverity:
+        project: micheljung/nocatch
+        email: michel.jung89@gmail.com
+        token: $COVERITY_SCAN_TOKEN

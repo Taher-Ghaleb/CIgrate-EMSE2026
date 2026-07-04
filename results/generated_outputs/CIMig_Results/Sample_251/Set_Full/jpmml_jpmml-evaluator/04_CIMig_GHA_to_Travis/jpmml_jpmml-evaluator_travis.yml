@@ -1,0 +1,17 @@
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn -B package --file pom.xml
+script
+include:
+  name: maven- (jdk 11)
+directories: ~/.m2

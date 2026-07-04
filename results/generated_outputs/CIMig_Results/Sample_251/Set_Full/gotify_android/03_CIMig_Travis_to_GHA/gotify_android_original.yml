@@ -1,0 +1,30 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      with: java-version
+      with:
+        java-version: ${{ matrix.java }}
+        draft: TRUE
+        server-id: sonatype-releases
+        configuration-cache-enabled: FALSE
+        script: gradle-cmd
+        clean: TRUE
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run: ./gradlew clean build --stacktrace
+
+macos:
+  jdk: openjdk8
+

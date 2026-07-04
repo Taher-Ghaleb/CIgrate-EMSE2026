@@ -1,0 +1,27 @@
+language: java
+cache:
+  directories:
+    - ~/.m2/repository
+branches:
+  only:
+    - main
+    - develop
+  except:
+    - /^hotfix\/.*$/
+    - /^feature\/.*$/
+    - /^release\/.*$/
+matrix:
+  allow_failures: true
+  include:
+    - os: ubuntu-latest
+      java: 8
+    - os: macos-latest
+      java: 8
+before_install:
+  - echo "Before install step"
+install:
+  - echo "Install step"
+before_script:
+  - echo "Before script step"
+script:
+  - ant -f make-jar.xml

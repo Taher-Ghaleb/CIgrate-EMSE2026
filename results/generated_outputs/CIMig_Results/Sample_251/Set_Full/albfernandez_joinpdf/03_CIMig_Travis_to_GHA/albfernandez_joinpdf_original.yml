@@ -1,0 +1,25 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      uses: actions/checkout@version
+      with: java-version
+      uses: actions/setup-java@version
+    - name: build with maven-
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+        java-version: ${{ matrix.java }}
+      uses: actions/cache@version
+      run: mvn install -DskipTests=true -Dgpg.skip=true -Dmaven.javadoc.skip=true
+

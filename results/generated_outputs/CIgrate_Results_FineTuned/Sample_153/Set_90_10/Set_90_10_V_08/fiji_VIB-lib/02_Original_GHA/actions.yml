@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - '**-[0-9]+.**'
+  pull_request:
+    branches:
+      - master
+      - '**-[0-9]+.**'
+
+env:
+  SECRET_1: QTnSkR2dCB9ZhM9s70c4TL1mAZ/laX69x6YzMrSXK6mSN7Vd1VhEm6XN8KbyxZa9bdeR4mp0+1VoZDnq0n/WyiYav/GHQWe7KVV/fT9OGH6MbIm5oxr01krojUik96tWgUFCtcYpYFXrKT024ZWV5Njc998XvngNWpSIrBvrUYs=
+  SECRET_2: UurHUs5/sX8jc4EBfdRIrC8X6q+RG55F5/AFFSOTCQL2ibV+oPtOd/1S6cb5a+5zyPcCVn1NfwgzNMMWXO6j0yhvb0QstRBiCONmiGzh3rpxWHSQPDJlc2PqB8kEstfx6PcMH8HTsYvxKgR3Q6e+9yym0u2E9pEdFuK6xP6AHec=
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Run build script
+        run: .travis/build.sh

@@ -1,0 +1,34 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    master
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        java-version: 1.8
+      with: key
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/checkout@version
+      env:
+        github_token: ${{ github.token }}
+    - name: placeholder_Name
+      run: ./gradlew assemble
+      if: ${{ always() }}
+
+macos:
+  jdk: oraclejdk8
+

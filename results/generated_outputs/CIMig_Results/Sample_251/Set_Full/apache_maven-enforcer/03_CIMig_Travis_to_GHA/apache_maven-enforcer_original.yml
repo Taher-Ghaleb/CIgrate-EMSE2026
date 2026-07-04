@@ -1,0 +1,24 @@
+name: placeholder_Name
+
+on:
+  pull_request: master
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      uses: actions/setup-java@version
+      with:
+        restore-keys: jdk11-
+      run: mvn verify -Prun-its
+      with:
+        restore-keys: jdk11-
+    - name: Placeholder
+      uses: actions/checkout@version
+
+strategy:
+  fail-fast: FALSE
+

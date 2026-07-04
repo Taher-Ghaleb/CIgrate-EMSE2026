@@ -1,0 +1,29 @@
+language: java
+jdk:
+  - oraclejdk8
+after_success:
+  - mvn -B jacoco:report coveralls:report
+before_install:
+  - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+  - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+cache:
+  directories:
+    - $HOME/.m2
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+
+deploy:
+  - provider: script
+    script: .deploy.sh
+    on:
+      repo: dhatim/safesql
+      branch: master
+      jdk: oraclejdk8
+  - provider: script
+    script: .deploy.sh
+    on:
+      repo: dhatim/safesql
+      tags: true
+      jdk: oraclejdk8

@@ -1,0 +1,30 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Run Maven
+        run: mvn -B -nsu verify
+```
+
+Note that I've used the `actions/cache@v4` action to cache the Maven repository, and the `hashFiles` function to generate a unique key for the cache. I've also used the `runner.os` variable to specify the operating system of the runner, which is used to generate the cache key.

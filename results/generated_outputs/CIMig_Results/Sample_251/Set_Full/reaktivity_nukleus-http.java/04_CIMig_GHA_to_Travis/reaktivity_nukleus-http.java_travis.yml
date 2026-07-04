@@ -1,0 +1,13 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: develop
+before_install:
+  java -version
+  ./mvnw -B -nsu verify
+script
+directories: ~/.m2

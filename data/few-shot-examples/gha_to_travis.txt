@@ -1,0 +1,207 @@
+Here are some example migrations for reference:
+
+## Example 1: Migration from GitHub Action Workflow to Travis CI Configuration
+### GitHub Actions Workflow:
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '9']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Test and generate coverage
+        run: mvn clean test jacoco:report
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+```
+
+### Corresponding Migrated Travis CI Configuration (.travis.yml):
+```yaml
+sudo: false
+language: java
+jdk:
+  - openjdk8
+  - oraclejdk9
+
+script:
+  - mvn clean test jacoco:report
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+```
+---
+
+## Example 2: Migration from GitHub Action Workflow to Travis CI Configuration
+### GitHub Actions Workflow:
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven and SonarQube
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.sonar/cache
+          key: ${{ runner.os }}-m2-sonar-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-sonar-
+      - name: Build, test and analyze
+        run: mvn clean package jacoco:report coveralls:report sonar:sonar -U
+        env:
+          SONAR_TOKEN: rFMDGYB3C4EbfS+CJq9lEuCtTmJgz8FmyrBp39P0lo6Zk/LqcuXolJBR2CLU9xkf/0oIOURov6+H6lMLRtmpYl6ZbmgAB+grq/y5ORLvlqccij+9UM19LeO/w8Nf1raOnwpB+V1VAfUx1dNTnxZIJRO/RrhtJDDdb9nWjyU0ua0=
+```
+
+### Corresponding Migrated Travis CI Configuration (.travis.yml):
+```yaml
+language: java
+sudo: false
+install: true
+addons:
+  sonarqube:
+    token:
+      secure: "rFMDGYB3C4EbfS+CJq9lEuCtTmJgz8FmyrBp39P0lo6Zk/LqcuXolJBR2CLU9xkf/0oIOURov6+H6lMLRtmpYl6ZbmgAB+grq/y5ORLvlqccij+9UM19LeO/w8Nf1raOnwpB+V1VAfUx1dNTnxZIJRO/RrhtJDDdb9nWjyU0ua0="
+    branches:
+      - master
+      - develop
+jdk:
+  - oraclejdk8
+script:
+  - mvn clean package jacoco:report coveralls:report sonar:sonar -U
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.sonar/cache'
+```
+---
+
+## Example 3: Migration from GitHub Action Workflow to Travis CI Configuration
+### GitHub Actions Workflow:
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  ANDROID_TARGET: android-21
+  ANDROID_ABI: armeabi-v7a
+  ADB_INSTALL_TIMEOUT: 10
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 7
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '7'
+      - name: Fix hostname
+        run: |
+          cat /etc/hosts
+          sudo hostname "$(hostname | cut -c1-63)"
+          sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+          cat /etc/hosts
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platforms;android-22"
+          sdkmanager "platforms;android-23"
+          sdkmanager "tools"
+          sdkmanager "platform-tools"
+          sdkmanager "build-tools;23.0.2"
+          sdkmanager "extras;android;m2repository"
+          sdkmanager "system-images;android-21;default;armeabi-v7a"
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Create AVD
+        run: echo no | avdmanager create avd --force --name test --package "system-images;android-21;default;armeabi-v7a" --abi $ANDROID_ABI
+      - name: Start emulator
+        run: |
+          emulator -avd test -no-skin -no-audio -no-window &
+          adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+          adb devices
+          adb shell input keyevent 82 &
+          adb shell svc power stayon true
+      - name: Run connected tests
+        run: ./gradlew --stacktrace connectedFdroidDebugAndroidTest -i
+      - name: Run tests and coverage
+        run: ./gradlew --stacktrace testDebug jacocoTestReport coveralls
+```
+
+### Corresponding Migrated Travis CI Configuration (.travis.yml):
+```yaml
+language: android
+jdk: openjdk7
+env:
+  matrix:
+    - ANDROID_TARGET=android-21 ANDROID_ABI=armeabi-v7a
+  global:
+    # wait up to 10 minutes for adb to connect to emulator
+    - ADB_INSTALL_TIMEOUT=10
+
+sudo: required
+before_install:
+    - cat /etc/hosts # optionally check the content *before*
+    - sudo hostname "$(hostname | cut -c1-63)"
+    - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+    - cat /etc/hosts # optionally check the content *after*
+android:
+    components:
+        - android-22
+        - android-23
+        - tools
+        - platform-tools
+        - build-tools-23.0.2
+        - extra-android-support
+        - extra-android-m2repository
+        - sys-img-armeabi-v7a-android-21
+    licenses:
+        - 'android-sdk-preview-license-52d11cd2'
+        - 'android-sdk-license-.+'
+        - 'google-gdk-license-.+'
+
+before_script:
+    - echo no | android create avd --force --name test --target $ANDROID_TARGET --abi $ANDROID_ABI
+    - emulator -avd test -no-skin -no-audio -no-window &
+    - android-wait-for-emulator
+    - adb devices
+    - adb shell input keyevent 82 &
+    - adb shell svc power stayon true
+
+script:
+    - ./gradlew --stacktrace connectedFdroidDebugAndroidTest -i
+    - ./gradlew --stacktrace testDebug jacocoTestReport coveralls
+```
+---

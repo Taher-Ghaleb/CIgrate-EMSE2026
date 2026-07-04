@@ -1,0 +1,46 @@
+name: Android Build
+
+on:
+  push:
+  pull_request:
+
+env:
+  ANDROID_HOME: /usr/local/android-sdk-23
+  JAVA_HOME: /usr/lib/jvm/temurin-8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Set up Android SDK
+        run: |
+          echo "sdk_root=$ANDROID_HOME" >> $HOME/.sdkmanager
+          echo "sdk_root=$ANDROID_HOME" >> $HOME/.gradle
+          echo "sdk_root=$ANDROID_HOME" >> $HOME/.m2
+        shell: bash
+      - name: Install Android SDK components
+        run: |
+          sdkmanager --licenses "android-sdk-license-.+"
+          sdkmanager "platform-tools"
+          sdkmanager "tools"
+          sdkmanager "android-23"
+          sdkmanager "build-tools-23.0.3"
+          sdkmanager "extra-android-support"
+          sdkmanager "extra-android-m2repository"
+        shell: bash
+      - name: Gradle Build
+        run: ./gradlew clean build
+        shell: bash
+      - uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle
+          key: gradle-${{ hash }}

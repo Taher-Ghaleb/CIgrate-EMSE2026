@@ -1,0 +1,31 @@
+language: java
+branches:
+  only:
+    - master
+    - '**-[0-9]+.**'
+  except:
+    - tags
+  override: false
+
+sudo: required
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - .cache/maven
+
+before_install:
+  - chmod +x .travis/build.sh
+
+install:
+  - echo "Setting up JDK 8"
+
+script:
+  - echo "Building the project"
+  - .travis/build.sh
+  - echo "Build completed"
+
+env:
+  global:
+    SECRET_1: $SECRET_1
+    SECRET_2: $SECRET_2

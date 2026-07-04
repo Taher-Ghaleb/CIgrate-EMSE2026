@@ -1,0 +1,78 @@
+language: java
+
+jdk:
+  - openjdk21
+
+install: true
+
+script:
+  - ./mvnw -B verify -Dvalidate-format
+
+env:
+  global:
+    - secure: "********************"
+model
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up JDK 21
+      uses: actions/setup-java@v5
+      with:
+        java-version: 21
+        distribution: temurin
+        cache: 'maven'
+    - name: Set up Maven
+      run:
+        mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.2.0:wrapper "-Dmaven=3.9.4"
+    - name: Build with Maven
+      run: ./mvnw -B verify -Dvalidate-format
+
+env:
+  global:
+    - FOO=********************
+model
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up JDK 21
+      uses: actions/setup-java@v5
+      with:
+        java-version: 21
+        distribution: temurin
+        cache: 'maven'
+    - name: Set up Maven
+      run:
+        mvn --errors --batch-mode --show-version org.apache.maven.plugins:maven-wrapper-plugin:3.2.0:wrapper "-Dmaven=3.9.4"
+    - name: Build with Maven
+      run: ./mvnw -B verify -Dvalidate-format
+
+env:
+  global:
+    - secure: "********************"
+modelInfo:
+  title: Java CI
+  description: Build and test with Maven
+  version: 1.0
+  date: "2024-02-28"
+language: java
+jdk:
+  - openjdk21
+install: true
+script:
+  - ./mvnw -B verify -

@@ -1,0 +1,19 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  components:
+    tools
+    extra-android-maven-repository
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    tools
+    extra-android-maven-repository
+before_install:
+  echo CURRENT=$(date +%Y) >> $GITHUB_ENV
+deploy:
+  api_key: $github_token

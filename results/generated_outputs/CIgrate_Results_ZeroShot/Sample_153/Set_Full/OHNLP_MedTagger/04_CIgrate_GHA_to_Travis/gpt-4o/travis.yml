@@ -1,0 +1,43 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - DEPLOY_KEY=$DEPLOY_KEY
+
+branches:
+  only:
+    - master
+    - /^v[0-9]+.[0-9]+.*/
+    - /^v.*$/
+
+services:
+  - docker
+
+before_install:
+  - git fetch --unshallow
+
+install:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+  - ant dist
+
+after_success:
+  - if [[ $TRAVIS_TAG ]]; then
+      if [ ! -f "MedTagger.zip" ]; then
+        echo "Error: MedTagger.zip not found";
+        exit 1;
+      fi;
+    fi
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file: MedTagger.zip
+  skip_cleanup: true
+  on:
+    tags: true
+    condition: -f MedTagger.zip

@@ -1,0 +1,15 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn -B package -Ppedantic --file pom.xml
+script
+directories: ~/.maven-
+include:
+  if: type in (pull_request, push)
+stage: ☕ 11

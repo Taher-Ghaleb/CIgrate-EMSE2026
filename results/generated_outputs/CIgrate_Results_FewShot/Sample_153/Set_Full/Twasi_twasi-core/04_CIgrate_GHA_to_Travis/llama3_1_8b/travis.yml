@@ -1,0 +1,35 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+  - mvn clean compile assembly:single
+deploy:
+  on:
+    branch: dev
+  env:
+    global:
+      - SONAR_TOKEN: $SONAR_TOKEN
+      - SONAR_ORGANIZATION: twasi
+  skip_cleanup: true
+  provider: docker
+  image: docker:latest
+  dockerfile:.travis.settings.xml
+  on:
+    branch: dev
+  if: github.event_name == 'push'
+  before_deploy:
+    - cp.travis.settings.xml $HOME/.m2/settings.xml
+  after_deploy:
+    - cp.travis.settings.xml $HOME/.m2/settings.xml
+  on_success:
+    - sed -i "s/LIVE/${{ github.run_number }}/g" pom.xml
+  on_failure:
+    - sed -i "s/LIVE/${{ github.run_number }}/g" pom.xml
+```
+
+Note: The `deploy` section is used to deploy the Docker image, but it's not clear from the original GitHub Actions workflow what the exact deployment process is. Therefore, I've added some placeholder commands in the `before_deploy` and `after_deploy` sections to copy the `.travis.settings.xml` file to the Maven settings directory. The `on_success` and `on_failure` sections are used to update the version in the `pom.xml` file.

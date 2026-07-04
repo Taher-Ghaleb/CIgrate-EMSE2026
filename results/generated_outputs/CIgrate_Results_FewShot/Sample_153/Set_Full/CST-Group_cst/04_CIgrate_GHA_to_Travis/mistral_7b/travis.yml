@@ -1,0 +1,52 @@
+language: java
+sudo: false
+env:
+  CC_TEST_REPORTER_ID: 430594ee361ff2e93ebf0a942f639b8092c6f17b7c5098f9c75abc404311dfc7
+
+jdk:
+  - openjdk8
+  - openjdk9
+
+script:
+  - actions/checkout@v4
+  - chmod +x gradlew
+
+cache:
+  directories:
+    - gradle
+
+before_install:
+  - if: matrix.jdk == '8'
+    run: |
+      curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+      chmod +x ./cc-test-reporter
+
+before_script:
+  - if: matrix.jdk == '8'
+    run: ./cc-test-reporter before-build
+
+install:
+  - actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: ${{ matrix.jdk }}
+      cache: 'gradle'
+
+script:
+  - ./gradlew clean build jacocoTestReport
+
+after_success:
+  - if: matrix.jdk == '8'
+    run: JACOCO_SOURCE_PATH=src/main/java ./cc-test-reporter format-coverage ./build/reports/jacoco/test/jacocoTestReport.xml --input-type jacoco
+
+after_success:
+  - if: matrix.jdk == '8'
+    run: ./cc-test-reporter upload-coverage -r $CC_TEST_REPORTER_ID
+
+after_success:
+  - if: always()
+    env:
+      COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+    run: |
+      curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+        -H 'Content-Type: application

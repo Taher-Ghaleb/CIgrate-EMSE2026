@@ -1,0 +1,30 @@
+language: android
+jdk:
+  - openjdk11
+
+android:
+  components:
+    - platform-tools
+    - build-tools-30.0.3
+    - android-30
+    - extra-android-m2repository
+    - extra-google-m2repository
+
+cache:
+  directories:
+    - $HOME/.android/build-cache
+
+before_install:
+  - chmod +x gradlew
+
+install:
+  - ./gradlew --version
+
+script:
+  - ./gradlew assembleDebugUnitTest
+  - ./gradlew testDebugUnitTest
+
+branches:
+  only:
+    - main
+    - develop

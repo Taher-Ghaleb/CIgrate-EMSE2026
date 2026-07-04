@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  tag:
+    patterns:
+      - '^\d+\.\d+(\.\d+)?(-\S*)?$'
+      - /^hf-.*$/
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Test
+        run: mvn test -B
+      - name: PIT Mutation Testing
+        run: mvn pitmp:run
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+
+  deploy:
+    if: github.ref_name == 'tags'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Deploy
+        run: ./deploy/deploy.sh

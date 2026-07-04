@@ -1,0 +1,15 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  chmod +x gradlew
+  java -version
+script:
+  script:
+    ./gradlew build
+apt:
+  packages: jdk-8-jdk

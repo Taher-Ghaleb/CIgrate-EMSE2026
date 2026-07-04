@@ -1,0 +1,22 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - mvn install -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+addons:
+  codecov:
+    token:
+      secure: "your_secret_token"
+    branches:
+      - master
+      - develop
+```
+
+Note: Replace `your_secret_token` with your actual Codecov token.

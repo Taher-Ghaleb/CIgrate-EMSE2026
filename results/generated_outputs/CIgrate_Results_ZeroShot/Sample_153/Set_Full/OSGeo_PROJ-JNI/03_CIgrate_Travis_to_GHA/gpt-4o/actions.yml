@@ -1,0 +1,58 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Display current directory
+        run: pwd
+
+      - name: List files
+        run: ls
+
+      - name: Update apt-get
+        run: sudo apt-get update
+
+      - name: Install sqlite3
+        run: sudo apt-get install -y sqlite3
+
+      - name: Display JAVA_HOME
+        run: echo $JAVA_HOME
+
+      - name: Download PROJ
+        run: wget https://download.osgeo.org/proj/proj-6.2.1.tar.gz
+
+      - name: Extract PROJ
+        run: tar xf proj-6.2.1.tar.gz
+
+      - name: Configure PROJ
+        run: |
+          cd proj-6.2.1
+          ./configure
+
+      - name: Build PROJ
+        run: |
+          cd proj-6.2.1
+          NPROC=$(nproc)
+          make -j${NPROC}
+
+      - name: Install PROJ
+        run: |
+          cd proj-6.2.1
+          sudo make install
+
+      - name: Build PROJ-JNI
+        run: |
+          cd ..
+          mvn package
+
+      - name: List files after build
+        run: ls
+
+      - name: Run tests
+        run: java --class-path target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java

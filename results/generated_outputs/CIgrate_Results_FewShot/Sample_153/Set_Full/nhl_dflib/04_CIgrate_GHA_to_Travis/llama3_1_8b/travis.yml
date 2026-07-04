@@ -1,0 +1,44 @@
+Here is the equivalent complete Travis CI configuration:
+
+```yaml
+language: java
+sudo: required
+jdk:
+  - oraclejdk11
+install: true
+matrix:
+  - db_profile=derby
+  - db_profile=mysql
+  - db_profile=postgresql
+fail-fast: false
+script:
+  - mvn verify -P${{ matrix.db_profile }}
+deploy:
+  if: github.ref =='refs/heads/master' && github.event_name == 'push' && github.repository == 'nhl/dflib'
+  needs: deploy
+  script:
+    - mvn clean source:jar javadoc:javadoc deploy -DskipTests
+    - export MAVEN_USERNAME=${OSSRH_USERNAME}
+    - export MAVEN_PASSWORD=${OSSRH_PASSWORD}
+    - export MAVEN_GPG_PASSPHRASE=${GPG_PASSPHRASE}
+addons:
+  sonarqube:
+    token:
+      secure: "your-sonar-token"
+    branches:
+      - master
+    server-id: ossrh
+    server-username: MAVEN_USERNAME
+    server-password: MAVEN_PASSWORD
+    gpg-private-key: |
+      -----BEGIN PGP PRIVATE KEY BLOCK-----
+      your-gpg-private-key
+      -----END PGP PRIVATE KEY BLOCK-----
+    gpg-passphrase: MAVEN_GPG_PASSPHRASE
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.sonar/cache'
+```
+
+Note that you should replace `your-sonar-token`, `your-gpg-private-key` with your actual SonarQube token and GPG private key. Also, you should set the `OSSRH_USERNAME`, `OSSRH_PASSWORD`, `GPG_PASSPHRASE` environment variables in your Travis CI settings.

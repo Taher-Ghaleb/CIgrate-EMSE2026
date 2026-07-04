@@ -1,0 +1,33 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.m2/
+branches:
+  only:
+    - master
+  except:
+    - /^(\d+)$/
+notifications:
+  email:
+    recipients:
+      - example@example.com
+    on_success: change
+    on_failure: always
+before_install:
+  - echo "Before install"
+install:
+  - echo "Install"
+before_script:
+  - echo "Before script"
+  - git clone https://github.com/git/git.git
+  - cd git
+  - git checkout v2.34.1
+  - cd ..
+  - echo "Git version: $(git --version)"
+script:
+  - echo "Running tests"
+  - mvn clean test
+  # - echo "Running performance tests"
+  # - mvn clean test -Pperformance-test

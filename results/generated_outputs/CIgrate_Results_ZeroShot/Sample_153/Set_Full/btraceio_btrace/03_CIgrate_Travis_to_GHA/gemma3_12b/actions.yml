@@ -1,0 +1,61 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  JAVA_HOME: /home/travis/openjdk11
+  global:
+    - secure: "********************"
+    - secure: "********************"
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        jdk:
+          - openjdk11
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+      - uses: actions/cache@v4
+        with:
+          path: ~/.gradle
+          key: gradle-${{ hashFiles('**/build.gradle') }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.sdkman
+          key: sdkman
+      - name: Install SDKMAN!
+        shell: bash
+        run: |
+          [[ -d /home/travis/.sdkman/ ]] && [[ -d /home/travis/.sdkman/bin/ ]] || rm -rf /home/travis/.sdkman/
+          curl -sL https://get.sdkman.io | bash
+          echo sdkman_auto_answer=true > $HOME/.sdkman/etc/config
+          echo sdkman_auto_selfupdate=true >> $HOME/.sdkman/etc/config
+          source "/home/travis/.sdkman/bin/sdkman-init.sh"
+      - name: Install codecov
+        shell: bash
+        run: |
+          pip install --user codecov
+      - name: Install ca-certificates-java
+        shell: bash
+        run: |
+          sudo dpkg --purge --force-depends ca-certificates-java
+          sudo apt-get install ca-certificates-java
+          sudo update-ca-certificates -f
+      - name: Build and Assemble
+        shell: bash
+        run: |
+          source ./config_build.sh && ./gradlew assemble -DexcludeBenchmark
+      - name: Run Tests
+        shell: bash
+        run: |
+          source ./config_build.sh && ./run_tests.sh
+      -

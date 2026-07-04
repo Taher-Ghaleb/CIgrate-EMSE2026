@@ -1,0 +1,29 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+  branches:
+    except:
+      - /^release\/.*$/
+
+env:
+  JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - run: mvn -B -nsu verify
+    cache:
+      path: ~/.m2
+      key: ${{ runner.os }}-maven

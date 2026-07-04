@@ -1,0 +1,54 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Cache Ivy2 cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy2-cache-${{ hashFiles('**/ivy.xml') }}
+          restore-keys: ${{ runner.os }}-ivy2-cache-
+      - name: Run tests
+        run: |
+          docker pull $RUNNER_IMAGE
+          docker run --mount "type=bind,source=${GITHUB_WORKSPACE},target=${GITHUB_WORKSPACE}" --mount "type=bind,source=${GITHUB.workspace}/.ivy2/cache,target=/root/.ivy2/cache" --workdir "${GITHUB_WORKSPACE}" $RUNNER_IMAGE.travis/run-tests.sh
+      - name: Run Sonar
+        run:.travis/sonar.sh
+      - name: Deploy to GitHub Releases
+        uses: actions/upload-artifact@v2
+        with:
+          name: constellation
+          path: dist/constellation.zip
+      - name: Send notification
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            curl -X POST \
+            https://webhooks.gitter.im/e/82ac70bdb3f9e144d859 \
+            -H 'Content-Type: application/json' \
+            -d '{"text": "CI completed"}'
+```
+
+Note that I've made the following changes:
+
+*   Replaced `before_cache` with `Cache Ivy2 cache` step using `actions/cache@v4`.
+*   Replaced `env` with `env` section in the workflow file.
+*   Replaced `git` with `fetch-depth` option in `actions/checkout@v4`.
+*   Replaced `jobs` with `jobs` section in the workflow file.
+*   Replaced `include` with `jobs` section in the workflow file.
+*   Replaced `dist` with `runs-on` option in the `jobs` section

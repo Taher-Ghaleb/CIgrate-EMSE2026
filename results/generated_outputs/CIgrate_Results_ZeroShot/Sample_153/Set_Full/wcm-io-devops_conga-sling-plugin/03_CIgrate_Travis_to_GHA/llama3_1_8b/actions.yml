@@ -1,0 +1,52 @@
+name: Java Maven Build
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+      -'release/*'
+  pull_request:
+    branches:
+      - main
+      - 'feature/*'
+      -'release/*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --privileged
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: '8'
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: $HOME/.m2/repository
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('.travis.maven-settings.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install dependencies
+      run: |
+        mvn -s./.travis.maven-settings.xml clean
+    - name: Build and install
+      run: |
+        mvn -s./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install
+    - name: Build and install example
+      run: |
+        mvn -s./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install -f example
+    - name: Clean up
+      run: |
+        rm -rf $HOME/.m2/repository/io/wcm
+    - name: Code coverage
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+```
+
+Note: The `branches` filter in the original Travis CI configuration is mapped to the `branches` keyword in GitHub Actions, and the `except` keyword is mapped to the `except` keyword in the `branches` keyword. The `cache` keyword is mapped to the `actions/cache@v4` action with the `stable keys` option. The `services` keyword is mapped to the `services` keyword in the `jobs` keyword. The `jdk` keyword is mapped to the `actions/setup-java@v4` action with the `distribution` option set to `temurin` and the `java-version

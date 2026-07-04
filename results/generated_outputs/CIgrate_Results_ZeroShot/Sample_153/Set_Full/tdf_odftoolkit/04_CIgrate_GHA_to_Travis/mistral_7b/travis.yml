@@ -1,0 +1,49 @@
+language: ubuntu-20.04
+
+branches:
+  include:
+    - master
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+install:
+  - name: Set up JDK 11
+    script: |
+      wget -qO- https://repo.microsoft.com/r/openjdk/11/x86_64/openjdk-11+28_linux-x86_64_bin.tar.gz | tar xz
+      export PATH=$PWD/openjdk-11+28_linux-x86_64_bin:$PATH
+
+script:
+  - mvn clean install -Ppedantic
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+deploy:
+  on:
+    tags: true
+
+before_deploy:
+  - script: |
+      # TODO: Add your deployment script here
+
+deploy:
+  provider: script
+  script: |
+      # TODO: Add your deployment script here
+
+after_success:
+  script: |
+      # TODO: Add your post-success script here
+
+after_failure:
+  script: |
+      # TODO: Add your post-failure script here

@@ -1,0 +1,17 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew ${{ matrix.gradle-task }} --no-daemon --console=plain -i
+stage:
+  tests
+  ☕ 11
+apt:
+  packages: jdk-6-jdk

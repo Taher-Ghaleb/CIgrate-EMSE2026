@@ -1,0 +1,35 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+branches:
+  only:
+    - master
+    - /^([a-zA-Z0-9]+)$/
+  except:
+    - /^feature\/[a-zA-Z0-9-]+$/
+matrix:
+  include:
+    - jdk: openjdk9
+      condition: github.ref != 'refs/heads/master' || github.event_name == 'pull_request'
+    - jdk: openjdk8
+      condition: github.ref != 'refs/heads/master' || github.event_name == 'pull_request'
+    - jdk: openjdk9
+      condition: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    - jdk: openjdk8
+      condition: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository == 'bootique/bootique-logback'
+    - jdk: openjdk8
+      condition: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository != 'bootique/bootique-logback'
+
+before_install:
+  - echo "Setting up JDK"
+
+install:
+  - echo "Installing Maven"
+
+script:
+  - mvn clean verify
+  - if [ "$TRAVIS_REPO_SLUG" == "bootique/bootique-logback" ]; then
+      mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+    fi

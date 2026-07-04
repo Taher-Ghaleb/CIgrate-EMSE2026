@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - '\\d+\\.\\d+'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+
+  test-openjdk11:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' }}
+    strategy:
+      matrix:
+        jdk:
+          - openjdk11
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' }}
+
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Set up JDK ${{ matrix.jdk }}
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: ${{ matrix.jdk }}
+    - name: Test
+      run: mvn -q clean verify -B
+    - name: Upload coverage to Codecov (TODO: Implement coverage reporting)
+      run: echo "TODO: Implement coverage reporting"
+
+env:
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # Assuming SONAR_TOKEN is a secret in the repository
+
+services:
+  docker:
+    - docker:latest
+
+jobs.deploy.steps:
+  - name: Deploy to Sonatype's snapshots repository
+    uses: sonatype-actions/sonatype-oss-action@v3
+    with:
+      repository: <your-sonatype-oss-repository>
+      username: ${{ secrets.SONATYPE_USERNAME }}
+      password: ${{ secrets.SONATYPE_PASSWORD }}
+      snapshots: true
+      deployOn:
+        type: tags
+        regular: '^\\d+\\.\\d+\\.\\d+\\-SNAPSHOT$'
+
+notifications:
+  email:
+    recipients:
+      - vertx3-

@@ -1,0 +1,42 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - SECRET_1=$SECRET_1
+    - SECRET_2=$SECRET_2
+    - SECRET_3=$SECRET_3
+    - SECRET_4=$SECRET_4
+    - SECRET_5=$SECRET_5
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+jobs:
+  include:
+    - stage: build
+      script:
+        - mvn package -DskipTests=true
+
+    - stage: deploy
+      if: branch = master AND type = push
+      script:
+        - mvn --settings .travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+
+    - stage: deploy-pages
+      if: tag IS present AND branch = master
+      script:
+        - mvn package -DskipTests=true
+        - ./deploy-gh-pages.sh
+
+before_install:
+  - echo "Setting up environment"
+
+# Custom script to deploy to GitHub Pages
+before_script:
+  - echo "Preparing to deploy to GitHub Pages"
+  - echo "github_token: $GITHUB_TOKEN" > deploy-gh-pages.sh
+  - echo "publish_dir: ./target/staging" >> deploy-gh-pages.sh
+  - chmod +x deploy-gh-pages.sh

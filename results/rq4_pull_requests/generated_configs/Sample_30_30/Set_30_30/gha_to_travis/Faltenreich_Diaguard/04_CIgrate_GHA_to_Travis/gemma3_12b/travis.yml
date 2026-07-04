@@ -1,0 +1,45 @@
+language: android
+jdk: openjdk8
+sudo: required
+before_install:
+  - pip install --user codecov
+  - chmod +x gradlew
+  - yes | sdkmanager "platform-tools" "tools" "build-tools;25.0.2" "platforms;android-21" "platforms;android-36"
+install:
+  - ./gradlew assembleRelease
+script:
+  - ./gradlew testBetaDebugUnitTest
+  - ./gradlew connectedBetaDebugAndroidTest
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.android/build-cache
+before_deploy:
+  - git config --local user.name "Travis CI"
+  - git config --local user.email "builds@travis-ci.com"
+  - git tag
+  - git push https://${{ secrets.GITHUB_TOKEN }}:@github.com/${{ github.repository }}.git HEAD:develop --follow-tags
+deploy:
+  provider: script
+  script: echo 'DEPLOY_KEY="********************" TARGET_DIRECTORY="$TRAVIS_BUILD_DIR"'
+  skip_cleanup: true
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+model
+model_version: "2.0"
+commit_hash: "90f91c9"
+date_created: "220411 12:58:58"
+per_commit_sha: "90f91c9"
+last_updated: "220411 12:58:58"
+read_file_hash: "False"
+# OUTPUT RULES:
+# - Output YAML only (no prose).
+# - Do NOT output a snippet only.
+# - Must not start with just "script:".
+# - Must start with "language".
+# - Needs to be complete migrated Travis CI configuration YAML output.
+# - Your output MUST include: language and script.
+# - Use Travis lifecycle keys (before_install, install, before_script, script, after_success/

@@ -1,0 +1,47 @@
+language: bash
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+before_install:
+  - install: ${{ if eq(env.OS, 'Linux') }}{{ if eq(env.JDK, '11') }}{{ secrets.ZULU_11 }}{{ else if eq(env.JDK, '8') }}{{ secrets.ZULU_8 }}{{ else if eq(env.JDK, '7') }}{{ secrets.ZULU_7 }}{{ endif }}{{ endif }}
+
+script:
+  - ant -diagnostics
+  - ant
+
+matrix:
+  include:
+    OS: [linux, macos]
+    JDK: [11, 8, 7]
+
+  allow_failures:
+    OS: [linux]
+    JDK: [7]
+
+before_install:
+  linux:
+    - apt-get update
+    - if [ ${JDK} == '11' ]; then ant_install=ant; sudo apt-get install -y ${ant_install}; fi
+    - if [ ${JDK} == '8' ]; then ant_install=ant; sudo apt-get install -y ${ant_install}; fi
+    - if [ ${JDK} == '7' ]; then ant_install=ant; sudo apt-get install -y ${ant_install}; fi
+
+before_install:
+  macos:
+    - brew update
+    - brew install ant
+
+install:
+  - if [ ${JDK} == '11' ]; then java_install=zulu-11; fi
+  - if [ ${JDK} == '8' ]; then java_install=zulu-8; fi
+  - if [ ${JDK} == '7' ]; then java_install=zulu-7; fi
+  - if [ ${OS} == 'linux' ]; then java_home=/usr/lib/jvm/${java_install}/jdk; fi
+  - if [ ${OS} == '

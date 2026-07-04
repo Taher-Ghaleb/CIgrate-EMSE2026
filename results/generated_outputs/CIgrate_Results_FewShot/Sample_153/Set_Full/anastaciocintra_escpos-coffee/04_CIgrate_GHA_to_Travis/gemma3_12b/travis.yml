@@ -1,0 +1,29 @@
+language: java
+branches:
+  only:
+    - master
+  except:
+    - /^pull.*/
+
+jobs:
+  build:
+    script:
+      - mvn install --settings .travis/settings.xml -DskipTests -Dmaven.javadoc.skip=true -B
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    script:
+      - mvn clean deploy --settings .travis/settings.xml -DskipTests=true -B
+    before_install:
+      - echo no
+    before_script:
+      - echo no
+    deploy:
+      on:
+        tags: true
+    env:
+      global:
+        secure:
+          - GPG_PRIVATE_KEY: ${GPG_PRIVATE_KEY}
+          - GPG_PASSPHRASE: ${GPG_PASSPHRASE}
+          - OSSRH_USERNAME: ${OSSRH_USERNAME}
+          - OSSRH_PASSWORD: ${OSSRH_PASSWORD}

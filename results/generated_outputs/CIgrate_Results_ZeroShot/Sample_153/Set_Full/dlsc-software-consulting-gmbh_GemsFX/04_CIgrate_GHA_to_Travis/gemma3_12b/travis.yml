@@ -1,0 +1,64 @@
+language: java
+jdk:
+  - openjdk17
+
+env:
+  MAVEN_OPTS: -Xmx2500m
+  DISPLAY: ':99.0'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - xvfb
+
+before_install:
+  - sudo apt-get update
+
+install:
+  - sudo apt-get install -y p7zip-full
+
+before_script:
+  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+
+script:
+  - mvn package -q
+
+deploy:
+  on:
+    tags: true
+  needs: build
+  if: startsWith(github.ref, 'refs/tags/')
+  script:
+    - TAG_BRANCH=$(git ls-remote origin | sed -n "\|${github.sha}\s\+refs/heads/|{s///p}")
+    - echo "tag_branch=$TAG_BRANCH"
+    - if [[ "${TAG_BRANCH}" =~ ^(master|master-11)$ ]]; then
+    -   echo "should_deploy=true"
+    - else
+    -   echo "should_deploy=false"
+    - fi
+    - if [[ "$should_deploy" == "true" ]]; then
+    -   chmod +x .github/deploy_prepare.sh
+    -   ./.github/deploy_prepare.sh
+    -   mvn package -q
+    -   JAR_FILES=$(find . -path '*/target/*.jar' -type f)
+    -   echo "jar_files<<EOF"
+    -   echo "$JAR_FILES"
+    -   echo "EOF"
+    -   if [ -f "javadoc.zip" ]; then
+    -     echo "Creating GitHub Release"
+    -     curl -L https://api.github.com/repos/${TRAVIS_REPO_SLUG}/releases -H "Authorization: token ${GITHUB_TOKEN}" -d "{\"tag_name\": \"${TRAVIS_TAG}\", \"prerelease\": false, \"draft\": false, \"body\": \"See [CHANGELOG.md](https://github.com/${TRAVIS_REPO_SLUG}/blob/${TAG_BRANCH}/CHANGELOG.md)\"}"
+    -   fi
+    - else
+    -   echo "Skipping deployment"
+    - fi
+  env:
+    global:
+      GITHUB_TOKEN: $GITHUB_TOKEN
+  # TODO: Bintray shut down on May 1, 2021
+  # Consider migrating to Maven Central via OSSRH or GitHub Packages
+  # - name: Deploy to Maven Central
+  #   if: steps.check_branch.outputs.should_deploy ==

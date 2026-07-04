@@ -1,0 +1,56 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+install: true
+script:
+  - pip install codecov
+  - chmod +x gradlew
+  - source./config_build.sh
+  -./gradlew assemble -DexcludeBenchmark
+  -./run_tests.sh
+  -./gradlew buildDistributions -DexcludeBenchmark
+  - bash <(curl -s https://codecov.io/bash)
+deploy:
+  - provider: script
+    script: |
+      # Deploy to alternative repository (Bintray is shutdown)
+      # Could use Maven Central, GitHub Packages, or JFrog Artifactory
+      echo "Bintray shutdown - configure alternative deployment"
+notifications:
+  on_success:
+    gitter:
+      webhook_url: https://webhooks.gitter.im/e/31a671345ecfdce18046
+      status: success
+  on_failure:
+    gitter:
+      webhook_url: https://webhooks.gitter.im/e/31a671345ecfdce18046
+      status: failure
+cache:
+  directories:
+    - '$HOME/.sdkman'
+    - '$HOME/.gradle'
+addons:
+  ca-certificates-java:
+    packages:
+      - ca-certificates-java
+    install: true
+    update-ca-certificates: true
+```
+
+Note that I've made the following changes:
+
+* Removed the `on` keyword and replaced it with `language` and `jdk` keywords.
+* Removed the `jobs` keyword and replaced it with `script` keyword.
+* Removed the `steps` keyword and replaced it with `script` keyword.
+* Removed the `uses` keyword and replaced it with `script` keyword.
+* Removed the `run` keyword and replaced it with `script` keyword.
+* Removed the `if` keyword and replaced it with `deploy` keyword.
+* Removed the `env` keyword and replaced it with `notifications` keyword.
+* Removed the `cache` keyword and replaced it with `cache` keyword.
+* Removed the `sdkman_auto_answer` and `sdkman_auto_selfupdate` variables and replaced them with `sdkman` keyword.
+* Removed the `sdkman` keyword and replaced it with `addons` keyword.
+* Removed the `update-ca-certificates` keyword and replaced it with `addons` keyword.
+* Removed the `dpkg` keyword and replaced it with

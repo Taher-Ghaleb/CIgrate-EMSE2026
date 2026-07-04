@@ -1,0 +1,62 @@
+name: Java Build and Deploy
+on:
+  push:
+    branches:
+      - master
+      - '**/*.*/*'
+  pull_request:
+    branches:
+      - master
+
+env:
+  global:
+    secure: ${{ secrets.DEPLOY_KEY }}
+    JAVA_TOKEN: ${{ secrets.JAVA_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Install Maven
+        uses: actions/setup-node@v4
+        with:
+          node-version: 14
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Install Ant
+        run: apt-get update && apt-get install -y ant
+
+      - name: Build and Deploy
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=${{ env.JAVA_TOKEN }}
+          mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+          ant dist
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MedTagger.zip
+          path: MedTagger/dist/MedTagger.zip
+
+      - name: Deploy to Re

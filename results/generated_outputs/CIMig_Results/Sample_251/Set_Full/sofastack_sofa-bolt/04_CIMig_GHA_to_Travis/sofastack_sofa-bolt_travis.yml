@@ -1,0 +1,21 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  ./mvnw package
+script
+after_success:
+  Codecov
+  python-cmd
+  ./mvnw clean install -Dmaven.test.skip=true -B -U -e && bash ./.middleware-common/check_format.sh
+allow_failures:
+  name: openjdk 11
+directories: ~/.maven-
+include:
+  stage: build

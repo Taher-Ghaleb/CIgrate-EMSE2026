@@ -1,0 +1,40 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  SONAR_TOKEN: "********************"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Cache Gradle and SonarQube
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.sonar/cache/
+          key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-sonar-
+      - name: Run tests and sonarqube
+        run: |
+         ./gradlew clean check sonarqube --info --stacktrace --warning-mode all
+      - name: Remove cache
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+```
+
+Note: I've replaced the `SONAR_TOKEN` value with `********************` as it was in the original configuration. You should replace it with your actual SonarCloud token.

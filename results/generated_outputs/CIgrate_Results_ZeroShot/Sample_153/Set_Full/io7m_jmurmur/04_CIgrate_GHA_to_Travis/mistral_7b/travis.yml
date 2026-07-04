@@ -1,0 +1,59 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+script:
+  - |
+    # Set up JDK 11
+    install -m 755 -d ~/.sdkman/candidates/java
+    curl -sSL https://get.sdkman.io | bash
+    sdk install java 11.0.14
+    java -version
+    sdk use java 11.0.14
+
+    # Build, verify and generate site
+    mvn --errors clean verify site
+
+    # Upload coverage to Codecov
+    if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" != "master" ]; then
+      CODECOV_TOKEN=$CODECOV_TOKEN mvn -B org.codecov:codecov-maven:1.0:prepare-codecov
+      CODECOV_TOKEN=$CODECOV_TOKEN mvn -B org.codecov:codecov-maven:1.0:report-codecov
+    fi
+
+    # Send IRC notification
+    if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+      notify-irc \
+        --server irc.libera.chat \
+        --port 6697 \
+        --channel '#io7m' \
+        --nickname github-actions-jmurmur \
+        --message "Build ${TRAVIS_BUILD_STATE}: ${TRAVIS_REPO_SLUG} (${TRAVIS_COMMIT})"
+    fi
+
+before_deploy:
+  - install: docker
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - docker-compose build
+    - docker-compose up --detach
+
+    # TODO: Add wait loop for docker-compose
+
+cache:
+  directories:
+    - ~/.sdkman/candidates/java
+    - ~/.m2/repository
+    -

@@ -1,0 +1,30 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    - JAVA_HOME: ${{ runner.os == 'linux' ? '$(which java)' : '$(which java -version | awk '{print $3}' | sed "s/\r//")' }}
+
+jobs:
+  build:
+    runs-on: ${{ if eq(matrix.os, 'linux') && eq(matrix.arch, 'x64') && eq(matrix.java, '8') }}ubuntu-latest${{ else if eq(matrix.os, 'windows') && eq(matrix.arch, 'x64') && eq(matrix.java, '8') }}windows-latest${{ else if eq(matrix.os, 'macos') && eq(matrix.arch, 'x64') && eq(matrix.java, '8') }}macos-latest
+    strategy:
+      matrix:
+        os: [linux, windows, macos]
+        arch: [x64]
+        java: [8]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Change directory
+        run: cd Hogajama
+      - name: Clean
+        run: mvn clean
+      - name: Install (skip tests and docs)
+        run: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V

@@ -1,0 +1,24 @@
+language: java
+jdk:
+  - oraclejdk8
+env:
+  - OSSRH_JIRA_USERNAME=********************
+  - OSSRH_JIRA_PASSWORD=********************
+  - GPG_KEY_NAME=********************
+  - GPG_PASSPHRASE=********************
+install: true
+script:
+  - mvn verify
+  - mvn clean test jacoco:report coveralls:report
+before_deploy:
+  - release/createReleaseProperties.sh
+  - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+  - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+  - $GPG_EXECUTABLE -v --keyserver hkp://p80.pool.sks-keyservers.net:80 --refresh-keys
+  - $GPG_EXECUTABLE -v --list-keys
+deploy:
+  provider: script
+  script: mvn -X release:perform --settings release/mvnsettings.xml -Darguments="-DskipTests"
+  skip_cleanup: true
+  on:
+    tags: true

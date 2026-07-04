@@ -1,0 +1,62 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn -version
+
+before_script:
+  - chmod +x util/*.sh
+
+script:
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f pom.xml
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f pom.xml
+
+after_success:
+  - util/print_surefire_reports.sh
+
+deploy:
+  on:
+    tags: true
+  environment:
+    SECRET_1: $SECRET_1
+    SECRET_2: $SECRET_2
+    SECRET_3: $SECRET_3
+  script:
+    - util/deploy_snapshot.sh
+    - util/update_snapshot_docs.sh
+
+matrix:
+  include:
+    - java: 8
+      root_pom: pom.xml
+    - java: 11
+      root_pom: android/pom.xml
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - 'ppa:openjdk/ppa'
+
+branches:
+  only:
+    - master
+    - release**
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com

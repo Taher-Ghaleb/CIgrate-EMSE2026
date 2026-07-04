@@ -1,0 +1,23 @@
+language: java
+jdk:
+  - openjdk11
+
+script:
+  -./gradlew assembleDebug checkstyle lintDebug --stacktrace
+
+deploy:
+  on:
+    branch: master
+  environment:
+    matrix:
+      - SECRET_KEY_1=your_secret_key_1
+      - SECRET_KEY_2=your_secret_key_2
+  before_script:
+    - chmod +x./gradlew
+  script:
+    -./gradlew publishSample --stacktrace
+  after_script:
+    - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+    - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+```
+Note: Replace `your_secret_key_1` and `your_secret_key_2` with your actual secret keys.

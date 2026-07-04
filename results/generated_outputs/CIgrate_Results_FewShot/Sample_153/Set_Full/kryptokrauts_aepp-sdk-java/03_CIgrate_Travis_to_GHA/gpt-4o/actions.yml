@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+  pull_request:
+    branches:
+      - dev
+      - master
+
+env:
+  PKG_CONFIG_PATH: $HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH
+  LD_LIBRARY_PATH: $HOME/libsodium/lib:$LD_LIBRARY_PATH
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: ./travis-install-libsodium.sh
+      - name: Cache Gradle and libsodium
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/libsodium
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Remove Gradle locks
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Start Docker Compose
+        run: docker-compose up -d
+      - name: Run integration tests
+        run: ./gradlew integrationTest
+      - name: Build
+        run: ./gradlew build
+
+  snapshot:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Publish Snapshot
+        run: ./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.key=${{ secrets.BINTRAY_KEY }} -Dbuild.number=${{ github.run_number }}
+
+  release:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Prepare Release
+        run: |
+          VERSION=$(./gradlew -q pV)
+          TAG="v$VERSION"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git tag $TAG
+      - name: Release to Bintray
+        run: ./gradlew bintrayUpload -x test -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.key=${{ secrets.BINTRAY_KEY }} -Dbuild.number=${{ github.run_number }}
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.prepare_release.outputs.TAG }}
+          release_name: Release ${{ steps.prepare_release.outputs.VERSION }}
+          body: "Please take a look into the [release notes](https://github.com/kryptokrauts/aepp-sdk-java/blob/${{ steps.prepare_release.outputs.TAG }}/docs/release-notes/RELEASE-NOTES-${{ steps.prepare_release.outputs.VERSION }}.md) for more information about the recent changes."
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload JAR files
+        uses: actions/upload-artifact@v3
+        with:
+          name: JAR files
+          path: build/libs/*.jar

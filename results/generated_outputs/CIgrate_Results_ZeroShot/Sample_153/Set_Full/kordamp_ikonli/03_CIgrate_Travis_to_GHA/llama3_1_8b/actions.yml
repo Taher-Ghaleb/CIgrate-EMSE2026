@@ -1,0 +1,52 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+      -'release/*'
+  pull_request:
+    branches:
+      - main
+      - 'feature/*'
+      -'release/*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      xvfb:
+        image: docker:latest
+        ports:
+          - 99:99
+        command: ['sh', '-c', 'xvfb-run --server-args=-screen 0 1024x768x24 &']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Gradle
+        uses: actions/cache@v4
+          at: gradle-cache
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradlew') }}
+      - name: Cache Sonar
+        uses: actions/cache@v4
+          at: sonar-cache
+          path: $HOME/.sonar/cache/
+          key: ${{ runner.os }}-sonar-${{ hashFiles('sonar-project.properties') }}
+      - name: Install dependencies
+        run: |
+         ./gradlew --version
+      - name: Build and test
+        run: |
+         ./gradlew clean build --console=plain -S --scan
+      - name: Send notification
+        uses: actions/notify@v2
+          dependencies: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          title: Build and test completed
+          message: The build and test completed successfully.

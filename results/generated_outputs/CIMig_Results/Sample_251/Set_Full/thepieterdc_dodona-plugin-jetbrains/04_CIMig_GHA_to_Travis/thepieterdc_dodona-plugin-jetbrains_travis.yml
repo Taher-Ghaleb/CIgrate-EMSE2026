@@ -1,0 +1,31 @@
+env:
+  global:
+    OBJ-NODE:
+      secure: token
+    OBJ-NODE:
+      secure: token
+notifications: email
+before_cache:
+  rm -fr ~/.gradle*/plugin-resolution/
+  rm -f ~/.gradle-2/modules-2.lock
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  Java
+jdk: [jdk7,jdk8]
+before_install:
+  java -version
+install:
+  TRUE
+script:
+  script:
+    ./gradlew assemble
+after_success:
+  bash <(curl-cmd
+addons:
+  firefox: latest
+include:
+  name: java

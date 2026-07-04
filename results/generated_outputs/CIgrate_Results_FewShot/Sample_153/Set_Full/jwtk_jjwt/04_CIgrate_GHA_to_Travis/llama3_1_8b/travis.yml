@@ -1,0 +1,44 @@
+Here is the equivalent complete Travis CI configuration:
+
+```yaml
+language: java
+jdk:
+  - oraclejdk7-custom
+  - openjdk8
+  - openjdk11
+  - openjdk17
+
+fail-fast: false
+
+before_install:
+  - echo "Building with JDK ${{ matrix.jdk }}"
+
+install:
+  - # Download and install Oracle JDK 7 (custom)
+    if: matrix.jdk == 'oraclejdk7-custom'
+    script: |
+      # Download and install Oracle JDK 7
+      wget https://s3.amazonaws.com/d2fbee19-5fe2-425f-ae11-cd25b35dc99a/jdk-7u80-linux-x64.tar.gz -O /tmp/jdk-7u80-linux-x64.tar.gz
+      tar xzf /tmp/jdk-7u80-linux-x64.tar.gz -C /tmp
+      sudo mv /tmp/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle
+
+      # Install JCE Unlimited Strength Crypto policies
+      curl -q -L -C - https://238dj3282as03k369.s3-us-west-1.amazonaws.com/UnlimitedJCEPolicyJDK7.zip -o /tmp/UnlimitedJCEPolicyJDK7.zip
+      sudo unzip -oj -d "/usr/lib/jvm/java-7-oracle/jre/lib/security" /tmp/UnlimitedJCEPolicyJDK7.zip \*/\*.jar
+      rm /tmp/UnlimitedJCEPolicyJDK7.zip
+
+      # Set environment variables for subsequent steps
+      export JAVA_HOME=/usr/lib/jvm/java-7-oracle
+      export PATH=$PATH:/usr/lib/jvm/java-7-oracle/bin
+      export MAVEN_OPTS=-Dhttps.protocols=TLSv1.2 -Xmx512m -XX:MaxPermSize=128m
+
+  - # Set up JDK ${{ matrix.jdk }}
+    if: matrix.jdk!= 'oraclejdk7-custom'
+    script: |
+      # Set up JDK ${{ matrix.jdk }}
+      export JAVA_HOME=/usr/lib/jvm/${{ matrix.jdk }}
+      export PATH=$PATH:/usr/lib/jvm/${{ matrix.jdk }}/bin
+      export MAVEN_OPTS=-Dhttps.protocols=TLSv1.2 -Xmx512m -XX:MaxPermSize=128m
+
+script:
+  - # Verify Java

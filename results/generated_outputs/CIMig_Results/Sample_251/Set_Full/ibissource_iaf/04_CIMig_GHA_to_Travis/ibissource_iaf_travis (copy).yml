@@ -1,0 +1,19 @@
+cache: directories
+sudo: FALSE
+language:
+  components:
+    tools
+    extra-android-maven-repository
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    tools
+    extra-android-maven-repository
+script:
+  mvn -B -V -T1 package -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+apt:
+  packages: jdk-8-jdk
+directories: ~/.maven-

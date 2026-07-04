@@ -1,0 +1,55 @@
+name: Fedora JSS Build
+
+on:
+  push:
+    branches:
+      - main
+      - 'fedora-27'
+      - 'fedora-28'
+  pull_request:
+    branches:
+      - main
+      - 'fedora-27'
+      - 'fedora-28'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      container:
+        image: registry.fedoraproject.org/fedora:27
+        env:
+          FEDORA: 27
+        ports:
+          - 8080
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Fedora
+        run: |
+          docker pull registry.fedoraproject.org/fedora:$FEDORA
+          docker run
+            --name=container
+            --detach
+            -i
+            -v $(pwd):/root/jss
+            registry.fedoraproject.org/fedora:$FEDORA
+          docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+          docker exec container dnf copr -y enable @pki/10.6
+          docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+          docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: /root/jss
+          key: ${{ runner.os }}-fedora-$FEDORA
+          restore-keys: ${{ runner.os }}-fedora-$FEDORA
+      - name: Install dependencies
+        run: |
+          docker exec container rpm -Uvh /root/build/jss/RPMS/*
+      - name: Test
+        run: |
+          docker exec container /root/jss/test.sh
+```
+
+Note: The `script` section is replaced with a `steps` section, and the `docker exec` commands are moved to the `steps` section. The `services` section is replaced with a `services` keyword in the `jobs` section. The `env` section is moved to the `services` section. The `cache` section is replaced with the `actions/cache` action. The `allow_failures` keyword is replaced with the `continue-on-error` keyword.

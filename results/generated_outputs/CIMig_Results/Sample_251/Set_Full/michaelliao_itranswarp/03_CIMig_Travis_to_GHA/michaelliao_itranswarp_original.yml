@@ -1,0 +1,18 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path
+        restore-keys: jdk11-
+      run: mvn -DskipTests=true clean package
+    - name: Placeholder
+      uses: actions/checkout@version
+

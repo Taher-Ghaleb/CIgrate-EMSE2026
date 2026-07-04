@@ -1,0 +1,75 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 9"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-9
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - mvn clean verify
+
+after_success:
+  - echo "Deploying to OSSRH"
+  - mvn deploy --settings travis_settings.xml
+
+after_failure:
+  - echo "Deploy failed"
+
+deploy:
+  on:
+    push:
+      branches:
+        only:
+          - master
+  environment:
+    MAVEN_USERNAME: $OSSRH_USERNAME
+    MAVEN_PASSWORD: $OSSRH_PASSWORD
+
+matrix:
+  include:
+    - java-version: 9
+      distribution: temurin
+      cache: maven
+    - java-version: 8
+      distribution: temurin
+      cache: maven
+      server-id: ossrh
+      server-username: OSSRH_USERNAME
+      server-password: OSSRH_PASSWORD
+
+services:
+  - docker-compose
+
+addons:
+  services:
+    - travis-ssh
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - your_email@example.com
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+continue-on-error:
+  - true
+
+branches:
+  only:
+    - master
+  except:
+    - main

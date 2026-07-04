@@ -1,0 +1,22 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew publishPlugins -Pgradle.publish.key=$GRADLE_PUBLISH_KEY -Pgradle.publish.secret=$GRADLE_PUBLISH_SECRET
+secure:
+  token: $sonar_token
+sonarcloud:
+  organization: powsybl-ci-github
+stages:
+  prepare
+  test
+  Publish

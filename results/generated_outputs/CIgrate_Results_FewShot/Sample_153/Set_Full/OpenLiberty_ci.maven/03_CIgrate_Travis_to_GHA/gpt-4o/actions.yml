@@ -1,0 +1,43 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [8, 11]
+        runtime: [ol, wlp]
+        runtime_version: ['19.0.0.6', '19.0.0.3']
+    env:
+      RUNTIME: ${{ matrix.runtime }}
+      RUNTIME_VERSION: ${{ matrix.runtime_version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Delete old .m2 artifacts
+        run: |
+          echo "Deleting old .m2 artifacts..."
+          rm -rf $HOME/.m2/repository/net/wasdev
+          rm -rf $HOME/.m2/repository/io/openliberty
+      - name: Install ci.common lib
+        run: |
+          echo 'Installing ci.common lib...'
+          git clone https://github.com/OpenLiberty/ci.common.git ./ci.common
+          cd ./ci.common
+          mvn clean install
+          cd ..
+      - name: Run Maven verify
+        run: travis_wait 30 mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=${{ env.RUNTIME }} -DruntimeVersion=${{ env.RUNTIME_VERSION }}

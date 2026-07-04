@@ -1,0 +1,20 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+script:
+  - mvn clean install -DskipTests -B -V
+  - mvn test
+  - sh ./tools/check_format.sh
+
+after_success:
+  - uses: codecov/codecov-action@v4
+```
+
+This Travis CI configuration maintains the semantics of the GitHub Actions workflow, including the use of Maven, JDK 8, and the skipping of tests during the installation step. The `codecov/codecov-action@v4` is used to upload coverage reports, which is the equivalent of the GitHub Actions `codecov/codecov-action@v4`. The `maven` addon is used to install Maven, which is the equivalent of the GitHub Actions `actions/cache` for the Maven cache. The `sudo: false` and `install: true` are included to maintain the semantics of the GitHub Actions workflow.

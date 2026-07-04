@@ -1,0 +1,66 @@
+language: java
+jdk:
+  - openjdk17
+
+services:
+  - docker
+
+addons:
+  apt:
+    packages:
+      - chromium-browser
+
+env:
+  global:
+    - secure: $ENCRYPTED_7051AC01CF89_KEY
+    - secure: $ENCRYPTED_7051AC01CF89_IV
+    - secure: $CODECOV_TOKEN
+    - secure: $DOCKER_PASSWORD
+    - secure: $DOCKER_LOGIN
+    - secure: $CONNECT_LINE
+    - secure: $UPDATE_COMMAND
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - frontend/node
+    - frontend/node_modules
+
+before_install:
+  - openssl aes-256-cbc -K $ENCRYPTED_7051AC01CF89_KEY -iv $ENCRYPTED_7051AC01CF89_IV -in ./.travis/id_rsa.enc -out ~/.ssh/id_rsa -d
+  - chmod 600 ~/.ssh/id_rsa
+  - nvm install node
+  - npm install -g npm@latest
+  - npm ci --prefix frontend
+  - firefox --version || wget -qO- https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US | tar xjf - -C /tmp && sudo mv /tmp/firefox /opt/firefox && sudo ln -s /opt/firefox/firefox /usr/bin/firefox
+
+install:
+  - chmod +x mvnw
+  - ./mvnw -U -q -Drevision=$(date +%Y%m%d.%H.%M) -P frontend -P jacoco -P docker -P webdriver-chrome -P webdriver-firefox -Dcustom.selenium.headless=true clean install
+
+before_script:
+  - cd docker
+  - docker-compose up -d
+  - cd ..
+
+script:
+  - ./mvnw -U -q -Drevision=$(date +%Y%m%d.%H.%M) -pl deploy-test -P deploy-test clean test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
+      echo "Pushing Docker image";
+      echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_LOGIN" --password-stdin;
+      docker push nkonev/blog:latest;
+      ssh -o "BatchMode yes" -o StrictHostKeyChecking=no -q $CONNECT_LINE "$UPDATE_COMMAND";
+    fi
+
+after_failure:
+  - echo "Build failed"
+
+after_script:
+  - cd docker
+  - docker-compose down
+  - cd ..
+  - rm -rf ~/.m2/repository/com/github/nkonev/blog
+  - rm -rf frontend/node_modules/.cache

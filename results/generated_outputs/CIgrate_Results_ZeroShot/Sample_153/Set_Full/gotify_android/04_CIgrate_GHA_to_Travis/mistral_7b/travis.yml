@@ -1,0 +1,56 @@
+language: bash
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+    types: [release]
+
+services:
+  - docker
+  - android
+
+before_install:
+  - openssl aes-256-cbc -K $KEYSTORE_ENCRYPTION_KEY -iv $KEYSTORE_ENCRYPTION_IV -in gotify-release-key.jks.enc -out gotify-release-key.jks -d
+
+script:
+  - java --version
+  - git rev-parse --short HEAD
+  - git config user.email "youremail@example.com"
+  - git config user.name "Your Name"
+  - android list sdk --verbose
+  - sdkmanager "platform-tools" "build-tools;28.0.3" "platforms;android-28" "extras;google;m2repository" "extras;android;m2repository"
+  - chmod +x gradlew
+  - ./gradlew clean build --stacktrace
+
+matrix:
+  include:
+    - java:
+        distribution: temurin
+        java_version: 8
+
+  before_install:
+    - actions/setup-java@v4
+
+  install:
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+  script:
+    - name: Build with Gradle (for non-release builds)
+      run: ./gradlew clean build --stacktrace
+    - name: Build release APK
+      if: $TRAVIS_TAG
+      run: ./gradlew clean assembleRelease --stacktrace
+
+    - name: Decrypt signing key
+      env:
+        KEYSTORE_KEY: $KEYSTORE_ENCRYPTION_KEY
+        KEYSTORE_IV: $KEYSTORE_ENCRYPTION_IV
+      run: |
+        openssl aes-256-cbc -K "$KEYSTORE_KEY" -iv "$KEYSTORE_IV" \
+          -in gotify-release-key.jks.

@@ -1,0 +1,26 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        jdk: [oraclejdk8, oraclejdk7, openjdk6]
+    env:
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64 # TODO: Determine correct JAVA_HOME based on jdk version
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install Oracle Java 8 Installer
+        if: ${{ matrix.os == 'ubuntu-latest }}
+        run: sudo apt-get update && sudo apt-get install -y oracle-java8-installer
+      - name: Build with Ant
+        run: ant -f make-jar.xml

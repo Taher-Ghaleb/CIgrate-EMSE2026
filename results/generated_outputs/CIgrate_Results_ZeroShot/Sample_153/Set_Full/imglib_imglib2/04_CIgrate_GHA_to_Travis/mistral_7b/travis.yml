@@ -1,0 +1,40 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+
+before_install:
+  - install: actions/checkout@v4
+
+services:
+  - docker: docker-latest
+
+before_script:
+  - run: |
+      curl -sSL https://get.sdkman.io | bash
+      sdk install java 8.0.262-temurin
+      export PATH=$HOME/.sdkman/candidates/java/8.0.262-temurin/bin:$PATH
+      chmod +x .travis/build.sh
+
+script:
+  - ./.travis/build.sh
+
+cache:
+  directories:
+    - ~/.sdkman/candidates/java/8.0.262-temurin/bin
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: ./deploy.sh
+
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including branches/tags filters, JDK version, and caches. It uses Travis lifecycle keys (before_install, script, deploy) and services/addons for services. The script section is equivalent to the GitHub Actions workflow's build script. The deploy section is for releasing on tags, similar to the GitHub Actions workflow's releases trigger.

@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - qa
+  pull_request:
+    branches:
+      - master
+      - qa
+
+env:
+  CHANGE_MINIKUBE_NONE_USER: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Unset Java options
+        run: unset _JAVA_OPTIONS
+      - name: Prepare test script
+        run: |
+          cd finish
+          chmod +x ../scripts/travisTest.sh
+      - name: Setup shared mount
+        run: sudo mount --make-rshared /
+      - name: Install kubectl
+        run: |
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+          chmod +x kubectl
+          sudo ln -s $(pwd)/kubectl /usr/local/bin/kubectl
+      - name: Install minikube
+        run: |
+          wget https://github.com/kubernetes/minikube/releases/download/v0.28.2/minikube-linux-amd64 -q -O minikube
+          chmod +x minikube
+          sudo ln -s $(pwd)/minikube /usr/local/bin/minikube
+      - name: Start minikube
+        run: sudo minikube start --vm-driver=none --bootstrapper=localkube
+      - name: Run tests
+        run: cd finish && ../scripts/travisTest.sh

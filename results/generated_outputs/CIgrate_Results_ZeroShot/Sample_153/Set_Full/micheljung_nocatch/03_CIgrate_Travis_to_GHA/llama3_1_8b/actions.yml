@@ -1,0 +1,49 @@
+name: Java CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - 'coverity_scan'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      coverity_scan:
+        image: coverityscan/scan
+        options: --project-name=micheljung/nocatch --description="Get rid of annoying checked exceptions!" --notification-email=michel.jung89@gmail.com --build-command-prepend="./gradlew clean" --build-command="./gradlew build"
+    strategy:
+      matrix:
+        - TERM=dumb
+    env:
+      global:
+        secure: "********************"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+         ./gradlew install
+      - name: Run tests
+        run: |
+         ./gradlew test jacocoTestReport &&./gradlew coveralls bintrayUpload
+      - name: Cache dependencies
+        uses: actions/cache@v4
+          at: cache
+          path: ~/.gradle
+          key: ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}-${GITHUB_RUN_NUMBER}
+          restore-keys: |
+            ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}
+      - name: Deploy
+        uses: deploy/deploy@v1
+          on:
+            release
+          branch: ${{ github.event.release.tag_name }}

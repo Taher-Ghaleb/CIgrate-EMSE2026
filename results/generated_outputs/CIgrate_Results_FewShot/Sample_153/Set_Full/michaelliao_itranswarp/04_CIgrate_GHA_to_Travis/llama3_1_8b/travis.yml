@@ -1,0 +1,26 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk: openjdk11
+install: true
+cache: maven
+
+script:
+  - mvn clean package
+
+after_success:
+  - if: branch = "main"
+    deploy:
+      provider: script
+      script: |
+        curl -X POST \
+        https://api.travis-ci.org/repos/your-repo-id/jobs/your-job-id/artifacts \
+        -H 'Content-Type: application/json' \
+        -H 'Authorization: Bearer your-travis-api-token' \
+        -d '{"name": "package", "path": "target/*.jar"}'
+```
+
+Note: Replace `your-repo-id`, `your-job-id`, and `your-travis-api-token` with your actual repository ID, job ID, and Travis API token respectively.
+
+Also, the `after_success` section is used to upload the build artifacts to Travis CI after the job has successfully completed. The `if` condition is used to check if the branch is `main` before uploading the artifacts.

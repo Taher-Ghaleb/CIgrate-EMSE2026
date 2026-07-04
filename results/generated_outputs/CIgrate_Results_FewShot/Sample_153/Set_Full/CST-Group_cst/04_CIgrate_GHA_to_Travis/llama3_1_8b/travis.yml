@@ -1,0 +1,24 @@
+language: java
+sudo: false
+install: true
+jdk:
+  - openjdk8
+  - oraclejdk9
+env:
+  matrix:
+    - CC_TEST_REPORTER_ID=430594ee361ff2e93ebf0a942f639b8092c6f17b7c5098f9c75abc404311dfc7
+script:
+  - chmod +x gradlew
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 >./cc-test-reporter
+  - chmod +x./cc-test-reporter
+  -./cc-test-reporter before-build
+  -./gradlew clean build jacocoTestReport
+  - JACOCO_SOURCE_PATH=src/main/java./cc-test-reporter format-coverage./build/reports/jacoco/test/jacocoTestReport.xml --input-type jacoco
+  -./cc-test-reporter upload-coverage -r $CC_TEST_REPORTER_ID
+after_success:
+  - curl -X POST $SLACK_WEBHOOK_URL \
+    -H 'Content-Type: application/json' \
+    -d "{\"text\":\"Build $TRAVIS_BUILD_STATUS: $TRAVIS_REPO_SLUG@${TRAVIS_BRANCH} (JDK $TRAVIS_JDK) - Commit: ${TRAVIS_COMMIT}\"}"
+cache:
+  directories:
+    - '$HOME/.gradle'

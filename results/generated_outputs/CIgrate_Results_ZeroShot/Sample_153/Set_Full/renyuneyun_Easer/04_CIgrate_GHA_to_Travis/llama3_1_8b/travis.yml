@@ -1,0 +1,49 @@
+language: java
+
+before_install:
+  - echo "Installing JDK 8"
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk
+
+install:
+  - echo "Installing Android SDK"
+  - apt-get install -y android-sdk
+  - echo "Installing Gradle"
+  - apt-get install -y gradle
+
+before_script:
+  - echo "Setting up environment variables"
+  - export COMPILE_SDK_VERSION=29
+  - export EMULATOR_API=22
+  - export BUILD_TOOLS_VERSION=28.0.3
+  - export ABI=armeabi-v7a
+  - export ADB_INSTALL_TIMEOUT=5
+
+script:
+  - echo "Setting up JDK 8"
+  - java -version
+  - echo "Setting up Android SDK"
+  - android list sdk --all
+  - echo "Preparing Gradle"
+  - chmod +x gradlew
+  - echo "Installing Android components"
+  - sdkmanager --list || true
+  - echo yes | sdkmanager "tools" "platform-tools" "build-tools;${BUILD_TOOLS_VERSION}" "platforms;android-${COMPILE_SDK_VERSION}" "platforms;android-${EMULATOR_API}" "extras;android;m2repository" "system-images;android-${EMULATOR_API};default;${ABI}"
+  - echo yes | sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.2"
+  - echo yes | sdkmanager "extras;m2repository;com;android;support;constraint;constraint-layout-solver;1.0.2"
+  - echo "Starting emulator"
+  - echo no | avdmanager create avd --force -n test -k "system-images;android-${EMULATOR_API};default;${ABI}" --abi ${ABI}
+  - emulator -avd test -no-audio -no-window &
+  - adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+  - adb shell input keyevent 82 &
+  - echo "Assembling"
+  -./gradlew assembleRelease
+  - echo "Running Jacoco"
+  -./gradlew jacocoTestReport
+  - echo "Running instrumented tests"
+  -./gradlew connectedCheck
+  - echo "Uploading coverage"
+  - codecov
+
+after_success:
+  - echo "Cleaning up Grad

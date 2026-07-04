@@ -1,0 +1,60 @@
+language: java
+cache:
+  directories:
+    - ~/.m2/repository
+  pip_cache: false
+  apt_cache: false
+
+branches:
+  only:
+    - main
+    - develop
+
+matrix:
+  allow_failures: true
+  fast_finish: true
+  include:
+    - java-version: 8
+      runtime: ol
+      runtime-version: 19.0.0.6
+    - java-version: 8
+      runtime: wlp
+      runtime-version: 19.0.0.6
+    - java-version: 11
+      runtime: ol
+      runtime-version: 19.0.0.6
+    - java-version: 11
+      runtime: wlp
+      runtime-version: 19.0.0.6
+    - java-version: 11
+      runtime: ol
+      runtime-version: 19.0.0.3
+    - java-version: 11
+      runtime: wlp
+      runtime-version: 19.0.0.3
+
+before_install:
+  - echo "Before install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before script"
+
+script:
+  - echo "Deleting old .m2 artifacts..."
+  - rm -rf $HOME/.m2/repository/net/wasdev
+  - rm -rf $HOME/.m2/repository/io/openliberty
+  - echo 'Installing ci.common lib...'
+  - git clone https://github.com/OpenLiberty/ci.common.git ./ci.common
+  - cd ./ci.common
+  - mvn clean install
+  - cd ..
+  - mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=${matrix.runtime} -DruntimeVersion=${matrix.runtime-version}
+
+after_success:
+  - echo "After success"
+
+after_failure:
+  - echo "After failure"

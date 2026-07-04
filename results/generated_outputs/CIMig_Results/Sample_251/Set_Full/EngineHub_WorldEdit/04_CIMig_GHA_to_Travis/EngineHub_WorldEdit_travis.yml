@@ -1,0 +1,16 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    jdk8
+apt:
+  packages: jdk-6-jdk
+sudo: FALSE
+dist: trusty

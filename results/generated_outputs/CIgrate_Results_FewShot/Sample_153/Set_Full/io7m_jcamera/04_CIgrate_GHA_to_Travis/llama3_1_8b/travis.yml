@@ -1,0 +1,31 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - oraclejdk8
+env:
+  matrix:
+    - _JAVA_OPTIONS=-Xms1G -Xmx4G
+install: true
+script:
+  - mvn clean verify
+after_success:
+  - irc:
+      server: irc.libera.chat
+      port: 6697
+      channel: '#io7m'
+      nickname: github-actions-io7m
+      message: |
+        [${{ TRAVIS_REPO_SLUG }}] Build ${{ TRAVIS_STATUS }} - ${{ TRAVIS_EVENT_TYPE }}: ${{ TRAVIS_COMMIT_MESSAGE }} (${{ TRAVIS_COMMIT }})
+        Details: ${{ TRAVIS_BUILD_WEB_URL }}
+```
+
+Note that I've used the following Travis CI variables:
+
+- `TRAVIS_REPO_SLUG`: The repository slug (e.g., `my-org/my-repo`)
+- `TRAVIS_STATUS`: The build status (e.g., `passed`, `failed`, etc.)
+- `TRAVIS_EVENT_TYPE`: The event type (e.g., `push`, `pull_request`, etc.)
+- `TRAVIS_COMMIT_MESSAGE`: The commit message
+- `TRAVIS_COMMIT`: The commit hash
+- `TRAVIS_BUILD_WEB_URL`: The build URL

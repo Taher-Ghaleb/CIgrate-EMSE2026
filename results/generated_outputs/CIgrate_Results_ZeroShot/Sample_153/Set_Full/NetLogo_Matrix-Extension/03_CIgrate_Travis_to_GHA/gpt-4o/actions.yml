@@ -1,0 +1,59 @@
+name: Scala CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [8]
+    env:
+      SCALA_VERSION: 2.11.7
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Ivy2
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ivy2
+          key: ${{ runner.os }}-ivy2-${{ hashFiles('**/build.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-ivy2-
+
+      - name: Cache SBT Boot
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.sbt/boot
+          key: ${{ runner.os }}-sbt-boot-${{ hashFiles('**/build.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-boot-
+
+      - name: Cache SBT Launchers
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.sbt/launchers
+          key: ${{ runner.os }}-sbt-launchers-${{ hashFiles('**/build.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-launchers-
+
+      - name: Install Dependencies
+        run: sbt update
+
+      - name: Compile
+        run: sbt compile
+
+      - name: Test
+        run: sbt test

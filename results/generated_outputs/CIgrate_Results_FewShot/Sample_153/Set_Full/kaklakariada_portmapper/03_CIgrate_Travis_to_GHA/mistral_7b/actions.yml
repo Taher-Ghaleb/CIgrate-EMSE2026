@@ -1,0 +1,41 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  SONARCLOUD_TOKEN: "********************"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Gradle and SonarQube
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.sonar/cache/
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/build.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-sonar-
+      - name: Fetch and clean Gradle cache
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Check and SonarQube
+        run: ./gradlew clean check sonarqube --info --stacktrace --warning-mode all
+      - name: Upload SonarQube results
+        uses: sonarcloud/sonar-scanner-github-actions@4
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          sonarcloudLogin: ${{ secrets.SONARCLOUD_TOKEN }}
+          sonarcloudOrganization: kaklakariada-github

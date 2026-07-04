@@ -1,0 +1,45 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - master
+    - /^v[0-9]+\.[0-9]+$/
+  except:
+    - /^v[0-9]+\.[0-9]+-.*/
+tags: true
+env:
+  global:
+    - DEPLOY_KEY: $DEPLOY_KEY
+before_install:
+  - echo "Before install"
+install:
+  - echo "Install"
+before_script:
+  - echo "Before script"
+script:
+  - mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - ant dist
+after_success:
+  - if [ "${TRAVIS_TAG}" != "" ]; then
+    - if [ ! -f "MedTagger.zip" ]; then
+      - echo "Error: MedTagger.zip not found"
+      - exit 1
+    fi
+  - if [ "${TRAVIS_TAG}" != "" ]; then
+    - echo "Creating and Uploading Release"
+    - echo "GITHUB_TOKEN: $GITHUB_TOKEN"
+    - echo "TRAVIS_TAG: $TRAVIS_TAG"
+    - echo "files: MedTagger.zip"
+    - echo "fail_on_unmatched_files: true"
+    - echo "draft: false"
+    - echo "prerelease: false"
+    - echo "Softprops action-gh-release"
+    # TODO: Softprops/action-gh-release equivalent in Travis CI
+    - echo "Release creation and asset upload not fully implemented in Travis CI."
+  fi

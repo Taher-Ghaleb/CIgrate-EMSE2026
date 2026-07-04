@@ -1,0 +1,23 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.sdkman/candidates/
+jdk:
+  - openjdk8
+branches:
+  only:
+    - master
+    - develop
+    - /^feature\/.+$/
+    - /^bugfix\/.+$/
+script:
+  - mvn clean verify cobertura:cobertura
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      curl -L https://codecov.io/bash | bash
+    fi
+env:
+  global:
+    - CODECOV_TOKEN: $CODECOV_TOKEN

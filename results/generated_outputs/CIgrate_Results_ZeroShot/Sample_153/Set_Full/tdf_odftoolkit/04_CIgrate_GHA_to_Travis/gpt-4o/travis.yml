@@ -1,0 +1,24 @@
+language: java
+jdk:
+  - openjdk11
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+services:
+  - docker
+
+before_install:
+  - echo "Setting up environment"
+
+install:
+  - mvn clean install -Ppedantic
+
+script:
+  - echo "Build and tests completed"
+
+branches:
+  only:
+    - main
+    - develop

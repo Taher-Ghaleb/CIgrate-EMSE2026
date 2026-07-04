@@ -1,0 +1,46 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dist: [bionic]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y sqlite3
+          echo $JAVA_HOME
+      - name: Install PROJ
+        uses: actions/download-artifact@v2
+        with:
+          name: proj-6.2.1.tar.gz
+          path: proj-6.2.1.tar.gz
+        run: |
+          tar xf proj-6.2.1.tar.gz
+          cd proj-6.2.1
+         ./configure
+          NPROC=$(nproc)
+          make -j${NPROC}
+          make install
+      - name: Build PROJ-JNI
+        run: |
+          cd..
+          mvn package
+      - name: Run tests
+        run: |
+          java --class-path target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java
+```
+
+Note: The `actions/download-artifact@v2` action is used to download the PROJ tarball, and the `apt-get` commands are used to install the dependencies. The `make` command is used to build and install PROJ. The `mvn` command is used to build PROJ-JNI, and the `java` command is used to run the tests.

@@ -1,0 +1,44 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - '*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --always-chown-rw /srv
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: '11'
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install dependencies
+      run: |
+        mvn --batch-mode --no-transfer-progress clean install -DskipTests=false -DskipIntegrationTests=false -Dcheckstyle.skip=false -Drat.skip=false -Dmaven.javadoc.skip=true
+    - name: Remove unnecessary dependencies
+      run: |
+        rm -rf $HOME/.m2/repository/org/glassfish/javax.el/3.0.1-b08
+    - name: Run tests
+      run: |
+        mvn test
+    - name: Upload test results
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+    - name: Fail the job on error
+      continue-on-error: true

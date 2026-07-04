@@ -1,0 +1,47 @@
+language: java
+sudo: required
+branches:
+  only:
+    - master
+  except:
+    - /^pull\/[0-9]+$/
+
+install: true
+
+matrix:
+  include:
+    - db_profile: derby
+      name: Build with derby
+    - db_profile: mysql
+      name: Build with mysql
+    - db_profile: postgresql
+      name: Build with postgresql
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+
+before_install:
+  - echo "Setting up JDK 11"
+
+jdk:
+  - openjdk11
+
+script:
+  - mvn verify -P${db_profile}
+
+deploy:
+  needs: build
+  if: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository == 'nhl/dflib'
+  script:
+    - mvn clean source:jar javadoc:javadoc deploy -DskipTests
+  env:
+    MAVEN_USERNAME: $OSSRH_USERNAME
+    MAVEN_PASSWORD: $OSSRH_PASSWORD
+    MAVEN_GPG_PASSPHRASE: $GPG_PASSPHRASE
+  before_deploy:
+    - echo "Setting up Maven Central deployment"
+    - echo "Setting up Maven Central deployment"
+  services:
+    - docker

@@ -1,0 +1,23 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+env:
+  matrix:
+    - CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+script:
+  - chmod +x mvnw
+  - ./mvnw clean verify
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: $CODECOV_TOKEN
+      fail_ci_if_error: false

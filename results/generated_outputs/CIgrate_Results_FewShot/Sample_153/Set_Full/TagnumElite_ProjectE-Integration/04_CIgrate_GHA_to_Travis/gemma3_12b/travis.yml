@@ -1,0 +1,42 @@
+language: java
+sudo: required
+cache:
+  directories:
+    - '$HOME/.gradle/caches'
+    - '$HOME/.gradle/wrapper'
+
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - /^1\.12\.(x+)$/
+  except:
+    - tags
+
+before_install:
+  - chmod +x gradlew
+
+install:
+  - ./gradlew setupCIWorkspace -S
+
+script:
+  - ./gradlew build
+  - ./gradlew javadoc
+
+deploy:
+  provider: pages
+  token: $GITHUB_TOKEN
+  local_dir: ./build/docs/javadoc
+  keep_files: true
+  on:
+    branch: 1.12.x
+    tags: false
+    events:
+      - push
+
+after_success:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -f  $HOME/.gradle/caches/minecraft/deobfedDeps/providedDummy.jar
+  - rm -f  $HOME/.gradle/caches/minecraft/deobfedDeps/compileDummy.jar

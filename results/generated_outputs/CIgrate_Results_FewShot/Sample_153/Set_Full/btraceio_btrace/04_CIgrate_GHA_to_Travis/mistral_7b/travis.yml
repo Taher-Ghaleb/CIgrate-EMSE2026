@@ -1,0 +1,62 @@
+language: bash
+sudo: false
+
+env:
+  matrix:
+    - JDK_VERSION: 11
+    - PYTHON_VERSION: 3.x
+
+jdk:
+  - openjdk11
+
+script:
+  - actions/checkout@v4
+  - |
+    if [[ ! -d $HOME/.sdkman/bin/ ]]; then
+      rm -rf $HOME/.sdkman
+      curl -sL https://get.sdkman.io | bash
+      echo "sdkman_auto_answer=true" > $HOME/.sdkman/etc/config
+      echo "sdkman_auto_selfupdate=true" >> $HOME/.sdkman/etc/config
+    fi
+    source "$HOME/.sdkman/bin/sdkman-init.sh"
+    sdk version
+
+addons:
+  cache:
+    directories:
+      - '$HOME/.sdkman'
+      - '$HOME/.cache/pip'
+
+before_install:
+  - pip install codecov
+
+install:
+  - actions/setup-java@v5 \
+    with:
+      distribution: 'temurin'
+      java-version: ${{ env.JDK_VERSION }}
+      cache: 'gradle'
+  - actions/setup-python@v5 \
+    with:
+      python-version: ${{ env.PYTHON_VERSION }}
+
+before_script:
+  - |
+    if [[ ! -d $HOME/.sdkman/bin/ ]]; then
+      rm -rf $HOME/.sdkman
+      curl -sL https://get.sdkman.io | bash
+      echo "sdkman_auto_answer=true" > $HOME/.sdkman/etc/config
+      echo "sdkman_auto_selfupdate=true" >> $HOME/.sdkman/etc/config
+    fi
+    source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+script:
+  - |
+    source ./config_build.sh
+    ./gradlew assemble -DexcludeBenchmark
+    ./run_tests.sh
+
+after_success:
+  - |
+    source ./config_build.sh
+    ./

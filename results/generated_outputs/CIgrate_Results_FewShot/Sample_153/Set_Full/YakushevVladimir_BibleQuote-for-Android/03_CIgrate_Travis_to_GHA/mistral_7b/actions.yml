@@ -1,0 +1,53 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK: oraclejdk8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ env.JDK }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: ${{ env.JDK }}
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ env.JDK }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Cache Gradle caches
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/
+          key: ${{ runner.os }}-gradle-caches-${{ env.JDK }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-caches-
+      - name: Cache Gradle wrapper
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-wrapper-${{ env.JDK }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-wrapper-
+      - name: Grant execute permissions to gradlew
+        run: chmod +x gradlew
+      - name: Install Android SDK
+        uses: actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platforms;android-30"
+          sdkmanager "tools"
+          sdkmanager "platform-tools"
+          sdkmanager "tools"
+          sdkmanager "build-tools;30.0.3"
+          sdkmanager "android-30"
+          sdk

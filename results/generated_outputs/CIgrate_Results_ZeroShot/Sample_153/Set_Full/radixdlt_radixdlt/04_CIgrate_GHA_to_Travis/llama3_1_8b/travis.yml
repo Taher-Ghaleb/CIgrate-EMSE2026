@@ -1,0 +1,71 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 11"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-11
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - echo "Setting up Gradle"
+  - curl -s https://services.gradle.org/distributions/gradle-7.5.1/bin | tar -xz -C /tmp/gradle
+  - export GRADLE_HOME=/tmp/gradle
+  - export PATH=$GRADLE_HOME/bin:$PATH
+
+install:
+  - echo "Installing dependencies"
+  -./gradlew wrapper --gradle-version 7.5.1 --distribution-type ALL
+
+script:
+  - echo "Building the project"
+  -./gradlew assemble --info
+  - echo "Uploading build"
+  - cp -r build /tmp/build
+  - echo "Uploading build artifact"
+  - cp -r /tmp/build /tmp/artifacts
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploying to production"
+
+after_failure:
+  - echo "Deploying to production on failure"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production"
+  on:
+    branch: never
+  skip_cleanup: true
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on_success: always
+    on_failure: always
+
+matrix:
+  allow_failures: true
+  include:
+    - java_version: 11
+      distribution: temurin
+    - java_version: 17
+      distribution: temurin
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - docker-compose
+  - wait
+
+branches:
+  only:
+    - main
+  except:
+    - dev
+    - feature/*

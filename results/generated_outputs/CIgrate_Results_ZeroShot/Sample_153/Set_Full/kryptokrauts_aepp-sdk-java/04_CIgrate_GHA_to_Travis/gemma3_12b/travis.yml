@@ -1,0 +1,73 @@
+language: java
+jdk: 8
+branches:
+  only:
+    - master
+    - dev
+
+matrix:
+  allow_failures: true
+  include:
+    - java: 8
+      script:
+        - chmod +x travis-install-libsodium.sh
+        - ./travis-install-libsodium.sh
+        - export PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH
+        - export LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH
+        - chmod +x gradlew
+        - docker-compose up -d &
+        - ./gradlew integrationTest
+        - ./gradlew build
+        - echo "Uploading build artifacts..."
+        - pip install awscli
+        - aws s3 cp build/libs/*.jar s3://your-s3-bucket/jar-files/
+      cache:
+        directories:
+          - ~/.m2/repository
+          - ~/.gradle/caches
+          - $HOME/.npm
+          - ~/libsodium
+      env:
+        global:
+          - FOO: $FOO
+    - java: 8
+      branch: dev
+      script:
+        - chmod +x travis-install-libsodium.sh
+        - ./travis-install-libsodium.sh
+        - export PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH
+        - export LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH
+        - chmod +x gradlew
+        - docker-compose up -d &
+        - ./gradlew integrationTest
+        - ./gradlew build
+        - ./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=${BINTRAY_USER} -Dbintray.key=${BINTRAY_KEY} -Dbuild.number=${TRAVIS_BUILD_NUMBER}
+      cache:
+        directories:
+          - ~/.m2/repository
+          - ~/.gradle/caches
+          - $HOME/.npm
+          - ~/libsodium
+      env:
+        global:
+          - FOO: $FOO
+    - java: 8
+      branch: master
+      script:
+        - chmod +x travis-install-libsodium.sh
+        - ./travis-install-libsodium.sh
+        - export PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH
+        - export LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH
+        - chmod +x gradlew
+        - ./gradlew bintrayUpload -x test -Dbintray.user=${BINTRAY_USER} -Dbintray.key=${BINTRAY_KEY} -Dbuild.number=${TRAVIS_BUILD_NUMBER}
+        - ./gradlew -q pV > version
+        - VERSION=$(cat version)
+        - echo "tag=v$VERSION"
+        - echo "tag=v$VERSION" > tag.txt
+        - echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+        - echo "tag=v$VERSION" >> tag.txt
+        - echo "tag=v$VERSION" >> tag.txt
+        - echo "tag=v$VERSION" >> tag.txt
+        - echo "tag=v$VERSION" >> tag.txt
+        - echo "tag=v$VERSION" >> tag.txt
+        - echo "tag=v$VERSION" >> tag.txt

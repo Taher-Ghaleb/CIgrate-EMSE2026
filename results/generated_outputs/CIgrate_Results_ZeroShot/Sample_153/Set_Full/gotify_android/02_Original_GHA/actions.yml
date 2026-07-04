@@ -1,0 +1,87 @@
+name: Android CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+        cache: 'gradle'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install Android SDK components
+      run: sdkmanager "platform-tools" "build-tools;28.0.3" "platforms;android-28" "extras;google;m2repository" "extras;android;m2repository"
+
+    - name: Make gradlew executable
+      run: chmod +x gradlew
+
+    - name: Build with Gradle
+      run: ./gradlew clean build --stacktrace
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') && github.repository == 'gotify/android'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+        cache: 'gradle'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install Android SDK components
+      run: sdkmanager "platform-tools" "build-tools;28.0.3" "platforms;android-28"
+
+    - name: Make gradlew executable
+      run: chmod +x gradlew
+
+    - name: Build release APK
+      run: ./gradlew clean assembleRelease --stacktrace
+
+    - name: Decrypt signing key
+      env:
+        KEYSTORE_KEY: ${{ secrets.KEYSTORE_ENCRYPTION_KEY }}
+        KEYSTORE_IV: ${{ secrets.KEYSTORE_ENCRYPTION_IV }}
+      run: |
+        openssl aes-256-cbc -K "$KEYSTORE_KEY" -iv "$KEYSTORE_IV" \
+          -in gotify-release-key.jks.enc -out gotify-release-key.jks -d
+
+    - name: Sign APK
+      env:
+        STOREPASS: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEYPASS: ${{ secrets.KEY_PASSWORD }}
+      run: |
+        jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+          -keystore gotify-release-key.jks \
+          -storepass "$STOREPASS" -keypass "$KEYPASS" \
+          app/build/outputs/apk/release/app-release-unsigned.apk gotify-release-key
+        
+        jarsigner -verify app/build/outputs/apk/release/app-release-unsigned.apk
+        
+        "${ANDROID_HOME}/build-tools/28.0.3/zipalign" -v 4 \
+          app/build/outputs/apk/release/app-release-unsigned.apk \
+          app/build/outputs/apk/release/Gotify.apk
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: app/build/outputs/apk/release/Gotify.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

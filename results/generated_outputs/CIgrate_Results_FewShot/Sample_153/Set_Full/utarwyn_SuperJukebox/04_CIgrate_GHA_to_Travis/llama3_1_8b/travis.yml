@@ -1,0 +1,28 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.sonar/cache'
+script:
+  - mvn clean verify sonar:sonar -Pcoverage
+  - mvn clean install
+after_success:
+  - if: branch ='main'
+    deploy:
+      provider: script
+      script: mvn clean verify sonar:sonar -Pcoverage -Dsonar.organization=utarwyn-github
+      on:
+        branch: main
+      environment:
+        SONAR_TOKEN: $SONAR_TOKEN
+        SONAR_ORGANIZATION: utarwyn-github
+```
+
+Note that the `after_success` section is used to deploy the code to SonarCloud on the `main` branch, and the `SONAR_TOKEN` and `SONAR_ORGANIZATION` environment variables are set accordingly.

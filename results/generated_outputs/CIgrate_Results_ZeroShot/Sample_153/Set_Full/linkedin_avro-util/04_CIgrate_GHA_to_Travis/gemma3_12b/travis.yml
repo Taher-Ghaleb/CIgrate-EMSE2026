@@ -1,0 +1,28 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - /^release\/.*$/
+  except:
+    - /^hotfix\/.*$/
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: bash -v scripts/publishToBintray.sh
+  env:
+    global:
+      BINTRAY_USERNAME: $BINTRAY_USERNAME
+      BINTRAY_API_KEY: $BINTRAY_API_KEY
+before_install:
+  - chmod +x gradlew
+install:
+  - # TODO: Gradle setup (actions/setup-gradle@v4 equivalent)
+script:
+  - ./gradlew clean build javadoc --no-daemon

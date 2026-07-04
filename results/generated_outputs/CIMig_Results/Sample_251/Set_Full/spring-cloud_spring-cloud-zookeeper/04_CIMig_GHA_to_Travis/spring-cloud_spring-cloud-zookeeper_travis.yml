@@ -1,0 +1,20 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: main
+before_install:
+  java -version
+  ./mvnw clean install -B -U -Pspring -Dmaven.test.redirectTestOutputToFile=true
+script
+apt:
+  packages: jdk-6-jdk
+directories:
+  ~/.m2/repository
+  ~/.sonar/cache
+email:
+  on_failure: always
+include:
+  stage: Build

@@ -1,0 +1,14 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn install -Dgpg.skip=true -ntp -B
+script
+directories: ~/.maven-
+include:
+  stage: build

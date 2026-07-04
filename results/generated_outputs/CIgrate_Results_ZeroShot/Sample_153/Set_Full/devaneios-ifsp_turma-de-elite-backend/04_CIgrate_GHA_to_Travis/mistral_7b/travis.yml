@@ -1,0 +1,67 @@
+language: ubuntu
+
+branches:
+  only:
+    - main
+    - release/*
+
+deploy:
+  on:
+    push:
+      tags: true
+
+before_install:
+  - checkout:
+      fetch-depth: 0
+
+script:
+  - openssl aes-256-cbc -K $FIREBASE_KEY -iv $FIREBASE_IV -in firebase/firebase-sdk-key.json.enc -out firebase/firebase-sdk-key.json -d
+  - npm install -g firebase-tools
+  - chmod +x gradlew
+  - npm run cache:clean
+  - firebase emulators:start --only auth
+  - ./gradlew test
+  - firebase emulators:stop
+
+before_install:
+  - actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '8'
+      cache: 'gradle'
+
+install:
+  - actions/setup-node@v4
+    with:
+      node-version: '18'
+      cache: 'npm'
+
+before_script:
+  - run: mkdir -p ~/.cache/firebase
+  - run: openssl aes-256-cbc -K $FIREBASE_KEY -iv $FIREBASE_IV -in firebase/firebase-sdk-key.json.enc -out firebase/firebase-sdk-key.json -d
+  - run: npm install -g firebase-tools
+  - run: chmod +x gradlew
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - docker
+
+env:
+  global:
+    FIREBASE_KEY: $FIREBASE_ENCRYPTION_KEY
+    FIREBASE_IV: $FIREBASE_ENCRYPTION_IV
+
+matrix:
+  include:
+    - java:
+        - '8'
+    - node:
+        - '18'
+
+before_script:
+  -

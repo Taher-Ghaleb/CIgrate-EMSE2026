@@ -1,0 +1,15 @@
+language: java
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+before_install:
+  - chmod +x mvnw
+
+script:
+  - ./mvnw clean verify
+  # Original Travis config included SonarCloud analysis (currently disabled):
+  # ./mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent verify sonar:sonar -fae

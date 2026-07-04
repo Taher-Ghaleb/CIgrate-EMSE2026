@@ -1,0 +1,204 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+env:
+  CHROME_BIN: /usr/bin/google-chrome
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: sudo apt-get install -y libappindicator1 fonts-liberation
+      - name: Set up Chrome and Firefox
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable firefox
+      - name: Cache Gradle and SonarQube
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.sonar/cache/
+          key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-sonar-
+      - name: Remove Gradle locks
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Run Check
+        run: ./gradlew check --no-daemon --console=plain
+      - name: Upload Reports
+        if: always()
+        run: ./.upload_reports.sh
+
+  check_sonar:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: sudo apt-get install -y libappindicator1 fonts-liberation
+      - name: Set up Chrome and Firefox
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable firefox
+      - name: Cache Gradle and SonarQube
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.sonar/cache/
+          key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-sonar-
+      - name: Remove Gradle locks
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Run Check + Sonar
+        run: ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${{ secrets.SONAR_ORG }} -Dsonar.host.url=${{ secrets.SONAR_HOST }} -Dsonar.login=${{ secrets.SONAR_LOGIN }} -Dsonar.branch.name=${{ github.ref_name }}
+      - name: Upload Reports
+        if: always()
+        run: ./.upload_reports.sh
+
+  grid:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: sudo apt-get install -y libappindicator1 fonts-liberation
+      - name: Set up Chrome and Firefox
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable firefox
+      - name: Cache Gradle and SonarQube
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.sonar/cache/
+          key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-sonar-
+      - name: Remove Gradle locks
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Run Grid
+        run: ./gradlew grid --no-daemon --console=plain -i
+      - name: Upload Reports
+        if: always()
+        run: ./.upload_reports.sh
+
+  firefox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: sudo apt-get install -y libappindicator1 fonts-liberation
+      - name: Set up Chrome and Firefox
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable firefox
+      - name: Cache Gradle and SonarQube
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.sonar/cache/
+          key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-sonar-
+      - name: Remove Gradle locks
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Run Firefox Headless
+        run: ./gradlew firefox_headless --no-daemon --console=plain -i
+      - name: Upload Reports
+        if: always()
+        run: ./.upload_reports.sh
+
+  chrome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: sudo apt-get install -y libappindicator1 fonts-liberation
+      - name: Set up Chrome and Firefox
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable firefox
+      - name: Cache Gradle and SonarQube
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.sonar/cache/
+          key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-sonar-
+      - name: Remove Gradle locks
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Run Chrome Headless
+        run: ./gradlew chrome_headless --no-daemon --console=plain -i
+      - name: Upload Reports
+        if: always()
+        run: ./.upload_reports.sh
+
+notifications:
+  slack:
+    rooms:
+      secure: "********************"

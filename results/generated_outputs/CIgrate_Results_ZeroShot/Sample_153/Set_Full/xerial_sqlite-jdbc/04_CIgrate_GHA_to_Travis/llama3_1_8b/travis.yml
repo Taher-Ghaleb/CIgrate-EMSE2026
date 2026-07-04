@@ -1,0 +1,68 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK"
+  - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+
+script:
+  - echo "Building with Maven"
+  - mvn install -B
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: Add deployment script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: Add deployment script"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  skip_cleanup: true
+  on:
+    branch: master
+  script:
+    - echo "Deploying to production"
+    - echo "TODO: Add deployment script"
+
+matrix:
+  allow_failures:
+    - distribution: 'zulu'
+      java: '7'
+    - distribution: 'temurin'
+      java: '8'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker
+
+addons:
+  apt:
+    sources:
+      - 'ppa:openjdk/ppa'
+
+branches:
+  only:
+    - master
+    - develop
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - 'your_email@example.com'

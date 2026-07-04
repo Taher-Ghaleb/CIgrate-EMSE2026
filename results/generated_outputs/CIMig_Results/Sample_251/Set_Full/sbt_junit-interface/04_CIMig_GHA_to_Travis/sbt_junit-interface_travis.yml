@@ -1,0 +1,23 @@
+cache:
+  directories: ~/.maven-
+language:
+  components:
+    platform-tools
+    tools
+    extra-android-maven-repository
+  java
+jdk: jdk8
+android:
+  components:
+    platform-tools
+    extra-android-maven-repository
+after_success:
+  bash <(curl-cmd
+addons:
+  firefox: latest
+sonarcloud:
+  organization: powsybl-ci-github
+sudo: FALSE
+include:
+  env: adoptopenjdk=11
+  stage: build and deploy snapshots

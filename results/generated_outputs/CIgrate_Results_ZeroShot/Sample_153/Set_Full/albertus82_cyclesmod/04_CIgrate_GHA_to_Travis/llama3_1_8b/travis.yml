@@ -1,0 +1,72 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies"
+  - apt-get update
+  - apt-get install -y ant
+
+script:
+  - ant -diagnostics
+  - ant
+
+matrix:
+  include:
+    - java_version: "11"
+      os: "linux"
+      dist: "ubuntu-latest"
+    - java_version: "8"
+      os: "linux"
+      dist: "ubuntu-latest"
+    - java_version: "7"
+      os: "linux"
+      dist: "ubuntu-latest"
+    - java_version: "11"
+      os: "macos"
+      dist: "macos-latest"
+
+before_script:
+  - brew update
+  - brew install ant
+
+after_success:
+  - echo "Build successful"
+
+after_failure:
+  - echo "Build failed"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: ant
+  on:
+    branch: never
+  skip_cleanup: true
+  on_push: true
+  on_pull_request: true
+  on_release: true
+  on_schedule: never
+  on_schedule_time: never
+  on_schedule_timezone: never
+  on_schedule_cron: never
+  on_schedule_cron_timezone: never
+  on_schedule_cron_minute: never
+  on_schedule_cron_hour: never
+  on_schedule_cron_day_of_month: never
+  on_schedule_cron_month: never
+  on_schedule_cron_day_of_week: never
+  on_schedule_cron_year: never
+  on_schedule_cron_day_of_year: never
+  on_schedule_cron_weeks: never
+  on_schedule_cron_special_days: never
+  on_schedule_cron_special_days_of_week: never
+  on_schedule_cron_special_days_of_month: never
+  on_schedule_cron_special_days_of_year: never
+  on_schedule_cron_special_days_of_weeks: never
+  on_schedule_cron_special_days_of_weeks_of_month: never
+  on_schedule_cron_special_days_of_weeks_of_year: never
+  on_schedule_cron_special_days_of_weeks_of_day_of_year: never
+  on_schedule_cron_special_days_of_weeks_of_day_of_month: never
+  on_schedule_cron_special_days_of_weeks_of_day_of_week: never
+  on_schedule_cron_special_days_of_weeks_of_day_of_weeks: never
+  on_schedule_cron_special_days_of_weeks_of_day_of_week

@@ -1,0 +1,36 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - mvn test -B
+deploy:
+  if: startsWith(travis.event_type, 'push') || startsWith(travis.event_type,'release')
+  on:
+    branch: never
+  job: deploy
+  environment:
+    global:
+      - GITHUB_TOKEN: $GITHUB_TOKEN
+  script:
+    - curl -X POST \
+      https://api.github.com/repos/{owner}/{repo}/releases \
+      -H 'Authorization: Bearer ${GITHUB_TOKEN}' \
+      -H 'Content-Type: application/json' \
+      -d '{"tag_name": "${TRAVIS_BRANCH}", "target_commitish": "${TRAVIS_COMMIT}", "name": "${TRAVIS_BRANCH}", "draft": false, "prerelease": false}'
+  after_deploy:
+    - curl -X POST \
+      https://api.github.com/repos/{owner}/{repo}/releases/${TRAVIS_JOB_NUMBER}/assets/new \
+      -H 'Authorization: Bearer ${GITHUB_TOKEN}' \
+      -H 'Content-Type: application/json' \
+      -d '{"name": "release.jar", "label": "Release Jar", "state": "uploaded", "browser_download_url": "https://github.com/{owner}/{repo}/releases/download/${TRAVIS_JOB_NUMBER}/release.jar"}'
+  cache:
+    directories:
+      - '$HOME/.m2/repository'
+```
+
+Note: Replace `{owner}` and `{repo}` with your actual GitHub repository owner and name.

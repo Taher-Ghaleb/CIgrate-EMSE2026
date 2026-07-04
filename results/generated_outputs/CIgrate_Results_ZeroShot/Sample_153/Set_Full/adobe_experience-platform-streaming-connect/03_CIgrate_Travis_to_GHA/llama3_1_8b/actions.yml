@@ -1,0 +1,39 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # TODO: consider using expanded form for branch filters
+  pull_request:
+    branches:
+      - main
+      - feature/*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10.0
+        options: --privileged
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: '8'
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y default-jdk
+    - name: Build and test
+      run: |
+       ./gradlew clean build

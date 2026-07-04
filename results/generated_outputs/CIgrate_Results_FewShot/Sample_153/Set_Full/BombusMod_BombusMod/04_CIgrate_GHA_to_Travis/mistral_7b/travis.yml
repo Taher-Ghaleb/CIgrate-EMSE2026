@@ -1,0 +1,28 @@
+language: android
+jdk: openjdk8
+env:
+  TERM: dumb
+
+sudo: required
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+      cache: 'gradle'
+
+before_script:
+  - sdkmanager --install "build-tools;28.0.3"
+  - sdkmanager --install "platforms;android-28"
+  - sdkmanager --install "system-images;android-28;default;x86_64"
+  - sdkmanager --install "extras;google;m2repository"
+  - sdkmanager --install "extras;android;m2repository"
+  - yes | sdkmanager --licenses
+
+script:
+  - chmod +x ./gradlew
+  - ./gradlew --no-daemon check

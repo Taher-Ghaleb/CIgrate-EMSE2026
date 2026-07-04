@@ -1,0 +1,47 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '11']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install dependencies
+        run: |
+          mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f $ROOT_POM
+      - name: Run tests and deploy snapshot
+        run: |
+          travis_wait 60
+          mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f $ROOT_POM
+         ./util/deploy_snapshot.sh
+         ./util/update_snapshot_docs.sh
+      - name: Print surefire reports
+        run:./util/print_surefire_reports.sh
+    env:
+      - name: ROOT_POM
+        value: ${{ matrix.ROOT_POM }}
+      - name: MAVEN_OPTS
+        value: -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+    cache:
+      - $HOME/.m2
+    secrets:
+      - secure: "********************"
+      - secure: "********************"
+      - secure: "********************"
+    branches:
+      - master
+      - /^release.*$/

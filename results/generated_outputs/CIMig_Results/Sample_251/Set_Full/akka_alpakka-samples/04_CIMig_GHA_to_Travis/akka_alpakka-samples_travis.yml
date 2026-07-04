@@ -1,0 +1,15 @@
+cache:
+  directories:
+    ~/.sbt
+    ~/.ivy2/cache
+    ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+script:
+  script:
+    cd docs && sbt makeSite
+sudo: FALSE

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    tags: true
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    env:
+      RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+    strategy:
+      matrix:
+        dist: [bionic]
+    services:
+      - docker
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Cache Ivy Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy-cache
+      - name: Pull Docker Image
+        run: docker pull "${RUNNER_IMAGE}"
+      - name: Run Tests
+        run: |
+          docker run --mount "type=bind,source=${{ github.workspace }}/,target=${{ github.workspace }}" --mount "type=bind,source=${{ github.workspace }}/.ivy2/cache,target=/root/.ivy2/cache" --workdir "${{ github.workspace }}" "${RUNNER_IMAGE}" ./.travis/run-tests.sh
+      - name: SonarCloud Analysis
+        run: ./.travis/sonar.sh
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    addons:
+      sonarcloud:
+        organization: "constellation-app"
+        token: ${{ secrets.SONAR_TOKEN }}
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/tags/master' || github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Deploy
+        run: |
+          # TODO: Implement deployment logic using releases provider
+          echo "Deployment not implemented"
+
+  notifications:
+    if: always()
+    uses: actions/github-script@v6
+    with:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+      script: |
+        if (github.event.pull_request

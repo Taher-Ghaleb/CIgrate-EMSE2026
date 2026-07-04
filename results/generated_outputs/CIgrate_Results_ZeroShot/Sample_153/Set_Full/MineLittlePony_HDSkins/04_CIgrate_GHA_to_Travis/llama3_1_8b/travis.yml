@@ -1,0 +1,62 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - curl -sL https://github.com/gradle/actions/raw/v4/setup-gradle/setup-gradle.sh | bash
+
+install:
+  - echo "Installing Gradle"
+  - curl -sL https://github.com/gradle/actions/raw/v4/setup-gradle/setup-gradle.sh | bash
+
+before_script:
+  - echo "Making gradlew executable"
+  - chmod +x gradlew
+
+script:
+  - echo "Running check"
+  -./gradlew check
+
+after_success:
+  - echo "Publishing to Maven Central"
+  -./gradlew build publish
+  - echo "Deploying to Maven Central"
+  -./gradlew deploy
+
+after_failure:
+  - echo "Failed to publish to Maven Central"
+
+deploy:
+  on:
+    tags: true
+  environment:
+    ACCESS_KEY: $ACCESS_KEY
+  script:
+    - echo "Deploying to Maven Central"
+    -./gradlew deploy
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - os: linux
+      dist: ubuntu
+      java: temurin-8
+      gradle: gradle-6.9
+
+branches:
+  only:
+    - master
+  except:
+    - main
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on_success: always
+    on_failure: always
+```
+
+Note: The `matrix` section is used to specify the different environments and configurations for the build. In this case, we're using a single environment with the specified JDK and Gradle versions. The `allow_failures` section specifies which environments are allowed to fail without stopping the build. The `include` section specifies the different environments that should be included in the build. The `branches` section specifies which branches should be built and which should be excluded. The `notifications` section specifies the email recipients and the conditions under which they should be notified.

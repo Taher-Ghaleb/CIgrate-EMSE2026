@@ -1,0 +1,37 @@
+language: java
+branches:
+  only:
+    - devel
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+matrix:
+  jdk:
+    - oraclejdk7
+    - openjdk7
+before_install:
+  - unset GEM_PATH
+install:
+  - # TODO: Equivalent of actions/setup-java@v4 with distribution and java-version
+    echo "Setting up JDK 7 (Zulu distribution)"
+    # This is a placeholder.  Travis CI doesn't have a direct equivalent.
+    # You'd need to install the JDK manually or use a Travis CI addon.
+    # For example:
+    # sudo apt-get update
+    # sudo apt-get install -y openjdk-7-jdk
+script:
+  - mvn install
+  - mvn package -f muikku/pom.xml -Popenshift
+  - python travis-prepare-maven.py
+  - mvn deploy --settings ~/.m2/mySettings.xml
+deploy:
+  on:
+    tags: false
+    branch: devel
+  if: github.ref == 'refs/heads/devel' && github.event_name == 'push'
+  before_deploy:
+    - echo 'Starting deployment'
+  after_deploy:
+    - echo 'Deployed'

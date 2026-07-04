@@ -1,0 +1,62 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-$JAVA_VERSION
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+before_script:
+  - echo "Cleaning corrupted Maven artifact"
+  - rm -rf ~/.m2/repository/org/glassfish/javax.el/3.0.1-b08
+
+script:
+  - echo "Making mvnw executable"
+  - chmod +x mvnw
+  - echo "Building and testing with Maven"
+  -./mvnw --batch-mode --no-transfer-progress \
+    clean install \
+    -DskipTests=false \
+    -DskipIntegrationTests=false \
+    -Dcheckstyle.skip=false \
+    -Drat.skip=false \
+    -Dmaven.javadoc.skip=true
+  - echo "Uploading coverage reports"
+  - if [ $? -eq 0 ]; then
+      codecov/codecov-action@v4 \
+        token=$CODECOV_TOKEN \
+        fail_ci_if_error=false
+    fi
+
+after_success:
+  - echo "Build successful for JDK $JAVA_VERSION"
+
+after_failure:
+  - echo "Build failed for JDK $JAVA_VERSION"
+
+matrix:
+  include:
+    - JAVA_VERSION=8
+    - JAVA_VERSION=11
+
+branches:
+  only:
+    - main
+    - feature/*
+    - release/*
+
+deploy:
+  on:
+    tags: true
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+```
+
+Note: Replace `your_email@example.com` with your actual email address.

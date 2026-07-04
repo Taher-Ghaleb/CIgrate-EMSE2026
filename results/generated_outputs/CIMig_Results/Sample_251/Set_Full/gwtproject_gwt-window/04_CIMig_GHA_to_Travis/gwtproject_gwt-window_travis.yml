@@ -1,0 +1,22 @@
+sudo: FALSE
+cache:
+  directories:
+    ~/.gradle
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew build
+before_cache:
+  rm -f ~/.gradle-2/modules-2.lock
+  rm -fr ~/.gradle*/plugin-resolution/
+sonarcloud:
+  organization: powsybl-ci-github
+include:
+  if: type in (pull_request, push)

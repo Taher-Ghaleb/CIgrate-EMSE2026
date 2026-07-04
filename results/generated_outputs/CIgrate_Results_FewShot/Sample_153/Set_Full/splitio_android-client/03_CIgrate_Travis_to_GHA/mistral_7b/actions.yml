@@ -1,0 +1,30 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK: oraclejdk8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: ${{ env.JDK }}
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "build-tools;${{ env.JDK }}"
+          sdkmanager "platforms;android-${{ env.JDK }}"
+
+      - name: Run tests
+        run: |
+          cd project
+          ./gradlew test

@@ -1,0 +1,59 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+
+env:
+  JAVA_HOME: ${{ env.HOME }}/.sdkman/candidates/java/current
+  M2_HOME: ${{ env.HOME }}/.m2
+  GIT_VERSION: git-${{ github.ref_name }}
+
+services:
+  - docker
+
+before_install:
+  - export JAVA_HOME=$env.JAVA_HOME
+  - export M2_HOME=$env.M2_HOME
+  - export PATH=$JAVA_HOME/bin:$M2_HOME/bin:$PATH
+
+install:
+  - apt-get update -q
+  - apt-get install -y -q git
+  - curl -sSL https://get.sdkman.io | bash
+  - sdk install java 8.0.272-adopt
+  - sdk use java 8.0.272-adopt
+  - git config --global user.name "Travis CI"
+  - git config --global user.email "travis@travis-ci.org"
+
+script:
+  - git config --local user.name "Hogajama"
+  - git config --local user.email "hogajama@example.com"
+  - git checkout ${{ github.ref_name }}
+  - git checkout -f
+  - git pull
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+cache:
+  directories:
+    - ~/.sdkman/candidates/java
+    - ~/.m2
+
+before_deploy:
+  - git checkout tags/v${{ github.ref_name }}
+
+deploy:
+  on:
+    tags:
+      only:
+        - v*
+
+  script:
+    - git checkout tags/v${{ github.ref_name }}
+    - git tag -d v${{ github.ref_name }}
+    - git push origin

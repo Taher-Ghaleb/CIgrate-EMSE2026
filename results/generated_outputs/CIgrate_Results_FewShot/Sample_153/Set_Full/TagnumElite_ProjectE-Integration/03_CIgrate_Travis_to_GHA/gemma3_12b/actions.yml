@@ -1,0 +1,45 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Gradle Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Remove cache files
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+          rm -f $HOME/.gradle/caches/minecraft/deobfedDeps/providedDummy.jar
+          rm -f $HOME/.gradle/caches/minecraft/deobfedDeps/compileDummy.jar
+      - name: Setup CI Workspace
+        run: ./gradlew setupCIWorkspace -S
+      - name: Build
+        run: ./gradlew build
+      - name: Javadoc
+        run: ./gradlew javadoc
+      - name: Deploy to Pages
+        if: github.ref == 'refs/heads/1.12.x'
+        uses: actions/deploy-pages@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/docs/javadoc
+          keep_history: true
+        continue-on-error: true

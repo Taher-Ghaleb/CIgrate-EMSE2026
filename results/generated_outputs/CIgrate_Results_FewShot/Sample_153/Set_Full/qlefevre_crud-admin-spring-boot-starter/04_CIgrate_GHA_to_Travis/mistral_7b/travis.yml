@@ -1,0 +1,42 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+
+script:
+  - mvn --version
+  - mvn clean verify
+
+after_success:
+  - mvn dependency:deps -q -Dverbose -Doutput=target/dependency-report.txt
+  - mvn dependency:tree -q -Dverbose -Doutput=target/dependency-tree.txt
+  - mvn org.apache.maven.plugins:maven-surefire-plugin:2.22.1:test -Dtest=MyTestClass -DtestFailureIgnore=true -DtestFailureIgnoreCount=1 -DtestOutputDirectory=target/surefire-reports
+  - mvn org.apache.maven.plugins:maven-jacoco-plugin:0.8.6:report
+  - mvn org.apache.maven.plugins:maven-checkstyle-plugin:3.1.0:checkstyle -Dconfig=checkstyle.xml
+  - mvn org.apache.maven.plugins:maven-pmd-plugin:6.2.2:pmd -Dpmd.properties=pmd.properties
+  - mvn org.apache.maven.plugins:maven-cobertura-plugin:2.10.4:cobertura -Dcobertura.report.files=target/cobertura.xml
+
+cache:
+  directories:
+    - ~/.m2/repository
+
+env:
+  matrix:
+    - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+deploy:
+  provider: github
+  skip_cleanup: true
+  on:
+    tags: true
+  environment:
+    name: production
+  script:
+    - git config --global user.email "travis@travis-ci.com"
+    - git config --global user.name "Travis CI"
+    - git remote add origin https://${GITHUB_TOKEN}@github.com/username/repo.git
+    - git push origin --tags
+
+# TODO: Add a deploy script for

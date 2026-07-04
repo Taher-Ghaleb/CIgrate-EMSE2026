@@ -1,0 +1,58 @@
+name: Android CI
+
+on:
+  push:
+    branches:
+      - master
+      - /^\d+\.\d+\.\d+$/
+  pull_request:
+    branches:
+      - master
+      - /^\d+\.\d+\.\d+$/
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: ${{ env.ANDROID_HOME }}
+    strategy:
+      matrix:
+        jdk: [8]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
+      - name: Install Codecov
+        run: pip install --user codecov
+
+      - name: Accept Android SDK licenses
+        run: |
+          mkdir "$ANDROID_HOME/licenses" || true
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> "$ANDROID_HOME/licenses/android-sdk-license"
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            $HOME/.gradle
+            $HOME/.m2/repository
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Run tests
+        run: ./gradlew clean testDebugUnitTest jacocoTestReport
+
+      - name: Upload coverage to Coveralls
+        if: success()
+        run: ./gradlew coveralls
+
+      - name: Upload coverage to Codecov
+        if: success()
+        run: codecov

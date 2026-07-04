@@ -1,0 +1,72 @@
+language: java
+sudo: required
+env:
+  global:
+    - DOCKER_COMPOSE_VERSION: 1.29.2
+    - VERSION: ${GITHUB_SHA}
+    - REGISTRY_HOST: proxy.cadc.dao.nrc.ca
+  matrix:
+    - JAVA_VERSION: '8'
+    - JAVA_VERSION: '11'
+jdk:
+  - openjdk8
+  - openjdk11
+cache:
+  directories:
+    - ~/.gradle
+    - ~/.m2/repository
+branches:
+  only:
+    - main
+    - master
+  except:
+    - /^feature\/.+$/
+    - /^bugfix\/.+$/
+before_install:
+  - echo "127.0.0.1 proxy.cadc.dao.nrc.ca" | sudo tee -a /etc/hosts
+install:
+  - if [ "$JAVA_VERSION" = '8' ]; then
+      echo "Installing JDK 8"
+    else
+      echo "Installing JDK 11"
+    fi
+script:
+  - gradle -i clean build test
+  - mkdir docker
+  - cp Dockerfile docker/
+  - cp build/libs/*.war docker/
+  - docker build \
+    -t opencadc/cadc-target-resolver:SNAPSHOT \
+    -t opencadc/cadc-target-resolver:alpine \
+    -t opencadc/cadc-target-resolver:${VERSION} \
+    -f docker/Dockerfile docker/
+  - cd integrationTest
+  - docker-compose up -d
+  - sleep 10
+  - docker ps -a
+  - cd ..
+  - if [ "$TRAVIS_BRANCH" == "main" || "$TRAVIS_BRANCH" == "master" ]; then
+      curl -vL -d 'level=DEBUG' http://proxy.cadc.dao.nrc.ca/cadc-target-resolver/logControl || echo "Log configuration failed, continuing..."
+    fi
+  - gradle -i -b ../build.gradle -Dca.nrc.cadc.reg.client.RegistryClient.host=$REGISTRY_HOST clean intTest
+  - cd integrationTest
+  - docker-compose down -v || true
+  - cd ..
+  - rm -rf docker
+deploy:
+  provider: docker
+  on:
+    tags: true
+    branch:
+      - main
+      - master
+  if: success()
+  env:
+    DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+    DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  script:
+    - if [ -f ./can-deploy.sh ]; then
+        DEPLOY_STATUS=$(./can-deploy.sh)
+        if [ "$DEPLOY_STATUS" = "DEPLOY" ]; then
+          echo "Deploying Docker images..."
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin

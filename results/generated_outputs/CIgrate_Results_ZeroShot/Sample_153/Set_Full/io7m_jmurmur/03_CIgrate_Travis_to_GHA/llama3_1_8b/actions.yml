@@ -1,0 +1,49 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '9'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies-
+      - name: Install dependencies
+        run: mvn --batch-mode install
+      - name: Run tests
+        run: mvn --batch-mode verify site
+      - name: Code coverage
+        run: bash <(curl -s https://codecov.io/bash) -f com.io7m.jmurmur.core/target/site/jacoco/jacoco.xml
+      - name: Deploy
+        run: |
+          # TODO: equivalent to Travis CI deploy
+      - name: Send notification
+        uses: dawb/irc-notifier@v1
+        with:
+          server: chat.freenode.net
+          channel: #io7m
+          message: ${{ steps.build.outputs.result }}

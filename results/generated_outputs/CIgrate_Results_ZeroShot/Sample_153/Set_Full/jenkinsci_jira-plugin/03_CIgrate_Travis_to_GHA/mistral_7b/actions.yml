@@ -1,0 +1,63 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker-database:
+        image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8,11
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies
+
+      - name: Cache SonarQube cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar-cache
+          restore-keys: |
+            ${{ runner.os }}-sonar-cache
+
+      - name: Install SonarQube CLI
+        run: |
+          wget -q -O /usr/local/bin/sonarscan https://bin.sonar-scanner.net/sonar-scanner-cli-linux -O /usr/local/bin/sonarscan
+          chmod +x /usr/local/bin/sonarscan
+
+      - name: Configure SonarQube
+        env:
+          SONAR_PROJECT_KEY: jenkins-jira-plugin
+          SONAR_HOST_URL: https://sonarcloud.io
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Build and analyze with SonarQube
+        run: |
+          mvn -Penable-jacoco -Dsonar.

@@ -1,0 +1,23 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Install dependencies
+        run: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
+      - name: Run tests and generate coverage
+        run: mvn clean cobertura:cobertura coveralls:report
+```
+
+Note: The `after_success` section in Travis CI is equivalent to the `after_success` and `after_failure` sections in GitHub Actions. However, in this case, since we are only running the `mvn clean cobertura:cobertura coveralls:report` command, we can simply use the `run` keyword in the `build` job.

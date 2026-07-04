@@ -1,0 +1,38 @@
+language: java
+sudo: false
+dist: trusty
+jdk:
+  - openjdk12
+install:
+  - sudo apt-get install -y p7zip-full
+script:
+  - mvn package -q
+before_cache:
+  - rm -rf $HOME/.m2/repository/com/github/nkonev
+cache:
+  directories:
+    - $HOME/.m2
+env:
+  global:
+    - export MAVEN_OPTS="-Xmx2500m"
+before_deploy:
+  - chmod +x .github/deploy_prepare.sh
+deploy:
+  - provider: releases
+    api_key: $GITHUB_API_KEY
+    file: 'javadoc.zip,**/target/*.jar'
+    skip_cleanup: true
+    on:
+      tags: true
+      branch: master
+      branch: master-11
+    name: "Release $TRAVIS_TAG"
+    body: "See [CHANGELOG.md](https://github.com/${TRAVIS_BUILD_NUMBER}/blob/${TRAVIS_BRANCH}/CHANGELOG.md)"
+after_deploy:
+  - provider: script
+    script: .github/deploy_bintray_central.sh
+    skip_cleanup: true
+    on:
+      tags: true
+      branch: master
+      branch: master-11

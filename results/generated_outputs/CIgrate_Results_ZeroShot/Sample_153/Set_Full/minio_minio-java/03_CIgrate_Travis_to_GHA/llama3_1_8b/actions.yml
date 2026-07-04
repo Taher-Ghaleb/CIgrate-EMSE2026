@@ -1,0 +1,67 @@
+name: Java Application Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+  pull_request:
+    branches:
+      - main
+      - feature/*
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: mydb
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+         ./gradlew dependencies
+      - name: Build and test
+        run: |
+         ./gradlew check
+         ./gradlew runFunctionalTest
+      - name: Deploy
+        uses: appleboy/ssh-deploy@v0.6.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            ssh ${DEPLOY_USERNAME}@${DEPLOY_HOST} "mkdir -p /var/www/${DEPLOY_APP_NAME}"
+            scp -r build/* ${DEPLOY_USERNAME}@${DEPLOY_HOST}:/var/www/${DEPLOY_APP_NAME}/
+      - name: Notify on success
+        uses: dawb/notify-slack@v1.0.0
+        with:
+          token: ${{ secrets.SLACK_TOKEN }}
+          channel: ${{ secrets.SLACK_CHANNEL }}
+          message: "Build and test successful!"
+      - name: Notify on failure
+        uses: dawb/notify-slack@v1.0.0
+        with:
+          token: ${{ secrets.SLACK_TOKEN }}
+          channel: ${{ secrets.SLACK_CHANNEL }}
+          message: "Build and test failed!"
+        continue-on-error:

@@ -1,0 +1,62 @@
+name: Java Build and Deployment
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 >./cc-test-reporter
+          chmod +x./cc-test-reporter
+         ./cc-test-reporter before-build
+          psql -c 'create database events;' -U postgres
+      - name: Build and test
+        run: |
+         ./gradlew clean build jacocoTestReport jacocoFix -PbuildNumber=$GITHUB_RUN_NUMBER --scan
+      - name: Build Docker image
+        run: |
+          docker build --no-cache --pull -t wisvch/events:$GITHUB_RUN_NUMBER.
+      - name: Login to Docker
+        run: |
+          echo "$DOCKER_USERNAME" | docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+      - name: Push Docker image
+        run: |
+          docker push wisvch/events:$GITHUB_RUN_NUMBER
+      - name: Format and upload coverage
+        run: |
+          cd src/main/java/
+         ../../../cc-test-reporter format-coverage -d -t jacoco
+         ../../../cc-test-reporter upload-coverage -d
+      - name: Continue on error
+        continue-on-error: true
+    env:
+      GITHUB_RUN_NUMBER: $GITHUB_RUN_NUMBER
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    cache:
+      key: ${{ runner.toolcache }}
+      paths:
+        - node_modules
+    allow-failures: true
+```
+
+Note: I've used the `ubuntu-latest` image as the base image for the workflow, but you can change it to any other image that suits your needs. Also, I've used the `temurin` distribution for Java, but you can change it to any other distribution

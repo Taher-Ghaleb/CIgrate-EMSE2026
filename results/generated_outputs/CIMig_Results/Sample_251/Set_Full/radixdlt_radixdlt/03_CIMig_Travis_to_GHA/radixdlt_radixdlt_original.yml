@@ -1,0 +1,38 @@
+matrix:
+  os:
+    ubuntu-latest
+    windows-latest
+  language: java
+  java
+
+github_token: ${{ secrets.github_token }}
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      with:
+        restore-keys: jdk11-
+        arguments: check
+      with: java-version
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      env:
+        ci: TRUE
+        sonar_token: ${{ secrets.sonar_token }}
+    - name: Placeholder
+      run: ./gradlew integrationTest --refresh-dependencies
+

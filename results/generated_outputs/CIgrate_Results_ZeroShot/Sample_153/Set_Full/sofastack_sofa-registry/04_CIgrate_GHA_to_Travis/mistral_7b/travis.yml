@@ -1,0 +1,40 @@
+language: ubuntu
+
+branches:
+  include:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+script:
+  - export JAVA_HOME=$(/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/bin/java -version | awk '{print $3}' && echo $JAVA_HOME)
+  - export MAVEN_HOME=$HOME/.m2
+  - export PATH=$MAVEN_HOME/bin:$PATH
+  - mvn clean install -DskipTests -B -V
+  - mvn test
+  - sh ./tools/check_format.sh
+
+before_script:
+  - cache --directories=$HOME/.m2/repository --key=maven --force --unix
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - git tag -a v$TRAVIS_TAG -m "Release $TRAVIS_TAG"
+    - git push origin v$TRAVIS_TAG
+    - git push --tags
+
+after_success: deploy
+after_failure: deploy
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including the use of the `on` trigger, jobs, steps, caches, services, branch filters, deploys, and notifications. It also includes the necessary environment variables, script commands, and matrix configurations.

@@ -1,0 +1,14 @@
+language: java
+jdk:
+  - openjdk11
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+script:
+  - mvn clean install
+
+after_success:
+  - find . -name "*.jar" -exec cp {} $TRAVIS_BUILD_DIR/ \;
+  # TODO: Implement artifact upload equivalent in Travis CI

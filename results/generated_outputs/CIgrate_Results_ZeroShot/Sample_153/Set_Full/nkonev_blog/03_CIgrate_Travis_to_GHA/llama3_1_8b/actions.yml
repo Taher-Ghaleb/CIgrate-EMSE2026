@@ -1,0 +1,54 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10.0-dind
+        privileged: true
+        ports:
+          - 8080:8080
+          - 80:80
+          - 443:443
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: '11'
+    - name: Install dependencies
+      run: |
+        sudo apt update && sudo apt install -y chromium-browser
+        openssl aes-256-cbc -K ${{ secrets.ENCRYPTED_KEY }} -iv ${{ secrets.ENCRYPTED_IV }} -in./.github/workflows/id_rsa.enc -out ~/.ssh/id_rsa -d
+        chmod 600 ~/.ssh/id_rsa
+        java -version
+        echo $JAVA_HOME
+    - name: Install Maven
+      run: /bin/true # workaround https://github.com/Swagger2Markup/swagger2markup-maven-plugin/pull/24
+    - name: Build and deploy
+      run: |
+        DATE_VERSION=$(date +%Y%m%d.%H.%M)
+        rm ~/.m2/settings.xml
+       ./mvnw -U -q -Drevision=$DATE_VERSION -P frontend -P jacoco -P docker -P webdriver-chrome -P webdriver-firefox -Dcustom.selenium.headless=true clean install
+        docker-compose down
+       ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+        rm -rf ~/.m2/repository/com/github/nkonev/blog
+        rm -rf $GITHUB_WORKSPACE/frontend/node_modules/.cache
+        bash <(curl -s https://codecov.io/bash)
+        if [[ "$GITHUB_BRANCH" == "main" && "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_STATUS" == "success" ]]; then (
+          echo "Will push docker image";
+          docker login -u="$DOCKER_LOGIN" -p="$DOCKER_PASSWORD";
+          docker push nkonev/blog:latest;
+          ssh -o "

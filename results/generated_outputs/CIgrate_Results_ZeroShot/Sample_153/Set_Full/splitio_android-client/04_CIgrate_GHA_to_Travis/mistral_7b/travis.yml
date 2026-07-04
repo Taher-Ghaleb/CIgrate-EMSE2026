@@ -1,0 +1,21 @@
+language: java
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - java -version
+  - sdkmanager --version
+  - if [ ! -d ~/.android ]; then android create avd -n my_avd -t 3 -c 3 -g 1024 -k ~/android-sdk/licenses; fi
+
+script:
+  - java -Dandroid.sdk.home=~/android-sdk -Dorg.gradle.jvmargs="-Xmx1024M -XX:+TieredCompilation" -Dorg.gradle.daemon=true -Dorg.gradle.parallel=true -Dorg.gradle.caching=true -Dorg.gradle.jvm.version=11 -Dorg.gradle.java.home=$(which java) -Dorg.gradle.java.installation.prefix=$(dirname $(which java)) -Dorg.gradle.tool.version=6.5 -Dorg.gradle.test.junit.version=4.12 -Dorg.gradle.test.ratings.disable=true -Dorg.gradle.test.logging.jvm.console=INFO -Dorg.gradle.test.logging.jvm.junit=INFO -Dorg.gradle.test.logging.jvm.testng=INFO -Dorg.gradle.test.logging.events.testng=INFO -Dorg.gradle.test.logging.junit.events.listener=org.junit.platform.console.listener.SummaryListener -Dorg.gradle.test.logging.events.testng.listener=org.testng.reporters.TextReporter -Dorg.gradle.test.logging.events.junit.listener=org.junit.platform.console.listener.SummaryListener -Dorg.gradle.test.logging.events.testng.listener=org.testng.reporters.TextReporter -Dorg.gradle.test.logging.events.junit.listener=org.junit.platform.console.listener.SummaryListener -Dorg.grad

@@ -1,0 +1,14 @@
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn package
+script
+sudo:
+  FALSE
+  TRUE
+include:
+  if: type in (pull_request, push)

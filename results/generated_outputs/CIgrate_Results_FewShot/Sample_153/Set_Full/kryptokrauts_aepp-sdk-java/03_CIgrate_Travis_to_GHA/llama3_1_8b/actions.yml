@@ -1,0 +1,67 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK: oraclejdk8
+  SERVICES: docker
+  PKG_CONFIG_PATH: ${{ env.HOME }}/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH
+  LD_LIBRARY_PATH: ${{ env.HOME }}/libsodium/lib:$LD_LIBRARY_PATH
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Docker
+        uses: docker/setup-docker@v1
+      - name: Install libsodium
+        run:./travis-install-libsodium.sh
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.gradle/wrapper/dist/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.jar') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Install dependencies
+        run: |
+          export PKG_CONFIG_PATH=$PKG_CONFIG_PATH
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+         ./gradlew integrationTest
+         ./gradlew build
+  snapshot:
+    runs-on: ubuntu-latest
+    if: github.event.branch == 'dev'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Docker
+        uses: docker/setup-docker@v1
+      - name: Install libsodium
+        run:./travis-install-libsodium.sh
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.gradle/wrapper/dist/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.jar') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle

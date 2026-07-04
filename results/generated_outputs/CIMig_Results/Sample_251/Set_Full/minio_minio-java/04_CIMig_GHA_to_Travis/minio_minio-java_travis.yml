@@ -1,0 +1,21 @@
+before_cache: rm -f ~/.gradle-2/modules-2.lock
+env: global
+notifications: email
+cache:
+  directories:
+    ~/.gradle
+    ~/.maven-
+sudo: FALSE
+language:
+  java
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew check\n./gradlew runFunctionalTest\n
+after_success:
+  bash <(curl-cmd
+  Gradle build on ${{ matrix.java-version }}
+  codecov

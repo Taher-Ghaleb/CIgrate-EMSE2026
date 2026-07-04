@@ -1,0 +1,23 @@
+language: android
+jdk: openjdk8
+env:
+  matrix:
+    - JDK_CACHE=gradle
+
+sudo: required
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - android-actions/setup-android@v3
+
+before_script:
+  - sdkmanager --install "platform-tools"
+  - sdkmanager --install "build-tools;25.0.2"
+  - sdkmanager --install "platforms;android-22"
+  - yes | sdkmanager --licenses
+  - chmod +x ./gradlew
+
+script:
+  - ./gradlew build

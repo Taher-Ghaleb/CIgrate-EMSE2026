@@ -1,0 +1,33 @@
+name: Java CI with Gradle
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TERM: dumb
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+      - name: Set up Xvfb
+        run: |
+          export DISPLAY=:99.0
+          sh -e /etc/init.d/xvfb start &
+      - name: Gradle Version
+        run: ./gradlew --version
+      - name: Gradle Build
+        run: ./gradlew clean build --console=plain -S --scan
+    cache:
+      key: ${{ runner.os }}-gradle-${{ hash }}
+      paths:
+        - $HOME/.gradle/caches/
+        - $HOME/.gradle/wrapper/
+        - $HOME/.sonar/cache/
+    before_cache:
+      - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock

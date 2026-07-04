@@ -1,0 +1,11 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn --batch-mode verify
+script
+directories: ~/.maven-

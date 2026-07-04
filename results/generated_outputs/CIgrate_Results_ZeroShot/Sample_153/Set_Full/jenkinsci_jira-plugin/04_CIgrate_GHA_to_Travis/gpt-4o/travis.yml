@@ -1,0 +1,42 @@
+language: java
+jdk:
+  - 8
+  - 11
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.sonar/cache
+
+env:
+  global:
+    - GITHUB_TOKEN=$GITHUB_TOKEN
+    - SONAR_TOKEN=$SONAR_TOKEN
+    - SONAR_ORGANIZATION=warden
+
+before_install:
+  - git fetch --unshallow
+
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - mvn -Penable-jacoco -Dsonar.projectKey=jenkins-jira-plugin -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml clean verify
+  - mvn sonar:sonar
+
+after_success:
+  - test $TRAVIS_BRANCH = "main" && mvn coveralls:report || echo "Skipping Coveralls report"
+  - rm -rf ~/.m2/repository/org/jenkins-ci/plugins/jira
+
+matrix:
+  allow_failures:
+    - jdk: 8
+  fast_finish: false
+
+branches:
+  only:
+    - main
+    - develop

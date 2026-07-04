@@ -1,0 +1,34 @@
+language: java
+os:
+  - linux
+jdk:
+  - oraclejdk8
+sudo: required
+dist: trusty
+cache:
+  directories:
+    - $HOME/mvn-home
+
+install:
+  # install maven 3.3.9 if it is not in cache already
+  - bash .travis.install-maven.sh "3.3.9" "${HOME}/mvn-home"
+  - export M2_HOME=${HOME}/mvn-home
+  - export PATH=${HOME}/mvn-home/bin:${PATH}
+  # visual check that we have the correct maven version installed
+  - mvn -version
+
+before_install:
+  - curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+  - sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+  - sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-trusty-prod trusty main" > /etc/apt/sources.list.d/dotnetdev.list'
+  - sudo apt-get install apt-transport-https
+  - sudo apt-get update
+  - sudo apt-get install dotnet-sdk-2.1.101
+
+jobs:
+  include:
+    - script: "mvn clean install -Dci --batch-mode -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
+    - script: "touch gremlin-dotnet/src/.glv && touch gremlin-dotnet/test/.glv && mvn clean install -q -DskipTests && mvn verify -pl :gremlin-dotnet,:gremlin-dotnet-tests -P gremlin-dotnet -DskipIntegrationTests=false"
+    - script: "touch gremlin-python/.glv && mvn clean install -q -DskipTests && mvn verify -pl gremlin-python -DskipIntegrationTests=false"
+    - script: "mvn clean install -q -DskipTests && mvn verify -pl :gremlin-javascript -DskipIntegrationTests=false"
+    - script: "mvn clean install -q -DskipTests && mvn verify -pl :spark-gremlin -DskipIntegrationTests=false"

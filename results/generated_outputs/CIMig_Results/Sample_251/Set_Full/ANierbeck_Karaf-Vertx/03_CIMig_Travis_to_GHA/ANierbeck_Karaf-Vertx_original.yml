@@ -1,0 +1,33 @@
+matrix:
+  os:
+    windows-latest
+    ubuntu-latest
+  language: java
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      with: java-version
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+      uses: actions/checkout@version
+    run: mvn --quiet clean install
+
+macos:
+  jdk: oraclejdk8
+

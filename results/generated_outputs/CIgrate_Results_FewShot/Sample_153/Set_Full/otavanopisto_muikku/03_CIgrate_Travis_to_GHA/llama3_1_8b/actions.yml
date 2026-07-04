@@ -1,0 +1,50 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches:
+      - devel
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  OPENSHIFT_USER: ${{ secrets.OPENSHIFT_USER }}
+  OPENSHIFT_PASSWORD: ${{ secrets.OPENSHIFT_PASSWORD }}
+  OPENSHIFT_APP: muikku
+  OPENSHIFT_DOMAIN: oodev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['7']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 7
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '7'
+      - name: Install Maven
+        run: |
+          mvn install
+      - name: Prepare Maven settings
+        run: |
+          python travis-prepare-maven.py
+      - name: Deploy to OpenShift
+        uses: openshift/openshift-action@v1
+        with:
+          openshift-app: ${{ env.OPENSHIFT_APP }}
+          openshift-domain: ${{ env.OPENSHIFT_DOMAIN }}
+          openshift-username: ${{ env.OPENSHIFT_USER }}
+          openshift-password: ${{ env.OPENSHIFT_PASSWORD }}
+          openshift-build-command:'mvn package -f muikku/pom.xml -Popenshift'
+          openshift-build-extra-args: '--settings ~/.m2/mySettings.xml'
+      - name: Post-deploy script
+        run: echo 'Deployed'
+```
+
+Note that I've used the `actions/checkout@v4` action to checkout the code, and the `actions/setup-java@v4` action to set up the JDK. I've also used the `openshift/openshift-action@v1` action to deploy to OpenShift. Additionally, I've used the `env` keyword to store the OpenShift credentials as secrets, and referenced them in the `with` block of the `openshift/openshift-action` step.

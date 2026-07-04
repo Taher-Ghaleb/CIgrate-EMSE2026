@@ -1,0 +1,16 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn clean verify
+script:
+  script:
+    mvn clean -Prelease apache-rat:check
+directories: ~/.m2/repository
+sudo: FALSE
+include:
+  stage: Build

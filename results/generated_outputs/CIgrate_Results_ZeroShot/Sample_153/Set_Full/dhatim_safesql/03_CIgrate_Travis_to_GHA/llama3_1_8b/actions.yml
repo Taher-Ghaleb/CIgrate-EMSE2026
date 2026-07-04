@@ -1,0 +1,64 @@
+name: Java Deployment
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          curl -fsSL https://download.oracle.com/berkeley-db/java/jdk8u322-linux-x64.tar.gz | tar -xvf - -C /tmp/jdk
+          export JAVA_HOME=/tmp/jdk/jdk1.8.0_322
+          export PATH=$JAVA_HOME/bin:$PATH
+      - name: Build and deploy
+        run: |
+         ./deploy.sh
+      - name: Deploy to production
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -X POST \
+            https://api.github.com/repos/dhatim/safesql/releases \
+            -H 'Content-Type: application/json' \
+            -H 'Authorization: Bearer $GITHUB_TOKEN' \
+            -d '{"tag_name": "v1.0", "target_commitish": "main", "name": "v1.0", "draft": false, "prerelease": false}'
+      - name: Deploy to production (tags)
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -X POST \
+            https://api.github.com/repos/dhatim/safesql/releases \
+            -H 'Content-Type: application/json' \
+            -H 'Authorization: Bearer $GITHUB_TOKEN' \
+            -d '{"tag_name": "${GITHUB_REF}",

@@ -1,0 +1,24 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  components:
+    platform-tools
+    extra-android-maven-repository
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    platform-tools
+    extra-android-maven-repository
+branches: rc\\/*
+before_install:
+  java -version
+directories:
+  ~/.gradle
+  ~/.gradle-3
+  ~/.gradle-2
+  ~/.jdk
+  ~/.maven-

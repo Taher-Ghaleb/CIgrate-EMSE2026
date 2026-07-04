@@ -1,0 +1,49 @@
+name: Java Build and Check
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Check
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          key: gradle-dependencies
+          path: $HOME/.gradle/caches/
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.os }}-${{ runner.id }}-gradle-dependencies
+
+      - name: Clean Gradle caches
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+      - name: Install Gradle
+        run: |
+          if [[ "${{ runner.os }}" == "osx" ]]; then brew update; fi
+
+      - name: Build and Check
+        run: |
+          ./gradlew assemble --warning-mode all
+          ./gradlew check --warning-mode all
+
+    continue-on-error: true
+```
+
+This GitHub Actions workflow maintains the semantics of the provided Travis CI configuration while adhering to the specified output and migration rules. It includes a single job named "Build and Check" that runs on Ubuntu, uses a PostgreSQL service, sets up Java 11, caches Gradle dependencies, cleans Gradle caches, installs Gradle, and builds and checks the project. The workflow is triggered on both push and pull request events.

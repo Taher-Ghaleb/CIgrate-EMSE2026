@@ -1,0 +1,42 @@
+language: java
+
+dist: trusty
+
+jdk: oraclejdk8
+
+env:
+  global:
+    # these secure values are encrypted for linkedin/avro-util. for use in forked repos, set env vars in your own build - they should win over these (as these wont be decodable in forked builds)
+    - secure: "********************"
+    - secure: "********************"
+
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
+
+install: true
+
+script:
+  - ./gradlew clean build javadoc --no-daemon
+
+before_cache:
+  - rm -rvf $HOME/.gradle/caches/journal-*/file-access.bin
+  - rm -rvf $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -rvf $HOME/.gradle/caches/*/scripts/
+  - rm -rvf $HOME/.gradle/caches/*/*.lock
+  - sync
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+
+deploy:
+  provider: script
+  script: bash -v scripts/publishToBintray.sh
+  skip_cleanup: true
+  on:
+    all_branches: true
+    tags: true
+    # the condition on the tag name (should be a semantic version) is inside the script, for ease of development

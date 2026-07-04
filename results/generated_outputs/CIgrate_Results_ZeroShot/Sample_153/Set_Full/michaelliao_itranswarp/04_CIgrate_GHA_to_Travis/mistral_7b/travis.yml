@@ -1,0 +1,43 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - install: ${{ if eq(env.GITHUB_EVENT_NAME, 'pull_request') }}{{ checkout ~{ { github.ref } } }}{{ else }}{{ checkout master }}{{ endif }}
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_script:
+  - java -version
+  - git -version
+
+script:
+  - java -Xms512M -Xmx512M -jar ./mvnw clean package
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - git tag -a ${TRAVIS_TAG} -m "Deploying to production"
+    - git push origin ${TRAVIS_TAG}
+
+    # TODO: Add deployment script for your application
+
+matrix:
+  include:
+    - java:
+        - '11'
+
+  allow_failures:
+    - java: '11'

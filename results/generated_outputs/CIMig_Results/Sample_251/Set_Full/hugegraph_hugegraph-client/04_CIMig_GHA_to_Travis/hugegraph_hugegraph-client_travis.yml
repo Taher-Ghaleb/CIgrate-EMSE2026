@@ -1,0 +1,22 @@
+env: global
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  mvn compile -Dmaven.javadoc.skip=true | grep -v \"Downloading\\|Downloaded\"\n
+script:
+  script:
+    mvn test -Dtest=UnitTestSuite\nmvn test -Dtest=ApiTestSuite\nmvn test -Dtest=FuncTestSuite\n
+    xvfb-run -e /dev/stdout -a make test
+directories: ~/.m2
+include:
+  stage: coverage

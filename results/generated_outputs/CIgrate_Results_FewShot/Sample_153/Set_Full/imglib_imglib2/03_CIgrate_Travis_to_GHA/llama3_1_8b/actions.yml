@@ -1,0 +1,35 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  branches:
+    - master
+    - "/.*-[0-9]+\\..*/"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Run build script
+        run:.travis/build.sh
+```
+
+Note: The `branches` filter in the Travis CI configuration is mapped to the `branches` keyword in the GitHub Actions workflow, and the `only` keyword is not needed in GitHub Actions. The `install` keyword is mapped to the `runs-on` keyword, and the `script` keyword is mapped to the `run` keyword. The `cache` keyword is mapped to the `actions/cache` action.

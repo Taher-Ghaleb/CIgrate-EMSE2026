@@ -1,0 +1,44 @@
+language: java
+jdk: openjdk11
+sudo: required
+install: true
+cache: maven
+env:
+  matrix:
+    - PROJ_VERSION=9.4.1
+  global:
+    - PROJ_INSTALL_PREFIX=/usr/local
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y \
+    sqlite3 \
+    libsqlite3-dev \
+    libtiff-dev \
+    libcurl4-openssl-dev \
+    pkg-config \
+    cmake \
+    build-essential
+script:
+  - wget https://download.osgeo.org/proj/proj-${{ env.PROJ_VERSION }}.tar.gz
+  - tar xf proj-${{ env.PROJ_VERSION }}.tar.gz
+  - mkdir build
+  - cd build
+  - cmake.. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=${{ env.PROJ_INSTALL_PREFIX }}
+  - NPROC=$(nproc)
+  - make -j${NPROC}
+  - sudo make install
+  - sudo ldconfig
+  - echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+  - echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+  - proj --version
+  - pkg-config --modversion proj
+  - mvn clean package
+  - javac -cp target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java
+  - java -cp "target/proj-1.0-SNAPSHOT.jar:example" TransformPoints
+after_success:
+  - actions/upload-artifact@v4
+    name: proj-jni-jar
+    path: target/proj-*.jar
+    retention-days: 7

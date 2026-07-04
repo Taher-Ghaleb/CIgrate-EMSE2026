@@ -1,0 +1,37 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - master
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.gradle
+
+matrix:
+  allow_failures:
+    - jdk: openjdk11
+
+  include:
+    - java: openjdk11
+      script:
+        - chmod +x gradlew
+        - ./gradlew check -i
+    - java: openjdk11
+      script:
+        - bash .travis/build_condition.sh HEAD..${TRAVIS_COMMIT} examples/example
+        - if [ "$TRAVIS_COMMIT" != "$HEAD" ]; then
+            - chmod +x examples/example/gradlew
+            - ./gradlew check -i
+          fi
+        - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      - curl -L https://codecov.io/bash | bash
+    fi

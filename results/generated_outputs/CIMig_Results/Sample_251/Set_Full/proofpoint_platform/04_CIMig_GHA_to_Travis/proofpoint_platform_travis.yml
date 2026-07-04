@@ -1,0 +1,20 @@
+env: global
+sudo
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn install -B -Ddocker.skip=true
+install:
+  TRUE
+script
+include:
+  if: type in (pull_request, push)
+directories: ~/.m2
+sonarcloud:
+  organization: powsybl-ci-github
+stage: ☕ 11

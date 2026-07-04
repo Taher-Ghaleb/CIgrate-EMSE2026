@@ -1,0 +1,60 @@
+language: java
+
+branches:
+  only:
+    - main
+    - develop
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+before_install:
+  - install: actions/checkout@v2
+
+script:
+  - checkout -f
+  - java --version
+  - mvn --version
+  - mvn -B install site -e -DskipTests
+
+before_install:
+  - name: Set up JDK 8
+    addons:
+      name: jdk8
+
+install:
+  - cache: maven
+    directories:
+      - ~/.m2/repository
+
+before_script:
+  - rm -rf ~/.m2/repository/org/joda/time
+
+script:
+  - chmod +x ./.github/website.sh
+
+before_script:
+  - if [ "${GITHUB_EVENT_NAME}" == "push" ]; then \
+      if [ "${GITHUB_REF}" =~ "^refs/tags/website" ] || [ "${GITHUB_REF}" =~ "^refs/tags/v" ]; then \
+          true; \
+      else \
+          false; \
+      fi; \
+    fi
+
+script:
+  - if [ "${GITHUB_EVENT_NAME}" == "push" ]; then \
+      if [ "${GITHUB_REF}" =~ "^refs/tags/website" ]; then \
+          ./.github/website.sh; \
+      elif [ "${GITHUB_REF}" =~ "^refs/tags/v" ]; then \
+          ./.github/website.sh; \
+      fi; \
+    fi
+
+env:
+  - name: SECRET_TOKEN
+    value: $SECRET_TOKEN

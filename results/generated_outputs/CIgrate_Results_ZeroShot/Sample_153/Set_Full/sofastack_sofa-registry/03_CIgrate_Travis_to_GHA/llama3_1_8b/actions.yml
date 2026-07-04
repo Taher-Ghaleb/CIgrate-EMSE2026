@@ -1,0 +1,70 @@
+name: Java Project
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: mydb
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${runner.os}-maven-dependencies-
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y maven
+      - name: Build and test
+        run: |
+          mvn clean install -DskipTests -B -V
+          mvn test
+      - name: Check code format
+        run: |
+          sh./tools/check_format.sh
+      - name: Code coverage
+        run: |
+          bash <(curl -s https://codecov.io/bash)
+      - name: Deploy
+        uses: actions/deploy@v1
+        with:
+          provider: GitHub
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.event.pull_request.base_ref }}
+          commit: ${{ github.sha }}
+          repo-token: ${{ secrets.REPO_TOKEN }}
+          repo-owner: ${{ github.repository_owner }}
+          repo-name: ${{ github.repository }}
+          deploy-token: ${{ secrets.DEPLOY_TOKEN }}
+          deploy-owner: ${{ github.repository_owner }}
+          deploy-name: ${{ github.repository }}
+          deploy-branch: ${{ github.event.pull_request.base_ref }}
+          deploy-commit: ${{ github.sha }}
+          deploy-repo-token: ${{ secrets.REPO_TOKEN }}
+          deploy-repo-owner: ${{ github.repository_owner }}
+          deploy-repo-name: ${{ github.repository }}
+          deploy-repo-branch: ${{ github.event.pull_request.base_ref }}

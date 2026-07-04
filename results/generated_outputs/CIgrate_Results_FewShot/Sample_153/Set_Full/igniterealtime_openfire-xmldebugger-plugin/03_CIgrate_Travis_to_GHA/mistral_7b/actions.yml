@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '*'
+
+env:
+  global:
+    - name: M2_SETTINGS
+      value: ${{ secrets.M2_SETTINGS_OPENFIRE }}
+    - name: CI_TOOLING_REPO
+      value: ${{ secrets.CI_TOOLING_REPO }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Checkout ci-tooling
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.CI_TOOLING_REPO }}
+          ref: 'main'
+      - name: Set maven settings
+        run: mv ${{ env.CI_TOOLING_REPO }}/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+      - name: Build and deploy
+        run: mvn deploy --settings $HOME/.m2/settings.xml
+        env:
+          MAVEN_OPTS: "-Dmaven.reactor.use.planner=false"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: maven-artifacts
+          path: target/
+
+secrets:
+  M2_SETTINGS_OPENFIRE: ${{ env.secure }}
+  CI_TOOLING_REPO: ${{ env.secure }}

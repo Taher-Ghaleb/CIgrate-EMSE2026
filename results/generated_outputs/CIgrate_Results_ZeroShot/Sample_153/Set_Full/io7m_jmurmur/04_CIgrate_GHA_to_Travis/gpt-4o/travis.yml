@@ -1,0 +1,55 @@
+language: java
+jdk:
+  - openjdk11
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+env:
+  global:
+    - CODECOV_TOKEN
+
+before_install:
+  - git clone --depth=1 https://github.com/actions/checkout.git
+  - cd checkout
+  - git checkout v4
+  - cd ..
+
+install:
+  - git clone --depth=1 https://github.com/actions/setup-java.git
+  - cd setup-java
+  - git checkout v4
+  - cd ..
+  - mvn --errors clean verify site
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f com.io7m.jmurmur.core/target/site/jacoco/jacoco.xml || echo "Codecov did not collect coverage reports"
+
+after_script:
+  - |
+    if [ "$TRAVIS_TEST_RESULT" != "0" ]; then
+      echo "Build failed"
+    fi
+  - |
+    if [ "$TRAVIS_TEST_RESULT" == "0" ]; then
+      echo "Build succeeded"
+    fi
+
+notifications:
+  irc:
+    channels:
+      - "irc.libera.chat#io7m"
+    template:
+      - "Build %{result}: %{repository_slug} (%{commit})"
+    on_success: always
+    on_failure: always
+    use_notice: true
+    skip_join: true
+    nick: "travis-ci-jmurmur"

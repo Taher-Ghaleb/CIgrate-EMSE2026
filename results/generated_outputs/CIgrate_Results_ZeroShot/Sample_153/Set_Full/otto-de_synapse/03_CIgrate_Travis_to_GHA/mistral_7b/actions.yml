@@ -1,0 +1,53 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: eu-central-1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          key: dependencies
+          path: ~/.m2/repository
+          restore-keys: |
+            ${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}:${{ github.event.ref }
+
+      - name: Install AWS CLI (skip if already installed)
+        if: ! contains(steps.run.outputs.aws_cli_installed, 'true')
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
+          unzip awscliv2.zip
+          sudo ./aws/install
+          export PATH=$PATH:$HOME/aws
+          aws --version
+          echo "aws cli installed: true" >> $GITHUB_OUTPUT
+
+      - name: Build and Test
+        run: |
+          ./gradlew clean assemble test
+          ./gradlew jacocoTestReport
+          ./gradlew jacocoReport
+
+      - name: Upload codecov report
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: build/jacoco/jacoco.xml
+          fail_on_error: false
+          fail_on_un

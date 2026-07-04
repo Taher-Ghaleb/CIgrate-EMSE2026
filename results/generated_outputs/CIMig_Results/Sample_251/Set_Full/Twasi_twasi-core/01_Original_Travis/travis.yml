@@ -1,0 +1,29 @@
+language: java
+sudo: required
+
+services:
+  - docker
+
+addons:
+  sonarcloud:
+    organization: "twasi"
+
+jobs:
+  include:
+    - stage: tests
+      script:
+        - "mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar"
+    - stage: build
+      script:
+        - "mvn clean compile assembly:single"
+    - stage: deploy-docker-dev
+      script:
+        - "cp .travis.settings.xml $HOME/.m2/settings.xml && mvn clean compile assembly:single docker:build -DpushImage"
+    - stage: deploy-dev
+      script:
+        - "sed -i \"s/LIVE/${TRAVIS_BUILD_NUMBER}/g\" pom.xml"
+        - "cp .travis.settings.xml $HOME/.m2/settings.xml && mvn clean compile assembly:single deploy"
+
+stages:
+  - name: deploy-dev
+    if: branch = dev

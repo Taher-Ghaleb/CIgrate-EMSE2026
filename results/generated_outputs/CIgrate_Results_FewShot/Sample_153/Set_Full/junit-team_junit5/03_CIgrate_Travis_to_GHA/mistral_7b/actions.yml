@@ -1,0 +1,45 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.ORG_GRADLE_PROJECT_ossrhUsername }}
+  ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.ORG_GRADLE_PROJECT_ossrhPassword }}
+  GRGIT_USER: ${{ secrets.GRGIT_USER }}
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [linux, osx]
+        jdk: [openjdk11, openjdk-ea]
+      exclude:
+        os: osx
+        jdk: openjdk-ea
+      allow-failures:
+        jdk: openjdk-ea
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.os }}/.gradle/caches/modules-2
+          key: ${{ runner.os }}-gradle-cache-${{ hashFiles('**/gradle/wrapper/dists') }}
+      - name: Install Gradle
+        uses: gradle/gradle@v3
+      - name: Display Gradle, Groovy, JVM and other versions
+        run: ./gradlew --version
+      - name: Setup Java ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Clean and build
+        run: ./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+      - name: Cache Gradle lock files
+        run: rm -f ${{ runner.os }}/.gradle/caches/*/*.lock
+
+  coverage:
+    needs: build
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && github.ref_name == 'master'

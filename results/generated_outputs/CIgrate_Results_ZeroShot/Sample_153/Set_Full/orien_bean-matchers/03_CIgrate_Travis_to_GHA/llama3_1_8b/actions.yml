@@ -1,0 +1,54 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: mydb
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${runner.os}-maven-dependencies-
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y maven
+      - name: Build and test
+        run: |
+          mvn clean package
+      - name: Deploy to codecov
+        run: |
+          bash <(curl -s https://codecov.io/bash)
+      - name: Deploy to db
+        run: |
+          psql -U ${{ secrets.POSTGRES_USER }} -d mydb -c "INSERT INTO mytable (name, value) VALUES ('test', 'testvalue');"
+      - name: Wait for db
+        run: |
+          while! psql -U ${{ secrets.POSTGRES_USER }} -d mydb -c "SELECT * FROM mytable WHERE name = 'test';" | grep -q 'testvalue'; do sleep 1; done

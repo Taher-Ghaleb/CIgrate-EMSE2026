@@ -1,0 +1,49 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [openjdk11]
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME_${{ matrix.jdk }}}
+
+    services:
+      dbs:
+        postgres:
+          image: postgres:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Install dependencies
+        run: ./gradlew dependencies
+
+      - name: Build and Test
+        run: ./gradlew :jar :test
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: build/libs/my-artifact.jar
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-gradle-dependencies
+          path: ./
+          restore-keys: |
+            ${{ runner.os }}-gradle-dependencies
+
+    # TODO: Add deploy steps if required

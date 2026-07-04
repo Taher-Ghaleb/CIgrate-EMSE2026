@@ -1,0 +1,57 @@
+name: Java Maven Build
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --privileged
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: 'cache-maven-dependencies'
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install dependencies
+      run: mvn -B -nsu install
+    - name: Verify
+      run: mvn -B -nsu verify
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: 'cache-maven-dependencies'
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: 'cache-maven-dependencies'
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: 'cache-maven-dependencies'
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: 'cache-maven-dependencies'
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hash

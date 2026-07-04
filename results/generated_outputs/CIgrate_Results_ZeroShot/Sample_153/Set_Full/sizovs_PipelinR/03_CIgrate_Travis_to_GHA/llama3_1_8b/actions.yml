@@ -1,0 +1,63 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # TODO: consider using filters instead of wildcard
+    tags:
+      - v*
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: mydb
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install dependencies
+        run: |
+         ./gradlew dependencies
+      - name: Build and test
+        run: |
+         ./gradlew build jacocoTestReport
+      - name: Upload test report
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file:./build/test-reports/jacoco.xml
+      - name: Deploy
+        uses: docker/build-push-action@v4
+        with:
+          context:.
+          push: true
+          tags: myimage:latest
+      - name: Wait for deployment
+        run: |
+          sleep 10
+      - name: Check deployment
+        run: |
+          curl -s http://localhost:5432
+      - name: Fail on error
+        continue-on-error: true
+        run: |
+          exit 1

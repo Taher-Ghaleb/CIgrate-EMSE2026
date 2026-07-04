@@ -1,0 +1,36 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  MAVEN_OPTS: -Dorg.slf4j.simpleMappin=true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [ openjdk8, openjdk11 ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Set up Docker
+        if: always()
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - name: Verify Build
+        run: |
+          chmod +x mvnw
+          mvn -version
+          mvn -B -U -Possrh clean verify

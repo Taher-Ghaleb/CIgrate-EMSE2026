@@ -1,0 +1,15 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: dev
+before_install:
+  java -version
+  mvn -Dmaven.test.skip=true -B package source:jar deploy --file pom.xml -s mvn_settings.xml -DS_NUTZMAVEN_USER_ID=${{secrets.S_NUTZMAVEN_USER_ID}} -DS_NUTZMAVEN_USER_PWD=${{secrets.S_NUTZMAVEN_USER_PWD}}
+script
+stage: ☕ 11
+directories: ~/.maven-

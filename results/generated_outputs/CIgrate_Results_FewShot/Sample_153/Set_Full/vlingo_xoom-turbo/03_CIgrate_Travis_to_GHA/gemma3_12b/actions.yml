@@ -1,0 +1,47 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Configure Maven
+        run: |
+          rm -rf $HOME/.m2/repository/io/vlingo
+          cp .travis/settings.xml $HOME/.m2/settings.xml
+          mvn deploy:help versions:help help:help
+      - name: Maven Install
+        run: mvn install -PTravisCI
+    cache:
+      path: ~/.m2/repository
+      key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+    
+  deploy:
+    if: github.ref == 'refs/tags/' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Maven Deploy
+        run: mvn deploy -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required for deploying to GitHub Packages
+      - name: Trigger Dependencies (on tag)
+        if: contains(github.ref, 'tag')
+        run: |
+          chmod u+x .travis/trigger_deps.sh
+          if [ -n "$TRAVIS_TAG" ]; then .travis/trigger_deps.sh; fi
+
+  notify:
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Notification
+        run: |
+          # TODO: Implement Slack notification using a dedicated action or script.
+          echo "Slack notification placeholder.  Configure your notification mechanism here."

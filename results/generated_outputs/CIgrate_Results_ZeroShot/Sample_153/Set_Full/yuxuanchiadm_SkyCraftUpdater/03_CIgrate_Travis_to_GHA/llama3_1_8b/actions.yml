@@ -1,0 +1,57 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # TODO: switch to expanded form
+  pull_request:
+    branches:
+      - main
+      - feature/*
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: chmod +x gradlew
+      - name: Build and deploy
+        run: |
+         ./gradlew build
+         ./gradlew deploy
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle
+          key: ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}-${GITHUB_RUN_NUMBER}
+          restore-keys: |
+            ~/.gradle
+      - name: Run tests
+        run:./gradlew test
+      - name: Deploy
+        uses: actions/deploy@v1
+        with:
+          provider: your-deploy-provider
+          token: ${{ secrets.YOUR_DEPLOY_TOKEN }}
+      - name: Send notification
+        uses: actions/notification@v1
+        with:
+          message: "Deployment successful"
+          title: "Deployment successful"
+          level: success
+```
+
+Note: The above YAML is a complete migrated workflow, but some parts (like deploy provider and token) are placeholders and should be replaced with your actual values.

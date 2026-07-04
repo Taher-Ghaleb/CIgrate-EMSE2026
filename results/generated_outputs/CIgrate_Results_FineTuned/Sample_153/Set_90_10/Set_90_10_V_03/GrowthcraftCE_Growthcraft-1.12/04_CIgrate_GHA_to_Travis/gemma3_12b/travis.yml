@@ -1,0 +1,50 @@
+language: java
+jdk:
+  - oraclejdk8
+before_install:
+  - ruby --version
+  - chmod +x ./gradlew
+  - ./gradlew setupCIWorkspace -S
+install: true
+script:
+  - ./gradlew build
+  - ./gradlew sonarqube
+after_success:
+  - ls -la build/libs
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.sonar/cache/
+    - $HOME/.m2/repository/
+    - .gradle
+notifications:
+  email:
+    recipients:
+      - travis-j@growthcraft.net
+      - travis-j2@growthcraft.net
+      - travis-j3@growthcraft.net
+      - travis-j4@growthcraft.net
+      - travis-j5@growthcraft.net
+      - travis-j6@growthcraft.net
+      - travis-j7@growthcraft.net
+      - travis-j8@growthcraft.net
+      - travis-j9@growthcraft.net
+      - travis-j10@growthcraft.net
+      - travis-j11@growthcraft.net
+      - travis-j12@growthcraft.net
+      - travis-j13@growthcraft.net
+      - travis-j14@growthcraft.net
+      - travis-j15@growthcraft.net
+      - travis-j16@growthcraft.net
+      - travis-j17@growthcraft.net
+      - travis-j18@growthcraft.net
+      - travis-j19@growthcraft.net
+      - travis-j20@growthcraft.net
+      - travis-j21@growthcraft.net
+      - travis-j22@growthcraft.net
+      - travis-j23@growthcraft.net
+      - travis-j24@growthcraft.net
+      - travis-j25@growthcraft.net
+      - travis

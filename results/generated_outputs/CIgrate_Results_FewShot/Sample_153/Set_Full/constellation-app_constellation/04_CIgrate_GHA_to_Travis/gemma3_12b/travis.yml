@@ -1,0 +1,58 @@
+language: java
+sudo: required
+env:
+  RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+  global:
+    - ADB_INSTALL_TIMEOUT: 10
+branches:
+  only:
+    - master
+    - develop
+  except:
+    - tags
+
+jobs:
+  build-and-test:
+    jdk: openjdk11
+    script:
+      - docker pull "${RUNNER_IMAGE}"
+      - docker run \
+          --mount "type=bind,source=${GITHUB_WORKSPACE},target=${GITHUB_WORKSPACE}" \
+          --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" \
+          --workdir "${GITHUB_WORKSPACE}" \
+          "${RUNNER_IMAGE}" \
+          .travis/run-tests.sh
+      - .travis/sonar.sh
+    cache:
+      directories:
+        - '$HOME/.ivy2/cache'
+    cache_key: "${{ runner.os }}-ivy-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}"
+    before_cache:
+      - rm -rf ~/.ivy2/cache
+    addons:
+      sonarcloud:
+        token:
+          secure: "${SONAR_TOKEN}"
+        organization: constellation-app
+    after_success:
+      - find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+    deploy:
+      provider: script
+      script:
+        - if [[ "${TRAVIS_TAG}" ]]; then
+            - echo "Uploading distribution artifact"
+            - zip -r dist/constellation.zip .
+            - echo "Uploaded distribution artifact"
+            - |
+              if [[ -n "${TRAVIS_TAG}" ]]; then
+                echo "Creating GitHub Release"
+                gh release create --draft "${TRAVIS_TAG}" --target-commit "${TRAVIS_COMMIT}" --append-file dist/constellation.zip
+                echo "Created GitHub Release"
+              fi
+          fi
+      on:
+        tags: true
+      skip_cleanup: true
+    notifications:
+      gitter:
+        webhook-url: https://webhooks.gitter.im/e/82ac70bdb3f9e1

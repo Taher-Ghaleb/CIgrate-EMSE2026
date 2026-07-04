@@ -1,0 +1,26 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+
+matrix:
+  allow_failures:
+    - jdk: openjdk8
+    - jdk: openjdk11
+
+before_install:
+  - rm -rf ~/.m2/repository/org/glassfish/javax.el/3.0.1-b08
+  - chmod +x mvnw
+
+script:
+  - ./mvnw --batch-mode --no-transfer-progress clean install -DskipTests=false -DskipIntegrationTests=false -Dcheckstyle.skip=false -Drat.skip=false -Dmaven.javadoc.skip=true
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN || echo "Codecov upload failed"
+
+after_failure:
+  - echo "Build failed for JDK $TRAVIS_JDK_VERSION"
+
+cache:
+  directories:
+    - $HOME/.m2/repository

@@ -1,0 +1,46 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 11"
+  - curl -sL https://github.com/ibm-extensions/temurin/releases/download/11.0.15/temurin-11.0.15-linux-x64.tar.gz | tar -xvf - -C /usr/local/lib --strip-components=1
+  - export JAVA_HOME=/usr/local/lib/temurin-11.0.15
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Setting up Gradle"
+  - curl -sL https://services.gradle.org/distributions/gradle-7.5.1/bin/gradle-7.5.1-all.zip | tar -xvf - -C /usr/local/lib --strip-components=1
+  - export GRADLE_HOME=/usr/local/lib/gradle-7.5.1
+  - export PATH=$GRADLE_HOME/bin:$PATH
+
+before_script:
+  - echo "Caching SonarCloud packages"
+  - mkdir -p ~/.sonar/cache
+  - mkdir -p ~/.gradle/caches
+  - mkdir -p ~/.m2/repository
+
+script:
+  - echo "Building and analyzing"
+  -./gradlew clean check sonarqube --info --stacktrace --warning-mode all
+  - export GITHUB_TOKEN=$GITHUB_TOKEN
+  - export SONAR_TOKEN=$SONAR_TOKEN
+  - export SONAR_ORGANIZATION=kaklakariada-github
+
+after_success:
+  - echo "Deploying to SonarCloud"
+  - curl -X POST \
+    https://sonarcloud.io/api/compilation \
+    -H 'Content-Type: application/json' \
+    -H 'Authorization: Bearer $SONAR_TOKEN' \
+    -d '{"projectKey": "kaklakariada-github", "branch": "master", "commitHash": "$TRAVIS_COMMIT"}'
+
+after_failure:
+  - echo "Deploying to SonarCloud"
+  - curl -X POST \
+    https://sonarcloud.io/api/compilation \
+    -H 'Content-Type: application/json' \
+    -H 'Authorization: Bearer $SONAR_TOKEN' \
+    -d '{"projectKey": "kaklakariada-github", "branch": "master", "commitHash": "$TRAVIS_COMMIT"}'
+
+deploy:
+  on:
+    tags: true

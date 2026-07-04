@@ -1,0 +1,29 @@
+name: Android Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+    env:
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Install Android SDK
+        run: |
+          echo "y" | tools/bin/sdkmanager "platform-tools"
+          echo "y" | tools/bin/sdkmanager "tools"
+          echo "y" | tools/bin/sdkmanager "build-tools-25.0.2"
+          echo "y" | tools/bin/sdkmanager "android-22"
+      - name: Build with Gradle
+        run: ./gradlew build

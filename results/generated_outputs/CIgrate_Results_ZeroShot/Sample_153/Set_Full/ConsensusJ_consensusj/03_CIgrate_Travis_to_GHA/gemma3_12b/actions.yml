@@ -1,0 +1,40 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64 # TODO: Determine if this is needed and how to set it correctly.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk8
+          - openjdk9
+          - openjdk11
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Update apt
+        run: sudo apt-get update
+      - name: Install graphviz
+        run: sudo apt-get install graphviz
+      - name: Java Version
+        run: java -version
+      - name: Gradle BuildCI
+        run: ./gradlew buildCI --scan --stacktrace --info
+
+    cache:
+      path:
+        - $HOME/.gradle/caches/
+        - $HOME/.gradle/wrapper/
+    before_cache:
+      - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+      - rm -fr $HOME/.gradle/caches/*/plugin-resolution/

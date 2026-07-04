@@ -1,0 +1,35 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: required
+addons:
+  android:
+    components:
+      - build-tools-29.0.2
+      - platforms;android-29
+
+env:
+  global:
+    - GRADLE_CACHE=true
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - uses: actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+      cache: 'gradle'
+
+before_script:
+  - uses: android-actions/setup-android@v3
+
+script:
+  - yes | sdkmanager --licenses || true
+  - run: sdkmanager "build-tools;29.0.2"
+  - run: sdkmanager "platforms;android-29"
+  - run: chmod +x project/gradlew
+  - working-directory: ./project
+    run: ./gradlew test

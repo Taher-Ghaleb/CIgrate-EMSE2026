@@ -1,0 +1,8 @@
+language: java
+jdk:
+  - openjdk7
+branches:
+  except:
+  - gh-pages
+after_success:
+  - ".utility/do-publish.sh"

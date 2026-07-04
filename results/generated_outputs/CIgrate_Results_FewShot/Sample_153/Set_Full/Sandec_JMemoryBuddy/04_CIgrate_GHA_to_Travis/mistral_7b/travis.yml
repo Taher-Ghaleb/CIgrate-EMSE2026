@@ -1,0 +1,17 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+install: true
+addons:
+  gradle:
+    version: '6.x'
+
+script:
+  - chmod +x gradlew
+  - ./gradlew :jar :test
+
+cache:
+  directories:
+    - '$HOME/.gradle'

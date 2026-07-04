@@ -1,0 +1,98 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies"
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - echo "Installing gradle"
+  - curl -s https://get.sdkman.io | sh
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install gradle 7.4
+  - sdk current gradle
+  - gradle wrapper --gradle-version 7.4
+
+script:
+  - echo "Running check"
+  -./gradlew check -i
+  - echo "Cleanup Gradle Cache"
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+deploy:
+  on:
+    branches:
+      only:
+        - master
+  before_deploy:
+    - echo "Deploying to production"
+  after_success:
+    - echo "Deploying to production"
+  on:
+    push:
+      branches:
+        only:
+          - master
+  deploy:
+    provider: script
+    script:
+      - echo "Deploying to production"
+    on:
+      branch: master
+    environment:
+      - name: DEPLOYMENT_BRANCH
+        value: $TRAVIS_BRANCH
+    on:
+      push:
+        branches:
+          only:
+            - master
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+    recipients:
+      - your_email@example.com
+
+matrix:
+  include:
+    - java_version: 11
+      dist: temurin
+    - java_version: 17
+      dist: temurin
+  allow_failures:
+    - java_version: 17
+      dist: temurin
+
+services:
+  - docker
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - "ppa:openjdk/ppa"
+    packages:
+      - openjdk-11-jdk
+      - openjdk-17-jdk
+    cache: apt
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle/*
+    - $HOME/.npm
+
+env:
+  global:
+    - name: FOO
+      value: ${{ secrets.FOO }}
+  matrix:
+    - name: JAVA_VERSION
+      value: $java_version
+    - name: DIST
+      value: $dist
+```
+Note: The

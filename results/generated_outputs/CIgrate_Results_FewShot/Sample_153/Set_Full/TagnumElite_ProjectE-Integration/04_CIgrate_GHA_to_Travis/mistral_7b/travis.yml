@@ -1,0 +1,29 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: false
+install: true
+addons:
+  github-pages:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+
+script:
+  - chmod +x gradlew
+  - ./gradlew setupCIWorkspace -S
+  - ./gradlew build
+  - ./gradlew javadoc
+
+before_script:
+  - cache --directories $HOME/.gradle
+
+if: $github.ref == 'refs/heads/1.12.x' && $github.event_name == 'push'
+  script:
+    - ./gradlew javadoc
+    - ./gradlew publishDocs
+
+after_success:
+  - rm -f $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -f $HOME/.gradle/caches/minecraft/deobfedDeps/providedDummy.jar
+  - rm -f $HOME/.gradle/caches/minecraft/deobfedDeps/compileDummy.jar
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock

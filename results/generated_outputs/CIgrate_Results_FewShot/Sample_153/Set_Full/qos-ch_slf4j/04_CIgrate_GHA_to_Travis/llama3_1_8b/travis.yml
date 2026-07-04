@@ -1,0 +1,58 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk: openjdk11
+cache: maven
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y default-jdk
+
+script:
+  - mvn clean install
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+  - if [ "$TR

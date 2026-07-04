@@ -1,0 +1,62 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - devel
+
+env:
+  global:
+    secure: ${{ secrets.SECRET_1 }}
+    secure: ${{ secrets.SECRET_2 }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        - postgres
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: '1.7'
+          cache: 'gradle'
+
+      - name: Install and Cache Maven
+        uses: actions/setup-node@v4
+
+      - name: Install Maven
+        run: |
+          wget https://dlcdn.apache.org/maven/maven-3/3.8.4/binaries/apache-maven-3.8.4-bin.tar.gz
+          tar -xzf apache-maven-3.8.4-bin.gz
+          mv apache-maven-3.8.4 /usr/local/maven
+          export M2_HOME=/usr/local/maven
+          export PATH=$M2_HOME/bin:$PATH
+          mvn -version
+
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies
+
+      - name: Install and Cache Gradle
+        uses: gradle/gradle@v4
+        with:
+          gradle-version: 7.0.2
+          cache: gradle
+
+      - name: Install and Cache NPM Dependencies
+        run: npm ci
+
+      - name: Build
+        run: mvn install
+
+      - name: Package and Deploy
+        if: ${{ github.event_name != '

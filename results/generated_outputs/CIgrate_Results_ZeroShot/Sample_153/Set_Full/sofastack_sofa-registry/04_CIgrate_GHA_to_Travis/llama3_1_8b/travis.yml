@@ -1,0 +1,27 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - export M2_HOME=~/.m2
+  - export MAVEN_OPTS=-Xmx512m
+  - export MAVEN_OPTS=-Dmaven.repoLocalPolicy=always-clean-releases
+  - export MAVEN_OPTS=-Dmaven.wagon.http.connectionTimeout=10000
+  - export MAVEN_OPTS=-Dmaven.wagon.http.readTimeout=10000
+  - export MAVEN_OPTS=-Dmaven.wagon.http.connectionTimeout=10000
+  - export MAVEN_OPTS=-Dmaven.wagon.http.readTimeout=10000
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.host=proxy.example.com
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.port=8080
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.auth.username=myuser
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.auth.password=mypassword
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.nonProxyHosts=localhost|127.0.0.1
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.nonProxyHosts=localhost|127.0.0.1
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.nonProxyHosts=localhost|127.0.0.1
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.nonProxyHosts=localhost|127.0.0.1
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.nonProxyHosts=localhost|127.0.0.1
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.nonProxyHosts=localhost|127.0.0.1
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.nonProxyHosts=localhost|127.0.0.1
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.nonProxyHosts=localhost|127.0.0.1
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.nonProxyHosts=localhost|127.0.0.1
+  - export MAVEN_OPTS=-Dmaven.wagon.http.proxy.nonProxyHosts=localhost

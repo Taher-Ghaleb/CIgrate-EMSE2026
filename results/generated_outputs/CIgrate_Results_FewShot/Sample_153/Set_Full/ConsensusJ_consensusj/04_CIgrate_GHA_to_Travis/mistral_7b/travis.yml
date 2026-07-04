@@ -1,0 +1,21 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk9
+  - openjdk11
+
+addons:
+  graphviz:
+    install: true
+
+script:
+  - apt-get update
+  - apt-get install -y graphviz
+  - chmod +x gradlew
+  - java -version
+  - ./gradlew buildCI --scan --stacktrace --info
+
+before_script:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/

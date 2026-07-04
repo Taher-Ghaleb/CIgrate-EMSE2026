@@ -1,0 +1,46 @@
+name: Java Maven Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-8
+        env:
+          GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
+          GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+      - name: Install dependencies
+        run: |
+          if [! -z "$GPG_SECRET_KEYS" ]; then
+            echo $GPG_SECRET_KEYS | base64 --decode | gpg --import
+          fi
+          if [! -z "$GPG_OWNERTRUST" ]; then
+            echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
+          fi
+          mvn install --settings.travis/settings.xml -DskipTests -Dmaven.javadoc.skip=true -B
+      - name: Build and deploy
+        run: |
+          mvn clean deploy --settings.travis/settings.xml -DskipTests=true -B
+```
+
+Note: The above YAML maintains the original branch and tag names, and uses the `actions/checkout@v4` action to checkout the code. The `setup-java@v4` action is used to set up Java 8, and the `actions/cache@v4` action is used to cache Maven dependencies. The `gpg` command is used to import GPG secret keys and owner trust. The `mvn` command is used to install, clean, and deploy the project.

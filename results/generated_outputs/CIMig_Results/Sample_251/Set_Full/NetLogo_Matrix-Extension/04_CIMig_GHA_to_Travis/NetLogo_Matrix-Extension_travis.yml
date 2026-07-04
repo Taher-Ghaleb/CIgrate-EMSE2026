@@ -1,0 +1,14 @@
+sudo: FALSE
+cache: directories
+language:
+  components:
+    tools
+    platform-tools
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    tools
+    extra-android-maven-repository

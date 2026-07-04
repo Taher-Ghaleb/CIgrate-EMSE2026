@@ -1,0 +1,31 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      uses: actions/setup-java@version
+      env:
+        github_token: ${{ github.token }}
+      with: java-version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+      uses: actions/checkout@version
+
+slack-workflow-status:
+  if: always()
+
+macos:
+  jdk: openjdk8
+
+uses: actions/checkout@version
+

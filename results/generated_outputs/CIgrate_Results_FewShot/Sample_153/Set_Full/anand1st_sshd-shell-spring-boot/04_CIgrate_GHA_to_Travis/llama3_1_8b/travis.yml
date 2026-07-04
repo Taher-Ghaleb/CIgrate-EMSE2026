@@ -1,0 +1,18 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.cache'
+script:
+  - cd sshd-shell-spring-boot-starter
+  - mvn jacoco:report coveralls:report
+after_success:
+  - curl -X POST \
+    https://coveralls.io/badges/0.1.0/embed?repo=github_account/repo_name&service=github&build=travis&branch=${TRAVIS_BRANCH}&commit=${TRAVIS_COMMIT}&job=${TRAVIS_JOB_NUMBER}&job_id=${TRAVIS_JOB_ID}&job_status=${TRAVIS_STATUS}&job_result=${TRAVIS_RESULT}&job_duration=${TRAVIS_DURATION}&job_url=${TRAVIS_BUILD_URL}&job_log_url=${TRAVIS_BUILD_LOG_URL}&job_artifacts=${TRAVIS_BUILD_ARTIFACTS}&job_coverage=${TRAVIS_COVERAGE}&job_coverage_percentage=${TRAVIS_COVERAGE_PERCENTAGE}&job_coverage_lines=${TRAVIS_COVERAGE_LINES}&job_coverage_lines_covered=${TRAVIS_COVERAGE_LINES_COVERED}&job_coverage_lines_missed=${TRAVIS_COVERAGE_LINES_MISSED}&job_coverage_lines_covered_percent=${TRAVIS_COVERAGE_LINES_COVERED_PERCENT}&job_coverage_lines_missed_percent=${TRAVIS_COVERAGE_LINES_MISSED_PERCENT}&job_coverage_lines_covered_percent=${TRAVIS_COVERAGE_LINES_COVERED_PERCENT}&job_coverage_lines_missed_percent=${TRAVIS_COVERAGE_LINES_MISSED_PERCENT}&job_coverage_lines_covered_percent=${TRAVIS_COVERAGE_LINES_COVERED_PERCENT}&job_coverage_lines_missed_percent=${TRAVIS_COVERAGE_LINES_MISSED_PERCENT}&job_coverage_lines_covered_percent=${TRAVIS_COVERAGE_LINES_COVERED_PERCENT}&job_coverage_lines_missed_percent=${TRAVIS_COVERAGE_LINES_MISSED_PERCENT}&job_coverage_lines_covered_percent=${TRAVIS_COVERAGE_LINES_COVERED_PERCENT}&job_coverage_lines_missed_percent=${TRAVIS_COVERAGE_LINES_MISSED_PERCENT}&job_coverage_lines_covered_percent=${TRAVIS_COVERAGE_LINES_COVERED_PERCENT}&job_coverage_lines_missed_percent=${TRAVIS_COVERAGE_LINES_MISSED_PERCENT}&job_coverage_lines_covered_percent=${TRAVIS_COVERAGE_LINES_COVERED_PERCENT}&job_coverage_lines_missed_percent=${TRAVIS_COVERAGE_LINES_MISSED_PERCENT}&job_coverage

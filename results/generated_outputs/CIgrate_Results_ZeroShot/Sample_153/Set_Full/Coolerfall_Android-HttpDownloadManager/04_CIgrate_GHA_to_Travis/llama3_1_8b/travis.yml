@@ -1,0 +1,80 @@
+language: java
+
+before_install:
+  - echo "Installing JDK 8"
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk
+
+install:
+  - echo "Installing Android SDK"
+  - apt-get install -y android-sdk
+  - echo "Installing Android SDK components"
+  - android-sdk tools/bin/sdkmanager "platform-tools" "platforms;android-28" "build-tools;28.0.3" "extras;android;m2repository"
+
+script:
+  - echo "Making gradlew executable"
+  - chmod +x gradlew
+  - echo "Building with Gradle"
+  -./gradlew build
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: Add deployment script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: Add deployment script"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production"
+    - echo "TODO: Add deployment script"
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on:
+      push:
+        branches:
+          only:
+            - main
+      release:
+        branches:
+          only:
+            - main
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - os: ubuntu-latest
+      dist: xenial
+      java-version: '8'
+    - os: ubuntu-latest
+      dist: xenial
+      java-version: '11'
+    - os: ubuntu-latest
+      dist: xenial
+      java-version: '17'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - docker
+  - docker-compose
+
+before_script:
+  - echo "Waiting for Docker to be available"
+  - docker-compose up -d
+
+script:
+  - echo "Running tests"
+  -./gradlew test

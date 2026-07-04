@@ -1,0 +1,21 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: false
+install: true
+addons:
+  gradle:
+    version: '6.x'
+
+env:
+  matrix:
+    - JDK_CACHE=gradle
+
+script:
+  - chmod +x gradlew
+  - ./gradlew build
+
+cache:
+  directories:
+    - $JDK_CACHE

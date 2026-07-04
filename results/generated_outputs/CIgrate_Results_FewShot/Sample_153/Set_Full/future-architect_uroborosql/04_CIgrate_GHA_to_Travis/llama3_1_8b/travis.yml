@@ -1,0 +1,49 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - oraclejdk8
+
+script:
+  - mvn clean install
+
+after_success:
+  - if: success() && github.event_name == 'push'
+    env:
+      - COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN
+    script:
+      - mvn jacoco:report coveralls:report
+
+deploy:
+  on:
+    branch: master
+    if: github.event_name == 'push'
+    env:
+      - OWNER=${OWNER}
+      - REPO=${REPO}
+  before_deploy:
+    - mvn deploy -Dmaven.test.skip=true --settings.travis.settings.xml
+
+notifications:
+  on_success:
+    email:
+      recipients:
+        - gr-tig-oss@future.co.jp
+      body: |
+        Build ${{ job.status }} for ${{ github.repository }}
+        Commit: ${{ github.sha }}
+        Branch: ${{ github.ref }}
+        Workflow: ${{ github.workflow }}
+  on_failure:
+    email:
+      recipients:
+        - gr-tig-oss@future.co.jp
+      body: |
+        Build ${{ job.status }} for ${{ github.repository }}
+        Commit: ${{ github.sha }}
+        Branch: ${{ github.ref }}
+        Workflow: ${{ github.workflow }}
+```
+
+Note that the `deploy` and `notifications` sections are not directly equivalent to the GitHub Actions workflow, as Travis CI does not support the same level of customization. However, the above configuration should achieve similar results.

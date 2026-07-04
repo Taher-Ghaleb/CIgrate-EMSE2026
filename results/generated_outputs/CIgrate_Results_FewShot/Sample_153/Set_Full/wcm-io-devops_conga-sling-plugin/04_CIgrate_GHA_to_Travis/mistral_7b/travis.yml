@@ -1,0 +1,30 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+env:
+  matrix:
+    - GITHUB_REF: ${{ github.ref }}
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+before_install:
+  - cat ./.travis.yml > ./.travis.maven-settings.xml
+
+script:
+  - mvn -s ./.travis.maven-settings.xml clean
+  - mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install
+  - if [ "${GITHUB_REF}" != "refs/heads/master" ]; then mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install -f example; fi
+
+after_success:
+  - uses: codecov/codecov-action@v4
+
+branches:
+  only:
+    - master
+  except:
+    - '**-[0-9]+.**'
+    - '**-[0-9]+.[0-9]+.[0-9]+**'

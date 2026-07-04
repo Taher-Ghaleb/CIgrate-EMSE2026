@@ -1,0 +1,54 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  GITHUB_OAUTH: ${{ secrets.GITHUB_OAUTH }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Gradle and SonarQube
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.sonar/cache
+          key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-sonar-
+      - name: Install dependencies
+        run:./gradlew setupCIWorkspace -S
+      - name: Run build and sonarqube
+        run:./gradlew build sonarqube
+      - name: Deploy artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: growthcraft
+          path: build/libs/growthcraft-*.jar
+          when: always
+      - name: Upload checksums.txt
+        uses: actions/upload-artifact@v3
+        with:
+          name: checksums
+          path: checksums.txt
+          when: always
+```
+
+Note: I have used `actions/upload-artifact@v3` to deploy the artifacts to GitHub. This action is used to upload files to the workflow's artifacts store. The `when` parameter is set to `always` to ensure that the artifacts are uploaded regardless of the workflow's outcome.

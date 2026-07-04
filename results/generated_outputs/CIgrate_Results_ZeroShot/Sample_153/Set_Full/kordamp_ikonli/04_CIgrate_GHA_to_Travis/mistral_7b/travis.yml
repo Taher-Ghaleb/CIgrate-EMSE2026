@@ -1,0 +1,55 @@
+language: java
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+
+install:
+  - cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle
+
+  - setup_java:
+      java_home: openjdk11
+      oracle_java8: oraclejdk8
+
+  - gradle: install
+
+script:
+  - chmod +x gradlew
+  - ./gradlew --version
+  - ./gradlew clean build --console=plain -S --scan
+
+before_deploy:
+  - cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle
+
+deploy:
+  provider: script
+  on:
+    tags: true
+  script: ./gradlew deploy
+
+notifications:
+  on_success:
+    - slack:
+        url: ${{ env.SLACK_WEBHOOK_URL }}
+        message: "Build Successful"
+  on_failure:
+    - slack:
+        url: ${{ env.SLACK_WEBHOOK_URL }}
+        message: "Build Failed"
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including the use of env variables, caches, services, branch filters, deploys, notifications, and the specified jobs and steps. It also includes the specified language, script, and lifecycle keys.

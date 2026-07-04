@@ -1,0 +1,28 @@
+language: java
+os:
+  - linux
+  - osx
+dist: focal
+jdk:
+  - openjdk11
+  - openjdk8
+  - openjdk7
+
+matrix:
+  include:
+    - os: osx
+      jdk: openjdk11
+  allow_failures:
+    - jdk: openjdk7
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y ant; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ant; fi
+
+install:
+  - ant -diagnostics
+
+script:
+  - ant

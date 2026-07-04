@@ -1,0 +1,20 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - oraclejdk11
+  - oraclejdk17
+install: true
+script:
+  - mvn clean install
+continue-on-error:
+  - matrix.jdk == '11'
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that the `continue-on-error` key is used to specify that the build should continue on error when the JDK is 11. This is equivalent to the `continue-on-error` key in the GitHub Actions workflow.

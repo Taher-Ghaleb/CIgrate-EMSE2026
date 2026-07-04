@@ -1,0 +1,13 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - .m2
+
+script:
+  - chmod +x mvnw
+  - ./mvnw clean verify

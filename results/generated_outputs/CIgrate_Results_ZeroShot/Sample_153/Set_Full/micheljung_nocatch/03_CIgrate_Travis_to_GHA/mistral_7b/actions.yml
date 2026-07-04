@@ -1,0 +1,59 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - coverity_scan
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      coverity-scan: coverity.scan.coverity.com:2626
+
+    env:
+      TERM: dumb
+      secure: ${{ secrets.SECRET_NAME }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Clean and Build
+        run: |
+          ./gradlew clean
+          ./gradlew build
+        env:
+          COVERITY_SCAN_PROJECT_NAME: "micheljung/nocatch"
+          COVERITY_SCAN_PROJECT_DESCRIPTION: "Get rid of annoying checked exceptions!"
+          COVERITY_SCAN_BUILD_COMMAND_PREPEND: "./gradlew clean"
+          COVERITY_SCAN_BUILD_COMMAND: "./gradlew build"
+
+      - name: Test and Publish
+        run: |
+          ./gradlew test jacocoTestReport && ./gradlew coveralls bintrayUpload
+
+      - name: Upload Coverity Scan Results
+        uses: coverity/coverity-scan-action@v1
+        with:
+          token: ${{ secrets.COVERITY_SCAN_TOKEN }}
+          project: ${{ env.COVERITY_SCAN_PROJECT_NAME }}
+          description: ${{ env.COVERITY_SCAN_PROJECT_DESCRIPTION }}
+          build_command_prepend: ${{ env.COVERITY_SCAN_BUILD_COMMAND_PREPEND }}
+          build_command: ${{ env.COVERITY_SCAN_BUILD_COMMAND }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    continue-on-error: true
+    steps:
+      - name: Deploy
+        uses: actions/checkout@v4
+        with:

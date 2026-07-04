@@ -1,0 +1,19 @@
+env: global
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  mvn clean install --no-transfer-progress
+script
+directories: ~/.m2
+stage:
+  ☕ 11
+  coverage
+sonarcloud:
+  organization: powsybl-ci-github

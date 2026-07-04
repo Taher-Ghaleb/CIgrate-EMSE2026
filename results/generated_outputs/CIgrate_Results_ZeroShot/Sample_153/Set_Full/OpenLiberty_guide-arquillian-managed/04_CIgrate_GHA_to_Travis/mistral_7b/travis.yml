@@ -1,0 +1,72 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - qa
+
+pull_request:
+  branches:
+    - master
+    - qa
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker:
+      - image: openjdk:8
+
+before_install:
+  - checkout
+
+install:
+  - run: chmod +x ../scripts/travisTest.sh
+
+script:
+  - env:
+      _JAVA_OPTIONS: ''
+    working-directory: finish
+    - ../scripts/travisTest.sh
+
+before_script:
+  - name: Set up JDK 8
+    run: |
+      curl -sSL https://get.sdkman.io | bash
+      sdk install java 8.0.272-redhat-2254233
+      java -version
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+matrix:
+  include:
+    - java:
+        - 8.0.272-redhat-2254233
+
+  allow_failures:
+    - matrix.java[0]
+
+before_install:
+  - run: |
+      if [ ! -d "$HOME/.sdkman/candidates/java/8.0.272-redhat-2254233" ]; then
+        sdk install java 8.0.272-redhat-2254233
+      fi
+
+after_success:
+  - name: Archive and upload server logs
+    if: '$TRAVIS_TEST_RUN_ID' != '0' && '$TRAVIS_TEST_RESULT' != 'passed'
+    env:
+      JFROG_TOKEN: $TRAVIS
+    script: |
+      set -e
+
+      # ... (the rest of the script remains the same)
+
+after_failure:
+  - name: Upload logs as GitHub artifact (backup)
+    if: '$TRAVIS_TEST_RUN_

@@ -1,0 +1,32 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - /^(\([0-9]+\)\/.*|release\/.*)/
+deploy:
+  on:
+    tags: true
+  provider:
+    maven:
+      settings: target/ci-tooling/maven-settings-for-openfire-plugins.xml
+      goals: deploy
+      username: $MAVEN_DEPLOY_USERNAME
+      password: $MAVEN_DEPLOY_PASSWORD
+matrix:
+  allow_failures:
+    - env: SECRET_1=$MAVEN_DEPLOY_USERNAME
+      env: SECRET_2=$MAVEN_DEPLOY_PASSWORD
+  include:
+    - script: mvn clean verify
+      jdk: 8
+      before_install:
+        - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+      install:
+        - mkdir -p $HOME/.m2
+        - cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml

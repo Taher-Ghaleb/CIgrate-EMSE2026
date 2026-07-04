@@ -1,0 +1,45 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  CHANGE_MINIKUBE_NONE_USER: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unset _JAVA_OPTIONS
+        run: unset _JAVA_OPTIONS
+      - name: Change directory
+        run: cd finish
+      - name: Make script executable
+        run: chmod +x../scripts/travisTest.sh
+      - name: Download kubectl
+        run: |
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+      - name: Make kubectl executable
+        run: chmod +x kubectl
+      - name: Create symbolic link for kubectl
+        run: |
+          sudo ln -s $(pwd)/kubectl /usr/local/bin/kubectl
+      - name: Download minikube
+        run: wget https://github.com/kubernetes/minikube/releases/download/v0.28.2/minikube-linux-amd64 -q -O minikube
+      - name: Make minikube executable
+        run: chmod +x minikube
+      - name: Create symbolic link for minikube
+        run: |
+          sudo ln -s $(pwd)/minikube /usr/local/bin/minikube
+      - name: Start minikube
+        run: |
+          sudo minikube start --vm-driver=none --bootstrapper=localkube
+      - name: Run tests
+        run:../scripts/travisTest.sh
+      - name: Filter branches
+        if: github.event.pull_request.base_ref =='master' || github.event.pull_request.base_ref == 'qa'
+```
+Note: The `branches` filter has been moved to the `if` condition in the last step, as GitHub Actions does not support filtering branches at the job level.

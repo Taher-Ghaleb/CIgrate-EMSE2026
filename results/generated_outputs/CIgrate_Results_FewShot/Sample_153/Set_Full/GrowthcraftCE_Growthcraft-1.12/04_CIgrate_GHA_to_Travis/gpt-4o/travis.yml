@@ -1,0 +1,42 @@
+language: java
+jdk: openjdk8
+sudo: false
+
+env:
+  global:
+    - SONAR_HOST_URL=https://sonarcloud.io
+    - SONAR_ORGANIZATION=growthcraftce
+
+cache:
+  directories:
+    - '$HOME/.gradle'
+    - '$HOME/.sonar/cache'
+
+jobs:
+  include:
+    - stage: build
+      script:
+        - chmod +x ./gradlew
+        - ./gradlew setupCIWorkspace -S
+        - ./gradlew build
+        - if [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_BRANCH" = "master" ]; then ./gradlew sonarqube; fi
+        - ls -la build/libs
+      addons:
+        sonarqube:
+          token:
+            secure: "$SONAR_TOKEN"
+
+    - stage: release
+      if: type = push AND tag IS present AND repo = growthcraftce/REPO_NAME
+      script:
+        - chmod +x ./gradlew
+        - ./gradlew build
+      deploy:
+        provider: releases
+        api_key: "$GITHUB_TOKEN"
+        file:
+          - checksums.txt
+          - build/libs/growthcraft-*.jar
+        skip_cleanup: true
+        on:
+          tags: true

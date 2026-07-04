@@ -1,0 +1,17 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - sbt compile test
+cache:
+  directories:
+    - '$HOME/.ivy2/cache'
+    - '$HOME/.sbt'
+    - '$HOME/.cache/coursier'
+```
+
+Note that the `before_install` and `before_script` sections are not needed in this case, as the `script` section can handle the compilation and testing of the project. The `cache` section is used to cache the SBT and dependencies, as specified in the GitHub Actions workflow.

@@ -1,0 +1,40 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  ACCESS_KEY: ${{ secrets.ACCESS_KEY }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Run check
+        run:./gradlew check
+      - name: Run build and publish
+        run:./gradlew build publish
+        if: github.event.pull_request.base_ref =='master' || github.event.pull_request.base_ref =='main'
+```
+
+Note that I've used the `github.event.pull_request.base_ref` condition to check if the pull request is targeting the `master` or `main` branch, and only run the `build` and `publish` stage if it is.

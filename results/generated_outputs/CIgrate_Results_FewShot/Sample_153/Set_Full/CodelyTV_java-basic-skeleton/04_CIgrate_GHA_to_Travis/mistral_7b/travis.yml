@@ -1,0 +1,41 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+
+matrix:
+  os:
+    - ubuntu-latest
+    - macos-latest
+
+env:
+  global:
+    - GRADE_WRAPPER_EXECUTABLE: true
+
+before_install:
+  - if: $os == 'macOS'
+    run: brew update
+
+install:
+  - uses: actions/checkout@v4
+  - name: Set up JDK 11
+    uses: actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '11'
+      cache: 'gradle'
+
+script:
+  - if: $os == 'macOS' && $GRADE_WRAPPER_EXECUTABLE
+    run: chmod +x gradlew
+
+  - run: ./gradlew assemble --warning-mode all
+
+  - run: ./gradlew check --warning-mode all
+
+before_script:
+  - if: $os == 'macOS'
+    run: |
+      rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+      rm -fr $HOME/.gradle/caches/*/plugin-resolution/

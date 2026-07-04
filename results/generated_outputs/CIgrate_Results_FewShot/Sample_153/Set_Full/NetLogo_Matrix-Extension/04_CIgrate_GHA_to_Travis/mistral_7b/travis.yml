@@ -1,0 +1,23 @@
+language: scala
+jdk: openjdk8
+sudo: false
+
+env:
+  matrix:
+    - SBT_CACHE_KEY: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
+
+script:
+  - sbt setup
+  - sbt compile test
+
+before_install:
+  - cat /etc/hosts # optionally check the content *before*
+  - sudo hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+  - cat /etc/hosts # optionally check the content *after*
+
+cache:
+  directories:
+    - '$HOME/.ivy2/cache'
+    - '$HOME/.sbt'
+    - '$HOME/.cache/coursier'

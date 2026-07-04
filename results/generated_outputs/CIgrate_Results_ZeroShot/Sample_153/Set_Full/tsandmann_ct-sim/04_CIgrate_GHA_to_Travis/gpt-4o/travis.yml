@@ -1,0 +1,27 @@
+language: java
+jdk:
+  - openjdk8
+
+os:
+  - linux
+  - osx
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle/caches
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update; fi
+
+install:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install -y ant; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install ant; fi
+
+script:
+  - ant -f make-jar.xml
+
+branches:
+  only:
+    - main
+    - develop

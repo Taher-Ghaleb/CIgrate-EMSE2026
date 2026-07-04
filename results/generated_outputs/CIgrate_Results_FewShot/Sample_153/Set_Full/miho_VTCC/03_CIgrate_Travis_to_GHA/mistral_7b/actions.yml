@@ -1,0 +1,22 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, osx]
+        jdk: [oraclejdk8, oraclejdk9]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: ${{ matrix.jdk }}
+      - name: Check Gradle version
+        run: sh ./gradlew --version
+      - name: Build and test
+        run: sh ./gradlew clean test

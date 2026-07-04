@@ -1,0 +1,21 @@
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    docker-cmd
+    echo-cmd
+    echo-cmd
+stage:
+  ☕ 11
+  coverage

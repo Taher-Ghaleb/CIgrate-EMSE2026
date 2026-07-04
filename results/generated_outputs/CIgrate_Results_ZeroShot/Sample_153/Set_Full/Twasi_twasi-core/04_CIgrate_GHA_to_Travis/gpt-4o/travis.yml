@@ -1,0 +1,50 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+env:
+  global:
+    - SONAR_ORGANIZATION=twasi
+    - secure: $SONAR_TOKEN
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+jobs:
+  include:
+    - stage: test
+      script:
+        - mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+      before_install:
+        - cp .travis.settings.xml $HOME/.m2/settings.xml
+
+    - stage: build
+      script:
+        - mvn clean compile assembly:single
+      before_install:
+        - cp .travis.settings.xml $HOME/.m2/settings.xml
+
+    - stage: deploy
+      if: branch = dev AND type = push
+      script:
+        - cp .travis.settings.xml $HOME/.m2/settings.xml
+        - mvn clean compile assembly:single docker:build -DpushImage
+      before_install:
+        - cp .travis.settings.xml $HOME/.m2/settings.xml
+      addons:
+        apt:
+          packages:
+            - docker-ce
+
+    - stage: deploy
+      if: branch = dev AND type = push
+      script:
+        - sed -i "s/LIVE/${TRAVIS_BUILD_NUMBER}/g" pom.xml
+        - cp .travis.settings.xml $HOME/.m2/settings.xml
+        - mvn clean compile assembly:single deploy
+      before_install:
+        - cp .travis.settings.xml $HOME/.m2/settings.xml

@@ -1,0 +1,41 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+
+script:
+  - chmod +x mvnw
+  - rm -rf ~/.m2/repository/org/glassfish/javax.el/3.0.1-b08
+  - ./mvnw --batch-mode --no-transfer-progress \
+    clean install \
+    -DskipTests=false \
+    -DskipIntegrationTests=false \
+    -Dcheckstyle.skip=false \
+    -Drat.skip=false \
+    -Dmaven.javadoc.skip=true
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: ${{ secrets.CODECOV_TOKEN }}
+      fail_ci_if_error: false
+
+before_script:
+  - actions/checkout@v4
+  - actions/setup-java@v4 \
+    with:
+      java-version: ${{ matrix.java }}
+      distribution: 'temurin'
+      cache: 'maven'
+
+branches:
+  include:
+    - master
+    - develop
+
+matrix:
+  java:
+    - 8
+    - 11
+  fail-fast: false

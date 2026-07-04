@@ -1,0 +1,24 @@
+notifications: email
+sudo: FALSE
+env: global
+cache:
+  directories:
+    ~/.gradle
+    ~/.maven-
+language:
+  java
+jdk: jdk8
+branches: *
+before_install:
+  java -version
+  mvn -B install
+install:
+  TRUE
+script
+after_success:
+  bash <(curl-cmd
+sonarcloud:
+  organization: powsybl-ci-github
+stage:
+  TRUE
+  Install

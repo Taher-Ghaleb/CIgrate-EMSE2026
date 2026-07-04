@@ -1,0 +1,13 @@
+language: scala
+sudo: false
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - '$HOME/.ivy2/cache'
+    - '$HOME/.sbt'
+    - '$HOME/.cache/coursier'
+
+script:
+  - sbt compile test

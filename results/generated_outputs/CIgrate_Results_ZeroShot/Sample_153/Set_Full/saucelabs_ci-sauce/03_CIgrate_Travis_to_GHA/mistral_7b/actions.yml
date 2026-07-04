@@ -1,0 +1,58 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Install Maven
+        uses: actions/setup-node@v4
+        with:
+          version: '14'
+
+      - name: Install Maven plugins
+        run: pip install --user codecov
+
+      - name: Install and cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies
+
+      - name: Build and Test
+        run: mvn install -DskipTests=true -Dgpg.skip=true -B -V
+
+      - name: Upload code coverage
+        uses: codecov/sonar-scanner-for-github@4
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          sonarQubeVersion: '8.9.1.4207'
+          sonarQubeHost: sonarcloud.io
+          sonarQubeLogin: ${{ secrets.SONAR_TOKEN }}
+          sonarQubeProjectKey: my-project-key
+          sonarQubeProjectName: my-project-name
+          sonarQubeProjectVersion: ${{ github.ref }}
+          sonarQubeAnalysisMode: reviewer
+          sonarQubeExclusions: '**/target/**,**/.git/**,**

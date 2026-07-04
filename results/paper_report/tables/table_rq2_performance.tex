@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\caption{RQ2 performance: Fine-tuned Gemma 3 12B results (10-fold CV) compared to baselines. Significance markers indicate Mann-Whitney U test results vs zero-shot baseline (one-sided, alternative='greater').}
+\label{tab:rq2-performance}
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Model} & \textbf{Setting} &
+\multicolumn{2}{c}{\textbf{Travis $\rightarrow$ GHA}} &
+\multicolumn{2}{c}{\textbf{GHA $\rightarrow$ Travis}} \\
+\cmidrule(lr){3-4} \cmidrule(lr){5-6}
+& & \textit{Cosine} & \textit{BLEU} & \textit{Cosine} & \textit{BLEU} \\
+\midrule
+Gemma 3 12B & Zero-shot & 0.66 & 0.44 & 0.36 & 0.26 \\
+Gemma 3 12B & Few-shot & 0.74 & 0.52 & 0.49 & 0.36 \\
+\midrule
+Gemma 3 12B & Fine-tuned & \textbf{0.90*** ($\delta=0.90$)}$\pm$0.02 & \textbf{0.74*** ($\delta=0.74$)}$\pm$0.04 & \textbf{0.76*** ($\delta=0.82$)}$\pm$0.06 & \textbf{0.65*** ($\delta=0.80$)}$\pm$0.06 \\
+\bottomrule
+\multicolumn{6}{l}{\footnotesize *** $p < 0.001$, ** $p < 0.01$, * $p < 0.0042$ (Bonferroni-corrected $\alpha$); $\delta$ = Cliff's Delta} \\
+\end{tabular}
+\end{table}

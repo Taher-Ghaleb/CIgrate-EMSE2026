@@ -1,0 +1,46 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    JODA_TIME_REPO_KEY: ${{ runner.os }}-m2-joda-time-${{ hashFiles('**/pom.xml') }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven and Joda Time
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.joda/time
+          key: ${{ runner.os }}-m2-joda-time-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-joda-time-
+      - name: Remove Joda Time repository
+        run: rm -rf $HOME/.m2/repository/org/joda/time
+      - name: Check Maven version
+        run: mvn --version
+      - name: Install and generate site
+        run: mvn install site -e -B
+      - name: Publish website if tag is v* and not a pull request
+        if: ${{ github.event_name == 'push' && $TRAVIS_TAG =~ ^v.*$ && !$TRAVIS_PULL_REQUEST }}
+        run: |
+          chmod +x ./.github/website.sh
+          .github/website.sh
+      - name: Publish website if tag is website* and JDK is Oracle 8
+        if: ${{ github.event_name == 'push' && $TRAVIS_TAG =~ ^website.*$ && $TRAVIS_JDK_VERSION

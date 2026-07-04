@@ -1,0 +1,23 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn package
+  wget https://download.osgeo.org/proj/proj-6.2.1.tar.gz
+before_script:
+  cd ..
+  sudo apt-get update
+  r --version
+script:
+  script:
+    cd proj-6.2.1
+directories: ~/.maven-
+stage:
+  ☕ 11
+  tests

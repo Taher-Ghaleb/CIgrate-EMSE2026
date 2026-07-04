@@ -1,0 +1,30 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK_VERSION: openjdk11
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ env.JDK_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JDK_VERSION }}
+      - name: Install Maven
+        uses: actions/setup-node@v4
+        with:
+          version: '3.6.0'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Install and build
+        run: mvn -DskipTests=true clean package

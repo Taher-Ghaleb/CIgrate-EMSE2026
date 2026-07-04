@@ -1,0 +1,61 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+deploy:
+  on:
+    types: [push, pull_request]
+
+before_install:
+  - checkout:
+      fetch-depth: 0  # SonarQube needs full history
+
+services:
+  - docker:
+      - image: openjdk:8
+
+cache:
+  directories:
+    - ~/.sonar/cache
+
+before_script:
+  - chmod +x ./gradlew
+
+script:
+  - ./gradlew setupCIWorkspace -S
+  - ./gradlew build
+  - (if $GITHUB_EVENT_NAME == 'push' && $GITHUB_REF == 'refs/heads/master') ./gradlew sonarqube
+  - ls -la build/libs
+
+matrix:
+  include:
+    - java:
+        - openjdk8
+
+  allow_failures:
+    - java: openjdk8
+
+before_install:
+  - actions/setup-java@v4
+
+install:
+  - ./gradlew
+
+deploy:
+  on:
+    types: [release]
+    repository: growthcraftce/REPO_NAME
+
+  script:
+    - checkout
+    - actions/setup-java@v4
+    - chmod +x ./gradlew
+    - ./gradlew build
+    - softprops/action-gh-release@v2 \
+        files: |
+            checksums.txt
+            build/libs/growthcraft-*.jar
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,46 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  PROFILES: headless-mode,chrome
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '11']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install Firefox GeckoDriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y firefox-geckodriver
+      - name: Clone and install PrimeFaces
+        run: |
+          git clone https://github.com/primefaces/primefaces && cd primefaces && mvn install && cd..
+      - name: Clone and install PrimeFaces Selenium
+        run: |
+          git clone https://github.com/primefaces-extensions/primefaces-selenium && cd primefaces-selenium && mvn install && cd..
+      - name: Create symbolic link for GeckoDriver
+        run: ln -s /usr/bin/geckodriver geckodriver
+      - name: Source install-chromedriver.sh
+        run: source.travis/install-chromedriver.sh
+      - name: Build and install
+        run: |
+          mvn -B -V clean install -P${{ env.PROFILES }}
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-

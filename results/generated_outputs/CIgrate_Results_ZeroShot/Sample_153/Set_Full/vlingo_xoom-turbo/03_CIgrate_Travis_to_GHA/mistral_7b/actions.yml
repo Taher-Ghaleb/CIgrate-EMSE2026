@@ -1,0 +1,68 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  release:
+    types: [published]
+
+env:
+  JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker: docker-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+
+      - name: Install Maven
+        run: |
+          rm -rf $HOME/.m2/repository/io/vlingo
+          cp .travis/settings.xml $HOME/.m2/settings.xml
+          mvn deploy:help versions:help help:help
+
+      - name: Build
+        run: mvn install -PTravisCI
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    services:
+      docker: docker-latest
+    steps:
+      - name: Use cached Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+
+      - name: Install Maven
+        run: |
+          rm -rf $HOME/.m2/repository/io/vlingo
+
+      - name: Build and Deploy
+        run: mvn install -PTravisCI
+        env:
+          MAVEN_OPTS: "-Xmx2048m -XX:MaxPermSize=512m"
+
+      - name: Deploy to GitHub Packages
+        uses: actions/upload-artifact@v3
+        with

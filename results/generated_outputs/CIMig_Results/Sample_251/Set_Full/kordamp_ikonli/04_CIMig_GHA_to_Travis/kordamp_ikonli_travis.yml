@@ -1,0 +1,25 @@
+before_cache: rm -f ~/.gradle-2/modules-2.lock
+env:
+  global:
+    OBJ-NODE:
+      secure: token
+    OBJ-NODE:
+      secure: token
+notifications: email
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle/wrapper
+language:
+  java
+jdk: [jdk7,jdk8]
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew build -S
+after_success:
+  bash <(curl-cmd
+include:
+  stage: Build
+sudo: FALSE

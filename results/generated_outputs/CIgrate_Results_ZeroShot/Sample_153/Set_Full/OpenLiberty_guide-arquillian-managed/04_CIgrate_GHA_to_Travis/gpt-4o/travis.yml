@@ -1,0 +1,59 @@
+language: java
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+    - qa
+
+services:
+  - docker
+
+before_install:
+  - chmod +x scripts/travisTest.sh
+
+script:
+  - ./scripts/travisTest.sh
+
+after_success:
+  - |
+    if [ -f "target/liberty/wlp/bin/server" ]; then
+      serverName=$(target/liberty/wlp/bin/server list | cut -d '.' -f2 | tr -d '\n')
+      if [ -n "$serverName" ]; then
+        logsDir="target/liberty/wlp/usr/servers/$serverName/logs"
+        if [ -d "$logsDir" ]; then
+          cd "$logsDir"
+          repo_name=$(echo "$TRAVIS_REPO_SLUG" | sed -e "s/\//-/g")
+          result="passed"
+          serverlogsarchive="${repo_name}-${TRAVIS_BUILD_NUMBER}-${result}.zip"
+          zip -r "$serverlogsarchive" .
+          if [ -n "$JFROG_TOKEN" ]; then
+            curl -f -H "X-JFrog-Art-Api: $JFROG_TOKEN" \
+              -T "$serverlogsarchive" \
+              "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"
+          fi
+        fi
+      fi
+    fi
+
+after_failure:
+  - |
+    if [ -f "target/liberty/wlp/bin/server" ]; then
+      serverName=$(target/liberty/wlp/bin/server list | cut -d '.' -f2 | tr -d '\n')
+      if [ -n "$serverName" ]; then
+        logsDir="target/liberty/wlp/usr/servers/$serverName/logs"
+        if [ -d "$logsDir" ]; then
+          cd "$logsDir"
+          repo_name=$(echo "$TRAVIS_REPO_SLUG" | sed -e "s/\//-/g")
+          result="failed"
+          serverlogsarchive="${repo_name}-${TRAVIS_BUILD_NUMBER}-${result}.zip"
+          zip -r "$serverlogsarchive" .
+          if [ -n "$JFROG_TOKEN" ]; then
+            curl -f -H "X-JFrog-Art-Api: $JFROG_TOKEN" \
+              -T "$serverlogsarchive" \
+              "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"
+          fi
+        fi
+      fi
+    fi

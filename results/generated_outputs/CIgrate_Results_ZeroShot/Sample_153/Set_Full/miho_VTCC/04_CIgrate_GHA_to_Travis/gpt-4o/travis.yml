@@ -1,0 +1,34 @@
+language: java
+
+os:
+  - linux
+  - osx
+
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+
+matrix:
+  include:
+    - os: linux
+      jdk: openjdk8
+    - os: linux
+      jdk: openjdk11
+    - os: linux
+      jdk: openjdk17
+    - os: osx
+      jdk: openjdk8
+    - os: osx
+      jdk: openjdk11
+    - os: osx
+      jdk: openjdk17
+
+before_install:
+  - chmod +x gradlew
+
+install:
+  - ./gradlew --version
+
+script:
+  - ./gradlew clean test

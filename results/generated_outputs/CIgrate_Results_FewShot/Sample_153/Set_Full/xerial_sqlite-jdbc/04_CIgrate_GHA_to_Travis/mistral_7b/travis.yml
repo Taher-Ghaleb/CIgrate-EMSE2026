@@ -1,0 +1,19 @@
+language: java
+sudo: false
+branches:
+  only:
+    - master
+    - develop
+
+jdk:
+  - distribution: zulu
+    java: '7'
+  - distribution: temurin
+    java: '8'
+
+script:
+  - mvn install -B
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

@@ -1,0 +1,24 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+script:
+  - if [ ! -f silo/lib/linux64/libjhdf5.so ]; then
+    echo "Error: HDF5 library not found at silo/lib/linux64/libjhdf5.so"
+    exit 1
+  fi
+  - echo "HDF5 library found: silo/lib/linux64/libjhdf5.so"
+  - mvn test -Dhdf5lib-absolute-path=$(pwd)/silo/lib/linux64/libjhdf5.so --fail-at-end --batch-mode -Dmatsim.preferLocalDtds=true
+env:
+  MAVEN_OPTS: -Xmx2500m

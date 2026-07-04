@@ -1,0 +1,57 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+addons:
+  sonarqube:
+    token:
+      secure: "your-sonarqube-token"
+    branches:
+      - master
+      - qa
+script:
+  - chmod +x../scripts/travisTest.sh
+  -./scripts/travisTest.sh
+  - set -e
+  - # Extract server name
+    if [! -f "target/liberty/wlp/bin/server" ]; then
+      echo "Error: Liberty server not found"
+      exit 1
+    fi
+  - serverName=$(target/liberty/wlp/bin/server list | cut -d '.' -f2 | tr -d '\n')
+  - if [ -z "$serverName" ]; then
+      echo "Error: Could not determine server name"
+      exit 1
+    fi
+  - echo "Server name: $serverName"
+  - # Navigate to logs directory
+    logsDir="target/liberty/wlp/usr/servers/$serverName/logs"
+  - if [! -d "$logsDir" ]; then
+      echo "Error: Logs directory not found: $logsDir"
+      exit 1
+    fi
+  - cd "$logsDir"
+  - # Determine result status
+    repo_name=$(echo "${{ github.repository }}" | sed -e "s/\//-/g")
+  - if [ "${{ matrix.result }}" == "success" ]; then
+      result="passed"
+    else
+      result="failed"
+    fi
+  - serverlogsarchive="${repo_name}-${{ matrix.build_number }}-${result}.zip"
+  - echo "Creating archive: $serverlogsarchive"
+  - zip -r "$serverlogsarchive".
+  - # Upload to Artifactory
+  - if [ -n "$SONAR_TOKEN" ]; then
+      echo "Uploading to Artifactory..."
+      curl -f -H "X-JFrog-Art-Api: ${SONAR_TOKEN}" \
+        -T "$serverlogsarchive" \
+        "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"
+      echo "Upload completed successfully"
+    else
+      echo "Warning: SONAR_TOKEN not set, skipping upload"
+    fi
+  - # Upload logs as GitHub artifact

@@ -1,0 +1,50 @@
+name: MedTagger Deployment
+
+on:
+  push:
+    branches:
+      - master
+      - /^v\d+\.\d+[a-zA-Z-_]+?(\.\d+[a-zA-Z-_]+?)/$
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+          mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+          mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+          ant dist
+      - name: Cache dependencies
+        uses: actions/cache@v4
+          at: cache
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Deploy
+        uses: actions/deploy@v1
+          provider: releases
+          api-key: ${{ secrets.DEPLOY_KEY }}
+          file: MedTagger.zip
+          on:
+            tags: true
+          skip-cleanup: true
+      - name: Send notification
+        uses: actions/notification@v1
+          # TODO: equivalent to Travis CI's email notifications
+```
+Note: The `actions/deploy` and `actions/notification` actions are not exact 1:1 equivalents of Travis CI's deploy and email notifications. You may need to use a different action or implement a custom solution to achieve the desired functionality.

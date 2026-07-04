@@ -1,0 +1,40 @@
+language: java
+branches:
+  only:
+    - master
+  except:
+    - tags
+
+matrix:
+  include:
+    - java: 9
+      jdk: 9
+      script: mvn clean verify
+      if: github.ref != 'refs/heads/master' || github.event_name == 'pull_request'
+    - java: 8
+      jdk: 8
+      script: mvn clean verify
+      if: github.ref != 'refs/heads/master' || github.event_name == 'pull_request'
+    - java: 9
+      jdk: 9
+      script: mvn clean verify
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    - java: 8
+      jdk: 8
+      script:
+        - mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository == 'bootique/bootique-logback'
+      env:
+        global:
+          - MAVEN_USERNAME: $OSSRH_USERNAME
+          - MAVEN_PASSWORD: $OSSRH_PASSWORD
+    - java: 8
+      jdk: 8
+      script: mvn clean verify
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository != 'bootique/bootique-logback'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm

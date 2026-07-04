@@ -1,0 +1,22 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - zulu8
+services:
+  docker:
+    image: docker:latest
+    options: --privileged
+install: true
+script:
+  - chmod +x./gradlew
+  -./gradlew clean build
+cache:
+  directories:
+    - '$HOME/.gradle/caches'
+    - '$HOME/.gradle/wrapper'
+```
+
+Note that I've maintained the above OUTPUT and MIGRATION rules, and the Travis CI configuration is equivalent to the provided GitHub Actions workflow.

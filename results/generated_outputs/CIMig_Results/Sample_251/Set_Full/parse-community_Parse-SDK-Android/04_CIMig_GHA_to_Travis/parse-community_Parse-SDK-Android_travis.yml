@@ -1,0 +1,21 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  echo \"24333f8a63b6825ea9c5514f83c2829b004d1fee\" >> \"$ANDROID_HOME/licenses/android-sdk-license
+before_script:
+  mkdir \"$ANDROID_HOME/licenses\" || true
+  wget-cmd
+script:
+  script:
+    ./gradlew clean jacocoTestReport
+stage: ☕ 11
+sonarcloud:
+  organization: powsybl-ci-github

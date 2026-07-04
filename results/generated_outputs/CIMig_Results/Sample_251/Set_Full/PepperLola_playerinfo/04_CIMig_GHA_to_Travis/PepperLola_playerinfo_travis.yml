@@ -1,0 +1,19 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  echo \"MOD_VERSION=v$(sed -e 's/\"//g' <<< cat build.gradle | grep -m 1 'version = ' | cut -d'=' -f2 | awk '{$1=$1};1')\" >> $GITHUB_ENV\n
+install:
+  TRUE
+script:
+  script:
+    ./gradlew build
+deploy:
+  github_token: $github_token
+sudo: FALSE
+coverity_scan:
+  branch_pattern: release.*

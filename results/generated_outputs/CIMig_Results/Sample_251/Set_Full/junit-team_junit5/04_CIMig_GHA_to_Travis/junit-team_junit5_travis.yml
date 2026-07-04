@@ -1,0 +1,28 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: *
+before_install:
+  java -version
+  sudo apt-get install graphviz\n./src/publishDocumentationSnapshotOnlyIfNecessary.sh\n
+script:
+  script:
+    ./gradlew --version\n./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build\n
+    yarn run test
+after_success:
+  bash <(curl -s https://codecov.io/bash)\n
+sonarcloud:
+  organization: powsybl-ci-github
+name: placeholder_Name
+include:
+  os:
+    windows
+    Linux
+stages:
+  prepare
+  test
+  Publish

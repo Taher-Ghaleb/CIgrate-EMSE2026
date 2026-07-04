@@ -1,0 +1,48 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "tools" "platform-tools"
+          sdkmanager "build-tools;26.0.2"
+          sdkmanager "platforms;android-23"
+          sdkmanager "extras;android;m2repository"
+          sdkmanager "extras;google;m2repository"
+          sdkmanager "extras;google;google_play_services"
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/android-sdk-dl
+            ~/android-sdk
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.android/build-cache
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Check Gradle version
+        run: ./gradlew --version
+      - name: Build
+        run: |
+          echo "Build..."
+          ./gradlew assembleDebugUnitTest -Dpre-dex=false
+      - name: Run tests
+        run: ./gradlew testDebugUnitTest -Dpre-dex=false -q
+      - name: Cleanup Gradle Cache
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/

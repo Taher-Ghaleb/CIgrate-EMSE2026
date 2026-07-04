@@ -1,0 +1,51 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  PROFILES: headless-mode
+  PROFILES: headless-mode,chrome
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk8
+          - openjdk11
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install GeckoDriver
+        run: sudo apt-get -y install firefox-geckodriver
+      - name: Install ChromiumDriver
+        uses: actions/setup-node@v4
+        with:
+          node-version: 14
+        run: |
+          curl -sS https://raw.githubusercontent.com/actions/setup-chromium/main/chromium.sh | bash
+      - name: Install Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Install PrimeFaces
+        run: git clone https://github.com/primefaces/primefaces && cd primefaces && mvn install && cd ..
+      - name: Install PrimeFaces Extensions
+        run: git clone https://github.com/primefaces-extensions/primefaces-selenium && cd primefaces-selenium && mvn install && cd ..
+      - name: Link GeckoDriver
+        run: ln -s /usr/bin/geckodriver geckodriver
+      - name: Set up ChromiumDriver
+        env:
+          CHROMIUM_DRIVER_PATH: ${{ runner.workspace}/.actions/chromium/chromedriver
+        run: |
+          export PATH=$CHROMIUM_

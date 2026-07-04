@@ -1,0 +1,72 @@
+Here is the complete Travis CI configuration YAML:
+
+```yml
+language: java
+
+services:
+  - xvfb
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y p7zip-full
+
+install:
+  - mvn install
+
+before_script:
+  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+  - export DISPLAY=:99.0
+
+script:
+  - mvn package -q
+
+deploy:
+  on:
+    tags: true
+  if: startsWith(github.ref,'refs/tags/')
+  before_deploy:
+    - checkout
+    - export DISPLAY=:99.0
+    - mvn package -q
+  after_success:
+    - deploy/bintray_central.sh
+  after_failure:
+    - deploy/bintray_central.sh
+  on:
+    branch: master
+    branch: master-11
+  before_deploy:
+    - checkout
+    - export DISPLAY=:99.0
+    - mvn package -q
+  after_success:
+    - deploy/deploy_prepare.sh
+    - deploy/bintray_central.sh
+  after_failure:
+    - deploy/deploy_prepare.sh
+    - deploy/bintray_central.sh
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+matrix:
+  allow_failures:
+    - master
+    - master-11
+  include:
+    - java: '17'
+      distribution: temurin
+      cache:'maven'
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    on_start: false
+    on_state_change: false
+```
+
+Note that I've removed the `jobs` section and replaced it with the equivalent Travis CI configuration. I've also removed the `env` section and replaced it with the equivalent Travis CI configuration. I've also removed the `continue-on-error` section and replaced it with the equivalent Travis CI configuration. I've also removed the `services` section and replaced it with the equivalent Travis CI configuration. I've also removed the `caches` section and replaced it with the equivalent Travis CI configuration. I've also removed the `deploy` section and replaced it with the equivalent Travis CI configuration. I've also removed the `notifications` section and replaced it with the equivalent Travis CI configuration.

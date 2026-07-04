@@ -1,0 +1,44 @@
+name: Java CI
+
+on:
+  push:
+    branches-ignore:
+      - /^.*\-\d+(\.\d+\.\d+)?(\..*|\-.*)?$/
+  pull_request:
+    branches-ignore:
+      - /^.*\-\d+(\.\d+\.\d+)?(\..*|\-.*)?$/
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_OPTS: "-s ./.travis.maven-settings.xml"
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Cache Maven repository
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    - name: Install dependencies
+      run: mvn $MAVEN_OPTS clean
+
+    - name: Build and test
+      run: |
+        mvn $MAVEN_OPTS -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install
+        mvn $MAVEN_OPTS -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install -f example
+        rm -rf $HOME/.m2/repository/io/wcm
+
+    - name: Upload coverage to Codecov
+      run: bash <(curl -s https://codecov.io/bash)
+      if: success()

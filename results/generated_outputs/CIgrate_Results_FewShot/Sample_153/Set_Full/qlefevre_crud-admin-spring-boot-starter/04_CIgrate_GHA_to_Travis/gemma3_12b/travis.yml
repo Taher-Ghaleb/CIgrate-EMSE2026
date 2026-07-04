@@ -1,0 +1,29 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+jdk:
+  - 8
+  - 11
+  - 17
+script:
+  - mvn --version
+  - mvn clean verify
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+    - echo "Uploading test results for branch: $TRAVIS_BRANCH"
+    - if [ "$TRAVIS_JOB_ID" != "" ]; then
+      - echo "TRAVIS_JOB_ID: $TRAVIS_JOB_ID"
+      - echo "Uploading test results..."
+      - >
+        if [ -d "**/target/surefire-reports/" ]; then
+          zip -r test-results-jdk${matrix.jdk}.zip **/target/surefire-reports/
+          echo "Uploading test results..."
+          echo "test-results-jdk${matrix.jdk}.zip" | base64 > test-results-jdk${matrix.jdk}.zip.b64
+          echo "Uploaded test results..."
+        else
+          echo "No test results found."
+        fi
+    fi
+  fi

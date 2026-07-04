@@ -1,0 +1,67 @@
+language: java
+
+before_install:
+  - echo "Installing JDK 8"
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk
+  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Node.js"
+  - apt-get update
+  - apt-get install -y nodejs
+  - npm install -g firebase-tools
+
+before_script:
+  - echo "Setting up cache directories"
+  - mkdir -p ~/.m2/repository
+  - mkdir -p ~/.gradle
+  - mkdir -p ~/.npm
+
+script:
+  - echo "Decrypting Firebase SDK key"
+  - openssl aes-256-cbc -K $FIREBASE_KEY -iv $FIREBASE_IV -in firebase/firebase-sdk-key.json.enc -out firebase/firebase-sdk-key.json -d
+  - echo "Installing Firebase CLI"
+  - npm install -g firebase-tools
+  - echo "Making gradlew executable"
+  - chmod +x gradlew
+  - echo "Running tests with Firebase emulators"
+  - firebase emulators:exec --only auth --project turma-de-elite-app './gradlew test'
+  - echo "Cleaning up Gradle Cache"
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+after_success:
+  - echo "Deploying to Heroku"
+  - heroku login -i
+  - heroku create turma-de-elite
+  - heroku git add.
+  - heroku git commit -m "Deploying to Heroku"
+  - heroku deploy web
+
+after_failure:
+  - echo "Deploy failed, cleaning up"
+  - heroku delete turma-de-elite
+
+deploy:
+  on:
+    branch: release
+  script:
+    - heroku login -i
+    - heroku create turma-de-elite
+    - heroku git add.
+    - heroku git commit -m "Deploying to Heroku"
+    - heroku deploy web
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - os: ubuntu-latest
+      java-version: '8'
+      node-version: '18'
+      cache: 'gradle'
+      services:
+        - cache: 'npm'
+        - cache:

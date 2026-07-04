@@ -1,0 +1,17 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+script:
+  script:
+    cd quarkus.jdt.ext && ./mvnw -B -U clean verify && cd ..
+directories: ~/.m2/wrapper
+stage: ☕ 11
+include:
+  name: unit tests
+  if: type in (pull_request, push)

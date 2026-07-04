@@ -1,0 +1,58 @@
+language: ubuntu
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - apt-get update
+
+install:
+  - apt-get install -qq raptor2-utils
+
+script:
+  - docker build -t atomgraph/processor .
+  - docker compose up -d
+  - sleep 300 # Wait for services to start
+  - bash ./run.sh
+
+before_script:
+  - curl -sL https://deb.nodesource.com/setup_14.x | bash -
+  - apt-get install -y nodejs
+
+cache:
+  directories:
+    - ~/.npm
+
+before_script:
+  - mkdir -p ~/.m2/repository
+  - mkdir -p ~/.gradle
+
+matrix:
+  include:
+    - jdk:
+        - openjdk11
+        - openjdk8
+    - git:
+        - "git-${{ matrix.git.version }}"
+
+  allow_failures:
+    - jdk: openjdk8
+
+env:
+  global:
+    - JDK_VERSION: ${{ matrix.jdk.name }}
+    - GIT_VERSION: ${{ matrix.git.name }}
+
+after_success:
+  - docker compose down
+  - docker compose rm -f

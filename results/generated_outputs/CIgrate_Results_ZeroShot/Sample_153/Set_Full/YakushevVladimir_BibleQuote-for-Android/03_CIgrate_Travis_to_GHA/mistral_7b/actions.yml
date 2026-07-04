@@ -1,0 +1,45 @@
+name: Android Build and Test
+on: [push, pull_request]
+
+env:
+  ANDROID_SDK_LICENSE: ${{ secrets.ANDROID_SDK_LICENSE }}
+  ANDROID_M2REPO_LICENSE: ${{ secrets.ANDROID_M2REPO_LICENSE }}
+  GOOGLE_GDK_LICENSE: ${{ secrets.GOOGLE_GDK_LICENSE }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: '8'
+      - name: Set up Android environment
+        uses: actions/setup-android@v2
+        with:
+          android-sdk-command: sdkmanager
+          android-sdk-license: ${{ env.ANDROID_SDK_LICENSE }}
+          android-sdk-platform: android-30
+          android-sdk-platform-tools: true
+          android-sdk-build-tools: build-tools-30.0.3
+          android-sdk-extra: tools,platforms,tools,build-tools,platforms,extra-android-m2repository,extra-google-m2repository,extra-android-support
+          android-sdk-licenses: android-sdk-preview-license-.+,android-sdk-license-.+,google-gdk-license-.+
+      - name: Cache Maven and Gradle
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os }}-m2
+          key: ${{ runner.os }}-m2
+          restore-keys: |
+            ${{ runner.os }}-m2
+            ${{ runner.os }}-gradle
+            ${{ runner.os }}-android
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os }}-gradle
+          key: ${{ runner.os }}-gradle
+          restore

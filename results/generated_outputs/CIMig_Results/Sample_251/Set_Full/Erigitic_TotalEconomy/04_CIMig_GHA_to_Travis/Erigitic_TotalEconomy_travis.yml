@@ -1,0 +1,16 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: terewritten
+before_install:
+  chmod +x gradlew
+  java -version
+script:
+  script:
+    ./gradlew build
+apt:
+  packages: jdk-8-jdk

@@ -1,0 +1,9 @@
+language: java
+branches:
+  only:
+  - master
+  - "2.13"
+jdk:
+  - openjdk8
+  - openjdk11
+script: mvn -B clean verify

@@ -1,0 +1,36 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+
+script:
+  - chmod +x util/*.sh
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f ${{ matrix.root_pom }}
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f ${{ matrix.root_pom }}
+
+after_failure:
+  - util/print_surefire_reports.sh
+
+branches:
+  only:
+    - master
+    - release*
+
+deploy:
+  on:
+    push:
+      branches:
+        - master
+        - release*
+  if: success() && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release'))
+  script:
+    - chmod +x util/*.sh
+    - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -Dmaven.javadoc.skip=true -f ${{ matrix.root_pom }}
+    - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f ${{ matrix.root_pom }}
+    - env:
+        SECRET_1: ${{ secrets.SECRET_1 }}
+        SECRET_2: ${{ secrets.SECRET_2 }}
+        SECRET_3: ${{ secrets.SECRET_3 }}
+      run: |
+        util/deploy_snapshot.sh

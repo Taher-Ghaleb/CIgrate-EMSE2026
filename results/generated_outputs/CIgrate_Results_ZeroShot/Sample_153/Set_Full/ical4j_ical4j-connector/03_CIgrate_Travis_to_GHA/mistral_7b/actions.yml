@@ -1,0 +1,58 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - feature/*
+  pull_request:
+    branches:
+      - ical4j/ical4j-connector/*
+
+env:
+  JAVA_HOME: ${{ runner.os == 'ubuntu' ? '$(which java --version)' : '$(which java)' }}
+  RELEASE_VERSION: ${{ github.ref_name }}
+  SONAR_CERT_FILE: sonar_cert.pem
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+          - oraclejdk7
+          - openjdk7
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-gradle
+          restore-keys: |
+            ${{ runner.os }}-gradle
+
+      - name: Install Gradle
+        run: |
+          curl -sSL https://get.gradle.org/gradle-latest-bin.zip -o /tmp/gradle.zip
+          unzip /tmp/gradle.zip -d /usr/local
+          export PATH=$PATH:/usr/local/gradle
+
+      - name: Install SonarQube Scanner
+        run: |
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli-${{ matrix.jdk }}-linux.zip
+          unzip sonar-scanner-cli-${{ matrix.jdk }}-linux.zip
+          mv sonar-scanner-cli-${{ matrix.jdk }

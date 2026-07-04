@@ -1,0 +1,61 @@
+name: Java CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      - docker
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y maven
+      - name: Run tests
+        run: |
+          mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+      - name: Build and deploy
+        run: |
+          cp.travis.settings.xml $HOME/.m2/settings.xml
+          sed -i "s/LIVE/${GITHUB_RUN_NUMBER}/g" pom.xml
+          mvn clean compile assembly:single deploy
+      - name: Cache Maven dependencies (again)
+        uses: actions/cache@v4
+          at: cache-maven-dependencies-again
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Login to SonarCloud
+        uses: sonarcloud/sonarcloud-github-action@1.1
+          token: ${{ secrets.SONAR_TOKEN }}
+          server: ${{ secrets.SONAR_SERVER }}
+          project-key: ${{ secrets.SONAR_PROJECT_KEY }}
+          project-name: ${{ secrets.SONAR_PROJECT_NAME }}
+          branch: ${{ GITHUB_REF }}
+      - name: Deploy to Docker
+        run: |
+          docker build -t my-image.
+          docker tag my-image ${{ secrets.DOCKER_IMAGE_NAME }}
+          docker push ${{ secrets.DOCKER_IMAGE_NAME }}
+      -

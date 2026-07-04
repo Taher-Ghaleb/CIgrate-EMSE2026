@@ -1,0 +1,43 @@
+Here is the complete Travis CI configuration (.travis.yml) for the given GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+before_install:
+  - rm -rf $HOME/.m2/repository/io/vlingo
+  - cp.travis/settings.xml $HOME/.m2/settings.xml
+  - mvn deploy:help versions:help help:help
+script:
+  - mvn install -PTravisCI
+deploy:
+  on:
+    tags: true
+  if: success()
+  script: mvn deploy -DskipTests
+  env:
+    GITHUB_TOKEN: $GITHUB_TOKEN
+    TRIGGER_TOKEN: $TRIGGER_TOKEN
+  before_deploy:
+    - chmod u+x.travis/trigger_deps.sh
+    -.travis/trigger_deps.sh
+after_success:
+  - rm -rf $HOME/.m2/repository/io/vlingo
+```
+
+Note that I've used the following mappings:
+
+- `on: [push, pull_request]` -> `deploy.on.tags: true` (deploy on tags only)
+- `jobs: build` -> `language: java` (Travis CI uses a single job by default)
+- `steps` -> `script` (Travis CI uses a single script section)
+- `uses: actions/checkout@v4` -> no equivalent (Travis CI uses a built-in checkout)
+- `name: Set up JDK 8` -> `jdk: openjdk8` (Travis CI uses a built-in JDK configuration)
+- `before_install` -> `before_install` (Travis CI uses a single before_install section)
+- `run: rm -rf $HOME/.m2/repository/io/vlingo` -> `before_install` (Travis CI uses a single before_install section)
+- `cp.travis/settings.xml $HOME/.m2/settings.xml` -> `before_install` (Travis CI uses a single before_install section)
+- `mvn deploy:help versions:help help:help` -> `before_install` (Travis CI uses a single before_install section)
+- `build` -> `script` (Travis CI uses a single script section)
+- `run: mvn install -PTravisCI` -> `script` (Travis CI uses a single script section)
+- `deploy (tag)` -> `deploy` (Travis CI uses a single deploy section)
+- `if: success

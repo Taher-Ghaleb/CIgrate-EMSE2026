@@ -1,0 +1,65 @@
+language: java
+
+before_install:
+  - echo "Installing JDK 8"
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk
+
+install:
+  - echo "Installing SBT"
+  - apt-get install -y sbt
+
+before_script:
+  - echo "Setting up SBT"
+  - sbt setup
+
+script:
+  - echo "Compiling and testing"
+  - sbt compile test
+
+after_success:
+  - echo "Deploying"
+  - echo "Deploying to production"
+
+after_failure:
+  - echo "Deploying to staging"
+
+deploy:
+  provider: script
+  on:
+    branch: master
+    tags: true
+  script: echo "Deploying to production"
+  on:
+    branch: dev
+    tags: false
+  script: echo "Deploying to staging"
+
+notifications:
+  email:
+    recipients:
+      - user@example.com
+    on:
+      push:
+        branches:
+          - master
+      pull_request:
+        branches:
+          - master
+
+matrix:
+  include:
+    - os: linux
+      java-version: 8
+    - os: osx
+      java-version: 8
+  allow_failures:
+    - os: osx
+
+cache:
+  directories:
+    - ~/.ivy2/cache
+    - ~/.sbt
+    - ~/.cache/coursier
+  key: ${{ runner.os }}-sbt-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/**/*.scala') }}
+  restore-keys: ${{ runner.os }}-sbt-

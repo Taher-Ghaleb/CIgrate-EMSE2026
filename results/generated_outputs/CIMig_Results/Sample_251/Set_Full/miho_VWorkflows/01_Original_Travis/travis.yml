@@ -1,0 +1,21 @@
+sudo: false
+
+language: java
+install: true
+jdk:
+- oraclejdk9
+
+env:
+  matrix:
+  - TERM=dumb
+
+before_install:
+
+before_script:
+  - ./gradlew --version
+  
+script:
+    - TERM=dumb ./gradlew clean build -S #-x :vworkflows-demo:jfxJar
+
+after_success:
+  - TERM=dumb ./gradlew test jacocoTestReport jacocoRootReport coveralls -S

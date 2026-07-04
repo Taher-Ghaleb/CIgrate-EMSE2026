@@ -1,0 +1,15 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  components:
+    tools
+    extra-android-maven-repository
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components: platform-tools
+deploy:
+  api_key: $github_token

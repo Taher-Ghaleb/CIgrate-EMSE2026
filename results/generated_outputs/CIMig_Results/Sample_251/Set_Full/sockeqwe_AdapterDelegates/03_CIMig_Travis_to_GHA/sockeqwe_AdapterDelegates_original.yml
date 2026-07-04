@@ -1,0 +1,37 @@
+matrix:
+  os:
+    ubuntu-latest
+    windows-latest
+  java
+
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix
+      fail-fast: FALSE
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+        configuration-cache-enabled: FALSE
+      uses: actions/cache@version
+      with:
+        java-version: ${{ matrix.java }}
+      run: ./gradlew clean build
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      with: java-version
+    - name: build with maven-
+
+macos:
+  jdk: oraclejdk8
+

@@ -1,0 +1,54 @@
+language: ubuntu
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+before_script:
+  - sudo apt-get update
+
+script:
+  - sudo apt-get install -y sqlite3 libsqlite3-dev libtiff-dev libcurl4-openssl-dev pkg-config cmake build-essential
+  - wget https://download.osgeo.org/proj/proj-${{ env.PROJ_VERSION }}.tar.gz
+  - tar xf proj-${{ env.PROJ_VERSION }}.tar.gz
+  - cd proj-${{ env.PROJ_VERSION }}
+  - mkdir build
+  - cd build
+  - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${{ env.PROJ_INSTALL_PREFIX }}
+  - NPROC=$(nproc)
+  - make -j${NPROC}
+  - sudo make install
+  - sudo ldconfig
+  - echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $HOME/.travis/env
+  - echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> $HOME/.travis/env
+  - proj --version
+  - pkg-config --modversion proj
+  - mvn clean package
+  - javac -cp target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java
+  - java -cp "target/proj-1.0-SNAPSHOT.jar:example" TransformPoints
+
+cache:
+  directories:
+    - /usr/local
+
+env:
+  global:
+    - PROJ_VERSION: 9.4.1
+    - PROJ_INSTALL_PREFIX: /usr/local
+
+matrix:
+  include:
+    -

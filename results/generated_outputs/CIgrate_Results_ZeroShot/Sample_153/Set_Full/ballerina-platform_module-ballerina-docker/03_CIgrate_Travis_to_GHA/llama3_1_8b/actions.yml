@@ -1,0 +1,72 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+  pull_request:
+    branches:
+      - main
+      - feature/*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    strategy:
+      matrix:
+        jdk: [openjdk8, openjdk11, openjdk17]
+        node_js: [14, 16]
+        python: [3.9, 3.10]
+        go: [1.17, 1.19]
+    env:
+      FOO: ${{ secrets.FOO }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          jdk-version: ${{ matrix.jdk }}
+      - name: Install Maven
+        run: |
+          apt-get update && apt-get install -y maven
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node_js }}
+      - name: Install Python
+        run: |
+          apt-get update && apt-get install -y python3
+      - name: Install Go
+        run: |
+          apt-get update && apt-get install -y golang
+      - name: Build and test
+        run: |
+         ./gradlew clean build -x test --stacktrace --console=plain --no-daemon
+      - name: Code coverage
+        run: |
+         ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon
+      - name: Code coverage report
+        run: |
+          bash <(curl -s https://codecov.io/bash)
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/*.pom') }}
+          restore-keys: ${{ runner.os }}-maven-
+      - name: Deploy
+        run: |
+          # TODO: Add deploy steps here
+      - name: Notify
+        uses: actions/notify@v2
+        with:
+          title: Build and test completed
+          message: The

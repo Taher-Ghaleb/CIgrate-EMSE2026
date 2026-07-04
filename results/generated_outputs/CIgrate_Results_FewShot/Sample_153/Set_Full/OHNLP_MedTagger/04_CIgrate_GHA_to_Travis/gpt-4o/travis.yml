@@ -1,0 +1,34 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - DEPLOY_KEY=$DEPLOY_KEY
+
+branches:
+  only:
+    - master
+    - /^v[0-9]+.[0-9]+.*/
+    - /^v.*$/
+
+install: true
+
+before_install:
+  - git fetch --unshallow
+
+script:
+  - mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - ant dist
+
+after_success:
+  - if [[ $TRAVIS_TAG ]]; then
+      if [ ! -f "MedTagger.zip" ]; then
+        echo "Error: MedTagger.zip not found";
+        exit 1;
+      fi;
+      curl -sL https://github.com/softprops/action-gh-release/releases/download/v2/gh-release -o gh-release;
+      chmod +x gh-release;
+      ./gh-release upload --files MedTagger.zip --fail-on-unmatched-files --draft=false --prerelease=false;
+    fi

@@ -1,0 +1,42 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+before_install:
+  - install: actions/checkout@v4
+
+services:
+  - docker:
+      - image: openjdk:8
+
+cache:
+  directories:
+    - ~/.m2/repository
+
+before_script:
+  - |
+    cat > ~/.m2/settings.xml <<EOF
+    <settings><servers><server><id>ossrh</id><username>$OSSRH_USER</username><password>$OSSRH_PASS</password></server></settings>
+    EOF
+
+script:
+  - mvn test -B
+
+after_success:
+  - if: $TRAVIS_BRANCH != 'master' -o $TRAVIS_PULL_REQUEST == 'true' -o (startsWith(github.ref, 'refs/tags/') -a $TRAVIS_TAG != 'latest')
+    - run: mvn deploy --settings ~/.m2/settings.xml
+
+after_failure:
+  matrix:
+    allow_failures:
+      - $TRAVIS_BRANCH == 'master'

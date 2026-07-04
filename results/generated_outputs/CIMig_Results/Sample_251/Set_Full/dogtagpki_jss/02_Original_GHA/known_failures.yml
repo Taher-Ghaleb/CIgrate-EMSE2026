@@ -1,0 +1,19 @@
+name: Known Failing Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - 'fedora_rawhide'
+          - 'fedora_sandbox'
+
+    steps:
+    - name: Clone the repository
+      uses: actions/checkout@v3
+
+    - name: Build and Run the Docker Image
+      run: bash tools/run_container.sh "${{ matrix.image }}" || echo "::warning ::Job exited with status $?"

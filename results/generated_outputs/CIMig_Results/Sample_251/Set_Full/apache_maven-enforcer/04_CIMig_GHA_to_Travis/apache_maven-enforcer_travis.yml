@@ -1,0 +1,18 @@
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+sudo: FALSE
+language:
+  components:
+    platform-tools
+    tools
+    extra-android-maven-repository
+  java
+jdk: jdk8
+android:
+  components:
+    platform-tools
+    tools
+    extra-android-maven-repository
+branches: master

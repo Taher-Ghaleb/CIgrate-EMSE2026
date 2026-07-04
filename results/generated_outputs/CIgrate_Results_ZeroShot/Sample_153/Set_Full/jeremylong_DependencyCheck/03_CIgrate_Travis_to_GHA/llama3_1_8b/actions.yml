@@ -1,0 +1,49 @@
+name: Java Maven Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        env:
+          MAVEN_OPTS: -Dmaven.repo.remote=*https://repo1.maven.org/maven2/*
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          mvn --version
+      - name: Build and deploy
+        run: |
+          mvn package -DskipTests=true
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-github-pages@v1
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master
+          local_dir: target/staging
+      - name: Deploy to script provider
+        run: |
+          mvn --settings.github/workflows/.maven-settings.xml source:jar javadoc:jar deploy -DskipTests=true
+          skip_cleanup: true
+```
+
+Note: The `secure` environment variables in the original Travis CI configuration are not directly supported in GitHub Actions. You can use the `secrets` feature in GitHub Actions to store sensitive information. In this example, I've assumed that the `GITHUB_TOKEN` secret is already set up in your repository. If you need to store other sensitive information, you can create a new secret in your repository settings.

@@ -1,0 +1,47 @@
+name: Liberty Build
+on:
+  push:
+  pull_request:
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk8
+          - openjdk11
+    env:
+      - RUNTIME=ol RUNTIME_VERSION=19.0.0.6
+      - RUNTIME=ol RUNTIME_VERSION=19.0.0.3
+      - RUNTIME=wlp RUNTIME_VERSION=19.0.0.6
+      - RUNTIME=wlp RUNTIME_VERSION=19.0.0.3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2
+      - name: Delete old .m2 artifacts
+        run: echo "Deleting old .m2 artifacts..." && rm -rf $HOME/.m2/repository/net/wasdev && rm -rf $HOME/.m2/repository/io/openliberty
+      - name: Install ci.ant lib
+        run: |
+          echo 'Installing ci.ant lib...'
+          git clone https://github.com/OpenLiberty/ci.ant.git ./ci.ant
+          cd ./ci.ant
+          mvn clean install
+          cd ..
+      - name: Install ci.common lib
+        run: |
+          echo 'Installing ci.common lib...'
+          git clone https://github.com/OpenLiberty/ci.common.git ./ci.common
+          cd ./ci.common
+          mvn clean install
+          cd ..
+      - name: Maven Verify
+        run: |
+          travis_wait 30 mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=$RUNTIME -DruntimeVersion=$RUNTIME_VERSION

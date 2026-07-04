@@ -1,0 +1,55 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # TODO: consider using filters instead of wildcard
+  pull_request:
+    branches:
+      - main
+      - feature/*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 15672:15672
+          - 5672:5672
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches
+          key: ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}-${GITHUB_RUN_NUMBER}
+          restore-keys: |
+            ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}
+      - name: Install dependencies
+        run: |
+         ./gradlew --stacktrace dependencies
+      - name: Build
+        run: |
+         ./gradlew --stacktrace build
+      - name: Test
+        run: |
+         ./gradlew --stacktrace test
+      - name: Deploy
+        run: |
+          # TODO: implement deploy logic
+      - name: Send notification
+        uses: actions/notify@v2
+        with:
+          title: Build and test completed
+          message: |
+            The build and test completed successfully.
+          level: success

@@ -1,0 +1,60 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies..."
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - echo "Installing Gradle..."
+  - curl -s https://get.sdkman.io | sh
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install gradle 7.5
+  - sdk current gradle
+  - gradle wrapper --gradle-version 7.5
+
+script:
+  - echo "Building with Gradle..."
+  -./gradlew build --scan -s
+
+after_success:
+  - echo "Deploying..."
+  - echo "Deploying to production..."
+
+deploy:
+  - echo "Deploying to production..."
+
+branches:
+  only:
+    - main
+
+matrix:
+  include:
+    - jdk: 8
+    - jdk: 11
+    - jdk: 17
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.sdkman/caches
+
+services:
+  - docker
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com
+
+deploy.on:
+  tags: true
+
+before_script:
+  - echo "Before script..."
+
+after_failure:
+  - echo "After failure..."

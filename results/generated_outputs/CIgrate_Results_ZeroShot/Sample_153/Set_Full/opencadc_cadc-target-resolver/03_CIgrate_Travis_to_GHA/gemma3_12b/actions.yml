@@ -1,0 +1,44 @@
+name: Build and Deploy CADC Target Resolver
+
+on:
+  push:
+  pull_request:
+
+env:
+  DOCKER_COMPOSE_VERSION: "1.29.2"
+  VERSION: "latest"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      - docker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Update apt and install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce curl
+          sudo rm /usr/local/bin/docker-compose
+          curl -L https://github.com/docker/compose/releases/download/${{ env.DOCKER_COMPOSE_VERSION }}/docker-compose-`uname -s`-`uname -m` > docker-compose
+          chmod +x docker-compose
+          sudo mv docker-compose /usr/local/bin
+      - name: Gradle Build
+        run: gradle -i clean build test
+      - name: Build Docker Image
+        run: |
+          mkdir docker && cp Dockerfile docker/ && cp build/libs/*.war docker/ && docker build -t opencadc/cadc-target-resolver:SNAPSHOT -t opencadc/cadc-target-resolver:alpine -t opencadc/cadc-target-resolver:${{ env.VERSION }} -f docker/Dockerfile docker/
+      - name: Integration Tests
+        run: |
+          cd integrationTest
+          docker-compose up -d
+          docker ps -a
+          docker-compose logs cadc-target-resolver.cadc.dao.nrc.ca
+          docker-compose logs proxy.cadc.dao.nrc.ca
+          curl -vL -d 'level=DEBUG' http://proxy.cadc.dao.nrc.ca/cadc-target-resolver/logControl
+          gradle -i -b ../build.gradle -Dca.nrc.cadc.reg.client.RegistryClient.host=${{ secrets.REGISTRY_HOST }} clean intTest
+          cd ../ &&

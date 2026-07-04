@@ -1,0 +1,18 @@
+Here is the complete Travis CI configuration (.travis.yml) for the given GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+script:
+  - chmod +x mvnw
+  -./mvnw clean verify
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.cache'
+```
+
+Note that I've removed the `before_install` section as it's not necessary in Travis CI, and the `before_script` section is not needed as the `script` section can handle the execution of the Maven wrapper. I've also removed the commented out SonarCloud analysis as it's not part of the original Travis config.

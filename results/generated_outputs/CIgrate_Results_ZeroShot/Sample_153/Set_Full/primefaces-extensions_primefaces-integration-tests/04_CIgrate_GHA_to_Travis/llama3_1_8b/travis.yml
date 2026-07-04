@@ -1,0 +1,59 @@
+language: java
+
+services:
+  - docker
+
+before_install:
+  - echo "Installing JDK"
+  - apt-get update
+  - apt-get install -y default-jdk
+  - update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+  - update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac
+
+install:
+  - echo "Installing Chrome and ChromeDriver"
+  - apt-get install -y chromium-browser
+  - apt-get install -y chromium-chromedriver
+  - echo "Installing Firefox and GeckoDriver"
+  - apt-get install -y firefox
+  - apt-get install -y geckodriver
+
+before_script:
+  - echo "Verifying browser installations"
+  - chromium-browser --version
+  - chromedriver --version
+  - firefox --version
+  - geckodriver --version
+
+script:
+  - echo "Cache PrimeFaces dependencies"
+  - mkdir -p ~/.m2/repository/org/primefaces
+  - mkdir -p ~/primefaces-install
+  - mvn install -DskipTests
+  - echo "Clone and install PrimeFaces"
+  - git clone --depth 1 https://github.com/primefaces/primefaces
+  - cd primefaces
+  - mvn install -DskipTests
+  - cd..
+  - touch ~/primefaces-install/.installed
+  - echo "Clone and install PrimeFaces Selenium"
+  - git clone --depth 1 https://github.com/primefaces-extensions/primefaces-selenium
+  - cd primefaces-selenium
+  - mvn install -DskipTests
+  - cd..
+  - echo "Build and test with Maven"
+  - mvn -B -V clean install -P${TRAVIS_JDK_VERSION}
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Upload test results"
+    - if [ $TRAVIS_JDK_VERSION == "11" ]; then
+        mvn -B -V clean install -P${TRAVIS_JDK_VERSION} -Dmaven.test.failure.ignore=true
+      else
+        mvn -B -V clean install -P${TRAVIS_JDK_VERSION} -Dmaven.test.failure.ignore=true
+      fi
+    - if [ $TRAVIS_JDK_VERSION == "11" ]; then
+        mvn -

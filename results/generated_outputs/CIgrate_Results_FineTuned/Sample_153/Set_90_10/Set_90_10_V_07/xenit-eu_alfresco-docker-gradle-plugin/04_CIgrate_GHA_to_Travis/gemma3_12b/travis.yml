@@ -1,0 +1,43 @@
+language: java
+sudo: false
+
+git:
+  depth: false
+
+before_install:
+  - docker pull alfresco/alfresco-content-repository-community:6.0.7-ga
+  - docker pull tomcat:7-jre8
+  - docker pull hello-world
+  - docker pull alpine:edge
+  - wait
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/modules-2/
+    - $HOME/.gradle/wrapper/
+
+matrix:
+  include:
+    - GRADLE_INTEGRATION_TEST_VERSIONS="5.3,5.6"
+      PUBLISH_SONAR="true"
+    - GRADLE_INTEGRATION_TEST_VERSIONS="6.0,6.6"
+
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+
+before_script:
+  - GRADLE_ARGS="check -i -PintegrationTestGradleVersions=$GRADLE_INTEGRATION_TEST_VERSIONS"
+  - if [[ "$PUBLISH_SONAR" == "true" && -n "$SONAR_TOKEN" ]]; then GRADLE_ARGS="${GRADLE_ARGS} sonarqube -Dsonar.projectKey=xenit-eu_alfresco-docker-gradle-plugin -Dsonar.organization=xenit-eu -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN"; fi
+  - ./gradlew $GRADLE_ARGS
+
+after_cache:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
+deploy:
+  provider: script
+  script: ./gradlew publishPlugins -Pgradle.publish.key=$GRADLE_PUBLISH_KEY -Pgradle.publish.secret=$GRADLE_PUBLISH_SECRET -x check
+  skip_cleanup: true
+  on:
+    tags: true

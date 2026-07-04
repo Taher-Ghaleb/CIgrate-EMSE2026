@@ -1,0 +1,41 @@
+language: java
+branches:
+  only:
+    - main
+    - develop
+
+os:
+  - ubuntu
+  - macos
+
+jdk:
+  - '8'
+  - '11'
+  - '17'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+
+before_install:
+  - "echo 'Before Install'"
+
+install:
+  - "echo 'Install'"
+
+before_script:
+  - "echo 'Before Script'"
+
+script:
+  - chmod +x gradlew
+  - ./gradlew --version
+  - ./gradlew clean test
+
+after_success:
+  - "echo 'After Success'"
+
+after_failure:
+  - "echo 'After Failure'"
+
+# TODO: Equivalent of actions/checkout@v4 is not directly available.  Git is handled implicitly.

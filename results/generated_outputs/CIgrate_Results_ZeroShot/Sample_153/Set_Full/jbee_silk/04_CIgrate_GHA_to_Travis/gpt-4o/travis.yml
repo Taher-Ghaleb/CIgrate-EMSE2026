@@ -1,0 +1,26 @@
+language: java
+jdk:
+  - 8
+  - 11
+
+branches:
+  only:
+    - main
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+before_install:
+  - echo "Setting up JDK $TRAVIS_JDK_VERSION"
+
+install:
+  - ant
+
+script:
+  - ant test
+
+matrix:
+  allow_failures:
+    - jdk: 8
+    - jdk: 11

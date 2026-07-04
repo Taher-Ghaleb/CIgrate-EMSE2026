@@ -1,0 +1,38 @@
+language: java
+sudo: false
+jdk:
+  - openjdk9
+  - openjdk8
+
+env:
+  matrix:
+    - github.ref != 'refs/heads/master' || github.event_name == 'pull_request'
+    - github.ref == 'refs/heads/master' && github.event_name == 'push'
+    - github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository == 'bootique/bootique-logback'
+    - github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository != 'bootique/bootique-logback'
+
+script:
+  - mvn clean verify
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+before_install:
+  - if: ${{ env.github.ref == 'refs/heads/master' && env.github.event_name == 'push' }}
+    run: |
+      if [ "${env.github.repository}" == "bootique/bootique-logback" ]; then
+        echo "Deploying to OSSRH"
+        export MAVEN_USERNAME=${{ secrets.OSSRH_USERNAME }}
+        export MAVEN_PASSWORD=${{ secrets.OSSRH_PASSWORD }}
+      fi
+
+install:
+  - mvn dependency:get -Dartifact=org.slf4j:slf4j-api:jar:1.7.30
+
+before_script:
+  - if: ${{ env.github.ref == 'refs/heads/master' && env.github.event_name == 'push' }}
+    run: |
+      if [ "${env.github.repository}" == "bootique/bootique-logback" ]; then
+        echo "Setting up OSSRH credentials"
+        mvn -s travis_settings.xml -DaltDeploymentRepository=ossrh -DossrhUsername=${{ env.MAVEN_USERNAME }} -DossrhPassword=${{ env.MAVEN_PASSWORD

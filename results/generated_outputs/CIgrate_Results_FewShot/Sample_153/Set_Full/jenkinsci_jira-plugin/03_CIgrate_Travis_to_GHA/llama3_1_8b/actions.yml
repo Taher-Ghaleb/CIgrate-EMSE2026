@@ -1,0 +1,48 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK_VERSIONS: '8,11'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [$JDK_VERSIONS]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven and SonarQube
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.sonar/cache
+          key: ${{ runner.os }}-m2-sonar-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-sonar-
+      - name: Run tests and coverage
+        run: |
+          mvn -Penable-jacoco -Dsonar.projectKey=jenkins-jira-plugin -Dsonar.coverage.jacoco.xmlReportPaths=/home/travis/build/jenkinsci/jira-plugin/target/site/jacoco/jacoco.xml clean verify coveralls:report sonar:sonar
+      - name: Clean cache
+        run: |
+          rm -fr $HOME/.m2/repository/org/jenkins-ci/plugins/jira
+      - name: Configure SonarCloud
+        uses: sonarcloud/sonarcloud-github-action@release/v1
+        with:
+          token: ${{ secrets.SONAR_TOKEN }}
+          organization: warden
+```
+
+Note: The `SONAR_TOKEN` secret should be replaced with the actual token from the SonarCloud project.

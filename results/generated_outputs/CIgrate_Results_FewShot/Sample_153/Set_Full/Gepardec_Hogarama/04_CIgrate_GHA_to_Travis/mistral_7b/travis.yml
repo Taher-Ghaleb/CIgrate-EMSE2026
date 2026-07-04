@@ -1,0 +1,17 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    working-directory: Hogajama
+
+script:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+cache:
+  directories:
+    - ~/.m2/repository
+```
+
+This Travis CI configuration maintains the semantics of the GitHub Actions workflow, including the use of JDK 8, the `working-directory`, and the Maven cache. It does not include testing or documentation generation, as those were skipped in the GitHub Actions workflow.

@@ -1,0 +1,94 @@
+language: java
+
+branches:
+  only:
+    - master
+    - '[0-9]*.[0-9]*'
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle
+    - $HOME/.npm
+
+before_install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - mvn install
+
+script:
+  - mvn clean verify -B
+
+deploy:
+  on:
+    tags: true
+  environment:
+    - SONATYPE_NEXUS_USERNAME
+    - SONATYPE_NEXUS_PASSWORD
+  script:
+    - bash.travis.deploy.artifacts.sh
+  only:
+    - master
+  before_script:
+    - chmod +x.travis.deploy.artifacts.sh
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+
+matrix:
+  include:
+    - java: '8'
+      cache:'maven'
+    - java: '11'
+      cache:'maven'
+  allow_failures: true
+
+jdk:
+  - java8
+  - java11
+
+jobs:
+  test_jdk8:
+    if: matrix.java == '8'
+    script:
+      - mvn clean verify -B
+    cache:
+      directories:
+        - $HOME/.m2/repository
+    services:
+      - docker
+
+  test_jdk11:
+    if: matrix.java == '11'
+    script:
+      - mvn clean verify -B
+    cache:
+      directories:
+        - $HOME/.m2/repository
+    services:
+      - docker
+
+  apollo_link_tests:
+    script:
+      - mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer
+      - npm install
+      - npm run test
+    services:
+      - docker
+
+  deploy_snapshots:
+    needs: [test_jdk8, apollo_link_tests]
+    script:
+      - bash.travis.deploy.artifacts.sh
+    environment:
+      - SONATYPE_NEXUS_USERNAME
+      - SONATYPE_NEXUS_PASSWORD
+    services:
+      - docker

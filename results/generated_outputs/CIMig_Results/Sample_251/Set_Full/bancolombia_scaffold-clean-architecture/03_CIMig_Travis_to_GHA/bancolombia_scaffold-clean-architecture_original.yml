@@ -1,0 +1,23 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      run:
+        ./gradlew test jacocoTestReport && cp build/reports/jacoco/report.xml jacoco.xml || echo \"Code coverage failed
+        chmod +x gradlew
+
+matrix:
+  os: linux-latest
+
+macos:
+  jdk: openjdk8
+

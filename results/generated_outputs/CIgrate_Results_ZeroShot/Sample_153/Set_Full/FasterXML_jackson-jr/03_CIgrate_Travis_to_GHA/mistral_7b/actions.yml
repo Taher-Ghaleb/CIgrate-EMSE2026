@@ -1,0 +1,48 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [openjdk8, openjdk11]
+
+    env:
+      JAVA_HOME: ${{ runner.os === 'linux' ? '${{ secrets.JAVA_HOME_${{ matrix.jdk }}' : '${{ secrets.JAVA_HOME }}' }}
+
+    services:
+      dbs:
+        - postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ matrix.jdk }}
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies-${{ matrix.jdk }}-*
+
+      - name: Install and run Maven
+        run: mvn -B clean verify
+
+    env:
+      PGHOST: ${{ secrets.PGHOST }}
+      PGUSER: ${{ secrets.PGUSER }}
+      PGPASSWORD: ${{ secrets.PGPASSWORD }}
+
+workflow:
+  branches:
+    include:
+      - master
+      - 2.13

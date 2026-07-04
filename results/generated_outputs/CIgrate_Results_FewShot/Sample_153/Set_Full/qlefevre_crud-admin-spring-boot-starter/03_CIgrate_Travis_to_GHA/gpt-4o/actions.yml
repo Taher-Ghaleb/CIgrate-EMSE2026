@@ -1,0 +1,25 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '8']
+    env:
+      MAVEN: 3.5.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install Maven ${{ env.MAVEN }}
+        uses: actions/setup-java@v4
+        with:
+          maven-version: ${{ env.MAVEN }}
+      - name: Build and verify
+        run: mvn clean verify

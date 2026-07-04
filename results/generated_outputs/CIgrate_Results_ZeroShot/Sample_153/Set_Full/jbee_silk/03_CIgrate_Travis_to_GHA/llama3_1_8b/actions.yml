@@ -1,0 +1,57 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # TODO: consider using expanded form for branch filters
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+          ant
+      - name: Build and deploy
+        run: |
+          # TODO: implement build and deploy logic here
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/*.pom') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies-*
+      - name: Deploy
+        uses: octo/action-deploy@v1
+        with:
+          provider: s3
+          bucket: my-bucket
+          region: us-east-1
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          deploy-on-success: true
+      - name: Send notification
+        uses: actions/notification@v1
+        with:
+          message: 'Deployment successful'
+          recipients: 'dev-team@example.com'
+          subject: 'Deployment notification'
+      - name: Allow failure
+        continue-on-error: true

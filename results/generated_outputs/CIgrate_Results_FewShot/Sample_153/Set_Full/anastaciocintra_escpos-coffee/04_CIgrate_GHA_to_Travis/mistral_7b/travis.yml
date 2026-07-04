@@ -1,0 +1,36 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+
+script:
+  - mvn install --settings .travis/settings.xml -DskipTests -Dmaven.javadoc.skip=true -B
+
+deploy:
+  on:
+    branches:
+      only:
+        - master
+    types:
+      - release
+
+  script:
+    - mvn clean deploy --settings .travis/settings.xml -DskipTests=true -B
+
+addons:
+  gpg:
+    secrets:
+      - GPG_PRIVATE_KEY
+      - GPG_PASSPHRASE
+
+services:
+  maven:
+    image: maven:3.6.3-jdk-8-alpine
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

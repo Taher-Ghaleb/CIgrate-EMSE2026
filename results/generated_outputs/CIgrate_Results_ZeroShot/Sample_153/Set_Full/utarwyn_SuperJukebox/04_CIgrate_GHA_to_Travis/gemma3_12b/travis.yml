@@ -1,0 +1,47 @@
+language: java
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+    - ~/.sonar/cache
+
+branches:
+  only:
+    - main
+  except:
+    - /^hotfix\/.*$/
+    - /^feature\/.*/
+
+services:
+  - docker
+
+before_install:
+  - echo "Before Install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before Script"
+
+script:
+  - if [ "${TRAVIS_BRANCH}" = "main" ]; then
+    mvn clean verify sonar:sonar -Pcoverage -Dsonar.organization=utarwyn-github
+    else
+    mvn clean install
+  fi
+
+after_success:
+  - echo "After Success"
+
+after_failure:
+  - echo "After Failure"
+
+deploy:
+  provider:
+    - script:
+        - echo "Deploy"

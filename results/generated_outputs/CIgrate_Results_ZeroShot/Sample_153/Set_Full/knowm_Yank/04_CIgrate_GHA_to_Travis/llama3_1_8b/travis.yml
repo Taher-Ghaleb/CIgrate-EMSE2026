@@ -1,0 +1,67 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 11"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-11
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+before_script:
+  - echo "Cloning travis settings branch"
+  - git clone -b travis https://x-access-token:$MAVEN_USERNAME@github.com:$MAVEN_REPO_OWNER/$MAVEN_REPO_NAME.git target/travis
+
+script:
+  - echo "Verifying on pull request"
+  - mvn clean verify --settings target/travis/settings.xml
+  - echo "Deploying on push"
+  - mvn clean deploy --settings target/travis/settings.xml
+
+after_success:
+  - echo "Deploying to production"
+  - mvn deploy
+
+after_failure:
+  - echo "Deploy failed, notifying team"
+  - notify-slack "Deploy failed"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - mvn deploy
+  skip_cleanup: true
+
+matrix:
+  include:
+    - java: '11'
+      maven: '3.8.6'
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - 'ppa:openjdk/ppa'
+    packages:
+      - openjdk-11-jdk-headless
+      - maven
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - 'your_email@example.com'

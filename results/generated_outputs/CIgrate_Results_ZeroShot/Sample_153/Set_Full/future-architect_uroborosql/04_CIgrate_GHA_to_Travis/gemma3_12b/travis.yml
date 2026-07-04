@@ -1,0 +1,60 @@
+language: java
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+
+env:
+  global:
+    - COVERALLS_REPO_TOKEN: $COVERALLS_REPO_TOKEN
+    - SMTP_USERNAME: $SMTP_USERNAME
+    - SMTP_PASSWORD: $SMTP_PASSWORD
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+before_install:
+  - echo "Before Install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before Script"
+
+script:
+  - mvn clean install
+
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn jacoco:report coveralls:report
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      mvn deploy -Dmaven.test.skip=true --settings .travis.settings.xml
+    fi
+
+  - echo "Script"
+
+after_success:
+  - echo "After Success"
+
+after_failure:
+  - echo "After Failure"
+
+notifications:
+  email:
+    recipients:
+      - gr-tig-oss@future.co.jp
+    subject: "Build ${job.status}: ${github.repository}"
+    body: |
+      Build ${job.status} for ${github.repository}
+      Commit: ${github.sha}
+      Branch: ${github.ref}
+      Workflow: ${github.workflow}
+  on_success: change
+  on_failure: change

@@ -1,0 +1,57 @@
+language: java
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+script:
+  - checkout
+
+  - if: $TRAVIS_OS_NAME == 'linux'
+    script: chmod +x $TRAVIS_BUILD_DIR/scripts/install_jdk_7_custom.sh
+    script: ./scripts/install_jdk_7_custom.sh
+    only: linux
+
+  - if: $TRAVIS_OS_NAME != 'linux'
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: ${{ matrix.jdk }}
+      cache: 'maven'
+
+  - run: java -version
+
+  - run: mvn install
+
+  - if: $TRAVIS_OS_NAME == 'linux' && matrix.jdk == '8'
+    script: |
+      mvn clean clover:setup test
+      mvn -pl . clover:clover clover:check
+
+  - if: $TRAVIS_OS_NAME == 'linux' && matrix.jdk == '8'
+    uses: coverallsapp/github-action@v2
+    with:
+      github-token: $GITHUB_TOKEN
+      path-to-lcov: target/site/clover/clover.xml
+      fail_on_error: false
+
+before_script:
+  - echo "JAVA_HOME=/usr/lib/jvm/java-7-oracle" >> $HOME/.bash_profile
+  - echo "/usr/lib/jvm/java-7-oracle/bin" >> $HOME/.bash_profile
+  - echo "MAVEN_OPTS=-Dhttps.protocols=TLSv1.2 -Xmx512m -XX:MaxPermSize=128m" >> $HOME/.bash_profile
+
+matrix:
+  include:
+    - jdk: 7-custom

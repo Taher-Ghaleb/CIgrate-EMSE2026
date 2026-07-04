@@ -1,0 +1,43 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - jdk-version: '8'
+            distribution: 'zulu'
+            name: 'Zulu 8 (Oracle JDK 8 equivalent)'
+          - jdk-version: '8'
+            distribution: 'temurin'
+            name: 'Temurin 8 (OpenJDK 8)'
+          - jdk-version: '9'
+            distribution: 'zulu'
+            name: 'Zulu 9 (Oracle JDK 9 - EOL)'
+    
+    name: Build with ${{ matrix.name }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK ${{ matrix.jdk-version }} (${{ matrix.distribution }})
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.jdk-version }}
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      
+      - name: Check
+        run: ./gradlew check
+      
+      - name: Run functional tests
+        run: ./gradlew runFunctionalTest

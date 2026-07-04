@@ -1,0 +1,67 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+deploy:
+  on:
+    push:
+      branches:
+        - master
+      tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+    with:
+      fetch-depth: 0
+
+script:
+  - name: Set up JDK 11
+    install: actions/setup-java@v4 -d '11' -c 'temurin'
+
+  - name: Make gradlew executable
+    run: chmod +x gradlew
+
+  - name: Run check
+    run: ./gradlew check -i
+
+  - name: Cleanup Gradle Cache
+    if: always()
+    run: |
+      rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+      rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+example:
+  include:
+    - local: example
+  language: ubuntu
+  before_install:
+    - check-if-test-needed:
+        script: |
+          if .build_condition.sh ${{ github.event.before }}..${{ github.sha }} examples/example; then
+            echo "Testing"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "NOT testing"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          fi
+  script:
+    - Make gradlew executable:
+        if: $skip != 'true'
+        run: chmod +x examples/example/gradlew
+    - Run example check:
+        if: $skip != 'true'
+        working-directory: ./examples/example/
+        run: ./gradlew check -i
+    - Cleanup Gradle Cache:
+        if: always()
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+deploy:
+  on:

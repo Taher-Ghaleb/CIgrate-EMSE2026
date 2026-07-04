@@ -1,0 +1,56 @@
+name: Java Build and Deployment
+
+on:
+  push:
+    branches:
+      - master
+      - "*/[0-9]+.*"
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ~/.m2/repository
+      - name: Install dependencies
+        run: |
+          mvn dependency:resolve
+      - name: Build and deploy
+        run: |
+         ./build.sh
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ~/.m2/repository
+      - name: Deploy
+        run: |
+          # TODO: Add deployment logic here
+      - name: Send notification
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+        run: |
+          # TODO: Add notification logic here
+      - name: Allow failure
+        continue-on-error: true

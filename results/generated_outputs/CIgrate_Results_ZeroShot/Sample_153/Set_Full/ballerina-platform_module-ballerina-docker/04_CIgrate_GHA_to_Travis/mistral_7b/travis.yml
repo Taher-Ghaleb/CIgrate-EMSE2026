@@ -1,0 +1,63 @@
+name: CI
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: choco install git -y
+
+install:
+  - cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle
+      key: ${{ runner.os }}-cache
+
+script:
+  - git config --global user.name "${{ github.actor }}"
+  - git config --global user.email "${{ github.actor }}"
+  - git checkout ${{ github.ref }}
+
+  - if [ "${{ runner.os }}" == "Windows" ]; then
+      choco install jdk8 -params 'installdir=c:\\java8' -y
+      echo "JAVA_HOME=c:\java8" >> $GITHUB_ENV
+      echo "c:\java8\bin" >> $GITHUB_PATH
+      choco install maven --version 3.6.3 -y
+      echo "C:\ProgramData\chocolatey\lib\maven\apache-maven-3.6.3\bin" >> $GITHUB_PATH
+      .\gradlew.bat build -x test --stacktrace --console=plain --no-daemon
+    else
+      actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+          cache: 'gradle'
+      chmod +x ./gradlew
+      java -version
+      ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon
+  endif
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: ${{ secrets.CODECOV_TOKEN }}
+      fail_ci_if_error: false
+
+matrix:
+  include:
+    - os: linux
+      jdk:
+        - '8'
+    - os: windows
+      jdk: '8'
+
+before_

@@ -1,0 +1,36 @@
+language: java
+sudo: required
+branches:
+  only:
+    - master
+    - develop
+  except:
+    - tags
+
+env:
+  global:
+    - JAVA_HOME: c:\java8
+    - PATH: c:\java8\bin;C:\ProgramData\chocolatey\lib\maven\apache-maven-3.6.3\bin
+    - CODECOV_TOKEN: $CODECOV_TOKEN
+
+jobs:
+  - name: windows-build
+    os: windows
+    jdk: openjdk8
+    script:
+      - choco install jdk8 -params 'installdir=c:\\java8' -y
+      - echo "JAVA_HOME=c:\java8" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - echo "c:\java8\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - choco install maven --version 3.6.3 -y
+      - .\gradlew.bat build -x test --stacktrace --console=plain --no-daemon
+    
+  - name: linux-build
+    os: linux
+    jdk: openjdk8
+    script:
+      - chmod +x ./gradlew
+      - java -version
+      - ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon
+    
+    after_success:
+      - bash <(curl -s https://codecov.io/bash)

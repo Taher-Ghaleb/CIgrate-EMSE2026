@@ -1,0 +1,31 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  branches:
+    - master
+    - "2.13"
+
+env:
+  JDK_VERSIONS: "8,11"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ${{ matrix.JDK_VERSIONS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Run Maven
+        run: mvn -B clean verify
+```
+
+Note: The `branches` keyword in the Travis CI configuration is equivalent to `branches` in the `on` keyword in GitHub Actions. The `only` keyword is not needed in GitHub Actions, as it is the default behavior. The `script` keyword is equivalent to the `run` keyword in GitHub Actions.

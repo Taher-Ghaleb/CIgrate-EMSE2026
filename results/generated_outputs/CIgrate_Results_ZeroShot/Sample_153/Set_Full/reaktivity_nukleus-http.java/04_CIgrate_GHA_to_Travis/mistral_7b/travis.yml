@@ -1,0 +1,61 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+  except:
+    - release/*
+
+services:
+  - docker
+
+before_install:
+  - export GIT_STRATEGY=include
+
+install:
+  - git config --global --add safe.directory '~/.m2'
+  - git config --global user.name "${{ github.actor }}"
+  - git config --global user.email "${{ github.actor }}"
+
+before_script:
+  - java -version
+  - mvn -version
+
+script:
+  - checkout
+  - actions/setup-java@v4 -distribution temurin -java-version '8'
+  - cache --directories ~/.m2/repository ~/.gradle/ ~/.npm/
+  - mvn -B -nsu verify
+
+deploy:
+  on:
+    tags: true
+
+after_success:
+  deploy:
+    provider: pages
+    skip_cleanup: true
+    github.ref: refs/tags/{}
+    github.token: ${{ secrets.GITHUB_TOKEN }}
+    local_dir: docs
+    on:
+      branch: master
+    script:
+      - npm install
+      - npm run build
+      - npm run deploy
+
+before_deploy:
+  - npm install
+  - npm run build
+
+deploy:
+  on:
+    tags: true
+  script:
+    - npm install
+    - npm run build
+    - npm run deploy
+
+# TODO: Add a script to handle docker-compose and wait loops in hooks

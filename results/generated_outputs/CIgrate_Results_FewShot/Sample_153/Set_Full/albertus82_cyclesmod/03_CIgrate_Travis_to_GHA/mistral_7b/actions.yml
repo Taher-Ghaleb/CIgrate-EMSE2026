@@ -1,0 +1,49 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JRE6_HOME: /usr/lib/jvm/java-6-openjdk-amd64/jre
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [linux, osx]
+        jdk: [oraclejdk11, oraclejdk8, openjdk7]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install dependencies (Linux only)
+        if: ${{ matrix.os == 'linux' }}
+        run: |
+          ant -diagnostics
+          brew update
+          brew install wine ant
+      - name: Install dependencies (OSX only)
+        if: ${{ matrix.os == 'osx' }}
+        uses: actions/setup-apt@v4
+        with:
+          apt-packages-to-install: |
+            ant-optional
+            lib32ncurses5
+            lib32z1
+            openjdk-6-jdk
+            winehq-stable
+      - name: Install WineHQ sources (Linux only)
+        if: ${{ matrix.os == 'linux' }}
+        run: |
+          add-apt-repository -y 'deb https://dl.winehq.org/wine-builds/ubuntu/ trusty main'
+          curl -sSL https://dl.winehq.org/winehq.key | apt-key add -
+          apt-get update
+      - name: Install WineHQ packages
+        if: ${{ matrix.os == 'linux' }}
+        run: apt-get install -y ant-optional lib32ncurses5 lib32z1 openjdk-6-jdk winehq-stable
+      - name: Run build
+        run: ant all

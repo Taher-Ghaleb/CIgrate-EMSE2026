@@ -1,0 +1,31 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+script:
+  - mvn install -P eclipse
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.m2/.cache'
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+env:
+  matrix:
+    - CODECOV_TOKEN=your_secret_codecov_token
+notifications:
+  on_success:
+    email:
+      recipients:
+        - your_email@example.com
+  on_failure:
+    email:
+      recipients:
+        - your_email@example.com
+```
+
+Note: Replace `your_secret_codecov_token` and `your_email@example.com` with your actual Codecov token and email address.

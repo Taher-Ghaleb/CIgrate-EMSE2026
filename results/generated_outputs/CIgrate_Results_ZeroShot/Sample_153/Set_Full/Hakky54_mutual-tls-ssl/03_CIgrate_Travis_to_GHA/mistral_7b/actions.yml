@@ -1,0 +1,51 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker: docker-latest
+
+    strategy:
+      matrix:
+        jdk: [openjdk11, openjdk8]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-m2
+          path: ${{ env.HOME }}/.m2
+          restore-keys: |
+            ${{ runner.os }}-m2
+
+      - name: Install Maven
+        run: |
+          curl -sL https://apache.org/dist/maven/maven-3/3.8.3/binaries/apache-maven-3.8.3-bin.tar.gz -o apache-maven.tar.gz
+          tar -xzf apache-maven.tar.gz
+          mv apache-maven-3.8.3 ${{ env.HOME }}/.m2/maven
+          export PATH=${{ env.HOME }}/.m2/maven/bin:$PATH
+
+      - name: Build and test
+        run: |
+          mvn clean verify -P without-authentication
+          mvn clean verify -P with-one-way-authentication
+          mvn clean verify -P with-two-way-authentication-by-trusting-each-other
+          mvn clean verify -P with-two-way-authentication-by-trusting-root-ca
+
+    env:
+      MAVEN_OPTS: "-Xmx2048M -XX:MaxPermSize=512m"
+
+#

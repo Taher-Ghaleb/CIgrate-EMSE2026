@@ -1,0 +1,12 @@
+language: java
+sudo: false
+jdk:
+  - openjdk11
+
+script:
+  - chmod +x gradlew
+  - ./gradlew :jar :test
+
+cache:
+  directories:
+    - '$HOME/.gradle'

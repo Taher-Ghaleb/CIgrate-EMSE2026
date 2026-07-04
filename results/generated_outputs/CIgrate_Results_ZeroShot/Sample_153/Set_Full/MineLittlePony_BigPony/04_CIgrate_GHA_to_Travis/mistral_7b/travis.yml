@@ -1,0 +1,50 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - setup_java:
+      distribution: temurin
+      java_version: '8'
+  - gradle/setup-gradle
+
+before_script:
+  - run: chmod +x gradlew
+
+script:
+  - ./gradlew check
+
+matrix:
+  include:
+    - java:
+        - '8'
+
+  cache:
+    directories:
+      - ~/.m2/repository
+      - ~/.gradle
+
+before_deploy:
+  - if: $GITHUB_EVENT_NAME == 'push' && github.ref == 'refs/heads/master'
+    script:
+      - checkout
+      - setup_java:
+          distribution: temurin
+          java_version: '8'
+      - gradle/setup-gradle
+      - run: chmod +x gradlew
+      - ./gradlew build publish
+      - env:
+          ACCESS_KEY: $ACCESS_KEY

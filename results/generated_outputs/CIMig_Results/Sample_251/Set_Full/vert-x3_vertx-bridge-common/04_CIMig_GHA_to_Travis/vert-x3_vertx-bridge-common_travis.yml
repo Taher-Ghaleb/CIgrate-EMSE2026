@@ -1,0 +1,20 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  echo \"PROJECT_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -B | grep -v '\\[')\" >> $GITHUB_ENV
+script:
+  script:
+    make all test
+    mvn deploy -s .travis.maven.settings.xml -DskipTests -B
+name: placeholder_Name
+stage: tests
+sonarcloud:
+  organization: powsybl-ci-github
+include:
+  env: jdk='oracle jdk 8'

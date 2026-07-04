@@ -1,0 +1,38 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - main
+    - develop
+
+cache:
+  directories:
+    - ~/.sonar/cache
+    - ~/.gradle/
+
+before_install:
+  - echo "Before install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before script"
+  - chmod +x gradlew
+
+script:
+  - ./gradlew clean check sonarqube --info --stacktrace --warning-mode all
+  
+  
+after_success:
+  - echo "After success"
+
+after_failure:
+  - echo "After failure"
+
+env:
+  GITHUB_TOKEN: $GITHUB_TOKEN
+  SONAR_TOKEN: $SONAR_TOKEN
+  SONAR_ORGANIZATION: kaklakariada-github

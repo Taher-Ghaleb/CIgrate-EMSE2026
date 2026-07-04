@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        jdk: ['oraclejdk8', 'oraclejdk9']
+        repo: ['bootique/bootique-logback', 'other']
+    if: (branch != 'master' || type == 'pull_request') && (branch == 'master' && type == 'push' && repo == 'bootique/bootique-logback' || branch == 'master' && type == 'push' && repo != 'bootique/bootique-logback')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Maven Build
+        run: |
+          if [[ $GITHUB_REF == refs/heads/master && $GITHUB_REPOSITORY == 'bootique/bootique-logback' ]]; then
+            mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+          else
+            mvn clean verify
+          fi
+        env:
+          GLOBAL_SECRET_1: ********************
+          GLOBAL_SECRET_2: ********************

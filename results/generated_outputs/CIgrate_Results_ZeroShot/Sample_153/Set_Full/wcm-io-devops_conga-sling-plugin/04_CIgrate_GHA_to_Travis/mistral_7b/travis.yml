@@ -1,0 +1,48 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - hotfix/*
+    - bugfix/*
+  except:
+    - '**-[0-9]+.**'
+    - '**-[0-9]+.[0-9]+.[0-9]+**'
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+install:
+  - name: Set up JDK 8
+    script: |
+      wget --quiet https://download.java.net/java/GA/jdk8/8u275/bin/linux/x64/jdk-8u275-linux-x64.tar.gz
+      tar -xzf jdk-8u275-linux-x64.tar.gz -C $HOME
+      export JAVA_HOME=$HOME/jdk1.8.0_275
+      export PATH=$JAVA_HOME/bin:$PATH
+      export MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle
+    - $HOME
+
+before_script:
+  - mvn -s ./.travis.maven-settings.xml clean
+
+script:
+  - mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install
+  - mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install -f example
+
+after_success:
+  - name: Upload coverage to Codecov
+    uses: codecov/codecov-action@v4
+
+after_failure:
+  - name: Cleanup repository
+    run: rm -rf $HOME/.m2/repository/io/wcm

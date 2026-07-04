@@ -1,0 +1,104 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y libappindicator1 fonts-liberation
+  - echo "CHROME_BIN=/usr/bin/google-chrome" >> $HOME/.travis/env
+
+script:
+  - chmod +x gradlew
+  - ./gradlew check --no-daemon --console=plain
+
+after_success:
+  - ./.upload_reports.sh
+
+before_script:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME
+
+matrix:
+  include:
+    - java:
+        - '8'
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - browser-actions/setup-chrome@v1
+  - browser-actions/setup-firefox@v1
+
+script:
+  - ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${{ env.SONAR_ORG }} -Dsonar.host.url=${{ env.SONAR_HOST }} -Dsonar.login=${{ env.SONAR_LOGIN }} -Dsonar.branch.name=${TRAVIS_BRANCH}
+
+after_success:
+  - ./.upload_reports.sh
+
+matrix:
+  include:
+    - java:
+        - '8'
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - browser-actions/setup-chrome@v1
+  - browser-actions/setup-firefox@v1
+
+script:
+  - ./gradlew grid --no-daemon --console=plain -i
+
+after_success:
+  - ./.upload_reports.sh
+
+matrix:
+  include:
+    - java:
+        - '8'
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - browser-actions/setup-firefox@v1
+
+script:
+  - ./gradlew firefox_headless --no-daemon --console=plain -i
+
+after_success:
+  - ./.upload_reports.sh
+
+matrix:
+  include:
+    - java:
+        - '8'
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - browser-actions/setup-chrome@v1
+
+script:
+  - ./gradlew chrome_headless --no-daemon --console=plain -i
+
+after_success:
+  - ./.upload_reports.sh

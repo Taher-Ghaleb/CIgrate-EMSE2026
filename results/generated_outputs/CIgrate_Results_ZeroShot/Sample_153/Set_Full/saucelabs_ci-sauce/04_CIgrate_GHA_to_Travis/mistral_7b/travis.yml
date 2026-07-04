@@ -1,0 +1,36 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - export GPG_KEY_PASSPHRASE=${{ secrets.GPG_KEY_PASSPHRASE }}
+
+script:
+  - checkout
+  - export JAVA_HOME=$(which java)
+  - export MAVEN_OPTS="-Dgpg.skip=true"
+  - ${{ if eq .github.event_name, 'pull_request' }} && mvn dependency:purge-local-repository -B || true
+  - ${{ if eq .github.event_name, 'push' }} && mvn install -DskipTests=true -B -V || true
+  - mvn test -B
+
+before_install:
+  - cache --directories ~/.m2/repository,~/.gradle/*,$HOME/.npm
+
+install:
+  - actions/setup-java@v4 -distribution 'temurin' -java-version '8'
+
+deploy:
+  on:
+    tags: true
+  script:
+    - mvn deploy -B
+
+# TODO: Add notifications and deploy scripts as needed

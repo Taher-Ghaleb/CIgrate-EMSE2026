@@ -1,0 +1,21 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Change directory to Hogajama
+        run: cd Hogajama
+      - name: Clean and install
+        run: |
+          mvn clean
+          mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+```
+
+Note: The `before_install` section in Travis CI is not directly equivalent to a GitHub Actions workflow. In GitHub Actions, the `before_install` section is not needed as the workflow will run in a clean environment. However, if you want to run a command before the installation, you can use the `before_install` keyword in the `jobs` section.

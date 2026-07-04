@@ -1,0 +1,39 @@
+name: Java CI/CD
+
+on:
+  push:
+    branches:
+      - master
+      - '/v\\d+\\.\\d+[a-zA-Z-_]+?(\\.\\d+[a-zA-Z-_]+)?/'
+  pull_request:
+    branches:
+      - master
+      - '/v\\d+\\.\\d+[a-zA-Z-_]+?(\\.\\d+[a-zA-Z-_]+)?/'
+  tag:
+    ignore: false
+
+env:
+  global:
+    DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+    API_KEY: ${{ secrets.API_KEY }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Install
+        run: |
+          mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+          mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+          ant dist
+      - name: Deploy
+        if: github.ref == 'refs/tags/*'
+        run: |
+          echo "Deploying release..."
+          # TODO: Implement release deployment using provider: releases, overwrite: true, api_key, file, skip_cleanup
+          # This requires a more complex action or script to handle the release process.
+          echo "Release deployment skipped.  Implement using a suitable action."

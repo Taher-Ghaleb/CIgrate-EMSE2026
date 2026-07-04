@@ -1,0 +1,56 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: constellationapplication/netbeans-runner:11.3
+        env:
+          HOME: /home/runner
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          depth: false
+      - name: Cache ivy cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.hash }}
+          restore-keys: ivydata-*.properties
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11.3'
+      - name: Run tests
+        run: |
+          docker run --mount "type=bind,source=${GITHUB_WORKSPACE},target=${GITHUB_WORKSPACE}" --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" --workdir "${GITHUB_WORKSPACE}" constellationapplication/netbeans-runner:11.3.travis/run-tests.sh
+      - name: Sonar
+        run:.travis/sonar.sh
+      - name: Deploy
+        uses: actions/deploy-release@v1
+        with:
+          provider: releases
+          api-key: ${{ secrets.API_KEY }}
+          file: dist/constellation.zip
+      - name: Send notification
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            curl -X POST \
+            https://webhooks.gitter.im/e/82ac70bdb3f9e144d859 \
+            -H 'Content-Type: application/json' \
+            -d '{"text": "Build and test completed"}'

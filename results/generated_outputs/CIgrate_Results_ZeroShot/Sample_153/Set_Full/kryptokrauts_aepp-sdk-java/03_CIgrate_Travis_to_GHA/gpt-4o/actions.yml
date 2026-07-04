@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+  pull_request:
+    branches:
+      - dev
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:stable
+        options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+          ./travis-install-libsodium.sh
+          echo "$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo "$HOME/libsodium/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.gradle/caches/
+            ${{ github.workspace }}/.gradle/wrapper/
+            ${{ github.workspace }}/libsodium
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Run Docker Compose
+        run: docker-compose up -d
+      - name: Run Gradle Integration Tests
+        run: ./gradlew integrationTest
+      - name: Build with Gradle
+        run: ./gradlew build
+
+  snapshot:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Publish Snapshot
+        run: ./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.key=${{ secrets.BINTRAY_KEY }} -Dbuild.number=${{ github.run_number }}
+
+  release:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Prepare for Release
+        run: |
+          VERSION=$(./gradlew -q pV)
+          TAG="v$VERSION"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git tag $TAG
+      - name: Release to Bintray
+        run: ./gradlew bintrayUpload -x test -Dbintray.user=${{ secrets.BINTRAY_USER }} -Dbintray.key=${{ secrets.BINTRAY_KEY }} -Dbuild.number=${{ github.run_number }}
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.prepare.outputs.TAG }}
+          release_name: Release ${{ steps.prepare.outputs.VERSION }}
+          body: "Please take a look into the [release notes](https://github.com/kryptokrauts/aepp-sdk-java/blob/${{ steps.prepare.outputs.TAG }}/docs/release-notes/RELEASE-NOTES-${{ steps.prepare.outputs.VERSION }}.md) for more information about the recent changes."
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/libs/*.jar
+          asset_name: ${{ steps.prepare.outputs.VERSION }}.jar
+          asset_content_type: application/java-archive

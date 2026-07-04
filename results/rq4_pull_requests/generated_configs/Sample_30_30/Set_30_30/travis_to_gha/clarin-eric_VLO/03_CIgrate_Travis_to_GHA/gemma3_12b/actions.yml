@@ -1,0 +1,62 @@
+name: Java CI
+
+on:
+  push:
+    tags: [v*]
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: 'maven'
+      
+      - name: Set MAVEN_OPTS
+        run: echo "MAVEN_OPTS='-Xmx2g'" > ~/.mavenrc
+      
+      - name: Set up Maven
+        uses: actions/setup-maven@v4
+      
+      - name: Build and test
+        run: |
+          if [ "${{ github.ref }}" ]; then
+            mvn versions:set -DnewVersion=${{ github.ref }} versions:commit
+          fi
+          mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+          mvn test -B
+          mvn clean install -DskipTests=true -Pdocker
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/target/surefire-reports/'
+          retention-days: 7
+      
+      - name: Deploy
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: vlo-distribution/target/vlo-${{ github.ref_name }}-docker.tar.gz
+          prerelease: true
+        env:
+          VLO_DEPLOY_TOKEN: ${{ secrets.VLO_DEPLOY_TOKEN }}
+      
+      - name: Send Slack notification
+        if: always()
+        uses: slackapi/slack-github-action@v4
+        with:
+          slack-token: ${{ secrets.SLACK_TOKEN }}
+          slack-message: |
+            ${{ github.repository }} - ${{ github.event.head_commit.message }}
+            ${{ github.actor }} - ${{

@@ -1,0 +1,47 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    if: "!startsWith(github.ref, 'refs/tags/')"
+    runs-on: ubuntu-latest
+    env:
+      TRAVIS_BUILD_NUMBER: ${{ github.run_number }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Before install
+      run: |
+        chmod +x gradlew
+        ./gradlew wrapper --gradle-version 4.8.1
+        echo $TRAVIS_BUILD_NUMBER > $TRAVIS_BUILD_NUMBER/src/main/resources/build.txt
+
+    - name: Script
+      run: |
+        chmod +x gradlew
+        ./gradlew :test
+
+    - name: Before deploy
+      run: |
+        git config --local user.name "PepperLola"
+        git config --local user.email "$GIT_EMAIL"
+        git tag -a $TRAVIS_BUILD_NUMBER -m "Automated beta build."
+        git push https://$GIT_TOKEN@github.com/PepperLola/playerinfo.git HEAD:master --follow-tags
+
+    - name: Deploy
+      if: github.repository == 'PepperLola/playerinfo'
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.TRAVIS_BUILD_NUMBER }}
+        files: ${{ github.workspace }}/build/libs/*
+        prerelease: true

@@ -1,0 +1,15 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - mvn package -Dmaven.javadoc.skip=true -Dsource.skip=true -Dgpg.skip=true -B -ntp
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that I've assumed the cache directory is `~/.m2/repository` as it's a common Maven cache directory. If you have a different cache directory, you can modify it accordingly.

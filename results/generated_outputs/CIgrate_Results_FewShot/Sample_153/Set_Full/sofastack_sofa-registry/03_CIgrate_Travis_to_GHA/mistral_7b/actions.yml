@@ -1,0 +1,25 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['oraclejdk8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: '8'
+      - name: Install dependencies
+        run: mvn clean install -DskipTests -B -V
+      - name: Test
+        run: mvn test
+      - name: Check format
+        run: sh ./tools/check_format.sh
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)

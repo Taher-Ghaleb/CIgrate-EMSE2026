@@ -1,0 +1,43 @@
+language: java
+jdk:
+  - openjdk11
+os:
+  - linux
+dist:
+  - bionic
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+
+jobs:
+  include:
+    - stage: "jdk11"
+      script: ./gradlew check -i
+    - stage: "example"
+      script:
+        - |
+          if [ -f ./.travis/build_condition.sh ]; then
+            source ./.travis/build_condition.sh
+            if .travis/build_condition.sh ${TRAVIS_COMMIT} ${TRAVIS_COMMIT_BEFORE} examples/example; then
+              echo "Testing"
+              cd ./examples/example/
+              ./gradlew check -i
+              cd ../..
+            else
+              echo "NOT testing"
+            fi
+          else
+            echo "NOT testing"
+          fi
+
+stages:
+  - jdk11
+  - example
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

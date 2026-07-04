@@ -1,0 +1,67 @@
+language: java
+
+jdk:
+  - 11
+  - 17
+
+env:
+  matrix:
+    - PROFILES='headless-mode'
+    - PROFILES='headless-mode,chrome'
+
+matrix:
+  allow_failures:
+    - jdk: 11
+      env: PROFILES='headless-mode,chrome'
+    - jdk: 17
+      env: PROFILES='headless-mode,chrome'
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/primefaces-install
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y google-chrome-stable
+  - google-chrome --version
+  - wget -q https://chromedriver.storage.googleapis.com/$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip
+  - unzip chromedriver_linux64.zip -d $HOME
+  - export PATH=$HOME:$PATH
+  - chromedriver --version
+  - sudo apt-get install -y firefox
+  - firefox --version
+  - wget -q https://github.com/mozilla/geckodriver/releases/latest/download/geckodriver-v0.30.0-linux64.tar.gz
+  - tar -xzf geckodriver-v0.30.0-linux64.tar.gz -C $HOME
+  - export PATH=$HOME:$PATH
+  - geckodriver --version
+
+install:
+  - if [ ! -f $HOME/primefaces-install/.installed ]; then
+      git clone --depth 1 https://github.com/primefaces/primefaces;
+      cd primefaces;
+      mvn install -DskipTests;
+      cd ..;
+      mkdir -p $HOME/primefaces-install;
+      touch $HOME/primefaces-install/.installed;
+    fi
+  - git clone --depth 1 https://github.com/primefaces-extensions/primefaces-selenium
+  - cd primefaces-selenium
+  - mvn install -DskipTests
+  - cd ..
+
+script:
+  - mvn -B -V clean install -P$PROFILES
+
+after_success:
+  - find . -type f -name '*.jar' -o -name '*.war' | xargs -I {} cp {} $TRAVIS_BUILD_DIR/
+  - find . -type f -name '*.xml' -path '*/target/surefire-reports/*' -o -path '*/target/failsafe-reports/*' | xargs -I {} cp {} $TRAVIS_BUILD_DIR/
+
+deploy:
+  provider: script
+  script: echo "Deploying artifacts..."
+  on:
+    branch: master

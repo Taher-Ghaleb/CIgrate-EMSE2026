@@ -1,0 +1,21 @@
+approach,setting,migration_direction,label,yaml_valid_pct,linter_pass_pct,n_files
+CIMig,rule-based,travis_to_gha,CIMig,5.6,5.6,251
+CIMig,rule-based,gha_to_travis,CIMig,6.0,6.0,252
+gpt-4o,zero-shot,travis_to_gha,gpt-4o (zero-shot),99.3,99.3,153
+gpt-4o,zero-shot,gha_to_travis,gpt-4o (zero-shot),94.8,94.8,153
+gemma3_12b,zero-shot,travis_to_gha,gemma3_12b (zero-shot),98.7,98.7,153
+gemma3_12b,zero-shot,gha_to_travis,gemma3_12b (zero-shot),77.8,77.8,153
+mistral_7b,zero-shot,travis_to_gha,mistral_7b (zero-shot),52.9,52.9,153
+mistral_7b,zero-shot,gha_to_travis,mistral_7b (zero-shot),60.1,60.1,153
+llama3_1_8b,zero-shot,travis_to_gha,llama3_1_8b (zero-shot),28.1,28.1,153
+llama3_1_8b,zero-shot,gha_to_travis,llama3_1_8b (zero-shot),24.2,24.2,153
+gpt-4o,few-shot,travis_to_gha,gpt-4o (few-shot),99.3,99.3,153
+gpt-4o,few-shot,gha_to_travis,gpt-4o (few-shot),96.1,96.1,153
+gemma3_12b,few-shot,travis_to_gha,gemma3_12b (few-shot),91.5,91.5,153
+gemma3_12b,few-shot,gha_to_travis,gemma3_12b (few-shot),76.5,76.5,153
+mistral_7b,few-shot,travis_to_gha,mistral_7b (few-shot),86.3,86.3,153
+mistral_7b,few-shot,gha_to_travis,mistral_7b (few-shot),69.9,69.9,153
+llama3_1_8b,few-shot,travis_to_gha,llama3_1_8b (few-shot),2.0,2.0,153
+llama3_1_8b,few-shot,gha_to_travis,llama3_1_8b (few-shot),0.7,0.7,153
+gemma3_12b,fine-tuned,travis_to_gha,Gemma 3 12B (fine-tuned),100.0,100.0,150
+gemma3_12b,fine-tuned,gha_to_travis,Gemma 3 12B (fine-tuned),97.3,97.3,150

@@ -1,0 +1,22 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['9']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Build and verify
+        run: mvn --errors clean verify site
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash) -f ./com.io7m.jproperties.core/target/site/jacoco/jacoco.xml
+# TODO: Migrate IRC notifications to a suitable GitHub Actions equivalent if available

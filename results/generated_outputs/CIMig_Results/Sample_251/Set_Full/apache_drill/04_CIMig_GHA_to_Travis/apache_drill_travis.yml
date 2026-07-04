@@ -1,0 +1,20 @@
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn install
+  sudo apt-get install -y libboost-all-dev libzookeeper-mt-dev libsasl2-dev cmake libcppunit-dev checkinstall && \\\npushd .. && \\\nif [ -f $HOME/protobuf/protobuf_3.6.1* ]; then \\\n  sudo dpkg -i $HOME/protobuf/protobuf_3.6.1*; \\\nelse \\\n  wget https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/protobuf-java-3.6.1.zip && \\\n  unzip protobuf-java-3.6.1.zip && pushd protobuf-3.6.1 && \\\n  ./configure && sudo make && sudo checkinstall -y && \\\n  if [ ! -d $HOME/protobuf ]; then \\\n    mkdir -p $HOME/protobuf; \\\n  fi && \\\n  mv protobuf_3.6.1* $HOME/protobuf/ && popd; \\\nfi && \\\nsudo ldconfig && popd; \\\n
+script
+after_success:
+  if [ \"$(git status -s | grep -c \"\")\" -gt 0 ]; then \\\n  echo \"The following changes are found in files after regenerating protobufs (output may be used as a patchto apply):\" >&2 &&\n  echo \"$(git diff --color)\" && \\\n  exit 1; \\\nelse\n  echo \"All checks are passed!\";\nfi\n
+directories: ~/.m2/repository
+stage:
+  Build
+  checkstyle
+include:
+  if: type in (pull_request, push)
+stages:
+  name: build and deploy snapshots

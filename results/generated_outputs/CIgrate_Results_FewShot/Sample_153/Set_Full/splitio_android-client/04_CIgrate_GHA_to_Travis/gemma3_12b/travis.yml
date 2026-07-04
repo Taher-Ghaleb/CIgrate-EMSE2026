@@ -1,0 +1,28 @@
+language: java
+sudo: required
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.gradle/caches'
+jdk:
+  - openjdk8
+env:
+  global:
+    - ADB_INSTALL_TIMEOUT=10
+before_install:
+  - cat /etc/hosts
+  - sudo hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+  - cat /etc/hosts
+android:
+  components:
+    - build-tools-29.0.2
+    - platforms;android-29
+  licenses:
+    - 'android-sdk-preview-license-52d11cd2'
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
+script:
+  - chmod +x project/gradlew
+  - working-directory: ./project
+  - ./gradlew test

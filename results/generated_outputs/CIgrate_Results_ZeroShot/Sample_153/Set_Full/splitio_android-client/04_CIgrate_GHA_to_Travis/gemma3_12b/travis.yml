@@ -1,0 +1,66 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+    - /^fix\/.*$/
+    - /^chore\/.*$/
+    - /^docs\/.*$/
+    - /^refactor\/.*$/
+    - /^test\/.*$/
+    - /^ci\/.*$/
+    - /^perf\/.*$/
+    - /^style\/.*$/
+    - /^tools\/.*$/
+    - /^i18n\/.*$/
+    - /^packaging\/.*$/
+    - /^build\/.*$/
+    - /^config\/.*$/
+    - /^security\/.*$/
+    - /^dep\/.*$/
+    - /^upgrade\/.*$/
+    - /^internal\/.*$/
+    - /^experimental\/.*$/
+    - /^legacy\/.*$/
+    - /^integration\/.*$/
+    - /^data\/.*$/
+    - /^api\/.*$/
+    - /^ui\/.*$/
+    - /^web\/.*$/
+    - /^mobile\/.*$/
+    - /^desktop\/.*$/
+    - /^embedded\/.*$/
+    - /^firmware\/.*$/
+    - /^kernel\/.*$/
+    - /^driver\/.*$/
+    - /^hardware\/.*$/
+    - /^network\/.*$/
+    - /^system\/.*$/
+    - /^virtualization\/.*$/
+    - /^cloud\/.*$/
+    - /^blockchain\/.*$/
+    - /^machine-learning\/.*$/
+    - /^artificial-intelligence\/.*$/
+    - /^robotics\/.*$/
+    - /^iot\/.*$/
+    - /^edge\/.*$/
+    - /^quantum\/.*$/
+    - /^vr\/.*$/
+    - /^ar\/.*$/
+    - /^xr\/.*$/
+    - /^metaverse\/.*$/
+    - /^blockchain\/.*$/
+    - /^web3\/.*$/
+    - /^nft\/.*$/
+    - /^dao\/.*$/
+    - /^defi\/.*$/

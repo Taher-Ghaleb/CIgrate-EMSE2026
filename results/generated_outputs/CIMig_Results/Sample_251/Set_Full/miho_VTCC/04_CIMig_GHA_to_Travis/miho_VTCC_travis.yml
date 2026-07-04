@@ -1,0 +1,15 @@
+env: global
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+  include:
+    os: windows
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew clean test

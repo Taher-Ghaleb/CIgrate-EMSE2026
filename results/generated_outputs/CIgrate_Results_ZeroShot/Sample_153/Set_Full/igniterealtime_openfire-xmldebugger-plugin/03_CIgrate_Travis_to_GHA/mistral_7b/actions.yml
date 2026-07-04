@@ -1,0 +1,56 @@
+name: Openfire Plugin Maven Deploy
+on:
+  push:
+    branches: [ '*' ]
+    paths:
+      - 'target/ci-tooling'
+  pull_request:
+    branches: [ '*' ]
+    paths:
+      - 'target/ci-tooling'
+
+env:
+  global:
+    GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+    MAVEN_SETTINGS: ${{ secrets.MAVEN_SETTINGS }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      docker-db:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: openfire
+          POSTGRES_PASSWORD: openfire
+          POSTGRES_DB: openfire
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies
+      - name: Checkout ci-tooling
+        uses: actions/checkout@v4
+        with:
+          path: target/ci-tooling
+      - name: Set maven settings
+        run: cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+      - name: Install and build
+        run: mvn clean install -B -DskipTests
+      - name: Deploy
+        run: mvn deploy -B --settings $HOME/.m2/settings.xml
+      - name: Cleanup
+        run: |
+          rm -rf $HOME/.m2/repository
+          rm $HOME/.m2/settings.xml
+      - name: Stop database
+        uses: docker/compose

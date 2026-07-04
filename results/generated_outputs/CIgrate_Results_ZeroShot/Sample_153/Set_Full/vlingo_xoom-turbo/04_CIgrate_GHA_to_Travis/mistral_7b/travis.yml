@@ -1,0 +1,64 @@
+language: java
+
+branches:
+  only:
+    - master
+  except:
+    - /^hotfix/
+    - /^release/
+
+deploy:
+  on:
+    tags: true
+    branches:
+      only:
+        - master
+
+services:
+  - docker
+
+before_install:
+  - run: rm -rf $HOME/.m2/repository/io/vlingo
+    chdir: $HOME
+
+install:
+  - command: |
+      cp .travis/settings.xml $HOME/.m2/settings.xml
+      mvn deploy:help versions:help help:help
+    chdir: $HOME
+
+script:
+  - mvn install -PTravisCI
+
+before_deploy:
+  - run: chmod u+x .travis/trigger_deps.sh
+    chdir: .travis
+
+deploy:
+  on:
+    success:
+      branches:
+        only:
+          - master
+      tags: true
+  script:
+    - .travis/trigger_deps.sh
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle
+    - $HOME
+
+env:
+  global:
+    - GITHUB_TOKEN: $GITHUB_TOKEN
+    - TRIGGER_TOKEN: $TRIGGER_TOKEN
+
+matrix:
+  include:
+    - java:
+        - '8'
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, while adhering to the specified output and migration rules. It includes the language, script, branches, services, caches, env, and matrix configurations. The deploy section is split into separate steps for before_deploy and deploy to maintain the same logic as in the source workflow.

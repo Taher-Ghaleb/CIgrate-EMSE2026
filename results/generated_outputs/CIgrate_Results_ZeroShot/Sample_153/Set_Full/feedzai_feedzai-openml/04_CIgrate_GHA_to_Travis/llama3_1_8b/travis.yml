@@ -1,0 +1,68 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y default-jdk
+  - apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up Maven cache"
+  - mkdir -p ~/.m2/repository
+  - mkdir -p ~/.gradle
+  - mkdir -p $HOME/.npm
+
+script:
+  - echo "Running tests"
+  - mvn test -B
+  - echo "Running PIT mutation testing"
+  - mvn pitmp:run
+
+after_success:
+  - echo "Uploading coverage to Codecov"
+  - codecov/codecov-action@v4 with:
+    token: $CODECOV_TOKEN
+    fail_ci_if_error: false
+
+deploy:
+  on:
+    tags: true
+  before_deploy:
+    - echo "Setting up JDK 8"
+    - apt-get install -y default-jdk
+    - apt-get install -y maven
+    - mkdir -p ~/.m2/repository
+    - mkdir -p ~/.gradle
+    - mkdir -p $HOME/.npm
+  deploy_script:
+    - echo "Making deploy script executable"
+    - chmod +x deploy/deploy.sh
+  on:
+    branch: master
+    tags: true
+  script:
+    - echo "Deploying"
+    -./deploy/deploy.sh
+
+matrix:
+  include:
+    - java_version: 8
+      distribution: temurin
+      cache: maven
+  allow_failures: true
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - your_email@example.com
+```
+
+Note: The above configuration is a complete Travis CI configuration YAML file. It includes all the necessary sections and properties as per the provided GitHub Actions workflow. The configuration includes the `language` property, `script` section, `before_install`, `install`, `before_script`, `after_success`, `deploy` sections, and other necessary properties. The `matrix` section is used to specify the Java version and distribution, and the `services` section is used to specify the Docker Compose service. The `notifications` section is used to specify the email notifications.

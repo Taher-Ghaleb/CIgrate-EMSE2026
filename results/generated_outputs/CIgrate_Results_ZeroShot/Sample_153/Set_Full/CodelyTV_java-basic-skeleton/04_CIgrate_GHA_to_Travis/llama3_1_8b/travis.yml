@@ -1,0 +1,52 @@
+language: java
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
+
+script:
+  - chmod +x gradlew
+  -./gradlew assemble --warning-mode all
+  -./gradlew check --warning-mode all
+
+after_success:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    -./gradlew assemble --warning-mode all
+    -./gradlew check --warning-mode all
+  skip_cleanup: true
+
+matrix:
+  include:
+    - os: linux
+      java: '11'
+    - os: osx
+      java: '11'
+
+services:
+  - docker
+
+addons:
+  apt:
+    sources:
+      - https://dl.bintray.com/adoptopenjdk/deb/
+    packages:
+      - openjdk-11-jdk-headless
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+    recipients:
+      - your_email@example.com

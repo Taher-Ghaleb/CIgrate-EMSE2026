@@ -1,0 +1,38 @@
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn -B verify -DskipTests=true
+  wget -qO- https://binaries.cockroachdb.com/cockroach-v20.1.2.linux-amd64.tgz | tar  xvz\ncd cockroach-v20.1.2.linux-amd64/ && ./cockroach start-single-node --insecure &\nsleep 10\n
+install:
+  ant
+  export-cmd
+  git clone https://github.com/h2database/h2database\ncd h2database/h2\n./build.sh jar\ncp bin/h2-2.0.201.jar ../../target/lib/h2-1.4.200.jar\ncp bin/h2-2.0.201.jar ~/.m2/repository/com/h2database/h2/1.4.200/h2-1.4.200.jar\nls -lh ../../target/lib\n
+  cd cockroach-v20.1.2.linux-amd64/ && ./cockroach sql --insecure -e \"CREATE USER sqlancer; GRANT admin to sqlancer\" && cd ..
+  ./PATH-OR-URL
+  ./configure
+  make -j
+before_script:
+  cd-cmd
+  sudo apt-get install libssl-dev libmecab2 libjson-perl mecab-ipadic-utf8\nsudo apt-get remove mysql-*\nwget -q https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-server_8.0.20-1ubuntu18.04_amd64.deb-bundle.tar\ntar -xvf mysql-server_8.0.20-1ubuntu18.04_amd64.deb-bundle.tar\nsudo dpkg -i *.deb\nsudo systemctl start mysql\n
+  r --version
+script:
+  script:
+    cd-cmd
+    mvn -B '-Dtest=!sqlancer.dbms.**' test
+after_success:
+  bash <(curl-cmd
+stage:
+  tests
+  Build
+packages: jdk-8-jdk
+services:
+  docker pull yandex/clickhouse-server:latest\ndocker run --ulimit nofile=262144:262144 --name clickhouse-server -p8123:8123 -d yandex/clickhouse-server:latest\nsleep 5\n
+  mysql
+sonarcloud:
+  organization: powsybl-ci-github
+stages:
+  name: Verify

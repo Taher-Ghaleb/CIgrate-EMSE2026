@@ -1,0 +1,19 @@
+language: java
+os:
+  - linux
+  - osx
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+
+matrix:
+  allow_failures:
+    - os: osx
+
+before_install:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew --version
+  - ./gradlew clean test

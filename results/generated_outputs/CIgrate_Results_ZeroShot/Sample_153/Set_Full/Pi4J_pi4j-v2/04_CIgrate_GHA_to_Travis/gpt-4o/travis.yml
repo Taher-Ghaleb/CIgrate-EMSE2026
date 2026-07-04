@@ -1,0 +1,27 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - master
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y gcc-arm-linux-gnueabihf
+
+install:
+  - echo "Architecture: $(uname -m)"
+  - echo "Java Home: $JAVA_HOME"
+  - java -version
+  - mvn -version
+
+script:
+  - mvn clean install -Drelease-build
+
+after_success:
+  - find . -name "*.jar" -o -name "*.war" | xargs -I {} cp {} $TRAVIS_BUILD_DIR/
+  # TODO: Implement artifact upload equivalent to GitHub Actions' upload-artifact

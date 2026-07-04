@@ -1,0 +1,19 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '~/.sonar/cache'
+env:
+  global:
+    - SONAR_TOKEN: $SONAR_TOKEN
+    - SONAR_ORGANIZATION: utarwyn-github
+branches:
+  only:
+    - main
+  except:
+    - /^pull\/.*$/
+jobs:
+  build:
+    script:
+      - if [ "${github.event_name}" != "pull_request" ]; then mvn clean verify sonar:sonar -Pcoverage -Dsonar.organization=utarwyn-github; else mvn clean install; fi

@@ -1,0 +1,49 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  ANDROID_TARGET: android-30
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platforms;android-30"
+          sdkmanager "tools"
+          sdkmanager "platform-tools"
+          sdkmanager "build-tools;30.0.3"
+          sdkmanager "extra-android-m2repository"
+          sdkmanager "extra-google-m2repository"
+          sdkmanager "extra-android-support"
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Run tests and coverage
+        run: |
+         ./gradlew clean build
+         ./gradlew testDebugUnitTestCoverage coveralls
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-

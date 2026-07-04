@@ -1,0 +1,58 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  GRGIT_USER: ${{ secrets.GRGIT_USER }}
+  OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+  OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['11', 'ea']
+        os: ['linux', 'osx']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Gradle and wrapper
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper/dists
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradle-wrapper.jar') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Display Gradle, Groovy, JVM and other versions
+        run:./gradlew --version
+      - name: Run tests and coverage
+        run:./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+      - name: Publish coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: repo = junit-team/junit5 AND branch = master AND type = push
+    steps:
+      - name: Publish snapshot artifacts
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+        run:./gradlew --scan publish -x check
+      - name: Update snapshot documentation
+        env:
+          GRGIT_USER: ${{ secrets.GRGIT_USER }}
+        run:./src/publishDocumentationSnapshotOnlyIfNecessary.sh
+```
+
+Note that I've used the `actions/cache` action to cache the Gradle and wrapper directories, and the `actions/checkout` action to checkout the code. I've also used the `matrix` strategy to run the build on both Linux and OSX, and the `if` condition

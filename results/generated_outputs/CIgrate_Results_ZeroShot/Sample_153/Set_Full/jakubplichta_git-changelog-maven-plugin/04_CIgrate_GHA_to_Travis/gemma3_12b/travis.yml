@@ -1,0 +1,48 @@
+language: java
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+  except:
+    - tags
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - docker
+
+before_install:
+  - "export JAVA_HOME=$(/usr/libexec/java_home)"
+
+install:
+  - mvn install -DskipTests=true
+
+before_script:
+  - git clone https://github.com/travis-ci/travis-maven-plugins.git
+  - git clone https://github.com/travis-ci/travis-fork-puller.git
+
+script:
+  - mvn verify javadoc:javadoc -Pcoverage
+
+after_success:
+  - |
+    if [ "$TRAVIS_BRANCH" = "master" ]; then
+      curl -L https://coveralls.io/hooks/github.com/YOUR_GITHUB_USERNAME/YOUR_GITHUB_REPOSITORY?job_id=$TRAVIS_JOB_ID&repo_token=$GITHUB_TOKEN
+    fi
+  - |
+    if [ "$TRAVIS_BRANCH" = "master" ]; then
+      curl -L https://codecov.io/bash/v2 -d target/site/jacoco/jacoco.xml
+    fi
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on_success: change
+    on_failure: always

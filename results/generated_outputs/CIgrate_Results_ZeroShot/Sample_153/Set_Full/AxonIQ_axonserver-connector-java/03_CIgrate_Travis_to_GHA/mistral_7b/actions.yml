@@ -1,0 +1,63 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      docker
+
+    strategy:
+      matrix:
+        jdk: [openjdk8, openjdk11]
+
+    env:
+      M2_HOME: ${{ secrets.M2_HOME }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2
+          restore-keys: |
+            ${{ runner.os }}-m2
+
+      - name: Install Maven
+        run: |
+          export M2_HOME=${{ env.M2_HOME }}
+          export PATH=${{ env.M2_HOME }}/bin:$PATH
+
+      - name: Build and Test
+        run: mvn -version && mvn -B -U -Possrh clean verify
+
+    after_success:
+      - name: Publish cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2
+          restore-keys: |
+            ${{ runner.os }}-m2
+
+    after_failure:
+      - name: Notify on failure
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.repos.createAlert({
+              title: 'Build failure',
+              body: 'The build has failed. Please investigate.',
+              expires_at: new Date(Date.now() + (60 * 60 * 24 * 7)).toISOString(),
+              state: 'critical',

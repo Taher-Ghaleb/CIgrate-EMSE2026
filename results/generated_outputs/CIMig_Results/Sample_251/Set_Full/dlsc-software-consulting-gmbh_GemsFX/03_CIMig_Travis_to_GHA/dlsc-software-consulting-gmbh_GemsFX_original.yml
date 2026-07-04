@@ -1,0 +1,46 @@
+matrix:
+  language: java
+  java
+  os:
+    ubuntu-latest
+    windows-latest
+
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      env:
+        ci: TRUE
+      with:
+        java-version: 1.8
+      with:
+        java-version: ${{ matrix.java }}
+        draft: TRUE
+        clean: TRUE
+        prerelease: TRUE
+        repo_token: ${{ secrets.github_token }}
+        server-id: sonatype-releases
+      with: key
+    - name: placeholder_Name
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run:
+        mvn package -q
+        if [[ \"${TRAVIS_OS_NAME}\" == linux ]]; then export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start; fi
+

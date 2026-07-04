@@ -1,0 +1,18 @@
+language: java
+branches:
+  except:
+    - release/**
+pull_request:
+  branches_ignore:
+    - release/**
+sudo: false
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+  key: '${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}'
+  restore_keys:
+    - '${{ runner.os }}-m2-'
+
+script:
+  - mvn -B -nsu verify

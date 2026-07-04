@@ -1,0 +1,20 @@
+cache:
+  directories: ~/.gradle
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    echo-cmd
+    echo-cmd
+after_success:
+  ./gradlew build
+stage: ☕ 11
+stages:
+  build
+  test

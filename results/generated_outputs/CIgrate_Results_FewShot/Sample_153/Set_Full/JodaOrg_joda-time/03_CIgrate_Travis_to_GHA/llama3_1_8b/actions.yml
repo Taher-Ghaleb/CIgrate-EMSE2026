@@ -1,0 +1,51 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Clean cache
+        run: rm -rf $HOME/.m2/repository/org/joda/time
+      - name: Install Maven
+        run: mvn --version
+      - name: Build and site
+        run: mvn install site -e -B
+      - name: Deploy website
+        if: $TRAVIS_TAG =~ ^website.*$ && ${{ matrix.jdk }} == '8'
+        run: |
+          chmod +x./.github/website.sh
+         ./.github/website.sh
+      - name: Deploy website
+        if: $TRAVIS_TAG =~ ^v.*$ && $TRAVIS_PULL_REQUEST == 'false' && ${{ matrix.jdk }} == '8'
+        run: |
+          chmod +x./.github/website.sh
+         ./.github/website.sh
+      - name: Set env variable
+        env:
+          secure: "********************"
+```
+Note that I've used the `if` keyword to conditionally run the deployment steps based on the `TRAVIS_TAG` and `TRAVIS_PULL_REQUEST` environment variables. I've also used the `matrix.jdk` syntax to access the value of the `jdk` matrix variable.

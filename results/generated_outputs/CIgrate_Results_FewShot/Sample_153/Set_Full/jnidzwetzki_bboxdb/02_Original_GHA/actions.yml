@@ -1,0 +1,52 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      zookeeper:
+        image: zookeeper:3.9
+        ports:
+          - 2181:2181
+        options: >-
+          --health-cmd "echo stat | nc localhost 2181"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: 'maven'
+
+      - name: Add Coverity certificate
+        run: |
+          echo -n | openssl s_client -connect scan.coverity.com:443 | \
+          sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | \
+          sudo tee -a /etc/ssl/certs/ca-certificates.crt
+
+      - name: Configure BBoxDB for ZooKeeper
+        run: |
+          sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" conf/bboxdb.yaml
+          echo "#####################################################################"
+          cat conf/bboxdb.yaml
+          echo "#####################################################################"
+          mkdir -p /tmp/bboxdb/data
+
+      - name: Build and test with Maven
+        run: mvn test
+
+      - name: Upload coverage to Codecov
+        if: success()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false

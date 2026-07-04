@@ -1,0 +1,36 @@
+name: Java Build
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Install Gradle
+        uses: gradle/gradle@v1
+
+      - name: Build
+        run: ./gradlew assemble
+
+    cache:
+      key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+      restore-keys: |
+        ${{ runner.os }}-gradle-
+
+    # TODO: Implement deploy steps if required

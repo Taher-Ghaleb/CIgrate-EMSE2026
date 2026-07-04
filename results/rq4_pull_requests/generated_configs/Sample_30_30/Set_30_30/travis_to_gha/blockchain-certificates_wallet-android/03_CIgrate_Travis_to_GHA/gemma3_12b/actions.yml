@@ -1,0 +1,43 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  TARGET_VERSION: 35
+  ANDROID_BUILD_TOOLS_VERSION: 35.0.0
+  ANDROID_HOME: $HOME/android-sdk
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android components
+        run: |
+          sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION"
+          sdkmanager "platforms;android-$TARGET_VERSION"
+          sdkmanager "system-images;android-$TARGET_VERSION;google_apis;x86_64"
+          sdkmanager "extra-android-support"
+          sdkmanager "extra-google-m2repository"
+          sdkmanager "extra-android-m2repository"
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Run tests
+        run: |
+          pushd LearningMachine
+          ./gradlew clean testDevDebug -PdisablePreDex -PdevBuild --console=plain

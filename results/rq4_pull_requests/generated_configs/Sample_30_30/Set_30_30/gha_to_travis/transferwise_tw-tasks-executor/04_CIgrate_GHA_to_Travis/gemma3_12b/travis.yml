@@ -1,0 +1,82 @@
+language: java
+
+services:
+  - docker
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.m2/repository
+
+before_install:
+  - apt-get update && apt-get install -y git unzip
+  - git config --global user.email "${GIT_EMAIL}"
+  - git config --global user.name "${GIT_NAME}"
+
+install:
+  - ./gradlew assemble --console=plain --info --stacktrace
+
+script:
+  - ./gradlew -Dspring.profiles.include=continuous-integration check -x test --console=plain --info --stacktrace -Dorg.gradle.parallel=true
+  - ./gradlew -Dspring.profiles.include=continuous-integration test --console=plain --info --stacktrace -Dorg.gradle.parallel=false
+  - ./gradlew publishToMavenLocal --console=plain --info --stacktrace
+
+after_success:
+  - tar -zcvf all-test-reports-${{ SPRING_BOOT_VERSION }}.tar.gz **/build/reports
+  - bash <(curl -s https://code.os-alt.org/travis-helper)
+
+after_failure:
+  - bash <(curl -s https://code.os-alt.  org/travis-helper)
+
+deploy:
+  provider: script
+  script: echo "Deploying..."
+  on:
+    tags: true
+
+env:
+  global:
+    - SPRING_BOOT_VERSION=3.4.6
+    - GRADLE_OPTS="-Djava.security.egd=file:/dev/urandom -Dorg.gradle.parallel=true"
+    - RUNS_IN_CI=true
+    - GIT_NAME="Travis CI"
+    - GIT_EMAIL="travis-j@os-alt.org"
+    - MARIADB_TCP_3306=3306
+    - MARIADB_HOST=mysql1
+    - TW_TASKS_EXECUTOR_KAFKA_TCP_9092=9092
+    - TW_TASKS_EXECUTOR_KAFKA_HOST=kafka1
+    - ZOOKEEPER_TCP_2181=2181
+    - ZOOKEEPER_HOST=zk-service1
+    - POSTGRES_HOST=postgres1
+    - POSTGRES_TCP_5432=5432
+
+matrix:
+  allow_failures:
+    - stage: build
+      condition: ${SPRING_BOOT_VERSION} != 3.5.0
+  include:
+    - stage: build
+      SPRING_BOOT_VERSION: 3.5.0
+      container:
+        image: azul/zulu-openjdk:17
+    - stage: build
+      SPRING_BOOT_VERSION: 3.4.6
+      container:
+        image: azul/zulu-openjdk:17
+
+before_deploy:
+  - git config --global user.email "$GIT_EMAIL"
+  - git config --global user.name "$GIT_NAME"
+  - git tag -a master "v1.0.0" -m "Release 1.0.0"
+    # DO NOT repeat this section, MUST NOT be duplicated.
+    # - git push https://$GIT_TOKEN@github.com/$GIT_REPO.git HEAD:master --tags
+    # - git push https://$GIT_TOKEN@github.com/$GIT_REPO.git HEAD:master
+    # - git push https://$GIT_TOKEN@github.com/$GIT_REPO.git HEAD:master --tags
+    # - git push https://$GIT_TOKEN@github.com/$GIT_REPO.git HEAD:master --tags
+    # - git push https://$GIT_TOKEN@github.com/$GIT_REPO.git HEAD:master --tags
+    # - git push https://$GIT_TOKEN@github.com/$GIT_REPO.git HEAD:

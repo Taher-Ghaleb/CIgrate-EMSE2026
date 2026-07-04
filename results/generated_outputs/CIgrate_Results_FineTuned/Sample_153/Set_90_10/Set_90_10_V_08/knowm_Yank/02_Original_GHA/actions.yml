@@ -1,0 +1,24 @@
+name: Java CI
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Before install
+      run: git clone -b travis "$(git config --get remote.origin.url)" target/travis
+
+    - name: Verify (PR)
+      if: github.event_name == 'pull_request'
+      run: mvn clean verify --settings target/travis/settings.xml
+
+    - name: Deploy (push)
+      if: github.event_name != 'pull_request'
+      run: mvn clean deploy --settings target/travis/settings.xml

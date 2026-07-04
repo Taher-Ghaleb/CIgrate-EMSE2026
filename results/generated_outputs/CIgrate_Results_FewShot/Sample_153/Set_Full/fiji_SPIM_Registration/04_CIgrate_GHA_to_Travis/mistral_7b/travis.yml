@@ -1,0 +1,27 @@
+language: bash
+jdk:
+  - openjdk8
+
+env:
+  matrix:
+    - SECRET_1=$SECRET_1
+    - SECRET_2=$SECRET_2
+    - SECRET_3=$SECRET_3
+    - SECRET_4=$SECRET_4
+
+script:
+  - chmod +x .travis/build.sh
+  - ./.travis/build.sh
+
+before_install:
+  - actions/checkout@v4
+
+cache:
+  directories:
+    - '.travis/maven'
+
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'

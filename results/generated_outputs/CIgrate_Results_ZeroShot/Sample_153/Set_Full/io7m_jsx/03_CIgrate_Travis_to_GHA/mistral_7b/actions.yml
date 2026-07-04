@@ -1,0 +1,64 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches: [master, develop]
+    tags: true
+  pull_request:
+    branches: [master, develop]
+
+env:
+  JAVA_VERSION: oraclejdk9
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies
+
+      - name: Install Maven
+        uses: actions/setup-node@v4
+        with:
+          version: 3.6.0
+
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies
+
+      - name: Install Maven
+        run: npm ci
+
+      - name: Build and Test
+        run: |
+          mvn --errors clean verify site
+          bash <(curl -s https://codecov.io/bash) -f ./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: jacoco-report
+          path: ./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml
+
+      - name: Publish

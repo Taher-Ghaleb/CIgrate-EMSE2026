@@ -1,0 +1,28 @@
+language: java
+jdk:
+  - openjdk11
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f com.io7m.jmurmur.core/target/site/jacoco/jacoco.xml || echo "Codecov did not collect coverage reports"
+
+after_script:
+  - |
+    if [ "$TRAVIS_TEST_RESULT" != "0" ]; then
+      MESSAGE="Build failed: $TRAVIS_REPO_SLUG ($TRAVIS_COMMIT)"
+    else
+      MESSAGE="Build succeeded: $TRAVIS_REPO_SLUG ($TRAVIS_COMMIT)"
+    fi
+    echo "Sending IRC notification"
+    echo "NICK github-actions-jmurmur" > irc_commands.txt
+    echo "USER github-actions-jmurmur 0 * :github-actions-jmurmur" >> irc_commands.txt
+    echo "JOIN #io7m" >> irc_commands.txt
+    echo "PRIVMSG #io7m :$MESSAGE" >> irc_commands.txt
+    echo "QUIT" >> irc_commands.txt
+    nc -C irc.libera.chat 6697 < irc_commands.txt
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

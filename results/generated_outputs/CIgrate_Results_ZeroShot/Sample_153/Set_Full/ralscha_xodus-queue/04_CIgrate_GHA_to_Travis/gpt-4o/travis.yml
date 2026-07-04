@@ -1,0 +1,34 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - SONATYPE_USERNAME=ralscha23
+    - SONATYPE_PASSWORD=$SONATYPE_PASSWORD
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+services:
+  - docker
+
+before_install:
+  - git clone https://github.com/$TRAVIS_REPO_SLUG.git
+  - cd $TRAVIS_REPO_SLUG
+
+install:
+  - mvn install -DskipTests=true
+
+script:
+  - mvn install
+
+after_success:
+  - python addsettings.py
+  - mvn clean deploy -DskipTests=true --settings ~/.m2/mySettings.xml
+
+branches:
+  only:
+    - main
+    - develop

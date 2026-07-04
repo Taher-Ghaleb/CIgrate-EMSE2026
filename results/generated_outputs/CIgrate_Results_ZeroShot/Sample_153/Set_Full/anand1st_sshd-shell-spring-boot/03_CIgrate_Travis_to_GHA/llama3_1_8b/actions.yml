@@ -1,0 +1,56 @@
+name: Java Maven Build and Coverage Report
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+      - 'feature/*'
+
+jobs:
+  build-and-report:
+    runs-on: ubuntu-latest
+    services:
+      sshd:
+        image: maven:3.8.6-jdk-11-slim
+        ports:
+          - 2222:22
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${runner.os}-maven-dependencies-
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+          cd sshd-shell-spring-boot-starter
+          mvn dependency:resolve
+      - name: Build and report
+        run: |
+          cd sshd-shell-spring-boot-starter
+          mvn jacoco:report coveralls:report
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${runner.os}-maven-dependencies-
+      - name: SSH login
+        run: |
+          ssh -p 2222 -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "PasswordAuthentication=no" -o "PubkeyAuthentication=yes" -o "AutoLogin=yes" -o "ControlMaster=no" -o "ControlPersist=no" -o "ServerAliveInterval=60" -o "ServerAliveCountMax=3" -o "TCPKeepAlive=yes" -o "ForwardAgent=yes" -o "ForwardX11=no" -o "ForwardX11Socket=no" -o "ForwardX11Timeout=20" -o

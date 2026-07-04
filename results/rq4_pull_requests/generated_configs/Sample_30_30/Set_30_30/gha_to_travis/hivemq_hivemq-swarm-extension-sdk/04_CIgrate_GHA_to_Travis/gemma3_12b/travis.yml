@@ -1,0 +1,72 @@
+language: java
+jdk:
+  - openjdk11
+install: true
+script:
+  - ./gradlew check
+  - ./gradlew publishToMavenCentral
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+        - secure: "********************"
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.m2/repository
+before_deploy:
+  - git config --local user.name "Travis CI"
+  - git config --local user.email "builds@travis-ci.com"
+deploy:
+  provider: script
+  script: ./gradlew publishToMavenCentral
+  on:
+    tags: true
+model
+language: java
+jdk:
+  - openjdk11
+install: true
+script:
+  - ./gradlew check
+  - ./gradlew publishToMavenCentral
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.m2/repository
+before_deploy:
+  - git config --local user.name "Travis CI"
+  - git config --local user.email "builds@travis-ci.com"
+deploy:
+  provider: script
+  script: ./gradlew publishToMavenCentral
+  on:
+    tags: true
+www
+model
+language: java
+jdk:
+  - openjdk11
+install: true
+script:
+  - ./gradlew check
+  - ./gradlew publishToMavenCentral
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+    - secure:

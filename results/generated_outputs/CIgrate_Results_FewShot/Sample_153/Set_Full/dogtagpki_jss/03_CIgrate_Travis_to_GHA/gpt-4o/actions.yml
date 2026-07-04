@@ -1,0 +1,35 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        fedora: [27, 28]
+    services:
+      docker:
+        image: docker:latest
+        options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pull Fedora image
+        run: docker pull registry.fedoraproject.org/fedora:${{ matrix.fedora }}
+      - name: Run Fedora container
+        run: |
+          docker run \
+            --name=container \
+            --detach \
+            -i \
+            -v ${{ github.workspace }}:/root/jss \
+            registry.fedoraproject.org/fedora:${{ matrix.fedora }}
+      - name: Install dependencies
+        run: |
+          docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+          docker exec container dnf copr -y enable @pki/10.6
+          docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+      - name: Build RPM
+        run: docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+      - name: Install RPM
+        run: docker exec container rpm -Uvh /root/build/jss/RPMS/*

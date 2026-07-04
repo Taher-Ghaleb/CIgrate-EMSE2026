@@ -1,0 +1,60 @@
+language: java
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+env:
+  global:
+    - SONATYPE_NEXUS_USERNAME=$SONATYPE_NEXUS_USERNAME
+    - SONATYPE_NEXUS_PASSWORD=$SONATYPE_NEXUS_PASSWORD
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+services:
+  - docker
+
+matrix:
+  include:
+    - jdk: openjdk8
+      env: TEST_SUITE=test_jdk8
+    - jdk: openjdk11
+      env: TEST_SUITE=test_jdk11
+    - jdk: openjdk8
+      env: TEST_SUITE=apollo_link_tests
+  allow_failures:
+    - env: TEST_SUITE=test_jdk11
+
+branches:
+  only:
+    - master
+    - /\d+\.\d+/
+
+before_install:
+  - if [ "$TEST_SUITE" = "apollo_link_tests" ]; then nvm install lts/*; fi
+
+install:
+  - mvn -q clean install -DskipTests=true
+
+before_script:
+  - if [ "$TEST_SUITE" = "apollo_link_tests" ]; then cd vertx-web-graphql; mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer -Dexec.classpathScope=test > ${HOME}/ApolloTestsServer.log 2>&1 & echo $! > ${HOME}/ApolloTestsServer.pid; ( tail -f ${HOME}/ApolloTestsServer.log & ) | grep -q "Apollo tests server started"; fi
+
+script:
+  - if [ "$TEST_SUITE" = "test_jdk8" ] || [ "$TEST_SUITE" = "test_jdk11" ]; then mvn -q clean verify -B; fi
+  - if [ "$TEST_SUITE" = "apollo_link_tests" ]; then cd vertx-web-graphql/tests/apollo; npm install; npm run test; fi
+
+after_failure:
+  - if [ "$TEST_SUITE" = "apollo_link_tests" ]; then cat ${HOME}/ApolloTestsServer.log; fi
+
+after_script:
+  - if [ "$TEST_SUITE" = "apollo_link_tests" ]; then cat ${HOME}/ApolloTestsServer.pid | xargs kill -9 || true; fi
+  - rm -rf $HOME/.m2/repository/io/vertx/
+
+deploy:
+  provider: script
+  script: bash .travis.deploy.artifacts.sh
+  on:
+    all_branches: true
+    condition: $SONATYPE_NEXUS_USERNAME != "" && $TEST_SUITE = "test_jdk8"

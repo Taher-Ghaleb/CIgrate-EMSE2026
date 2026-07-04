@@ -1,0 +1,40 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    - JAVA_11_HOME: ${{ runner.os == 'ubuntu' ? 'java-11' : 'java-11-openjdk' }}
+    - JAVA_8_HOME: ${{ runner.os == 'ubuntu' ? 'java-8' : 'openjdk8' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [${{ env.JAVA_11_HOME }, ${{ env.JAVA_8_HOME }}]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ matrix.jdk }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Remove specific artifact
+        run: rm -rf ~/.m2/repository/org/glassfish/javax.el/3.0.1-b08
+      - name: Build and test
+        run: |
+          travis_wait 30 ./mvnw --batch-mode --no-transfer-progress clean install -DskipTests=false -DskipIntegrationTests=false -Dcheckstyle.skip=false -Drat.skip=false -Dmaven.javadoc.skip=true
+      - name: Upload coverage to Codecov
+        if: ${{ github.event_name != 'pull_request' }}
+        run: bash <(curl -s https://codecov.io/bash)
+      - name: Notify on failure
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "build failed!"

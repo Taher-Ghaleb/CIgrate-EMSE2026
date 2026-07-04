@@ -1,0 +1,13 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies..."
+  - apt-get update && apt-get install -y openjdk-8-jdk-headless
+  - apt-get install -y android-sdk-platform-tools
+  - apt-get install -y android-sdk-build-tools
+
+install:
+  - echo "Installing Gradle..."
+  - curl -sL https://services.gradle.org/distributions/gradle-7.4.1-bin.zip -o gradle.zip
+  - unzip gradle.zip
+  - export PATH=$PATH:/home/travis/.gradle/wrapper/dists/gradle-7.4.1-bin/8y6qy5w6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p6p

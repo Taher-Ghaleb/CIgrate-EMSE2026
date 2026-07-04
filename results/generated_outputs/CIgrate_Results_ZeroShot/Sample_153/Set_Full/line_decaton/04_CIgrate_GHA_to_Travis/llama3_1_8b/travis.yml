@@ -1,0 +1,79 @@
+language: java
+
+before_install:
+  - echo "Setting up environment"
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - echo "Installing Gradle"
+  - curl -s https://get.sdkman.io | sh
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install gradle 7.4
+
+script:
+  - echo "Building and running integration tests"
+  -./gradlew build integrationTest
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: implement deployment script"
+
+deploy:
+  provider: script
+  on:
+    branch: main
+    tags: true
+  script:
+    - echo "Deploying to production"
+    - echo "TODO: implement deployment script"
+
+notifications:
+  email:
+    on:
+      push:
+        branches:
+          only:
+            - main
+      release:
+        branches:
+          names:
+            - main
+    recipients:
+      - user@example.com
+
+matrix:
+  include:
+    - jdk: 8
+    - jdk: 11
+  allow_failures:
+    - jdk: 8
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - docker
+
+addons:
+  apt:
+    sources:
+      - "ppa:deadsnakes/ppa"
+
+branches:
+  only:
+    - main
+  except:
+    - dev
+
+before_script:
+  - echo "Setting up environment"
+  - apt-get update
+  - apt-get install -y default-jdk
+
+after_failure:
+  - echo "Deployment failed"
+  - echo "TODO: implement error handling script"

@@ -1,0 +1,26 @@
+
+language: java
+jdk:
+  - openjdk11
+os:
+  - linux
+arch: 
+  - arm64
+dist: 
+  - bionic
+
+branches:
+  only:
+  - master
+
+install:
+  - export PROJECT_DIR=$PWD
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq --yes tree git build-essential file curl wget maven gcc
+  - sudo apt-get --force-yes --yes install gcc-arm-linux-gnueabihf
+  - cd $HOME
+  - cd $PROJECT_DIR
+
+script:
+  - export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")
+  - mvn clean install -Drelease-build

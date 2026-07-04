@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches:
+      except:
+        - /^r\d.*$/
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os:
+          - linux
+          - macos
+        jdk:
+          - openjdk11
+          - openjdk-ea
+    runs-on: ${{ matrix.os == 'linux' ? 'ubuntu-latest' : 'macos-latest' }}
+    env:
+      ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.ORG_GRADLE_PROJECT_ossrhUsername }}
+      ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.ORG_GRADLE_PROJECT_ossrhPassword }}
+      GRGIT_USER: ${{ secrets.GRGIT_USER }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Display Gradle Version
+        run: ./gradlew --version
+      - name: Build
+        run: ./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+      - name: Coverage
+        if: matrix.jdk == 'openjdk-ea'
+        run: ./gradlew --scan --stacktrace --warning-mode=all -PenableJaCoCo build jacocoRootReport
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
+      - name: Publish snapshot artifacts
+        if: github.repository == 'junit-team/junit5' && github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: ./gradlew --scan publish -x check
+      - name: Update snapshot documentation
+        if: matrix.jdk == 'openjdk

@@ -1,0 +1,48 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  COVERITY_CERT: ${{ secrets.COVERITY_CERT }}
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2
+          restore-keys: |
+            ${{ runner.os }}-m2
+
+      - name: Download and configure Zookeeper
+        run: |
+          echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
+          mkdir /tmp/zookeeper
+          export ZK="apache-zookeeper-3.7.0-bin"
+          wget https://archive.apache.org/dist/zookeeper/zookeeper-3.7.0/$ZK.tar.gz
+          tar xzf $ZK.tar.gz -C /tmp/zookeeper
+          cp /tmp/zookeeper/$ZK/conf/zoo_sample.cfg /tmp/zookeeper/$ZK/conf/zoo.cfg
+          /tmp/zookeeper/$ZK/bin/zkServer.sh start
+          cat /tmp/zookeeper/$ZK/logs/*
+          sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" conf/bboxdb.yaml

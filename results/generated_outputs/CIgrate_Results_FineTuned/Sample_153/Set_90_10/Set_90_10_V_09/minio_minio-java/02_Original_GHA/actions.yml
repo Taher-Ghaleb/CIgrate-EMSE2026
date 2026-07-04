@@ -1,0 +1,25 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java-version: [8, 8, 9]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: ${{ matrix.java-version }}
+
+    - name: Check
+      run: ./gradlew check
+
+    - name: Run functional tests
+      run: ./gradlew runFunctionalTest

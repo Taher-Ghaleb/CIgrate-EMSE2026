@@ -1,0 +1,17 @@
+env: global
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  echo ::set-output name=RELEASE_TAG::${GITHUB_REF#refs/tags/}
+script:
+  script:
+    bash -v scripts/PATH-OR-URL
+    ./gradlew clean build javadoc --stacktrace --warning-mode all --no-daemon
+apt:
+  packages: jdk-8-jdk

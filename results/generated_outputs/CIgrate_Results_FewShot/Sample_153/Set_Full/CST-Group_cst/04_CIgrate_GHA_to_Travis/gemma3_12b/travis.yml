@@ -1,0 +1,27 @@
+language: java
+sudo: required
+env:
+  CC_TEST_REPORTER_ID: 430594ee361ff2e93ebf0a942f639b8092c6f17b7c5098f9c75abc404311dfc7
+jdk:
+  - openjdk8
+  - oraclejdk9
+cache:
+  directories:
+    - '$HOME/.gradle'
+script:
+  - chmod +x gradlew
+  - ./gradlew clean build jacocoTestReport
+  - |
+    if [ "${TRAVIS_BRANCH}" == "main" ]; then
+      curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+      chmod +x ./cc-test-reporter
+      ./cc-test-reporter before-build
+      JACOCO_SOURCE_PATH=src/main/java ./cc-test-reporter format-coverage ./build/reports/jacoco/test/jacocoTestReport.xml --input-type jacoco
+      ./cc-test-reporter upload-coverage -r $CC_TEST_REPORTER_ID
+    fi
+  - |
+    if [ "${TRAVIS_BRANCH}" == "main" ]; then
+      curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+        -H 'Content-Type: application/json' \
+        -d "{\"text\":\"Build ${{ job.status }}: ${{ github.repository }}@${{ github.ref }} (JDK ${{ matrix.jdk }}) - Commit: ${COMMIT_MESSAGE}\"}"
+    fi

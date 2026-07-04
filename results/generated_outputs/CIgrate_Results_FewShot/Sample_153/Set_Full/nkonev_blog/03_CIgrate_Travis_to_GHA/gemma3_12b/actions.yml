@@ -1,0 +1,49 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: ${{ env.JAVA_HOME }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      - docker
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '13'
+      - name: Cache Maven and Node
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2
+            frontend/node
+            frontend/node_modules
+          key: ${{ runner.os }}-m2-node-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-node-
+      - name: Install dependencies
+        run: |
+          sudo apt update && sudo apt install -y chromium-browser
+      - name: Decrypt SSH key
+        run: |
+          openssl aes-256-cbc -K ${{ secrets.ENCRYPTED_ID_RSA_KEY }} -iv ${{ secrets.ENCRYPTED_ID_RSA_IV }} -in ./.travis/id_rsa.enc -out ~/.ssh/id_rsa -d
+          chmod 600 ~/.ssh/id_rsa
+      - name: Run tests
+        run: |
+          DATE_VERSION=`date +%Y%m%d.%H.%M`
+          rm ~/.m2/settings.xml
+          ./mvnw -U -q -Drevision=$DATE_VERSION -P frontend -P jacoco -P docker -P webdriver-chrome -P webdriver-firefox -Dcustom.selenium.headless=true clean install
+          (cd docker; docker-compose up -d)
+          ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+          (cd docker; docker-compose down)
+          rm -rf ~/.m2/repository/com/github/nkonev/blog
+          rm -rf $TRAVIS_BUILD_DIR/frontend/node_modules/.cache
+      - name: Upload coverage to Codecov
+        run: bash <(

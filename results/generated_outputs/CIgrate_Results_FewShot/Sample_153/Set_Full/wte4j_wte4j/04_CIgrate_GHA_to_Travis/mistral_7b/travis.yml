@@ -1,0 +1,27 @@
+language: java
+jdk:
+  - zulu7
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+script:
+  - mvn test -B
+
+deploy:
+  on:
+    branches:
+      - master
+    tags: true
+  if: $TRAVIS_BRANCH != 'master' && !startsWith(github.ref, 'refs/tags/') && github.event_name == 'push'
+  env:
+    OSSRH_USER: ${{ env.OSSRH_USER }}
+    OSSRH_PASS: ${{ env.OSSRH_PASS }}
+  script:
+    - cat > ~/.m2/settings.xml <<EOF
+      <settings><servers><server><id>ossrh</id><username>${OSSRH_USER}</username><password>${OSSRH_PASS}</password></server></servers></settings>
+      EOF
+    - mvn deploy

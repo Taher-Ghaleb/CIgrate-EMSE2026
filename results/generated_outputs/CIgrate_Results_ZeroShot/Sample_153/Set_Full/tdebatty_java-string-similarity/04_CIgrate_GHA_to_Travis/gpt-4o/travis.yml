@@ -1,0 +1,27 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.m2
+
+before_install:
+  - git checkout $TRAVIS_BRANCH
+
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
+
+script:
+  - mvn test
+
+after_success:
+  - mvn clean cobertura:cobertura coveralls:report
+
+branches:
+  only:
+    - main
+    - develop

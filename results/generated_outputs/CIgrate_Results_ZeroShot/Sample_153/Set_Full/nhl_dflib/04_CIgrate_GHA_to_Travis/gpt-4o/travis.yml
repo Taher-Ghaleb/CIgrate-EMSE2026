@@ -1,0 +1,46 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  global:
+    - MAVEN_USERNAME=$OSSRH_USERNAME
+    - MAVEN_PASSWORD=$OSSRH_PASSWORD
+    - MAVEN_GPG_PASSPHRASE=$GPG_PASSPHRASE
+
+matrix:
+  include:
+    - env: DB_PROFILE=derby
+    - env: DB_PROFILE=mysql
+    - env: DB_PROFILE=postgresql
+  allow_failures:
+    - env: DB_PROFILE=derby
+    - env: DB_PROFILE=mysql
+    - env: DB_PROFILE=postgresql
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+branches:
+  only:
+    - master
+
+before_install:
+  - echo "Setting up JDK 11"
+  - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
+  - chmod +x install-jdk.sh
+  - ./install-jdk.sh --feature 11 --license GPL --distribution temurin
+
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - mvn verify -P$DB_PROFILE
+
+deploy:
+  provider: script
+  script: mvn clean source:jar javadoc:javadoc deploy -DskipTests
+  on:
+    branch: master
+    condition: $TRAVIS_REPO_SLUG = nhl/dflib

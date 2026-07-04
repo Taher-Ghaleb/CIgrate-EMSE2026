@@ -1,0 +1,18 @@
+cache:
+  directories: ~/.maven-
+language:
+  components:
+    tools
+    platform-tools
+    extra-android-maven-repository
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    tools
+    extra-android-maven-repository
+branches: main
+sudo: FALSE
+dist: trusty

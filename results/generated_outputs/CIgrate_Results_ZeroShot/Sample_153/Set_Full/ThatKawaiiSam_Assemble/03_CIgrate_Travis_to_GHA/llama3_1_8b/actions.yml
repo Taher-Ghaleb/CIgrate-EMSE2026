@@ -1,0 +1,34 @@
+name: Java Release Deployment
+
+on:
+  push:
+    tags: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install dependencies
+        run: |
+          mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+      - name: Deploy
+        uses: actions/deploy-java-release@v1
+          api-key: ${{ secrets.TRAVIS_GITHUB_RELEASE_KEY }}
+          file: target/release.jar
+          skip-cleanup: true

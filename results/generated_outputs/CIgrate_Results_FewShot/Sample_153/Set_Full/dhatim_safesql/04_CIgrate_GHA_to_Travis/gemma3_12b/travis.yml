@@ -1,0 +1,30 @@
+language: java
+sudo: required
+cache:
+  directories:
+    - ~/.m2/repository
+branches:
+  only:
+    - master
+  except:
+    - /^(\d+)$/
+deploy:
+  on:
+    tags: true
+env:
+  global:
+    - secure: "YOUR_GPG_SECRET_KEYS_BASE64_ENCODED" # TODO: Replace with actual base64 encoded GPG keys
+    - secure: "YOUR_GPG_OWNERTRUST_BASE64_ENCODED" # TODO: Replace with actual base64 encoded GPG owner trust
+    - COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+    - GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+    - OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+    - OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+jdk:
+  - openjdk8
+script:
+  - mvn test
+  - mvn -B jacoco:report coveralls:report
+  - if [ "$TRAVIS_BRANCH" = "master" ] || [[ "$TRAVIS_TAG" != "" ]]; then
+  -   chmod +x .deploy.sh
+  -   ./.deploy.sh
+  fi

@@ -1,0 +1,32 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path
+        tags: ${{ secrets.docker-cmd
+      with:
+        java-version: 1.8
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/checkout@version
+      with: java-version
+    - name: install in docker-cmd
+    - name: placeholder_Name
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      run:
+        docker
+        ./gradlew build
+

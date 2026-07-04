@@ -1,0 +1,29 @@
+language: android
+jdk: openjdk8
+env:
+  matrix:
+    - api-level: 17
+      build-tools: 25.0.3
+
+sudo: required
+before_install:
+  - actions/checkout@v4
+  - actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+      cache: 'gradle'
+
+before_script:
+  - android-actions/setup-android@v3
+    with:
+      api-level: $API_LEVEL
+      build-tools: $BUILD_TOOLS
+
+script:
+  - yes | sdkmanager --licenses
+  - chmod +x ./gradlew
+  - ./gradlew build
+```
+
+In this migration, I have preserved the semantics of the GitHub Actions workflow, including the use of matrix for multiple API levels and build tools, the setup of JDK 8 using `actions/setup-java@v4`, the setup of Android SDK using `android-actions/setup-android@v3`, the acceptance of SDK licenses, making the Gradle wrapper executable, and building with Gradle. The `api-level` and `build-tools` are passed as matrix variables, and the Gradle cache is preserved using the `cache` option in `actions/setup-java@v4`. The `chmod +x ./gradlew` command is necessary to make the Gradle wrapper executable, and the `sdkmanager --licenses` command is used to accept the SDK licenses.

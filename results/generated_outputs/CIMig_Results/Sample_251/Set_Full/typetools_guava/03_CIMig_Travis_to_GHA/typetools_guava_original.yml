@@ -1,0 +1,36 @@
+matrix:
+  language: java
+  java
+  os:
+    windows-latest
+    ubuntu-latest
+
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    strategy:
+      matrix
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+      with:
+        java-version: 1.8
+      with:
+        java-version: ${{ matrix.java }}
+    - name: placeholder_Name
+      uses: actions/checkout@version
+      with: java-version
+      uses: actions/setup-java@version
+      run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f $ROOT_POM
+
+env:
+  github_token: ${{ github.token }}
+

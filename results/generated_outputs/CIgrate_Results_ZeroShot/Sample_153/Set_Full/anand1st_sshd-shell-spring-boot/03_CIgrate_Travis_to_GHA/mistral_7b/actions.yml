@@ -1,0 +1,59 @@
+name: Java Build and Coverage Report
+on: [push, pull_request]
+
+jobs:
+  build-and-report:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JDBC_URL: ${{ secrets.JDBC_URL }}
+      JDBC_USER: ${{ secrets.JDBC_USER }}
+      JDBC_PASSWORD: ${{ secrets.JDBC_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Install Maven
+        run: apt-get update && apt-get install -y maven
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-maven-dependencies
+          path: ~/.m2/repository
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and Report
+        run: |
+          cd sshd-shell-spring-boot-starter
+          mvn jacoco:report coveralls:report
+
+    after_success:
+      - name: Upload coverage report
+        uses: coveralls/coveralls-action@v3
+        with:
+          REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+          SUBMODULE_ROOT: sshd-shell-spring-boot-starter
+
+    after_failure:
+      - name: Notify on failure
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.createIssueComment({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo

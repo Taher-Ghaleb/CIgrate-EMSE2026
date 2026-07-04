@@ -1,0 +1,21 @@
+language: java
+jdk:
+  - temurin11
+
+script:
+  - chmod +x gradlew
+  - ./gradlew check -i
+
+before_script:
+  - if .travis/build_condition.sh ${{ github.event.before }}..${{ github.sha }}; then echo "Testing" && echo "skip=false" >> $GITHUB_OUTPUT || echo "NOT testing" && echo "skip=true" >> $GITHUB_OUTPUT
+
+examples:
+  matrix:
+    - examples/example
+
+  script:
+    - chmod +x examples/example/gradlew
+    - (if steps.check.outputs.skip != 'true') && ./gradlew check -i
+
+after_success:
+  - uses: codecov/codecov-action@v4

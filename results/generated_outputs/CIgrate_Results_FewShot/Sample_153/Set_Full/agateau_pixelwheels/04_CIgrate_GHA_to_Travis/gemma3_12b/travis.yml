@@ -1,0 +1,13 @@
+language: bash
+sudo: required
+branches:
+  only:
+    - master
+    - develop
+    - pull-request
+
+script:
+  - chmod +x ci/build-docker-image
+  - chmod +x ci/docker-build-game
+  - ./ci/build-docker-image
+  - ./ci/docker-build-game

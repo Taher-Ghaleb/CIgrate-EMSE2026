@@ -1,0 +1,60 @@
+language: java
+sudo: required
+branches:
+  only:
+    - master
+    - /^[0-9]+.[0-9]+.[0-9]+$/
+pull_requests:
+  only:
+    - master
+    - /^[0-9]+.[0-9]+.[0-9]+$/
+
+env:
+  global:
+    - COVERALLS_REPO_TOKEN: $COVERALLS_REPO_TOKEN
+    - CODECOV_TOKEN: $CODECOV_TOKEN
+
+cache:
+  directories:
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+
+before_install:
+  - chmod +x gradlew
+
+install:
+  - sdkmanager --licenses || true
+
+script:
+  - ./gradlew clean testDebugUnitTest jacocoTestReport
+  - ./gradlew coveralls
+  - ./gradlew testDebugUnitTest
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" = "master" ]; then
+      ./gradlew coveralls
+    fi
+  - if [ "$TRAVIS_BRANCH" != "master" ]; then
+    - ./gradlew coveralls
+  fi
+  - if [ "$TRAVIS_BRANCH" != "master" ]; then
+    - ./gradlew testDebugUnitTest
+  fi
+  - if success(); then
+    - if [ "$TRAVIS_BRANCH" != "master" ]; then
+      - echo "Codecov upload skipped for non-master branches."
+    else
+      - bash <(curl -s https://codecov.io/bash)
+    fi
+  fi
+
+addons:
+  codecov:
+    token: $CODECOV_TOKEN
+    files: build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+    fail_ci_if_error: false
+    verbose: true
+
+cache_directories:
+  - build/reports/tests
+  - build/test-results

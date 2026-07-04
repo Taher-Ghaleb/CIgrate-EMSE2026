@@ -1,0 +1,39 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  branches:
+    - master
+    - '^\d+\.\d+$'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['oraclejdk8', 'openjdk11']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Test
+        run: mvn -q clean verify -B
+      - name: Deploy to Sonatype's snapshots repository
+        if: type!= pull_request
+        run: bash.travis.deploy.artifacts.sh
+      - name: Send notifications
+        uses: dmag - actions/send-email@v1
+        with:
+          to: vertx3-ci@googlegroups.com
+          subject: CI result
+          body: |
+            * Build result: ${{ steps.build.result }}
+            * Details: ${{ steps.build.output }}
+```
+
+Note: The migrated workflow uses the `actions/send-email` action to send notifications, as there is no direct equivalent to the `notifications.email` section in GitHub Actions.

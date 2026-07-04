@@ -1,0 +1,61 @@
+language: bash
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: |
+      curl -sSL https://get.sdkman.io | bash
+      sdk install java 8.0.262-temurin-1.8
+      sdk use java 8.0.262-temurin-1.8
+
+script:
+  - checkout
+  - android-sdk/setup
+  - cache: gradle
+  - prepare-gradle
+  - install-android-components
+  - start-emulator
+  - assemble
+  - jacoco
+  - instrumented-tests
+  - upload-coverage
+
+before_script:
+  - if [ -f ~/.gradle/caches/modules-2/modules-2.lock ]; then rm -f ~/.gradle/caches/modules-2/modules-2.lock; fi
+  - if [ -d ~/.gradle/caches/*/plugin-resolution/ ]; then rm -fr ~/.gradle/caches/*/plugin-resolution/; fi
+
+cache:
+  directories:
+    - ~/.gradle/caches/
+    - ~/.gradle/wrapper/
+
+matrix:
+  include:
+    - os: linux
+
+  allow_failures:
+    - os: linux
+
+env:
+  global:
+    - COMPILE_SDK_VERSION: ${{ env.COMPILE_SDK_VERSION }}
+    - EMULATOR_API: ${{ env.EMULATOR_API }}
+    - BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOLS_VERSION }}
+    - ABI: ${{ env.ABI }}
+    - ADB_INSTALL_TIMEOUT: ${{ env.ADB_INSTALL_TIMEOUT }}
+
+before_install:
+  - run: |
+      curl -sSL https://get.sdkman.io | bash
+      sdk install android-sdk-platform-29 android-sdk-platform-

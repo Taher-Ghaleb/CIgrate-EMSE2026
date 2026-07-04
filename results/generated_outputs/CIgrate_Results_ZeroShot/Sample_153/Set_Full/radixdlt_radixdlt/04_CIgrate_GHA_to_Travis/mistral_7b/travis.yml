@@ -1,0 +1,85 @@
+language: ubuntu
+
+branches:
+  only:
+    - main
+
+deploy:
+  on:
+    tags: true
+
+env:
+  TEST_DURATION: $TEST_DURATION
+
+services:
+  - docker
+  - docker-compose
+
+before_install:
+  - install: |
+      # TODO: Add a script to set up JDK 11 if not available in the Docker image
+      # Assuming JDK 11 is available in the Docker image
+
+install:
+  - install: gradle
+
+script:
+  - ./gradlew assemble --info
+
+before_script:
+  - checkout --depth 0
+
+matrix:
+  java:
+    - 11
+
+  os:
+    - linux
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+
+before_script:
+  - key=TEMPURIN_JAVA_HOME
+  - value=$(curl -s https://api.temurin.org/latest/version)
+  - export $key=$value
+
+script:
+  - ./gradlew assemble --info
+
+after_success:
+  - name: Upload build
+    deploy:
+      provider: pages
+      skip_cleanup: true
+      github_token: $GITHUB_TOKEN
+      local_dir: '**/build/'
+      on:
+        tags: true
+        branches:
+          only:
+            - main
+
+before_script:
+  - key=GRADLE_HOME
+  - value=$(curl -s https://api.gradle.org/gradle/latest/download)
+  - export $key=$value
+
+script:
+  - ./gradlew check jacocoTestReport sonarqube --info
+
+before_script:
+  - key=TEMPURIN_JAVA_HOME
+  - value=$(curl -s https://api.temurin.org/latest/version)
+  - export $key=$value
+
+script:
+  - ./gradlew integrationTest --info
+
+matrix:
+  java:
+    - 11
+
+  os:

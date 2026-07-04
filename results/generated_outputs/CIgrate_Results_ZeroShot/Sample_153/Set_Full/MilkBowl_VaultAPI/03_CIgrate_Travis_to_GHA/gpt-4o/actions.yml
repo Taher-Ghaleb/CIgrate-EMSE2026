@@ -1,0 +1,33 @@
+name: Java CI
+
+on:
+  push:
+    branches-ignore:
+      - gh-pages
+  pull_request:
+    branches-ignore:
+      - gh-pages
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      secure_1: ${{ secrets.SECURE_1 }}
+      secure_2: ${{ secrets.SECURE_2 }}
+      secure_3: ${{ secrets.SECURE_3 }}
+    strategy:
+      matrix:
+        jdk: [openjdk7]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
+      - name: Run after success script
+        if: success()
+        run: .utility/do-publish.sh

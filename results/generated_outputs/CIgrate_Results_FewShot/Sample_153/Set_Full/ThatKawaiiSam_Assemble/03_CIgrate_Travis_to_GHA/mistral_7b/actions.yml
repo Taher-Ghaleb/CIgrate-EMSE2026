@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ github.event.ref }}
+      - name: Build and Deploy
+        run: mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_RELEASES_API_TOKEN: ${{ secrets.GITHUB_RELEASES_API_KEY }}
+        outputs:
+          artifact_path: target/release.jar
+      - name: Upload Artifact to GitHub Releases
+        uses: actions/upload-artifact@v3
+        with:
+          name: release.jar
+          path: ${{ steps.build.outputs.artifact_path }}

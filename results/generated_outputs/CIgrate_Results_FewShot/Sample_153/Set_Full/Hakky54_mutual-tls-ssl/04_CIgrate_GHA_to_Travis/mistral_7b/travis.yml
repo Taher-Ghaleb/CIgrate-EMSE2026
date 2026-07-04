@@ -1,0 +1,35 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+
+branches:
+  only:
+    - master
+
+script:
+  - mvn clean verify
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - actions/setup-java@v4 -d temurin -j 11 -c maven
+
+matrix:
+  authentication:
+    - without-authentication
+    - one-way-authentication
+    - two-way-authentication-trusting-each-other
+    - two-way-authentication-trusting-root-ca
+
+strategy:
+  matrix:
+    authentication: ${{ matrix.authentication }}
+
+before_script:
+  - mvn clean
+
+script:
+  - mvn clean verify -P ${{ matrix.authentication }}

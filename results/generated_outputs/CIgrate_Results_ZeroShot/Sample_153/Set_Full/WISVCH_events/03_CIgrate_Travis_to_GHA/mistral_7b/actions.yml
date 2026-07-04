@@ -1,0 +1,57 @@
+name: Build and Deploy Events
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      - docker
+      - postgres
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2
+          restore-keys: |
+            ${{ runner.os }}-m2
+
+      - name: Install Gradle
+        run: |
+          curl -sSL https://get.gradle.org/gradle-latest-bin.zip -o gradle.zip
+          unzip gradle.zip
+          mv gradle-${Gradle_VERSION} /usr/local/gradle
+          export GRADLE_HOME=/usr/local/gradle
+          export PATH=$GRADLE_HOME/bin:$PATH
+
+      - name: Checkout Code Climate test reporter
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+          chmod +x ./cc-test-reporter
+
+      - name: Run Code Climate before build
+        run: ./cc-test-reporter before-build
+
+      - name: Create database
+        run: psql -c 'create database events;' -U postgres
+
+      - name: Build, test, and cache Gradle dependencies
+        run: |
+          ./cc-test-reporter format-coverage -d -t jacoco

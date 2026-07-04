@@ -1,0 +1,73 @@
+language: java
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+
+branches:
+  only:
+    - main
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - echo "Before install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before script"
+  - git config --global user.email "${GIT_COMMITTER_EMAIL}"
+  - git config --global user.name "${GIT_COMMITTER_NAME}"
+
+script:
+  - mvn install -P eclipse
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "main" || "$TRAVIS_BRANCH" == "develop" ]; then
+      echo "Running after success on main or develop"
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+      echo "Running after success on main"
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "develop" ]; then
+      echo "Running after success on develop"
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "main" || "$TRAVIS_BRANCH" == "develop" ]; then
+      echo "Running after success on main or develop"
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+      echo "Running after success on main"
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "develop" ]; then
+      echo "Running after success on develop"
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "main" || "$TRAVIS_BRANCH" == "develop" ]; then
+      echo "Running after success on main or develop"
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+      echo "Running after success on main"
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "develop" ]; then
+      echo "Running after success on develop"
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "main" || "$TRAVIS_BRANCH" == "develop" ]; then
+      echo "Running after success on main or develop"
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "

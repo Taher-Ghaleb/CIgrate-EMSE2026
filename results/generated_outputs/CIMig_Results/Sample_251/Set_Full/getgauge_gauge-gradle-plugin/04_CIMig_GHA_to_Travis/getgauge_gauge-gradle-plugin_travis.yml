@@ -1,0 +1,27 @@
+env:
+  global:
+    OBJ-NODE:
+      secure: token
+    OBJ-NODE:
+      secure: token
+notifications: email
+cache:
+  directories:
+    ~/.gradle
+    ~/.maven-
+sudo: FALSE
+language:
+  java
+jdk: jdk8
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew clean build
+after_success:
+  bash <(curl-cmd
+include:
+  if: type in (pull_request, push)
+  stage: Build
+apt:
+  packages: jdk-6-jdk

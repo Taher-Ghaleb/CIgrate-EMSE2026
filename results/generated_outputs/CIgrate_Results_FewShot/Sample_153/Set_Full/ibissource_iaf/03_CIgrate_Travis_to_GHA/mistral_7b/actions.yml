@@ -1,0 +1,42 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    - TRAVIS_JAVA_8_OPENJDK
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - name: Install
+        run: echo 'Skipping separate install phase'
+      - name: Build, test and generate coverage
+        run: mvn install -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+
+notifications:
+  email:
+    on-success:
+      recipients:
+        - travis-j@ibissource.org
+        - travis-j2@ibissource.org
+        - travis-n@ibissource.org
+        - travis-p@ibissource.org
+        - travis-g@ibissource.org

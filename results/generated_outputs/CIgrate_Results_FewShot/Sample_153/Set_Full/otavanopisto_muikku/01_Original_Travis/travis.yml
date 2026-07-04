@@ -1,0 +1,34 @@
+language: java
+script: mvn install
+before_install:
+  - unset GEM_PATH
+jdk:
+  - oraclejdk7
+  - openjdk7
+
+branches:
+  only:
+    - devel
+
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"  
+
+after_success:
+  - mvn package -f muikku/pom.xml -Popenshift
+  - python travis-prepare-maven.py
+  - mvn deploy --settings ~/.m2/mySettings.xml
+before_deploy: "echo 'Starting deployment'"
+deploy:
+  provider: openshift
+  user: 
+    secure: "********************"
+  password:
+    secure: "********************"
+  app: muikku
+  domain: oodev
+  on:
+    jdk: openjdk7
+    branch: devel
+after_deploy: "echo 'Deployed'"

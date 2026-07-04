@@ -1,0 +1,31 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        clean: TRUE
+        draft: TRUE
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+    - name: Placeholder
+      with: java-version
+      run:
+        ./scripts/PATH-OR-URL
+        ./gradlew clean build javadoc --no-daemon
+
+env:
+  github_token: ${{ github.token }}
+  ci: TRUE
+
+macos:
+  jdk: oraclejdk8
+

@@ -1,0 +1,26 @@
+with:
+  distribution: zulu
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+    - name: Placeholder
+    - name: Placeholder
+      run: cd h2
+
+uses: actions/setup-java@version
+

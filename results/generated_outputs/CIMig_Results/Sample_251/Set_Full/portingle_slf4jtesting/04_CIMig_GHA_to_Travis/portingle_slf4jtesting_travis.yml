@@ -1,0 +1,17 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  chmod +x gradlew
+script:
+  script:
+    jdk8
+    ./gradlew build
+stage: ☕ 11

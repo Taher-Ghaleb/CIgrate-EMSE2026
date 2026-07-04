@@ -1,0 +1,41 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+script:
+  - chmod +x gradlew
+  -./gradlew build
+  -./gradlew jacocoTestReport
+
+after_success:
+  -./gradlew jacocoTestReport
+  - codecov/codecov-action@v4:
+    on:
+      push:
+        branches: [main]
+    with:
+      token: $CODECOV_TOKEN
+      fail_ci_if_error: false
+
+deploy:
+  on:
+    push:
+      branches: [main]
+  before_deploy:
+    - echo "Deploying to production"
+  after_deploy:
+    - echo "Deployment successful"
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: temurin
+      cache: 'gradle'
+  allow_failures: true

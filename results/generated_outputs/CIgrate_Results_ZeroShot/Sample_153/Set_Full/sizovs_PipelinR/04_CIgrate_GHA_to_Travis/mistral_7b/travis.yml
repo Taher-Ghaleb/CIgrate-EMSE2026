@@ -1,0 +1,45 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+install:
+  - name: Set up JDK 8
+    script: |
+      wget --quiet https://download.java.net/java/GA/jdk8u275-b01/2a8a33512af64e69b5175f081c6e8c9a/jdk-8u275-linux-x64.tar.gz
+      tar -xzf jdk-8u275-linux-x64.tar.gz -C ~
+      export JAVA_HOME=~/jdk1.8.0_275
+      export PATH=$JAVA_HOME/bin:$PATH
+      export MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
+      export GRADLE_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
+
+before_script:
+  - name: Make gradlew executable
+    script: chmod +x gradlew
+
+script:
+  - name: Build and generate coverage report
+    script: ./gradlew build jacocoTestReport
+
+after_success:
+  - name: Upload coverage to Codecov
+    uses: codecov/codecov-action@v4
+
+deploy:
+  on:
+    tags: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle

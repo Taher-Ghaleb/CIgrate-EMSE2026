@@ -1,0 +1,66 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - curl -sfL https://github.com/actions/checkout/releases/download/v4/actions-checkout-v4.tar.gz | tar -xzf - -C./ --strip-components=1
+  -./actions-checkout-v4/install-repo.sh
+  - export GRADLE_HOME=~/.gradle
+  - export PATH=$GRADLE_HOME/bin:$PATH
+  - curl -sfL https://github.com/gradle/gradle/releases/download/gradle-7.5/gradle-7.5-bin.zip | tar -xzf - -C ~/.gradle --strip-components=1
+  - chmod +x ~/.gradle/gradle-7.5/bin/gradle
+  - export PATH=$PATH:~/.gradle/gradle-7.5/bin
+
+install:
+  - export GRADLE_OPTS=-Xmx512m
+  - export GRADLE_USER_HOME=~/.gradle
+  - export GRADLE_HOME=~/.gradle/gradle-7.5
+  - export PATH=$PATH:~/.gradle/gradle-7.5/bin
+
+script:
+  -./gradlew build jacocoTestReport
+
+after_success:
+  - codecov/codecov-action@v4:
+    api-key: $CODECOV_TOKEN
+    files: gradle/jacocoTestReport.xml
+
+after_failure:
+  - echo "Failed to build and generate coverage report"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production"
+  on:
+    branch: never
+  skip_cleanup: true
+  environment:
+    name: production
+  before_deploy:
+    - echo "Before deploying to production"
+  after_deploy:
+    - echo "After deploying to production"
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - os: ubuntu-latest
+      dist: temurin-8
+      java-version: 8
+      cache: gradle
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - 'temurin-8'
+    packages:
+      - openjdk-8-jdk
+      - openjdk-8-jdk-headless

@@ -1,0 +1,43 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  branches:
+    - master
+    - /^v\d+\.\d+[a-zA-Z-_]+?(\.\d+[a-zA-Z-_]+?)/
+
+env:
+  DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Install dependencies
+        run: |
+          mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+          mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+          ant dist
+      - name: Create release
+        uses: softprops/action-release@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          release-name: ${{ github.event.release.name }}
+          release-body: ${{ github.event.release.body }}
+          draft: false
+          prerelease: false
+          assets: MedTagger.zip
+          overwrite: true
+          skip-cleanup: true
+```
+
+Note: The `github.event.release.name` and `github.event.release.body` are not directly available in GitHub Actions. You can use the `github.event.release` object to access the release name and body. However, in this case, I used the `github.event.release.name` and `github.event.release.body` as they are the correct keys to access the release name and body.

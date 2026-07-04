@@ -1,0 +1,23 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - master
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+services:
+  # TODO: Add any services if needed
+
+before_install:
+  - echo "Setting up environment"
+
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - mvn verify -Prun-its

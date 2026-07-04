@@ -1,0 +1,33 @@
+language: ubuntu
+
+branches:
+  only:
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - git clone -b travis https://${GITHUB_API_TOKEN}@github.com/${GITHUB_REPOSITORY}.git target/travis
+
+script:
+  - export GITHUB_API_TOKEN
+  - actions/checkout@v4
+  - actions/setup-java@v4 -d temurin -j 11 -c maven
+  - if [ "${GITHUB_EVENT_NAME}" == "pull_request" ]; then mvn clean verify --settings target/travis/settings.xml; else mvn clean deploy --settings target/travis/settings.xml; fi
+
+env:
+  global:
+    MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+    MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+deploy:
+  on:
+    tags: true
+  script: mvn clean deploy --settings target/travis/settings.xml

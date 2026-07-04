@@ -1,0 +1,91 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        jdk: ['11', '17']
+        profiles: ['headless-mode', 'headless-mode,chrome']
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+          cache: maven
+      
+      - name: Setup Chrome and ChromeDriver
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+      
+      - name: Setup Firefox and GeckoDriver
+        uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: latest
+      
+      - name: Verify browser installations
+        run: |
+          google-chrome --version
+          chromedriver --version
+          firefox --version
+          geckodriver --version
+      
+      - name: Cache PrimeFaces dependencies
+        id: cache-primefaces
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/primefaces-install
+            ~/.m2/repository/org/primefaces
+          key: primefaces-deps-${{ hashFiles('**/pom.xml') }}-v1
+      
+      - name: Clone and install PrimeFaces
+        if: steps.cache-primefaces.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/primefaces/primefaces
+          cd primefaces
+          mvn install -DskipTests
+          cd ..
+          mkdir -p ~/primefaces-install
+          touch ~/primefaces-install/.installed
+      
+      - name: Clone and install PrimeFaces Selenium
+        if: steps.cache-primefaces.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/primefaces-extensions/primefaces-selenium
+          cd primefaces-selenium
+          mvn install -DskipTests
+          cd ..
+      
+      - name: Build and test with Maven
+        run: mvn -B -V clean install -P${{ matrix.profiles }}
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-jdk${{ matrix.jdk }}-${{ matrix.profiles }}
+          path: |
+            **/target/surefire-reports/
+            **/target/failsafe-reports/
+          retention-days: 7
+      
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-jdk${{ matrix.jdk }}-${{ matrix.profiles }}
+          path: |
+            **/target/*.jar
+            **/target/*.war
+          retention-days: 7

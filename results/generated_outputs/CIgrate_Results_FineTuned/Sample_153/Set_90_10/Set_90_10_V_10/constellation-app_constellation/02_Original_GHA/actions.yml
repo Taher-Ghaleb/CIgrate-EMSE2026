@@ -1,0 +1,54 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Ivy packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-ivy-
+      - name: Pull Docker image
+        run: docker pull "${RUNNER_IMAGE}"
+      - name: Run tests in Docker
+        run: docker run --mount "type=bind,source=${GITHUB_WORKSPACE},target=${GITHUB_WORKSPACE}" --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" --workdir "${GITHUB_WORKSPACE}" "${RUNNER_IMAGE}" .travis/run-tests.sh
+      - name: Run SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: .travis/sonar.sh
+      - name: Cleanup Ivy cache
+        if: always()
+        run: find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.repository == 'constellation-app/constellation' && github.ref == 'refs/heads/master' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.ref_name }} dist/constellation.zip
+      - name: Send Gitter notification
+        if: always()
+        run: |
+          # TODO: Configure Gitter webhook notification to https://webhooks.gitter.im/e/82ac70bdb3f9e144d859
+          echo "Gitter notification not implemented"

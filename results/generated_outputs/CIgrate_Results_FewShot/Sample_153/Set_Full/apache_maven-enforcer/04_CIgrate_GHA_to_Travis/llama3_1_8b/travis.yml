@@ -1,0 +1,26 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk11
+install: true
+branches:
+  only:
+    - master
+script:
+  - mvn verify -Prun-its
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that I've used the following mappings:
+
+- `language: java` to specify the language as Java
+- `jdk: openjdk11` to specify the JDK version as OpenJDK 11
+- `install: true` to enable the installation of the JDK
+- `branches: only: - master` to specify the branch to run the job on
+- `script: - mvn verify -Prun-its` to run the Maven command to execute the integration tests
+- `cache: directories: - '$HOME/.m2/repository'` to cache the Maven repository directory

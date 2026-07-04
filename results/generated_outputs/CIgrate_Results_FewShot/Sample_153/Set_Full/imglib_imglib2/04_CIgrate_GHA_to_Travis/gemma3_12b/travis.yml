@@ -1,0 +1,23 @@
+language: java
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+  except:
+    - /^release\/.*$/
+pull_request:
+  branches:
+    only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+    - /^release\/.*$/
+cache:
+  directories:
+    - ~/.m2/repository
+script:
+  - chmod +x ./.travis/build.sh
+  - ./.travis/build.sh
+jdk:
+  - openjdk8

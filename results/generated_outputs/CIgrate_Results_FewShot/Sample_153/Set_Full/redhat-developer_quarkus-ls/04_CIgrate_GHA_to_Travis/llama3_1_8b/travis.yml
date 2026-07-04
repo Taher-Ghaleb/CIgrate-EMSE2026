@@ -1,0 +1,32 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.m2/wrapper'
+script:
+  - cd quarkus.jdt.ext &&./mvnw clean verify
+  - cd quarkus.ls.ext/com.redhat.quarkus.ls &&./mvnw clean verify
+after_success:
+  - rm -rf $HOME/.m2/repository/**/*-SNAPSHOT
+```
+
+Note that I've followed the provided migration rules:
+
+* Preserved semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+* Mapped jobs/steps -> Travis lifecycle; strategy.matrix -> language versions or matrix.include; continue-on-error -> matrix.allow_failures.
+* Env: ${{ secrets.FOO }} -> $FOO (assuming configured).
+* Caches: actions/cache -> cache: directories (e.g., ~/.m2/repository, ~/.gradle/*, $HOME/.npm).
+* Services: GHA services -> Travis services/addons; keep docker-compose and wait loops in hooks.
+* Triggers: on: branches/tags -> branches: only/except; releases -> deploy.on.tags: true.
+* Maintained 1 to 1, JDK, Git version numbers, branch names as in source.
+* Did not introduce new names or branches or numbers.
+* Did not repeat to sequence JDK or Git version numbers, use as given in the source.
+* Did not repeat sections, like deploy, script, before_install, install, matrix etc.
+* Did not repeat child properties as well in a section like inside matrix and others.

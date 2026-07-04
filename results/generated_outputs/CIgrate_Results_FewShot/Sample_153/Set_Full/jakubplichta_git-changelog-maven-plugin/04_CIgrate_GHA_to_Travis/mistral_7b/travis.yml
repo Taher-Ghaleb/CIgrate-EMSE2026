@@ -1,0 +1,22 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+env:
+  matrix:
+    - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+script:
+  - mvn verify javadoc:javadoc -Pcoverage
+
+after_success:
+  - uses: coverallsapp/github-action@v2
+    with:
+      github-token: $GITHUB_TOKEN
+      path-to-lcov: target/site/jacoco/jacoco.xml
+      matrix.allow_failures: true
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

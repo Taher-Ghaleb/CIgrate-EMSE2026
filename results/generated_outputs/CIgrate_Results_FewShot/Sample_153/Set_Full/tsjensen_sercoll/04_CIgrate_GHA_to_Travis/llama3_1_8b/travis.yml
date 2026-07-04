@@ -1,0 +1,29 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - oraclejdk8
+  - openjdk6
+
+script:
+  -./gradlew clean
+
+cache:
+  directories:
+    - '$HOME/.gradle'
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y openjdk-6-jdk
+
+install:
+  - sudo apt-get install -y openjdk-6-jdk
+
+before_script:
+  - ls -a
+  - pwd
+```
+
+Note that I've removed the `env` section as it's not necessary in Travis CI, and the `jobs` section is not needed as it's the default configuration. I've also removed the `services` section as it's not applicable in this case. The `script` section now contains the `./gradlew clean` command, and the `cache` section is used to cache the Gradle packages. The `before_install` section is used to install OpenJDK 6.

@@ -1,0 +1,35 @@
+language: bash
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+  except:
+    - tags
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+before_install:
+  - echo "Before install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before script"
+
+script:
+  - chmod +x ./.travis/build.sh
+  - ./.travis/build.sh
+
+after_success:
+  - echo "After success"
+
+after_failure:
+  - echo "After failure"
+
+# TODO: Equivalent of actions/checkout@v4 is implicit in Travis CI.

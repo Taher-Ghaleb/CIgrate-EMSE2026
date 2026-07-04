@@ -1,0 +1,22 @@
+language: java
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+script:
+  - mvn verify javadoc:javadoc -Pcoverage
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -f target/site/jacoco/jacoco.xml
+
+matrix:
+  allow_failures:
+    - script:
+        - bash <(curl -s https://codecov.io/bash) -f target/site/jacoco/jacoco.xml

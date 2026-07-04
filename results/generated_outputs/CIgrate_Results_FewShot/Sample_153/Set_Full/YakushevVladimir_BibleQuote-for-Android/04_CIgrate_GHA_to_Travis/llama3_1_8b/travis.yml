@@ -1,0 +1,32 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+sudo: false
+install: true
+addons:
+  android:
+    components:
+        - tools
+        - platform-tools
+        - build-tools-30.0.3
+        - platforms;android-30
+        - extras;android;m2repository
+        - extras;google;m2repository
+        - extras;android;support
+    licenses:
+        - 'android-sdk-preview-license-52d11cd2'
+        - 'android-sdk-license-.+'
+        - 'google-gdk-license-.+'
+script:
+  - chmod +x gradlew
+  -./gradlew clean build
+  -./gradlew testDebugUnitTestCoverage coveralls
+cache:
+  directories:
+    - '$HOME/.gradle'
+```
+
+Note that I've used the `cache` directive to cache the Gradle cache directory, which should speed up the build process. I've also removed the `before_install` section, as it's not necessary in Travis CI.

@@ -1,0 +1,9 @@
+language: java
+jdk:
+  - openjdk9
+script:
+  - mvn --errors clean verify site
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -f ./com.io7m.jproperties.core/target/site/jacoco/jacoco.xml
+notifications:
+  irc: "chat.freenode.net#io7m"

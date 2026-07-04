@@ -1,0 +1,23 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Install dependencies
+        run: mvn install
+      - name: Build
+        run: mvn package -Dmaven.javadoc.skip=true -Dsource.skip=true -Dgpg.skip=true -B -ntp
+```
+
+Note: The `-ntp` flag is used to enable parallel builds, which is the default behavior in Maven 3.5 and later. If you're using an earlier version of Maven, you may need to remove this flag.

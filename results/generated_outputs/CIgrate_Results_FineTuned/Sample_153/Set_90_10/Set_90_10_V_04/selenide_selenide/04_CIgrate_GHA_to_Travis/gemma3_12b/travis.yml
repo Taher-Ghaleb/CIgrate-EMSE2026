@@ -1,0 +1,52 @@
+language: java
+sudo: false
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y libappindicator1 fonts-liberation
+  - export CHROME_BIN=/usr/bin/google-chrome
+
+install: true
+
+cache:
+  directories:
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
+  - $HOME/.sonar/cache/
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+jobs:
+  include:
+    - stage: check
+      script: ./gradlew check --no-daemon --console=plain
+    - if: type != pull_request
+      stage: check_sonar
+      script: ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=$SONAR_ORG -Dsonar.host.url=$SONAR_HOST -Dsonar.login=$SONAR_LOGIN -Dsonar.branch.name=$TRAVIS_BRANCH
+    - stage: grid
+      script: ./gradlew grid --no-daemon --console=plain -i
+    - stage: firefox
+      addons:
+        firefox: "59.0"
+      script: ./gradlew firefox_headless --no-daemon --console=plain -i
+    - stage: chrome
+      addons:
+        chrome: "76.0"
+      script: ./gradlew chrome_headless --no-daemon --console=plain -i
+
+after_script:
+  - ./.upload_reports.sh
+
+addons:
+  apt:
+    update: true
+    packages:
+      - google-chrome-stable
+      - firefox
+
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"

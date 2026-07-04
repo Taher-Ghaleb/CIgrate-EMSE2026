@@ -1,0 +1,56 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: ${{ secrets.JAVA_HOME_11 }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2
+          restore-keys: |
+            ${{ runner.os }}-m2
+
+      - name: Install and run tests
+        run: mvn clean install -Ppedantic
+
+strategy:
+  matrix:
+    jdk: ${{ toJson(jdk) }}
+
+workflow:
+  branches:
+    include:
+      - master
+      - develop
+    exclude:
+      - '**/*'
+  tags:
+    include:
+      - '*'
+
+# TODO: Add deploy steps if needed
+```
+
+This GitHub Actions workflow maintains the specified output and migration rules. It includes a job named "build" that runs on the latest Ubuntu image, uses a PostgreSQL service, sets up JDK 11, caches Maven dependencies, and runs the Maven command to build and test the project. The workflow is triggered on both push and pull request events, and it uses a matrix strategy to run the job with different JDK versions. The branch and tag filters are also preserved.

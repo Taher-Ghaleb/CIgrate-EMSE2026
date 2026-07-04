@@ -1,0 +1,51 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows, linux]
+    runs-on: ${{ matrix.os == 'windows' ? 'windows-latest' : 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        if: ${{ matrix.os == 'linux' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Install dependencies (Windows)
+        if: ${{ matrix.os == 'windows' }}
+        shell: powershell
+        run: |
+          choco install jdk8 -params 'installdir=c:\\java8'
+          $env:JAVA_HOME="c:\\java8"
+          $env:PATH="$env:PATH;$JAVA_HOME\\bin"
+          choco install maven -version 3.6.3
+          $env:PATH="$env:PATH;C:\\ProgramData\\chocolatey\\lib\\maven\\apache-maven-3.6.3\\bin"
+
+      - name: Install dependencies (Linux)
+        if: ${{ matrix.os == 'linux' }}
+        run: |
+          java -version
+
+      - name: Build (Windows)
+        if: ${{ matrix.os == 'windows' }}
+        shell: powershell
+        run: './gradlew.bat build -x test --stacktrace --console=plain --no-daemon'
+
+      - name: Build (Linux)
+        if: ${{ matrix.os == 'linux' }}
+        run: ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon
+
+      - name: Upload coverage to Codecov
+        if: ${{ matrix.os == 'linux' }}
+        run: bash <(curl -s https://codecov.io/bash)
+
+  cache:
+    directories:
+      - $HOME/.m2

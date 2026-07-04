@@ -1,0 +1,28 @@
+# Python dependencies for CIgrate replication package
+# Tested with Python 3.11+
+
+# Core analysis (RQ1–RQ3 metrics and figures)
+pandas>=2.0
+numpy>=1.24
+scipy>=1.10
+matplotlib>=3.7
+PyYAML>=6.0
+
+# Prompting with OpenAI (RQ1 GPT-4o only)
+openai>=1.0
+tiktoken>=0.7
+
+# Fine-tuning + open-weight inference (RQ1–RQ4 via Unsloth)
+# Install PyTorch separately for your CUDA version: https://pytorch.org
+torch>=2.1
+datasets>=2.14
+trl>=0.9
+peft>=0.10
+unsloth>=2024.9
+transformers>=4.40
+accelerate>=0.27
+tqdm>=4.66
+
+# Full paper report (figures, LaTeX tables, RQ4 charts)
+seaborn>=0.13
+vaderSentiment>=3.3

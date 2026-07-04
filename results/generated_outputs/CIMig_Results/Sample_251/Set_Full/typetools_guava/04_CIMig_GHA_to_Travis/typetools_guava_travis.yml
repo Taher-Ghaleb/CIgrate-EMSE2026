@@ -1,0 +1,29 @@
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn -B -P!standard-with-extra-repos verify -U -Dmaven.javadoc.skip=true -f $ROOT_POM
+Install
+script:
+  script:
+    mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f $ROOT_POM
+    yarn run test
+    make all test
+after_success:
+  bash <(curl-cmd
+deploy:
+  github_token: $github_token
+directories:
+  ~/.m2/repository
+  ~/.sonar/cache
+stage: ☕ 11
+sonarcloud:
+  organization: powsybl-ci-github
+stages:
+  prepare
+  test
+  Publish

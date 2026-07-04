@@ -1,0 +1,33 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+  except:
+    - tags
+deploy:
+  on:
+    tags: true
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y libappindicator1 fonts-liberation
+  - echo "CHROME_BIN=/usr/bin/google-chrome" >> $GITHUB_ENV
+install:
+  - chmod +x gradlew
+script:
+  - ./gradlew check --no-daemon --console=plain
+  - ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${SONAR_ORG} -Dsonar.host.url=${SONAR_HOST} -Dsonar.login=${SONAR_LOGIN} -Dsonar.branch.name=${TRAVIS_BRANCH}
+  - ./gradlew grid --no-daemon --console=plain -i
+  - ./gradlew firefox_headless --no-daemon --console=plain -i
+  - ./gradlew chrome_headless --no-daemon --console=plain -i
+after_success:
+  - ./.upload_reports.sh
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/

@@ -1,0 +1,56 @@
+language: java
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  zookeeper:
+    image: zookeeper:3.9
+    ports:
+      - 2181:2181
+    options:
+      - '--health-cmd "echo stat | nc localhost 2181"'
+      - '--health-interval 10s'
+      - '--health-timeout 5s'
+      - '--health-retries 5'
+
+before_install:
+  - run: |
+      echo -n | openssl s_client -connect scan.coverity.com:443 | \
+      sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | \
+      sudo tee -a /etc/ssl/certs/ca-certificates.crt
+
+install:
+  - name: Set up JDK 8
+    cache: maven
+    script: |
+      actions/setup-java@v4
+      java -version
+      mvn -version
+
+script:
+  - mvn clean test
+
+matrix:
+  include:
+    - java:
+        - '8'
+
+before_script:
+  - run: sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" conf/bboxdb.yaml
+  - run: mkdir -p /tmp/bboxdb/data
+
+before_deploy:
+  - run: mvn test
+
+deploy:
+  on:
+    tags: true
+  script: mvn deploy

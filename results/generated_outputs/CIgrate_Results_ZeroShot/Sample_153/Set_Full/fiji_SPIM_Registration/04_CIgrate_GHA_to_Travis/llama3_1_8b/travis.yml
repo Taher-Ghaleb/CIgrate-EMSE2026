@@ -1,0 +1,84 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - export MAVEN_HOME=/usr/share/maven
+  - export PATH=$MAVEN_HOME/bin:$PATH
+
+script:
+  - echo "Running build script"
+  - export SECRET_1=$SECRET_1
+  - export SECRET_2=$SECRET_2
+  - export SECRET_3=$SECRET_3
+  - export SECRET_4=$SECRET_4
+  - chmod +x.travis/build.sh
+  -./build.sh
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploying to staging"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "Deploying to staging on failure"
+
+deploy:
+  - provider: script
+    script: echo "Deploying to production"
+    on:
+      branch: master
+      tags: true
+
+matrix:
+  include:
+    - java-version: '8'
+      os: linux
+      dist: ubuntu
+    - java-version: '11'
+      os: linux
+      dist: ubuntu
+  allow_failures:
+    - java-version: '9'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com
+
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+  except:
+    - dev
+
+env:
+  - name: SECRET_1
+    value: $SECRET_1
+  - name: SECRET_2
+    value: $SECRET_2
+  - name: SECRET_3
+    value: $SECRET_3
+  - name: SECRET_4
+    value: $SECRET_4

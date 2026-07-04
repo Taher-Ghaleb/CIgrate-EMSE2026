@@ -1,0 +1,53 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches: [your-branch-name]
+  pull_request:
+    branches: [your-branch-name]
+  release:
+    types: [published]
+
+env:
+  global:
+    ORACLE_JAVA_HOME: ${{ secrets.ORACLE_JAVA_HOME }}
+    LINKEDIN_AVRO_UTIL_SECRET_1: ${{ secrets.LINKEDIN_AVRO_UTIL_SECRET_1 }}
+    LINKEDIN_AVRO_UTIL_SECRET_2: ${{ secrets.LINKEDIN_AVRO_UTIL_SECRET_2 }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        name: postgres
+        image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y oracle-java8-installer
+
+      - name: Configure Oracle JDK
+        run: echo 'export ORACLE_JAVA_HOME=$(which java | sed -e 's/.*\/\(.*\)\/bin/\\1/' | xargs dirname)' >> $GITHUB_ENV
+        env:
+          ORACLE_JAVA_HOME: ${{ secrets.ORACLE_JAVA_HOME }}
+
+      - name: Checkout and Install Dependencies
+        run: ./gradlew clean build javadoc --no-daemon
+
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-gradle-dependencies
+          path: $HOME/.gradle/caches/
+          restore-keys: |
+            ${{ runner.os }}-gradle-dependencies
+
+      - name:

@@ -1,0 +1,28 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: java-version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+      with:
+        java-version: 1.8
+      uses: actions/setup-java@version
+    - name: set up jdk 1.8
+      uses: actions/checkout@version
+    run: mvn -DargLine=\"-DredisBinary=`which redis-server`\" -Punit-test -Ptravis clean verify
+
+macos:
+  jdk: oraclejdk8
+
+image: redis
+

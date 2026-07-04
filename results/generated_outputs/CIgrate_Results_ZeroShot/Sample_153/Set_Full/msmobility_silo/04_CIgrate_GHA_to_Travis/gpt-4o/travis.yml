@@ -1,0 +1,29 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - MAVEN_OPTS=-Xmx2500m
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.m2
+
+before_install:
+  - git clone https://github.com/your-repo/silo.git
+
+install:
+  - if [ ! -f silo/lib/linux64/libjhdf5.so ]; then echo "Error: HDF5 library not found at silo/lib/linux64/libjhdf5.so" && exit 1; fi
+  - echo "HDF5 library found: silo/lib/linux64/libjhdf5.so"
+
+script:
+  - mvn test -Dhdf5lib-absolute-path=$(pwd)/silo/lib/linux64/libjhdf5.so --fail-at-end --batch-mode -Dmatsim.preferLocalDtds=true
+
+branches:
+  only:
+    - main
+    - develop

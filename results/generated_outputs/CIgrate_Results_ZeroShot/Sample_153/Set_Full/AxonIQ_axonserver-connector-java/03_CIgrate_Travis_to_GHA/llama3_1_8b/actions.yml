@@ -1,0 +1,36 @@
+name: Java Maven Build
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          chmod +x mvnw
+      - name: Build and test
+        run: |
+          mvn -version
+          mvn -B -U -Possrh clean verify
+```
+
+Note: The `jdk` matrix is not directly supported in GitHub Actions, so it's not possible to use the `jdk` matrix in the same way as in Travis CI. However, you can use the `services` section to specify the Java version. In this example, I've used `maven:3-jdk-11` as the image for the `maven` service, which includes Java 11. If you need to use a different Java version, you can use a different image or modify the `services` section accordingly.

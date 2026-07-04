@@ -1,0 +1,23 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: java-version
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run: mvn install -DskipTests=true -Dmaven.javadoc.skip=true
+    run: mvn -DskipTests=true clean package
+
+macos:
+  jdk: oraclejdk8
+

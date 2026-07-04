@@ -1,0 +1,66 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  SECRET_1: EIQ8VWbg8LRnX7n6PIP9HjXLg4nIKOsJk0xnMunbMZ475Z+pTd73awLu6VCbjO5DVAd9R7W36snIlGVv92j3dai6e0jOO+WtSTQ7gd1cEq+4swEXg7Qvc1oyqsXVL+FoO+j1InZxxUx93ObLRGvFZiUeBhnPNdqsM794EkUScN4=
+  SECRET_2: HLMEzx4NuU+oXU5yGViN8pAfFvhVeib5zvfH21nVbOC1Rg57HUKQTRCg5S/acr5C8At4BfHORt7p3MHztGB/GXylzm1kFRnKliJ50S9BkEW+/852f2gbGmnIEe7aMz4nFOheRpLgk7zcZrbYbztoRAFL+HREBiEaAZu8bti4gpU=
+  JAVA_HOME: /home/runner/openjdk11
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle
+            ~/.sdkman
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}-sdkman
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install codecov
+        run: pip install codecov
+      - name: Setup SDKMAN
+        run: |
+          [[ -d $HOME/.sdkman/ ]] && [[ -d $HOME/.sdkman/bin/ ]] || rm -rf $HOME/.sdkman/
+          curl -sL https://get.sdkman.io | bash
+          echo sdkman_auto_answer=true > $HOME/.sdkman/etc/config
+          echo sdkman_auto_selfupdate=true >> $HOME/.sdkman/etc/config
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+      - name: Update CA certificates
+        run: |
+          sudo dpkg --purge --force-depends ca-certificates-java || true
+          sudo apt-get update
+          sudo apt-get install ca-certificates-java
+          sudo update-ca-certificates -f
+      - name: Assemble
+        run: source ./config_build.sh && ./gradlew assemble -DexcludeBenchmark
+      - name: Run tests
+        run: source ./config_build.sh && ./run_tests.sh
+      - name: Build distributions
+        run: ./gradlew buildDistributions -DexcludeBenchmark
+      - name: Upload coverage
+        run: codecov
+      - name: Deploy to Bintray
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          # TODO: Configure Bintray deployment using bintray.json
+        env:
+          BINTRAY_USER: jbachorik
+          BINTRAY_KEY: I+Lvki1TM2pQPJEf75U098GSQexgjudOZ2TDCPSQEdGys7PdW7SIy5THiHYdCG+tO8dSKQ3FUXufDD1KzhHxEBSWUX1rpAgE3SGvxYwzAU+bl3FvoQzjb+WD69ya86h0TFM2fVOJsg4+iDimheHcD+7mCuYx3ga1dsi8lVjh38s=
+      - name: Gitter notification
+        if: always()
+        run: |
+          # TODO: Configure Gitter webhook notifications to https://webhooks.gitter.im/e/31a671345ecfdce18046

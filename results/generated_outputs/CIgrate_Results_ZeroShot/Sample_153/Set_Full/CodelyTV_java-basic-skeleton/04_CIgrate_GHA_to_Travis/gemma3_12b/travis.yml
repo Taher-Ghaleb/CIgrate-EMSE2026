@@ -1,0 +1,56 @@
+language: java
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.gradle/caches
+branches:
+  only:
+    - main
+    - develop
+    - /^(\([0-9]+\)\s)?(\w+\/)$/
+    - /^(\([0-9]+\)\s)?(\w+\/)\w+$/
+    - /^feature\/.+$/
+    - /^bugfix\/.+$/
+    - /^hotfix\/.+$/
+    - /^release\/.+$/
+    - /^release-candidate\/.+$/
+    - /^release-patch\/.+$/
+    - /^release-candidate-patch\/.+$/
+    - /^fix\/.+$/
+    - /^test\/.+$/
+    - /^doc\/.+$/
+    - /^refactor\/.+$/
+    - /^chore\/.+$/
+    - /^ci\/.+$/
+    - /^tools\/.+$/
+    - /^build\/.+$/
+    - /^config\/.+$/
+    - /^scripts\/.+$/
+    - /^data\/.+$/
+    - /^assets\/.+$/
+    - /^i18n\/.+$/
+    - /^locale\/.+$/
+    - /^qa\/.+$/
+    - /^staging\/.+$/
+    - /^tmp\/.+$/
+    - /^tmp-cache\/.+$/
+    - /^tmp-build\/.+$/
+    - /^tmp-deploy\/.+$/
+    - /^tmp-logs\/.+$/
+    - /^tmp-test\/.+$/
+    - /^tmp-work\/.+$/
+    - /^vendor\/.+$/
+    - /^modules\/.+$/
+    - /^packages\/.+$/
+    - /^plugins\/.+$/
+    - /^themes\/.+$/
+    - /^extensions\/.+$/
+    - /^components\/.+$/
+    - /^services\/.+$/
+    - /^api\/.+$/
+    - /^lib\/.+$/
+    - /^src\/.+$/
+    - /^test\/.+$/
+    - /^docs\/.+$/
+    - /^website\/.

@@ -1,0 +1,50 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y maven
+      - name: Build and test
+        run: |
+          mvn clean verify -P without-authentication
+      - name: Build and test (one way authentication)
+        run: |
+          mvn clean verify -P with-one-way-authentication
+      - name: Build and test (two way authentication by trusting each other)
+        run: |
+          mvn clean verify -P with-two-way-authentication-by-trusting-each-other
+      - name: Build and test (two way authentication by trusting root ca)
+        run: |
+          mvn clean verify -P with-two-way-authentication-by-trusting-root-ca
+```
+
+Note: The above workflow uses the `ubuntu-latest` image, which is a common choice for Java development. If you need a different image, you can replace it with the one you prefer. Also, the `cache-maven-dependencies` step uses the `actions/cache` action to cache Maven dependencies, which is a good practice to speed up the build process.

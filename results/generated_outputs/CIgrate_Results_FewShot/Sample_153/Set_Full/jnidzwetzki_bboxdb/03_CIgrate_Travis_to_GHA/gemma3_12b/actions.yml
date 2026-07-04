@@ -1,0 +1,42 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JAVA_VERSION: 8
+  ZK: apache-zookeeper-3.7.0-bin
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Install zookeeper
+        run: |
+          mkdir /tmp/zookeeper
+          wget https://archive.apache.org/dist/zookeeper/zookeeper-3.7.0-${{ env.ZK }}.tar.gz
+          tar xzf ${{ env.ZK }}.tar.gz -C /tmp/zookeeper
+          cp /tmp/zookeeper/${{ env.ZK }}/conf/zoo_sample.cfg /tmp/zookeeper/${{ env.ZK }}/conf/zoo.cfg
+          /tmp/zookeeper/${{ env.ZK }}/bin/zkServer.sh start
+          cat /tmp/zookeeper/${{ env.ZK }}/logs/*
+      - name: Change config
+        run: |
+          sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" conf/bboxdb.yaml
+          echo "#####################################################################"
+          cat conf/bboxdb.yaml
+          echo "#####################################################################"
+      - name: Create required directories
+        run: mkdir -p /tmp/bboxdb/data
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+      - name: Install Coverity Certificate
+        run: |
+          echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-

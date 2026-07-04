@@ -1,0 +1,17 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+branches:
+  only:
+    - main
+    - develop
+    - release/*
+    - hotfix/*
+    - feature/*
+script:
+  - chmod +x gradlew
+  - ./gradlew assemble

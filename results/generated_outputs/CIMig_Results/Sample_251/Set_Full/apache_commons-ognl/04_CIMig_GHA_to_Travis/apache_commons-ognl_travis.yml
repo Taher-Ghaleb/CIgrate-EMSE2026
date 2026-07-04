@@ -1,0 +1,13 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn -V clean test package
+script
+directories: ~/.maven-

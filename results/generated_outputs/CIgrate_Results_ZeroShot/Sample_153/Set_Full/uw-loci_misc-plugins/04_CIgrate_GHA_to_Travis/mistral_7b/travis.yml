@@ -1,0 +1,45 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - '**-[0-9]+.**'
+
+deploy:
+  on:
+    tags: true
+
+before_install:
+  - install: actions/checkout@v4
+
+services:
+  - docker: docker-latest
+
+before_script:
+  - run: |
+      apt-get update -y
+      apt-get install -y openjdk-8-jdk
+      export JAVA_HOME=$(which openjdk-8-jdk)
+      export PATH=$JAVA_HOME/bin:$PATH
+      export SECRET_1=${{ env.SECRET_1 }}
+      export SECRET_2=${{ env.SECRET_2 }}
+
+script:
+  - chmod +x .travis/build.sh
+  - .travis/build.sh
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_deploy:
+  # TODO: Add docker-compose and wait loop for services if needed
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - # TODO: Add deployment script

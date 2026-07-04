@@ -1,0 +1,41 @@
+language: java
+jdk:
+  - openjdk17
+
+env:
+  global:
+    - MAVEN_OPTS=-Xmx2500m
+    - DISPLAY=:99.0
+
+services:
+  - xvfb
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y p7zip-full
+  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+
+script:
+  - mvn package -q
+
+jobs:
+  include:
+    - stage: deploy
+      if: tag IS present
+      script:
+        - TAG_BRANCH=$(git ls-remote origin | sed -n "\|${TRAVIS_COMMIT}\s\+refs/heads/|{s///p}")
+        - echo "Tag branch: $TAG_BRANCH"
+        - if [[ "$TAG_BRANCH" =~ ^(master|master-11)$ ]]; then
+            echo "Deploying...";
+            sudo apt-get update;
+            sudo apt-get install -y p7zip-full;
+            chmod +x .github/deploy_prepare.sh;
+            ./.github/deploy_prepare.sh;
+            mvn package -q;
+            JAR_FILES=$(find . -path '*/target/*.jar' -type f);
+            echo "JAR files: $JAR_FILES";
+            # Create GitHub Release
+            # TODO: Implement GitHub Release using Travis CI deployment
+          else
+            echo "Not deploying, tag is not on master or master-11";
+          fi

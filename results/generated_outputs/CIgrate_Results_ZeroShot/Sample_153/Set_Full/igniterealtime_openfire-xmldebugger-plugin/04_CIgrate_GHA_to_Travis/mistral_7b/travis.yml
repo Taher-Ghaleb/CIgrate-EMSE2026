@@ -1,0 +1,75 @@
+language: java
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+before_install:
+  - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+
+script:
+  - mkdir -p $HOME/.m2 && cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+  - mvn clean verify
+
+before_deploy:
+  - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+
+deploy:
+  on:
+    repository: OWNER/REPO
+    branches:
+      only:
+        - main
+
+env:
+  global:
+    - MAVEN_DEPLOY_USERNAME: ${{ env.GITHUB_ACTOR }}
+    - MAVEN_DEPLOY_PASSWORD: ${{ secrets.MAVEN_DEPLOY_PASSWORD }}
+
+addons:
+  name: docker
+
+services:
+  - docker
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_install:
+  - java -version
+  - git -version
+
+install:
+  - java -version
+  - git -version
+
+script:
+  - java -version
+  - git -version
+
+matrix:
+  include:
+    - java:
+        - '8'
+
+before_deploy:
+  - java -version
+  - git -version
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+  script:
+    - mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml

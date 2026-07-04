@@ -1,0 +1,25 @@
+language: java
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+services:
+  - docker
+
+before_install:
+  - docker-compose up -d
+  - until docker-compose exec -T service_name curl -f http://localhost:service_port; do sleep 1; done
+
+install:
+  - mvn clean install
+
+script:
+  - mvn test
+
+branches:
+  only:
+    - main
+    - develop

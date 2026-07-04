@@ -1,0 +1,52 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+env:
+  CC_TEST_REPORTER_ID: $CC_TEST_REPORTER_ID
+  SLACK_WEBHOOK_URL: $SLACK_WEBHOOK_URL
+
+before_install:
+  - checkout: git
+
+install:
+  - name: Set up JDK
+    if: ${{ matrix.jdk }} in ['8', '9']
+    script: |
+      wget -qO- https://adoptopenjdk.jfrog.io/adoptopenjdk/api/v1/packages/archive/ubuntu/ | tar xz -C ~/adoptopenjdk
+      ln -sf ~/adoptopenjdk/openjdk-${{ matrix.jdk }}/bin/java java
+      ln -sf ~/adoptopenjdk/openjdk-${{ matrix.jdk }}/bin/javac javac
+
+  - name: Cache Gradle
+    cache: gradle
+
+  - name: Download CodeClimate test reporter (if JDK is 8)
+    if: ${{ matrix.jdk }} == '8'
+    script: |
+      curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+      chmod +x ./cc-test-reporter
+
+before_script:
+  - run: chmod +x gradlew
+
+script:
+  - name: CodeClimate before-build (if JDK is 8)
+    if: ${{ matrix.jdk }} == '8'
+    script: ./cc-test-reporter before-build
+
+  - name: Build and test
+    script: ./gradlew clean build jacocoTestReport
+
+  - name: Format coverage report (if JDK is 8)
+    if: always() && ${{ matrix.jdk }} == '8'
+    script: JACOCO

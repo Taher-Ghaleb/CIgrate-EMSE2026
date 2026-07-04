@@ -1,0 +1,21 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: main
+before_install:
+  java -version
+  mvn --batch-mode verify
+script:
+  script:
+    yarn run test
+after_success:
+  bash <(curl-cmd
+webhooks:
+  on_start: FALSE
+directories: ~/.maven-
+include:
+  stage: tests

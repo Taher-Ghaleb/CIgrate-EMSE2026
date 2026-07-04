@@ -1,0 +1,38 @@
+# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Ref (Optional)
+        required: false
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+#  schedule:
+#    - cron: '0 9 * * *'
+
+
+jobs:
+  build:
+    runs-on: Ubuntu-20.04
+    env:
+      AWS_REGION: eu-central-1
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Start localstack
+      run: ./gradlew startLocalStack
+    - name: Build with Gradle
+      run: ./gradlew build
+    - name: Stop localstack
+      run: ./gradlew stopLocalStack

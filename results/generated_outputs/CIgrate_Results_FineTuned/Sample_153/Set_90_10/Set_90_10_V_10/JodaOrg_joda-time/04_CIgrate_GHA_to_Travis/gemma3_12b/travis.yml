@@ -1,0 +1,42 @@
+language: java
+jdk:
+  - oraclejdk8
+install:
+  - mvn --version
+script:
+  - mvn install site -e -B
+before_cache:
+  - rm -rf $HOME/.m2/repository/org/joda/time
+cache:
+  directories:
+    - $HOME/.m2/repository
+notifications:
+  slack:
+    secure: "********************"
+deploy:
+  - provider: script
+    script: chmod +x ./.github/website.sh && ./ ./.github/website.sh
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: ${TRAVIS_TAG} =~ ^website$
+  - provider: script
+    script: chmod +x ./.github/website.sh && ./ ./.github/website.sh
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: ${TRAVIS_TAG} =~ ^v\d+\.\d+[a-zA-Z-_]+?(\.\d+[a-zA-Z-_]+?)+?$
+  - provider: pages
+    skip_cleanup: true
+    local_dir: target/staging
+    github_token: $GITHUB_TOKEN
+    on:
+      tags: true
+      condition: ${TRAVIS_TAG} =~ ^website$
+  - provider: pages
+    skip_cleanup: true
+    local_dir: target/staging
+    github_token: $GITHUB_TOKEN
+    on:
+      tags: true
+      condition: ${TRAVIS_TAG} =~ ^v\d+\.\d+[a-zA-Z-_]+?(\.\d+[a-zA-Z-_]+?)+?$

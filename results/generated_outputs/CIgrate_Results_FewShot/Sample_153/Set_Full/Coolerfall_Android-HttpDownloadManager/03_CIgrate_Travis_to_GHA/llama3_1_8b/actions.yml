@@ -1,0 +1,39 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  ANDROID_PLATFORM_TOOLS: platform-tools
+  ANDROID_TOOLS: tools
+  ANDROID_API_LEVEL: 28
+  ANDROID_BUILD_TOOLS_VERSION: 28.0.3
+  ANDROID_M2REPOSITORY: extra-android-m2repository
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platforms;android-$ANDROID_API_LEVEL"
+          sdkmanager "$ANDROID_TOOLS"
+          sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION"
+          sdkmanager "$ANDROID_M2REPOSITORY"
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Run build
+        run:./gradlew build
+```
+
+Note that I've used the `actions/checkout@v4` action to checkout the code, and the `actions/setup-java@v4` action to set up the JDK. I've also used the `android-actions/setup-android@v3` action to set up the Android SDK. The `sdkmanager` commands are used to install the required Android SDK components. The `chmod` command is used to make the `gradlew` script executable. Finally, the `./gradlew build` command is used to run the build.

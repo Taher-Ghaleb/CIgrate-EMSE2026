@@ -1,0 +1,61 @@
+language: java
+
+branches:
+  only:
+    - master
+    - branches/1.12.x
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - name: Set up JDK 8
+    script: |
+      curl -sSL https://get.sdkman.io | bash
+      sdk install java 8.0.292-redhat-294
+      java -version
+      sdk use java 8.0.292-redhat-294
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew setupCIWorkspace -S
+  - ./gradlew build
+  - ./gradlew javadoc
+
+before_deploy:
+  - if: $github.ref == 'refs/tags/'*
+    script: |
+      curl -sSL https://get.sdkman.io | bash
+      sdk install java 8.0.292-redhat-294
+      java -version
+      sdk use java 8.0.292-redhat-294
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - npm install -g peaceiris/actions-gh-pages@v4
+    - $GITHUB_TOKEN -c "npm run deploy"
+
+after_success:
+  - if: $github.ref == 'refs/heads/1.12.x'
+    cache:
+      directories:
+        - $HOME/.gradle
+
+after_failure:
+  - if: $github.ref == 'refs/heads/1.12.x'
+    cache:
+      directories:
+        - $HOME/.gradle

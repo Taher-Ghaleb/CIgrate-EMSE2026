@@ -1,0 +1,14 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+
+script:
+  - ant install
+
+before_script:
+  - ant test
+```
+
+This Travis CI configuration maintains the semantics of the GitHub Actions workflow, including the matrix strategy, the use of `actions/setup-java@v4` to set up the JDK, and the separation of the build and test phases into separate steps. The `ant install` command is run in the script phase, while the `ant test` command is run in the before_script phase to ensure that tests are run before the build. The fail-fast rule is not directly supported in Travis CI, so it is not included in the migration.

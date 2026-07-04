@@ -1,0 +1,60 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+    - /^(\([0-9]+|[a-z0-9]+)\)$/
+    - /^feature\/.+$/
+    - /^bugfix\/.+$/
+    - /^hotfix\/.+$/
+    - /^release\/.+$/
+    - /^fixup\/.+$/
+    - /^chore\/.+$/
+    - /^docs\/.+$/
+    - /^refactor\/.+$/
+    - /^test\/.+$/
+    - /^ci\/.+$/
+    - /^tools\/.+$/
+    - /^scripts\/.+$/
+    - /^i18n\/.+$/
+    - /^locale\/.+$/
+    - /^qa\/.+$/
+    - /^release\/.+$/
+    - /^staging\/.+$/
+    - /^support\/.+$/
+    - /^upgrade\/.+$/
+    - /^version\/.+$/
+    - /^experimental\/.+$/
+    - /^prototype\/.+$/
+    - /^sandbox\/.+$/
+    - /^tmp\/.+$/
+    - /^tmp-.*$/
+    - /^dev\/.+$/
+    - /^preprod\/.+$/
+    - /^qa\/.+$/
+    - /^qa-.*$/
+    - /^release-candidate\/.+$/
+    - /^release-candidate-.*$/
+    - /^beta\/.+$/
+    - /^beta-.*$/
+    - /^alpha\/.+$/
+    - /^alpha-.*$/
+    - /^nightly\/.+$/
+    - /^nightly-.*$/
+    - /^snapshot\/.+$/
+    - /^snapshot-.*$/
+    - /^rc\/.+$/
+    - /^rc-.*$/
+    - /^master\/.+$/
+    - /^origin\/.+$/
+    - /^remote\/.+$/
+    - /^trunk\/.+$/
+    - /^mainline\/.+$/
+    - /^stable\/.+$/
+    - /^latest\/.

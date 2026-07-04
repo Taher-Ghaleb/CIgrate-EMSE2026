@@ -1,0 +1,39 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - install: ${{ if eq(env.GITHUB_EVENT_NAME, 'pull_request') }}{{ actions/checkout@v4 }{% else %}true{% endif %}
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+env:
+  - JAVA_HOME=$({{ env.HOME }}/.sdkman/candidates/java/current)
+  - M2_HOME=$HOME/.sdkman/candidates/maven/current
+  - GIT_COMMIT=$GITHUB_SHA
+  - GIT_BRANCH=$GITHUB_REF_NAME
+
+before_script:
+  - java -version
+  - mvn -version
+
+script:
+  - mvn clean package
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - git tag -a ${GIT_TAG} -m "Deploying to production"
+    - git push origin ${GIT_TAG}

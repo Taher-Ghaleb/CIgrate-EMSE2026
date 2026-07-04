@@ -1,0 +1,22 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        java-version: ${{ matrix.java }}
+      env:
+        ci: TRUE
+    - name: Placeholder
+    - name: Placeholder
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run: ./gradlew build --scan -s
+

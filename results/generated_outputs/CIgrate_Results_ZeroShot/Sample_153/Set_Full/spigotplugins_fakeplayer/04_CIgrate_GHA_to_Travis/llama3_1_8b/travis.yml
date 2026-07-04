@@ -1,0 +1,71 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - mvn package -Dmaven.javadoc.skip=true -Dsource.skip=true -Dgpg.skip=true -B -ntp
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: implement deployment script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: implement deployment script"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: echo "TODO: implement deployment script"
+  on:
+    branch: never
+  skip_cleanup: true
+  environment:
+    name: production
+    matrix:
+      - java_version: 8
+        jdk: temurin
+  cache:
+    directories:
+      - ~/.m2/repository
+      - ~/.gradle/*
+      - $HOME/.npm
+  services:
+    - docker-compose
+  addons:
+    - travis-ci/emoji
+  notifications:
+    email:
+      on_success: false
+      on_failure: true
+  branches:
+    only:
+      - main
+  matrix:
+    allow_failures:
+      - java_version: 8
+        jdk: temurin
+  services:
+    - docker-compose
+  before_install:
+    - echo "Installing Maven"
+    - apt-get update && apt-get install -y maven
+  install:
+    - mvn --version
+  before_script:
+    - echo "Setting up JDK 8"
+    - export JAVA_HOME=/usr/lib/jvm/temurin-8
+    - export PATH=$JAVA_HOME/bin:$PATH
+  script:
+    - mvn package -Dmaven.javadoc.skip=true -Dsource.skip=true -Dgpg.skip=true -B -ntp

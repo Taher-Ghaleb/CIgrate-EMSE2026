@@ -1,0 +1,38 @@
+name: Java CI with Kubernetes
+
+on:
+  push:
+  pull_request:
+    branches:
+      - master
+      - qa
+
+env:
+  CHANGE_MINIKUBE_NONE_USER: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Before Script
+        run: |
+          unset _JAVA_OPTIONS
+          cd finish
+          chmod +x ../scripts/travisTest.sh
+      - name: Install Kubernetes and Minikube
+        run: |
+          sudo mount --make-rshared /
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+          chmod +x kubectl
+          sudo ln -s $(pwd)/kubectl /usr/local/bin/kubectl
+          wget https://github.com/kubernetes/minikube/releases/download/v0.28.2/minikube-linux-amd64 -q -O minikube
+          chmod +x minikube
+          sudo ln -s $(pwd)/minikube /usr/local/bin/minikube
+          sudo minikube start --vm-driver=none --bootstrapper=localkube
+      - name: Run Tests
+        run: ../scripts/travisTest.sh

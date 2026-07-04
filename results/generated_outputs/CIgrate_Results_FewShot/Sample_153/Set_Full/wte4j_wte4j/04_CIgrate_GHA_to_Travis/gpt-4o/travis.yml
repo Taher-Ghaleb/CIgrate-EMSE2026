@@ -1,0 +1,24 @@
+language: java
+jdk:
+  - openjdk7
+
+install: true
+
+script:
+  - mvn test -B
+
+before_deploy:
+  - if [[ "$TRAVIS_BRANCH" != $(git describe --tags --exact-match 2>/dev/null) && "$TRAVIS_EVENT_TYPE" == "push" ]]; then
+      echo "<settings><servers><server><id>ossrh</id><username>$OSSRH_USER</username><password>$OSSRH_PASS</password></server></servers></settings>" > ~/settings.xml;
+    fi
+
+deploy:
+  provider: script
+  script: mvn deploy --settings ~/settings.xml
+  on:
+    all_branches: true
+    condition: $TRAVIS_BRANCH != $(git describe --tags --exact-match 2>/dev/null) && $TRAVIS_EVENT_TYPE == "push"
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

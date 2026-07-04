@@ -1,0 +1,70 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - radixdlt-github/*  # TODO: filter branch names
+  pull_request:
+    branches:
+      - radixdlt-github/*  # TODO: filter branch names
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      sonarcloud:
+        image: sonarcloud/sonar-scanner-cli
+        options: --organization="radixdlt-github" --token=${{ secrets.SONAR_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+         ./gradlew --info --refresh-dependencies
+      - name: Run tests
+        run: |
+         ./gradlew check jacocoTestReport sonarqube --info --refresh-dependencies
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2/repository
+          key: ${{ runner.hash }}
+          restore-keys: |
+            $HOME/.m2/repository
+      - name: Clean cache
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Cache Sonar cache
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.sonar/cache
+          key: ${{ runner.hash }}
+          restore-keys: |
+            $HOME/.sonar/cache
+      - name: Cache Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle
+          key: ${{ runner.hash }}
+          restore-keys: |
+            $HOME/.gradle
+      - name: Cache Gradle wrapper cache
+        uses: actions/cache@v4
+        with:
+          path:.gradle
+          key: ${{ runner.hash }}
+          restore-keys: |
+           .gradle
+      - name: Run integration tests
+        run: |
+         ./gradlew integrationTest --refresh-dependencies
+      - name: Set environment variable
+        env:

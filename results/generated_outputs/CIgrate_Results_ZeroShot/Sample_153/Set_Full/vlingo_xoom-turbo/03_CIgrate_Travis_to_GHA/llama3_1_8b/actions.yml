@@ -1,0 +1,62 @@
+name: Java Maven Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - 'vlingo/*'
+  pull_request:
+    branches:
+      - main
+  tags:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        env:
+          MAVEN_OPTS: -Dmaven.repo.local=$HOME/.m2/repository
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: '11'
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: $HOME/.m2/repository
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install Maven dependencies
+      run: |
+        mvn dependency:clean install -B
+    - name: Build and deploy
+      run: |
+        mvn install -PTravisCI
+    - name: Deploy to Maven repository
+      run: |
+        mvn deploy -DskipTests
+    - name: Trigger dependencies
+      if: ${{ github.event.release || github.event.pull_request.merged == true }}
+      run: |
+        chmod u+x.travis/trigger_deps.sh
+       .travis/trigger_deps.sh
+    - name: Send notification
+      uses: ad-m/github-action-slack@v1
+        token: ${{ secrets.SLACK_TOKEN }}
+        channel: ${{ secrets.SLACK_CHANNEL }}
+        attachments: |
+          {
+            "color": "#36a64f",
+            "title": "Deployment successful",
+            "text": "The deployment was successful."
+          }
+```
+
+Note: The `secure` fields in the original configuration have been replaced with placeholders. You should replace them with your actual secrets.

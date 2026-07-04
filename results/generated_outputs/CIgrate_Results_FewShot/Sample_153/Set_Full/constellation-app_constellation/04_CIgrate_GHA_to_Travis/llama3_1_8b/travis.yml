@@ -1,0 +1,59 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+
+env:
+  matrix:
+    - RUNNER_IMAGE=constellationapplication/netbeans-runner:11.3
+
+sudo: required
+before_install:
+  - cat /etc/hosts # optionally check the content *before*
+  - sudo hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+  - cat /etc/hosts # optionally check the content *after*
+cache:
+  directories:
+    - '$HOME/.ivy2/cache'
+
+before_script:
+  - docker pull "${RUNNER_IMAGE}"
+  - docker run \
+    --mount "type=bind,source=${GITHUB_WORKSPACE},target=${GITHUB_WORKSPACE}" \
+    --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" \
+    --workdir "${GITHUB_WORKSPACE}" \
+    "${RUNNER_IMAGE}" \
+   .travis/run-tests.sh
+
+script:
+  -.travis/sonar.sh
+
+after_success:
+  - find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+
+deploy:
+  if: github.repository == 'constellation-app/constellation' && startsWith(github.ref,'refs/tags/')
+  permissions:
+    contents: write
+  on:
+    branch:'refs/tags/*'
+  script:
+    - uses: actions/checkout@v4
+    - uses: actions/download-artifact@v4
+      with:
+        name: constellation-distribution
+        path: dist/
+    - uses: softprops/action-gh-release@v2
+      with:
+        files: dist/constellation.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: zulip/github-actions-gitter@v1
+      with:
+        webhook-url: https://webhooks.gitter.im/e/82ac70bdb3f9e144d859
+        status: ${{ job.status }}
+```
+Note that I've removed the `build-and-test` job as it's not necessary in Travis CI, and the `deploy` job is now a separate

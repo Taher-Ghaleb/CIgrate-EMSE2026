@@ -1,0 +1,58 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - curl -sL https://github.com/ibm-openshift/ibm-java-jdk | sh -
+
+install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+before_script:
+  - java -version
+
+script:
+  - mvn -B -nsu verify
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploying to staging"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "Deploying to staging on failure"
+
+deploy:
+  - provider: script
+    script: echo "Deploying to production"
+    on:
+      branch: master
+      tags: true
+
+matrix:
+  include:
+    - java-version: '8'
+      os: linux
+      dist: ubuntu
+    - java-version: '11'
+      os: linux
+      dist: ubuntu
+  allow_failures:
+    - java-version: '8'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    recipients:
+      - user@example.com
+    on:
+      branch: master
+      tags: true

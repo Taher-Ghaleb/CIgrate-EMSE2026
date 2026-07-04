@@ -1,0 +1,54 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get update -qq
+
+install:
+  - ant -version
+  - if [ ! -d ~/.m2/repository ]; then actions/cache --key ~/.m2/repository --restore; fi
+  - if [ ! -d ~/.gradle ]; then actions/cache --key ~/.gradle --restore; fi
+  - if [ ! -d $HOME/.npm ]; then actions/cache --key $HOME/.npm --restore; fi
+
+script:
+  - actions/checkout@v4
+  - java -version
+  - ant -Dant.home=/usr/share/ant -Dant.buildfile=./framework/build.xml -f ./framework/build.xml test
+
+before_deploy:
+  - java -version
+
+deploy:
+  on:
+    tags: true
+  script:
+    - ant -Dant.home=/usr/share/ant -Dant.buildfile=./framework/build.xml -f ./framework/build.xml deploy
+
+deploy.github.on:
+  branches:
+    only:
+      - master
+    tags:
+      only: []
+  script:
+    - ant -Dant.home=/usr/share/ant -Dant.buildfile=./framework/build.xml -f ./framework/build.xml deploy
+
+matrix:
+  include:
+    - java_version: 8
+      os: linux
+  allow_failures:
+    - java_version: 8
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm

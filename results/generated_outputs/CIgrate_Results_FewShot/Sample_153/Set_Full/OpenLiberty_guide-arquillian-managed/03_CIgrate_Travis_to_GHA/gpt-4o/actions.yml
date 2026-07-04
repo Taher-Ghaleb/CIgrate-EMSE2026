@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - qa
+  pull_request:
+    branches:
+      - master
+      - qa
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unset _JAVA_OPTIONS and prepare environment
+        run: |
+          unset _JAVA_OPTIONS
+          cd finish
+          chmod +x ../scripts/travisTest.sh
+      - name: Run Travis test script
+        run: ../scripts/travisTest.sh
+      - name: Archive and upload server logs
+        run: |
+          serverName=$(target/liberty/wlp/bin/server list | cut -d '.' -f2| tr -d '\n')
+          cd target/liberty/wlp/usr/servers/"$serverName"/logs/
+          repo_name=$(echo "${{ github.repository }}" | sed -e "s/\//-/g")
+          if [ "${{ job.status }}" == 'success' ]; then result="passed"; else result="failed"; fi
+          serverlogsarchive="$repo_name-${{ github.run_number }}-$result.zip"
+          zip -r "$serverlogsarchive" .
+          curl -H "${{ secrets.JFROG_TOKEN }}" -T "$serverlogsarchive" "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"

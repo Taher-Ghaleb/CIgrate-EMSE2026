@@ -1,0 +1,37 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [8]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
+      - name: Install dependencies
+        run: mvn clean install -DskipTests -B -V
+
+      - name: Run tests
+        run: mvn test
+
+      - name: Check format
+        run: sh ./tools/check_format.sh
+
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)

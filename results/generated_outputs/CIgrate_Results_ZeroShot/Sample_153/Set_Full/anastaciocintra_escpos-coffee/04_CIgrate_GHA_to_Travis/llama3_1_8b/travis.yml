@@ -1,0 +1,64 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn -version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - mvn install --settings.travis/settings.xml -DskipTests -Dmaven.javadoc.skip=true -B
+
+after_success:
+  - echo "Deploying to Maven Central"
+  - mvn clean deploy --settings.travis/settings.xml -DskipTests=true -B
+
+after_failure:
+  - echo "Deployment failed"
+
+deploy:
+  on:
+    push:
+      branches:
+        only: master
+      if: true
+  environment:
+    OSSRH_USERNAME: $OSSRH_USERNAME
+    OSSRH_PASSWORD: $OSSRH_PASSWORD
+  script:
+    - mvn clean deploy --settings.travis/settings.xml -DskipTests=true -B
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: 'temurin'
+      cache:'maven'
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  services:
+    - docker-compose
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    on_nevermind: false
+```
+
+Note: The above configuration is a complete Travis CI configuration that maintains the same semantics as the original GitHub Actions workflow. It includes the necessary sections and properties, and it does not introduce any new tools or registries not present in the source.

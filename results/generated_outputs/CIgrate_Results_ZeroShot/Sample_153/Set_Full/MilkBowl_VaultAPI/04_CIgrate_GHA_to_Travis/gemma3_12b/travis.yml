@@ -1,0 +1,28 @@
+language: java
+jdk: 11
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+branches:
+  except:
+    - gh-pages
+os: ubuntu
+services:
+  - docker
+before_install:
+  - "export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"
+install:
+  - "mvn install -DskipTests=true"
+before_script:
+  - "chmod +x .utility/do-publish.sh"
+script:
+  - "mvn test"
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
+      chmod +x .utility/do-publish.sh
+      .utility/do-publish.sh
+      export SECRET_1=$SECRET_1
+      export SECRET_2=$SECRET_2
+      export SECRET_3=$SECRET_3
+    fi

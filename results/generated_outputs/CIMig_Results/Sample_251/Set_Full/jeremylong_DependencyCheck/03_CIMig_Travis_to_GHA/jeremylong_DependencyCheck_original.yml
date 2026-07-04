@@ -1,0 +1,31 @@
+with:
+  distribution: zulu
+
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push::
+    branches-ignore:
+      main
+      master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+      with:
+        target_branch: gh-pages
+        draft: TRUE
+        github-token: ${{ secrets.github_token }}
+        clean: TRUE
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+    run: mvn --settings .travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+    run: mvn --settings .travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+
+uses: actions/setup-java@version
+

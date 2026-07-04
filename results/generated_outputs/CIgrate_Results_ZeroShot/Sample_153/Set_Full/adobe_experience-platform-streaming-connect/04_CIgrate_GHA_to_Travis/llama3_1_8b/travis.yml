@@ -1,0 +1,58 @@
+language: java
+
+before_install:
+  - echo "Installing Docker"
+  - apt-get update && apt-get install -y docker.io
+  - usermod -aG docker $USER
+  - newgrp docker
+  - docker run --rm -d --name docker-docker -p 2375:2375 -v /var/run/docker.sock:/var/run/docker.sock -v /usr/local/bin/docker:/usr/local/bin/docker -v /var/lib/docker:/var/lib/docker --privileged docker:latest
+  - docker-compose up -d
+
+install:
+  - echo "Installing Java"
+  - apt-get update && apt-get install -y openjdk-8-jdk-headless
+  - echo "Installing Gradle"
+  - curl -s https://get.sdkman.io | sh && source $HOME/.sdkman/bin/sdkman-init.sh && sdk install gradle 7.4
+
+script:
+  - echo "Building with Gradle"
+  -./gradlew clean build
+
+after_success:
+  - echo "Deploying to production"
+  - curl -X POST \
+    https://api.github.com/repos/{owner}/{repo}/deployments \
+    -H 'Authorization: Bearer $GITHUB_TOKEN' \
+    -H 'Content-Type: application/json' \
+    -d '{"ref": "refs/heads/master", "environment": "production", "auto_merge": false, "push_connectivity": true}'
+
+after_failure:
+  - echo "Deploying to staging"
+  - curl -X POST \
+    https://api.github.com/repos/{owner}/{repo}/deployments \
+    -H 'Authorization: Bearer $GITHUB_TOKEN' \
+    -H 'Content-Type: application/json' \
+    -d '{"ref": "refs/heads/staging", "environment": "staging", "auto_merge": false, "push_connectivity": true}'
+
+deploy:
+  on:
+    tags:
+      - "v1.0"
+  environment:
+    name: production
+    matrix:
+      - java-version: "8"
+        branch: "master"
+      - java-version: "11"
+        branch: "main"
+  cache:
+    directories:
+      - ~/.gradle/caches
+      - ~/.gradle/wrapper
+  services:
+    - docker
+  before_script:
+    - echo "Setting up JDK"
+    - echo "Installing Docker"
+    - apt-get update && apt-get install -y docker.io
+    - usermod -a

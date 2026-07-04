@@ -1,0 +1,25 @@
+language: java
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+jobs:
+  include:
+    - stage: build
+      script:
+        - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+        - mkdir -p $HOME/.m2 && cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+        - mvn clean verify
+
+    - stage: deploy
+      if: branch = master AND type = push
+      script:
+        - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+        - mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml
+      env:
+        global:
+          - SECRET_1=$MAVEN_DEPLOY_USERNAME
+          - SECRET_2=$MAVEN_DEPLOY_PASSWORD

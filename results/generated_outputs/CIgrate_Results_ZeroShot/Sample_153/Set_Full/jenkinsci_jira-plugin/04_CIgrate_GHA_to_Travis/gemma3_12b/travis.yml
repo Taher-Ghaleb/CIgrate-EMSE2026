@@ -1,0 +1,46 @@
+language: java
+jdk:
+  - '8'
+  - '11'
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+    - ~/.sonar/cache
+branches:
+  only:
+    - main
+    - develop
+    - /^(\([0-9]+|[a-z0-9\-]+)\.?)?fix(\/\S+)?$/
+    - /^(\([0-9]+|[a-z0-9\-]+)\.?)?feature(\/\S+)?$/
+    - /^(\([0-9]+|[a-z0-9\-]+)\.?)?hotfix(\/\S+)?$/
+    - /^(\([0-9]+|[a-z0-9\-]+)\.?)?release(\/\S+)?$/
+script:
+  - mvn -Penable-jacoco -Dsonar.projectKey=jenkins-jira-plugin -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml clean verify
+  - mvn sonar:sonar
+  - rm -rf ~/.m2/repository/org/jenkins-ci/plugins/jira
+before_install:
+  - echo "Before install"
+  - # TODO: Add any pre-install steps if needed
+install:
+  - echo "Install"
+  - # TODO: Add any install steps if needed
+before_script:
+  - echo "Before script"
+  - # TODO: Add any pre-script steps if needed
+after_success:
+  - echo "After success"
+  - coverallsapp/github-action@v2
+    with:
+      github-token: $GITHUB_TOKEN
+      path-to-lcov: target/site/jacoco/jacoco.xml
+  - echo "Coverage uploaded"
+after_failure:
+  - echo "After failure"
+  - # TODO: Add any post-failure steps if needed
+env:
+  global:
+    GITHUB_TOKEN: $GITHUB_TOKEN
+    SONAR_TOKEN: $SONAR_TOKEN
+    SONAR_ORGANIZATION: warden

@@ -1,0 +1,11 @@
+language: java
+jdk:
+  - oraclejdk8
+script:
+  - echo 'Skipping separate install phase'
+  - mvn install -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+cache:
+  directories:
+    - $HOME/.m2

@@ -1,0 +1,48 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # TODO: consider using filters instead of explicit branch names
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies-
+      - name: Install dependencies
+        run: |
+         ./gradlew assemble
+      - name: Test
+        run: |
+         ./gradlew test
+      - name: Deploy
+        run: |
+          # TODO: implement deployment logic here
+      - name: Send notification
+        uses: actions/notification@v1  # TODO: consider using a more modern action
+        with:
+          title: Build and test completed
+          body: The build and test were successful.

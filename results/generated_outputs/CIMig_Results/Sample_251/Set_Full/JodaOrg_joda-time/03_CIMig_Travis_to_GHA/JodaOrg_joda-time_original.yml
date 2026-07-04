@@ -1,0 +1,28 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run:
+        if [[ $TRAVIS_TAG =~ ^website.*$ ]] && [ \"$TRAVIS_JDK_VERSION\" == \"oraclejdk8\" ]; then chmod +x ./.github/website.sh; .github/website.sh; fi
+        rm -rf $HOME/.m2/repository/org/joda/time
+        mvn --version
+
+macos:
+  jdk: openjdk8
+
+env:
+  github_token: ${{ github.token }}
+

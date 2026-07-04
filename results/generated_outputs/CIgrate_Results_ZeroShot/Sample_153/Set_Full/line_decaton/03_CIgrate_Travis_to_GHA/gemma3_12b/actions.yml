@@ -1,0 +1,38 @@
+name: Java Build and Test
+on:
+  push:
+  pull_request:
+  tags:
+    - '*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+          - openjdk11
+    env:
+      JAVA_HOME: '/opt/java'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: gradle-${{ hash }}
+          restore-keys: |
+            gradle-${{ hash }}
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper
+          key: gradle-wrapper
+          restore-keys: |
+            gradle-wrapper
+      - name: Gradle Build and Integration Test
+        run: ./gradlew build integrationTest

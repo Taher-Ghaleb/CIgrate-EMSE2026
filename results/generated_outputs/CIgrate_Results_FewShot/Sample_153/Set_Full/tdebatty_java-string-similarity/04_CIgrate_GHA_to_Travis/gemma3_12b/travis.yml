@@ -1,0 +1,12 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+jdk:
+  - openjdk8
+
+script:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
+  - mvn test
+  - mvn clean cobertura:cobertura coveralls:report

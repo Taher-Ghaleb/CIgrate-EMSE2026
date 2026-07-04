@@ -1,0 +1,32 @@
+language: java
+dist: trusty
+before_install:
+- rm -rf $HOME/.m2/repository/io/vlingo
+- cp .travis/settings.xml $HOME/.m2/settings.xml
+- mvn deploy:help versions:help help:help
+script:
+- mvn install -PTravisCI
+before_cache:
+- rm -rf $HOME/.m2/repository/io/vlingo
+cache:
+  directories:
+  - "$HOME/.m2/repository"
+deploy:
+  - provider: script
+    script: mvn deploy -DskipTests
+    skip_cleanup: true
+    on:
+      tags: true
+  - provider: script
+    script: mvn deploy -DskipTests
+    skip_cleanup: true
+    on:
+      branch: master
+  - key:
+    secure: "********************"
+after_deploy:
+- chmod u+x .travis/trigger_deps.sh
+- if [ -n "$TRAVIS_TAG" ]; then .travis/trigger_deps.sh; fi
+notifications:
+  slack:
+    secure: "********************"

@@ -1,0 +1,63 @@
+language: java
+
+branches:
+  except:
+    - /^r\d.*$/
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/*/*.lock
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/modules-2
+    - $HOME/.gradle/wrapper/dists
+
+install:
+  - ./gradlew --version # Display Gradle, Groovy, JVM and other versions
+
+jdk:
+  - openjdk11
+  - openjdk-ea
+
+os:
+  - linux
+  - osx
+
+matrix:
+  exclude:
+    - os: osx
+      jdk: openjdk-ea
+  allow_failures:
+    - jdk: openjdk-ea
+
+script:
+  - ./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+
+stages:
+  - test
+  - name: deploy
+    if: repo = junit-team/junit5 AND branch = master AND type = push
+
+jobs:
+  include:
+    - name: "Coverage"
+      script:
+        - ./gradlew --scan --stacktrace --warning-mode=all -PenableJaCoCo build jacocoRootReport
+        - bash <(curl -s https://codecov.io/bash)
+    - stage: deploy
+      name: "Publish snapshot artifacts"
+      env:
+        # ORG_GRADLE_PROJECT_ossrhUsername
+        - secure: "********************"
+        # ORG_GRADLE_PROJECT_ossrhPassword
+        - secure: "********************"
+      script: ./gradlew --scan publish -x check
+    - name: "Update snapshot documentation"
+      addons:
+        apt:
+          packages:
+            - graphviz
+      env:
+        # GRGIT_USER
+        - secure: "********************"
+      script: ./src/publishDocumentationSnapshotOnlyIfNecessary.sh

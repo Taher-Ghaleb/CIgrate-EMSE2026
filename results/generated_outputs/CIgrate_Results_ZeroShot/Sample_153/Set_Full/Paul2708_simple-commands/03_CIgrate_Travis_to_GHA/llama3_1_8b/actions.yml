@@ -1,0 +1,41 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - v*
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-8
+        options: --always-chown-outputs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+          mvn dependency:resolve
+      - name: Build and test
+        run: |
+          mvn clean install
+      - name: Run checkstyle
+        run: |
+          mvn checkstyle:check
+    after_success:
+      - name: Deploy to production
+        uses: your-deploy-action@v1
+          on:
+            branch: main
+          env:
+            FOO: ${{ secrets.FOO }}
+          # TODO: Add deploy to production logic here

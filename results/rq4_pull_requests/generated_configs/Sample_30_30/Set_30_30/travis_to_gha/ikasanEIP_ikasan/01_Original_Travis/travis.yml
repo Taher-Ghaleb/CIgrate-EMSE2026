@@ -1,0 +1,53 @@
+sudo: false
+arch: amd64          # optional, this is default, routes to a full VM
+os: linux            # optional, this is default
+dist: noble          # or jammy | focal | bionic | xenial | trusty | precise with xenial as default
+language: java
+jdk:
+   - openjdk17
+cache:
+  directories:
+  - $HOME/.m2
+  - $HOME/apache-maven-3.8.6
+
+## export GPG details
+before_install:
+  - echo use-agent >> ~/.gnupg/gpg.conf
+  - echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+  - echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+  - echo RELOADAGENT | gpg-connect-agent
+  - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import --no-tty --batch --yes
+  - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+  - export M2_HOME=$HOME/apache-maven-3.8.6
+  - if [ ! -d $M2_HOME/bin ]; then curl https://archive.apache.org/dist/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz | tar zxf - -C $HOME; fi
+  - export PATH=$M2_HOME/bin:$PATH
+
+install: skip
+
+script: mvn --file ikasaneip/pom.xml --settings .settings.xml clean install -Dmaven.javadoc.skip=true -Djava.security.egd=file:/dev/./urandom -Pall -B -V
+
+deploy:
+  # deploy develop 3.3.x to oss
+  - provider: script
+    skip_cleanup: true
+    script: mvn -quiet --file ikasaneip/pom.xml deploy -DskipTests=true -Djava.security.egd=file:/dev/./urandom -Pall -B  -V --settings .settings.xml
+    on:
+      branch: 3.3.x
+  # deploy develop 4.0.x to oss
+  - provider: script
+    skip_cleanup: true
+    script: mvn --file ikasaneip/pom.xml deploy -DskipTests=true -Djava.security.egd=file:/dev/./urandom -Pall -B  -V --settings .settings.xml
+    on:
+      branch: 4.0.x
+  # deploy develop 4.1.x to oss
+  - provider: script
+    skip_cleanup: true
+    script: mvn -quiet --file ikasaneip/pom.xml deploy -DskipTests=true -Djava.security.egd=file:/dev/./urandom -Pall -B  -V --settings .settings.xml
+    on:
+      branch: 4.1.x
+  # Push release to oss
+  - provider: script
+    skip_cleanup: true
+    script: mvn -quiet --file ikasaneip/pom.xml deploy -DskipTests=true -Djava.security.egd=file:/dev/./urandom -Pall,release-sign-artifacts -B  -V --settings .settings.xml
+    on:
+      tags: true

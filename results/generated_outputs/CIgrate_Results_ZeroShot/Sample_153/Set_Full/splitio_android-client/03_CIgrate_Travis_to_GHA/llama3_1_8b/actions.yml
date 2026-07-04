@@ -1,0 +1,54 @@
+name: Android Build and Test
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+      -'release/*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      android-emulator:
+        image: ghcr.io/microsoft/android-emulator:latest
+        privileged: true
+        ports:
+          - 5554:5554
+          - 5555:5555
+        env:
+          ANDROID_HOME: /home/runner/.android
+          ANDROID_SDK_TOOLS: /home/runner/.android/sdk
+          ANDROID_EMULATOR_HOME: /home/runner/.android/emulator
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Install Android SDK
+        run: |
+          echo "y" | android update sdk --all --no-ui --filter build-tools-29.0.2,android-29
+      - name: Install Android licenses
+        run: |
+          echo "y" | android licenses accept-all
+      - name: Install Gradle
+        run: |
+          curl -sL https://services.gradle.org/distributions/gradle-7.4.1/bin/gradle-7.4.1-linux | tar -xvz
+          export PATH=$PATH:/home/runner/.gradle/gradle-7.4.1/bin
+      - name: Build and test
+        run: |
+          cd project
+         ./gradlew test
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}
+          key: ${{ runner.hash }}
+          restore-keys: gradle-7.4.1
+```
+
+Note: The above workflow uses the `ubuntu-latest` runner, which is a good default choice for most cases. If you need a specific runner, you can replace `ubuntu-latest` with the desired runner.

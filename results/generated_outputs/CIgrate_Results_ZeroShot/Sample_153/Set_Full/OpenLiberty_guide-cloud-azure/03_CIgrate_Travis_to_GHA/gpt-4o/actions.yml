@@ -1,0 +1,54 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+      - qa
+  pull_request:
+    branches:
+      - master
+      - qa
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CHANGE_MINIKUBE_NONE_USER: true
+    services:
+      docker:
+        image: docker:stable-dind
+        options: --privileged
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Unset Java options
+        run: unset _JAVA_OPTIONS
+
+      - name: Change directory
+        run: cd finish
+
+      - name: Make script executable
+        run: chmod +x ../scripts/travisTest.sh
+
+      - name: Mount shared
+        run: sudo mount --make-rshared /
+
+      - name: Download kubectl
+        run: |
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+          chmod +x kubectl
+          sudo ln -s $(pwd)/kubectl /usr/local/bin/kubectl
+
+      - name: Download minikube
+        run: |
+          wget https://github.com/kubernetes/minikube/releases/download/v0.28.2/minikube-linux-amd64 -q -O minikube
+          chmod +x minikube
+          sudo ln -s $(pwd)/minikube /usr/local/bin/minikube
+
+      - name: Start minikube
+        run: sudo minikube start --vm-driver=none --bootstrapper=localkube
+
+      - name: Run tests
+        run: ../scripts/travisTest.sh

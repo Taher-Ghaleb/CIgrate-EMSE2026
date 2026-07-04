@@ -1,0 +1,31 @@
+language: bash
+sudo: required
+services:
+  - docker
+
+script:
+  - apt-get update
+  - apt-get install -qq raptor2-utils
+  - docker build -t atomgraph/processor .
+  - docker compose up -d
+
+before_script:
+  - echo "Waiting for processor-ct (8080)..."
+  - while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8080 | grep "404" ; do sleep 1 ; done
+  - echo "Waiting for processor-ct-write (8081)..."
+  - while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8081 | grep "404" ; do sleep 1 ; done
+  - echo "Waiting for processor-ngt (8082)..."
+  - while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8082 | grep "404" ; do sleep 1 ; done
+  - echo "Waiting for processor-ngt-write (8083)..."
+  - while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8083 | grep "404" ; do sleep 1 ; done
+  - echo "Waiting for processor-custom (8084)..."
+  - while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8084 | grep "404" ; do sleep 1 ; done
+  - echo "Waiting for processor-custom-write (8085)..."
+  - while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8085 | grep "404" ; do sleep 1 ; done
+  - echo "All services are ready!"
+
+after_success:
+  - bash ./run.sh
+
+after_script:
+  - docker compose down

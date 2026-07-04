@@ -1,0 +1,24 @@
+language: java
+sudo: false
+env:
+  matrix:
+    - JDK_VERSION=8
+
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+script:
+  - mvn -B -nsu verify
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+  except:
+    - release/*

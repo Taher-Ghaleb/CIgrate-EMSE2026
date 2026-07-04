@@ -1,0 +1,15 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+jdk: jdk8
+before_install:
+  java -version
+  mvn clean verify -e -B -V
+script
+apt:
+  packages: jdk-8-jdk
+directories: ~/.m2/repository
+include:
+  if: type in (pull_request, push)
+sudo: FALSE

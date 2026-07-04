@@ -1,0 +1,24 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push::
+    branches-ignore:
+      main
+      master
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      with:
+        arguments: check
+      run: ./gradlew check
+
+macos:
+  jdk: openjdk8
+

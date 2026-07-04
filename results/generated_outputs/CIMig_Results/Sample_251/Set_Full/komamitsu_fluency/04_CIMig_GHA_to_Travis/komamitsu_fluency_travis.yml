@@ -1,0 +1,20 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  chmod +x gradlew
+script:
+  script:
+    ./gradlew check jacocoTestReport coveralls --stacktrace --info
+include:
+  stage: tests
+allow_failures:
+  name: openjdk 11
+sonarcloud:
+  organization: powsybl-ci-github

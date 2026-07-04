@@ -1,0 +1,52 @@
+name: Android Build and Test
+
+on: [push, pull_request]
+
+env:
+  JDK_VERSION: oraclejdk8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      android:
+        image: android/sdkplatform27
+        name: Android SDK
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JDK_VERSION }}
+
+      - name: Check Gradle version
+        run: ./gradlew --version
+
+      - name: Setup Android SDK
+        uses: actions/setup-android@v4
+        with:
+          android-sdk-version: platform-27
+          android-sdk-components: tools,platform-tools,build-tools-26.0.2,android-23,extra-android-support,extra-android-m2repository,extra-google-m2repository,extra-google-google_play_services
+
+      - name: Setup Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os }}-gradle-cache
+          key: ${{ runner.os }}-gradle-${{ env.JDK_VERSION }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-${{ env.JDK_VERSION }}-
+
+      - name: Setup Android build cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.os }}-android-build-cache
+          key: ${{ runner.os }}-android-build-cache-${{ env.JDK_VERSION }}-${{ hashFiles('**/android/build-cache') }}
+          restore-keys: |
+            ${{ runner.os }}-android-build-cache-${{ env.JDK_VERSION }}-
+
+      - name: Clean and

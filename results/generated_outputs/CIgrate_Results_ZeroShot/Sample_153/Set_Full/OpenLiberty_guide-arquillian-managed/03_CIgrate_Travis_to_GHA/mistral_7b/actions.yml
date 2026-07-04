@@ -1,0 +1,71 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - qa
+  pull_request:
+    branches:
+      - master
+      - qa
+
+env:
+  JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      - name: Install dependencies
+        run: mvn clean install -DskipTests
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 14
+
+      - name: Install dependencies (Node.js)
+        run: npm ci
+
+      - name: Build and test
+        run: npm run test
+
+      - name: Cache Liberty server logs
+        uses: actions/cache@v4
+        with:
+          path: ~/.liberty
+          key: ${{ runner.os }}-liberty-${{ hashFiles('**/target/liberty') }}
+          restore-keys: |
+            ${{ runner.os }}-liberty-
+
+      - name: Build Liberty server
+        run: cd target/liberty && liberty build
+
+      - name: Deploy Liberty server
+        run: liberty deploy
+
+      - name: Archive Liberty server logs
+        run: |
+          serverName=$(target/liberty/wlp/bin/server list | cut -

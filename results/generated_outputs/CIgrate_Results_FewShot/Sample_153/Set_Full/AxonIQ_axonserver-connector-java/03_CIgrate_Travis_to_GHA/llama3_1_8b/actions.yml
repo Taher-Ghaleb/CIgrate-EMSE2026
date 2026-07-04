@@ -1,0 +1,35 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK_VERSIONS: '8,11'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: maven:3-jdk-11
+        env:
+          MAVEN_OPTS: -Xmx1024m
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+      - name: Install dependencies
+        run: chmod +x mvnw
+      - name: Run Maven
+        run: |
+          mvn -version
+          mvn -B -U -P ossrh clean verify
+```
+
+Note: The `jdk` section is not directly applicable in GitHub Actions, as the environment is already set to use the `maven:3-jdk-11` image, which includes both Java 8 and 11. The `services` section is used to run a Docker container, in this case, the Maven build process. The `before_install` section is not needed as the `install` section is set to `true`, which means the script will run after the installation. The `cache` section is used to cache the Maven dependencies.

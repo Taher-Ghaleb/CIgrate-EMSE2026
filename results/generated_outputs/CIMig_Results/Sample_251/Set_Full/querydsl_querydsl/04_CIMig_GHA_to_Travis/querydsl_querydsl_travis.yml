@@ -1,0 +1,22 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: *
+before_install:
+  java -version
+  mvn --batch-mode coveralls:report
+script:
+  script:
+    mvn deploy --settings deploy/.m2/settings.xml -DskipTests
+directories: ~/.m2/repository
+apt:
+  packages: jdk-8-jdk
+services: docker-compose --file travis/docker-compose.yml up --detach mysql postgresql mongo
+stage:
+  report-coverage
+  tests
+env: maven-_opts=-PATH-OR-URL.apache.maven-.cli.transfer.slf4jmaven-transferlistener=warn
+before_cache: rm -rf ~/.m2/repository/com/querydsl/

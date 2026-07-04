@@ -1,0 +1,63 @@
+language: java
+
+services:
+  docker:
+    image: ubuntu:latest
+
+branches:
+  only:
+    - r[0-9]**
+
+before_install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - echo "export GRADLE_HOME=/usr/lib/jvm/java-11/lib" >> ~/.bashrc
+  - echo "export PATH=\$PATH:\$GRADLE_HOME/bin" >> ~/.bashrc
+  - source ~/.bashrc
+  - gradle --version
+
+script:
+  - if [ "$TRAVIS_JDK_VERSION" == "ea" ]; then
+      distribution="oracle"
+    else
+      distribution="temurin"
+    fi
+  - gradle --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+
+after_success:
+  - if [ "$TRAVIS_JDK_VERSION" == "11" ]; then
+     ./gradlew --scan --stacktrace --warning-mode=all -PenableJaCoCo build jacocoRootReport
+    fi
+
+deploy:
+  on:
+    tags: true
+  environment:
+    OSSRH_USERNAME: $OSSRH_USERNAME
+    OSSRH_PASSWORD: $OSSRH_PASSWORD
+  before_deploy:
+    -./gradlew --scan publish -x check
+  after_deploy:
+    -./gradlew --scan publish -x check
+
+update-documentation:
+  on:
+    push:
+      branches:
+        only:
+          - master
+  environment:
+    GRGIT_USER: $GRGIT_USER
+  before_deploy:
+    -./src/publishDocumentationSnapshotOnlyIfNecessary.sh
+  after_deploy:
+    -./src/publishDocumentationSnapshotOnlyIfNecessary.sh
+
+notifications:
+  email:
+    recipients:
+      - junit-team@googlegroups.com
+    on_success: always
+    on_failure: always

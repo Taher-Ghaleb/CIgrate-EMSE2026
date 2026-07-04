@@ -1,0 +1,43 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    MAVEN_OPTS: "-Xmx2500m"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Install HDF5 library
+        uses: actions/setup-node@v4
+        with:
+          node-version: 14
+      - name: Install HDF5 library
+        run: |
+          wget https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10.5/src/Linux/hdf5-1.10.5.tar.gz
+          tar xvf hdf5-1.10.5.tar.gz
+          cd hdf5-1.10.5
+          ./configure --prefix=$HOME/silo
+          make -j$(nproc)
+          make install
+          ln -s $HOME/silo/lib/linux64/libjhdf5.so $HOME/silo/lib/linux64/libjhdf5.so
+      - name: Test with HDF5 library
+        run: mvn test -Dhdf5lib-absolute-path=$HOME/silo/lib/linux64/libjhdf5.so --fail-at-end --batch-mode -Dmatsim.preferLocalDtds=true

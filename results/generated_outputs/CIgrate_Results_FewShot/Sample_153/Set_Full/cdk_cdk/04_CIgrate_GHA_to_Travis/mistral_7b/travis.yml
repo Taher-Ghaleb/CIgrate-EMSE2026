@@ -1,0 +1,16 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+script:
+  - mvn clean verify
+
+cache:
+  directories:
+    - ~/.m2/repository

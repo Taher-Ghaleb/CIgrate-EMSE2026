@@ -1,0 +1,36 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        java-version: 1.8
+      with:
+        java-version: ${{ matrix.java }}
+    - name: placeholder_Name
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run:
+        mvn clean verify -Pscala-$SCALA_VERSION -Dflink.version=$FLINK_VERSION
+        rm -rf $HOME/.m2/repository/org/apache/flink/
+
+macos:
+  jdk: openjdk8
+
+env:
+  ci: TRUE
+

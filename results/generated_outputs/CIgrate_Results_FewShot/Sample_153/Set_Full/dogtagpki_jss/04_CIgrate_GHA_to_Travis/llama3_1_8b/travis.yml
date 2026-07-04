@@ -1,0 +1,18 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: generic
+sudo: required
+dist: fedora
+dist: 40
+before_install:
+  - dnf install -y dnf-plugins-core gcc make rpm-build
+  - dnf copr -y enable @pki/10.6
+script:
+  - /root/jss/build.sh --with-timestamp --with-commit-id rpm
+  - rpm -Uvh /root/build/jss/RPMS/*
+after_success:
+  - dnf clean all
+```
+
+Note: The `dist` key is used to specify the Fedora version, and `before_install` is used to install the build dependencies. The `script` key is used to run the build and test commands, and `after_success` is used to clean up the system.

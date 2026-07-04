@@ -1,0 +1,65 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  JDK_VERSION: oraclejdk8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JDK_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache
+          key: ${{ runner.os }}-java-${{ env.JDK_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-java-${{ env.JDK_VERSION }}
+
+      - name: Install and run tests
+        run: mvn clean test jacoco:report coveralls:report
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout settings.xml
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.ref }}
+          path: .travis.settings.xml
+
+      - name: Deploy
+        run: mvn deploy -Dmaven.test.skip=true --settings .travis.settings.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup
+        if: ${{ needs.build.succeeded }}
+        run: |
+          rm -rf .travis.settings.xml
+
+workflow:
+  resolves:
+    build: build
+  dispatch: build

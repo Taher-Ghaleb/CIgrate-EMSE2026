@@ -1,0 +1,56 @@
+language: java
+
+before_install:
+  - git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+
+install:
+  - mkdir -p $HOME/.m2 && cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+
+script:
+  - mvn clean verify
+
+deploy:
+  on:
+    push:
+      branches:
+        only:
+          - main
+  before_script:
+    - echo "Deploying to repository"
+  script:
+    - mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml
+  env:
+    MAVEN_DEPLOY_USERNAME: $MAVEN_DEPLOY_USERNAME
+    MAVEN_DEPLOY_PASSWORD: $MAVEN_DEPLOY_PASSWORD
+
+services:
+  - docker-compose
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle/*
+    - $HOME/.npm
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - your_email@example.com
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - os: ubuntu-latest
+      dist: temurin
+      java-version: 8
+
+before_script:
+  - echo "Setting up JDK 8"
+  - actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+      cache:'maven'

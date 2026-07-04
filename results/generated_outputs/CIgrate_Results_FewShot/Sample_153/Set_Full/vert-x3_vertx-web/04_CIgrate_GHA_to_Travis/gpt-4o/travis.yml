@@ -1,0 +1,70 @@
+language: java
+sudo: false
+
+env:
+  global:
+    - NODE_VERSION="lts/*"
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+branches:
+  only:
+    - master
+    - /\d+\.\d+/
+
+matrix:
+  include:
+    - jdk: openjdk8
+      env: JOB=test_jdk8
+    - jdk: openjdk11
+      env: JOB=test_jdk11
+      if: type != pull_request
+    - jdk: openjdk8
+      env: JOB=apollo_link_tests
+    - jdk: openjdk8
+      env: JOB=deploy_snapshots
+      if: type != pull_request
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+before_install:
+  - nvm install $NODE_VERSION
+  - nvm use $NODE_VERSION
+
+install: true
+
+before_script:
+  - if [ "$JOB" = "apollo_link_tests" ]; then
+      cd vertx-web-graphql;
+      mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer -Dexec.classpathScope=test > ${HOME}/ApolloTestsServer.log 2>&1 & echo $! > ${HOME}/ApolloTestsServer.pid;
+      ( tail -f ${HOME}/ApolloTestsServer.log & ) | grep -q "Apollo tests server started";
+    fi
+
+script:
+  - if [ "$JOB" = "test_jdk8" ] || [ "$JOB" = "test_jdk11" ]; then
+      mvn -q clean verify -B;
+    elif [ "$JOB" = "apollo_link_tests" ]; then
+      cd vertx-web-graphql/tests/apollo;
+      npm install;
+      npm run test;
+    elif [ "$JOB" = "deploy_snapshots" ]; then
+      chmod +x .travis.deploy.artifacts.sh;
+      if [ -n "$SONATYPE_NEXUS_USERNAME" ]; then
+        bash .travis.deploy.artifacts.sh;
+      fi;
+    fi
+
+after_failure:
+  - if [ "$JOB" = "apollo_link_tests" ]; then
+      cat ${HOME}/ApolloTestsServer.log;
+    fi
+
+after_script:
+  - if [ "$JOB" = "apollo_link_tests" ]; then
+      cat ${HOME}/ApolloTestsServer.pid | xargs kill -9 || true;
+    fi
+  - rm -rf $HOME/.m2/repository/io/vertx/

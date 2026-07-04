@@ -1,0 +1,61 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+  except:
+    - /^hotfix-/
+    - /^feature-/
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+before_install:
+  - key: setup-java
+    distribution: temurin
+    java_version: '8'
+    cache: maven
+
+script:
+  - checkout
+  - run: |
+      echo "$GPG_SECRET_KEYS" | base64 --decode | gpg --batch --import
+      echo "$GPG_OWNERTRUST" | base64 --decode | gpg --batch --import-ownertrust
+  - run: mvn test
+  - name: Generate coverage report and upload to Coveralls
+    if: success()
+    env:
+      COVERALLS_REPO_TOKEN: ${{ env.COVERALLS_REPO_TOKEN }}
+    run: mvn -B jacoco:report coveralls:report
+
+before_deploy:
+  - key: setup-java
+    distribution: temurin
+    java_version: '8'
+    cache: maven
+
+deploy:
+  on:
+    tags: true
+    branches:
+      only: master
+  if: github.repository == 'dhatim/safesql'
+  environment: deploy
+  script:
+    - run: |
+        echo "$GPG_SECRET_KEYS" | base64 --decode | gpg --batch --import
+        echo "$GPG_OWNERTRUST" | base64 --decode | gpg --batch --import-ownertrust
+    - run: chmod +x .deploy.sh
+    - run: ./.deploy.sh
+  addons:
+    sshkeys:
+      private_key: ${{ env.GPG_PRIVATE_KEY }}
+    docker:
+      - image: dhatim/safesql:latest
+        name: deploy
+        privileged: true
+        environment:
+          GPG_PASSPHRASE: ${{ env.GPG_PASSPHRASE }}
+          OSSR

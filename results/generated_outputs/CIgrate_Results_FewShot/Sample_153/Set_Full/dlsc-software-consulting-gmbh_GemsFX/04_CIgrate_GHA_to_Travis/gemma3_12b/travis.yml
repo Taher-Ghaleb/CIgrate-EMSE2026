@@ -1,0 +1,61 @@
+language: java
+sudo: required
+env:
+  MAVEN_OPTS: -Xmx2500m
+  DISPLAY: ':99.0'
+  
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+  
+before_install:
+  - apt-get update && apt-get install -y p7zip-full
+
+install:
+  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+
+script:
+  - mvn package -q
+
+deploy:
+  on:
+    tags: true
+  needs: build
+  jdk: openjdk17
+  
+  before_install:
+    - git ls-remote origin | sed -n "\|${{ github.sha }}\s\+refs/heads/|{s///p}" > tag_branch.txt
+    - TAG_BRANCH=$(cat tag_branch.txt)
+    - if [[ "${TAG_BRANCH}" =~ ^(master|master-11)$ ]]; then
+        echo "should_deploy=true"
+      else
+        echo "should_deploy=false"
+      fi
+    - echo "Tag branch: $TAG_BRANCH"
+  
+  install:
+    - if [ "$should_deploy" = "true" ]; then
+        apt-get update && apt-get install -y p7zip-full
+      fi
+  
+  before_script:
+    - if [ "$should_deploy" = "true" ]; then
+        chmod +x .github/deploy_prepare.sh
+        ./.github/deploy_prepare.sh
+      fi
+  
+  script:
+    - if [ "$should_deploy" = "true" ]; then
+        mvn package -q
+        find . -path '*/target/*.jar' -type f > jar_files.txt
+        JAR_FILES=$(cat jar_files.txt)
+        echo "jar_files<<EOF"
+        echo "$JAR_FILES"
+        echo "EOF"
+    fi
+  
+  after_success:
+    - if [ "$should_deploy" = "true" ]; then
+        curl -L https://github.com/softprops/action-gh-release/releases/download/v2/action-gh-release-linux-x64 | sudo tee /usr/local/bin/action-gh-release > /dev/null
+        action-gh-release --name "Release ${github.ref_name}" --body "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${TAG_BRANCH}/CHANGELOG.md)" --files javadoc.zip,$(cat jar_files.txt)
+    fi

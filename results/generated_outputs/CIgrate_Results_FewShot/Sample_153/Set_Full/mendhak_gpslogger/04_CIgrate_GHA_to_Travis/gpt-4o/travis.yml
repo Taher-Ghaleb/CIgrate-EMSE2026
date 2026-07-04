@@ -1,0 +1,27 @@
+language: android
+jdk: openjdk11
+
+sudo: required
+
+before_install:
+  - yes | sdkmanager --licenses
+
+android:
+  components:
+    - platform-tools
+    - build-tools-30.0.3
+    - android-30
+    - extra-android-m2repository
+    - extra-google-m2repository
+
+before_script:
+  - chmod +x gradlew
+  - ./gradlew --version
+
+script:
+  - ./gradlew assembleDebugUnitTest
+  - ./gradlew testDebugUnitTest
+
+cache:
+  directories:
+    - '$HOME/.android/build-cache'

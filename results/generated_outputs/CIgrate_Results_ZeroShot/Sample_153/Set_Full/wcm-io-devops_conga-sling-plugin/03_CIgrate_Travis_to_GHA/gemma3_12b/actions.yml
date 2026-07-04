@@ -1,0 +1,37 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+    env:
+      MAVEN_SETTINGS_FILE: ./.travis.maven-settings.xml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Install
+        run: mvn -s ${{ env.MAVEN_SETTINGS_FILE }} clean
+      - name: Script
+        run: mvn -s ${{ env.MAVEN_SETTINGS_FILE }} -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install
+      - name: Script - Example
+        run: mvn -s ${{ env.MAVEN_SETTINGS_FILE }} -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install -f example
+      - name: Cleanup
+        run: rm -rf $HOME/.m2/repository/io/wcm
+    if: always()
+  
+  coverage:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Codecov
+        run: bash <(curl -s https://codecov.io/bash)

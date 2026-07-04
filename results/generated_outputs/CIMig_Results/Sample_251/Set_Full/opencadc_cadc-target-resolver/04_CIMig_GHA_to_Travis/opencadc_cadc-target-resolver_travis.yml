@@ -1,0 +1,20 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+before_script:
+  mkdir docker && cp Dockerfile docker/ && cp build/libs/*.war docker/ && docker build -t opencadc/cadc-target-resolver:SNAPSHOT -t opencadc/cadc-target-resolver:alpine -t opencadc/cadc-target-resolver -f docker/Dockerfile docker/
+  wget-cmd
+script:
+  script:
+    gradle -i clean build test
+after_success:
+  bash <(curl-cmd
+apt:
+  packages: jdk-8-jdk
+services: docker-compose -f integrationTest/docker-compose.yml up -d && docker ps -a && docker-compose -f integrationTest/docker-compose.yml logs cadc-target-resolver.cadc.dao.nrc.ca && docker-compose -f integrationTest/docker-compose.yml logs proxy.cadc.dao.nrc.ca

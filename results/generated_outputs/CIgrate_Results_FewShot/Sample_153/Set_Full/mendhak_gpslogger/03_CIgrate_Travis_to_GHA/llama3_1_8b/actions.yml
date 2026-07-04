@@ -1,0 +1,54 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK: oraclejdk8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: '8'
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            $HOME/android-sdk-dl
+            $HOME/android-sdk
+          key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/android-sdk-dl') }}
+          restore-keys: ${{ runner.os }}-android-sdk-
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            $HOME/.gradle/caches/
+            $HOME/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+      - name: Cache Android build cache
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.android/build-cache
+          key: ${{ runner.os }}-android-build-cache-${{ hashFiles('**/build.gradle') }}
+          restore-keys: ${{ runner.os }}-android-build-cache-
+      - name: Check Gradle version
+        run:./gradlew --version
+      - name: Build and test
+        run: |
+          echo '"Build..."' && echo -en 'travis_fold:start:script.build\\r'
+         ./gradlew assembleDebugUnitTest -Dpre-dex=false
+          echo -en 'travis_fold:end:script.build\\r'
+      - name: Run tests
+        run:./gradlew testDebugUnitTest -Dpre-dex=false -q
+```
+
+Note that I've used the `actions/cache` action to cache the Android SDK, Gradle dependencies, and Android build cache, as well as the `hashFiles` function to generate unique keys for each cache. I've also used the `restore-keys` option to specify the keys to restore when the cache is restored.

@@ -1,0 +1,18 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: build with maven-
+      uses: actions/checkout@version
+      run: unset _JAVA_OPTIONS
+

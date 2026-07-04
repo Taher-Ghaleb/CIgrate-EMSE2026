@@ -1,0 +1,55 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    strategy:
+      matrix:
+        jdk: [8]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.jdk }}
+
+    - name: Cache Maven repository
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ github.workspace }}/.m2/repository
+          ${{ github.workspace }}/.sonar/cache
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    - name: Install dependencies
+      run: mvn install -DskipTests
+
+    - name: Build and test
+      run: |
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          mvn clean install
+        else
+          mvn clean verify sonar:sonar -Pcoverage
+        fi
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    # TODO: Add sonarcloud integration if needed

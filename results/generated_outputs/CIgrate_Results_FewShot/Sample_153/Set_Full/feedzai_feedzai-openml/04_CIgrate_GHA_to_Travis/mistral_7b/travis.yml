@@ -1,0 +1,37 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - master
+    - hf-*
+
+tags:
+  only:
+    - '[0-9]+.[0-9]+'
+    - '[0-9]+.[0-9]+.[0-9]+'
+    - '[0-9]+.[0-9]+-*'
+    - '[0-9]+.[0-9]+.[0-9]+-*'
+
+matrix:
+  cache:
+    - maven
+
+script:
+  - mvn test -B
+  - mvn pitmp:run
+
+after_success:
+  - chmod +x deploy/deploy.sh
+  - ./deploy/deploy.sh
+
+deploy:
+  needs: build
+  if: startsWith(github.ref, 'refs/tags/')
+  script:
+    - mvn test -B
+    - mvn pitmp:run
+    - chmod +x deploy/deploy.sh
+    - ./deploy/deploy.sh

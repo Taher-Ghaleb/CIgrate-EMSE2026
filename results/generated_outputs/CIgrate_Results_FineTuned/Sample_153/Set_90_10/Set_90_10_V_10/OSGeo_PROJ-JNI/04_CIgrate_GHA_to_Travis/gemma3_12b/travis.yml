@@ -1,0 +1,20 @@
+language: java
+sudo: false
+dist: xenial
+os: linux
+install:
+  - pwd
+  - ls
+  - echo $JAVA_HOME
+  - sudo apt-get update
+  - sudo apt-get install sqlite3
+  - wget https://download.osgeo.org/proj/proj-6.2.1.tar.gz
+  - tar xf proj-6.2.1.tar.gz
+  - cd proj-6.2.1
+  - ./configure
+  - NPROC=$(nproc)
+  - make -j${NPROC}
+  - sudo make install
+  - mvn package
+  - ls
+script: java --class-path target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java

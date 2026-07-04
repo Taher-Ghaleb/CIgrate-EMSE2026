@@ -1,0 +1,31 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+  python
+before_install:
+  echo ::add-path::${{ github.workspace }}/bin
+install:
+  TRUE
+before_script:
+  mkdir -p \"$HOME/.kube/
+  wget-cmd
+script:
+  script:
+    yarn run lint
+    cd tests/sdk/${{ matrix.language }} && go test -v -count=1 -cover -timeout 2h -parallel 4 ./...
+    python -m pip install pip twine
+    python-cmd
+after_success:
+  bash <(curl-cmd
+deploy:
+  github_token: $github_token
+stages:
+  prepare
+  test
+  publish
+sudo: FALSE
+email:
+  on_failure: always

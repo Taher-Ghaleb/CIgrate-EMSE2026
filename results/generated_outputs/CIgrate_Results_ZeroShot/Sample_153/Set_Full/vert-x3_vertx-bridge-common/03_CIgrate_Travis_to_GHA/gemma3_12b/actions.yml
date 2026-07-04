@@ -1,0 +1,46 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+      - /^\d+\.\d+$/
+  pull_request:
+    branches:
+      - master
+      - /^\d+\.\d+$/
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+          - openjdk11
+    stage: test
+    name: ${{ matrix.jdk }}
+    if: type != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - run: mvn -q clean verify -B
+
+  deploy:
+    stage: deploy
+    name: "Deploy to Sonatype's snapshots repository"
+    if: type != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash .travis.deploy.artifacts.sh
+
+notifications:
+  email:
+    recipients:
+      - vertx3-ci@googlegroups.com
+    on_success: always
+    on_failure: always

@@ -1,0 +1,85 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    env:
+      PROJ_VERSION: 9.4.1
+      PROJ_INSTALL_PREFIX: /usr/local
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: maven
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            sqlite3 \
+            libsqlite3-dev \
+            libtiff-dev \
+            libcurl4-openssl-dev \
+            pkg-config \
+            cmake \
+            build-essential
+      
+      - name: Cache PROJ build
+        id: cache-proj
+        uses: actions/cache@v4
+        with:
+          path: /usr/local
+          key: ${{ runner.os }}-proj-${{ env.PROJ_VERSION }}
+      
+      - name: Download and build PROJ
+        if: steps.cache-proj.outputs.cache-hit != 'true'
+        run: |
+          wget https://download.osgeo.org/proj/proj-${{ env.PROJ_VERSION }}.tar.gz
+          tar xf proj-${{ env.PROJ_VERSION }}.tar.gz
+          cd proj-${{ env.PROJ_VERSION }}
+          
+          mkdir build
+          cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ env.PROJ_INSTALL_PREFIX }}
+          
+          NPROC=$(nproc)
+          make -j${NPROC}
+          sudo make install
+      
+      - name: Configure library path
+        run: |
+          sudo ldconfig
+          echo "LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+      
+      - name: Verify PROJ installation
+        run: |
+          proj --version
+          pkg-config --modversion proj
+      
+      - name: Build PROJ-JNI
+        run: mvn clean package
+      
+      - name: Compile test example
+        run: javac -cp target/proj-1.0-SNAPSHOT.jar example/TransformPoints.java
+      
+      - name: Run tests
+        run: java -cp "target/proj-1.0-SNAPSHOT.jar:example" TransformPoints
+      
+      - name: Upload build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proj-jni-jar
+          path: target/proj-*.jar
+          retention-days: 7

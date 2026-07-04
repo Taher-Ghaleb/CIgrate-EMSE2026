@@ -1,0 +1,50 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+before_script:
+  - docker-compose pull
+  - docker-compose build --no-cache
+  - docker-compose run --rm --name selenium-chrome chrome --version
+  - docker-compose run --rm --name selenium-firefox firefox --version
+
+script:
+  - git clone --depth 1 https://github.com/primefaces/primefaces
+  - git clone --depth 1 https://github.com/primefaces-extensions/primefaces-selenium
+
+install:
+  - name: Set up JDK ${{ matrix.jdk }}
+    cache: directories
+    script: |
+      wget --quiet https://download.java.net/java/GA/jdk${{ matrix.jdk }}/${{ matrix.jdk }}_linux-x64_bin.tar.gz
+      tar -xzf ${{ matrix.jdk }}_linux-x64_bin.tar.gz -C /usr/local
+      export JAVA_HOME=/usr/local/jdk${{ matrix.jdk }}
+      export PATH=$JAVA_HOME/bin:$PATH
+
+  - name: Setup Chrome and ChromeDriver
+    cache: directories
+    script: |
+      wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+      sudo dpkg -i google-chrome-stable_current_amd64.deb
+      wget https://chromedriver.storage.googleapis.com/latest/chromedriver_linux64.zip
+      unzip chromedriver_linux64.zip
+      sudo mv chromedriver /usr/bin/
+
+  - name: Setup Firefox and GeckoDriver
+    cache: directories
+    script: |
+      wget https://download-files.mozilla.org/fire

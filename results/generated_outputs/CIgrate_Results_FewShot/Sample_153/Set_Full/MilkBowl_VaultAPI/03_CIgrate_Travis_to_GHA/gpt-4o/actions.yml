@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches-ignore:
+      - gh-pages
+  pull_request:
+    branches-ignore:
+      - gh-pages
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SECURE_VAR_1: ${{ secrets.SECURE_VAR_1 }}
+      SECURE_VAR_2: ${{ secrets.SECURE_VAR_2 }}
+      SECURE_VAR_3: ${{ secrets.SECURE_VAR_3 }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 7
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '7'
+      - name: Run after success script
+        run: .utility/do-publish.sh

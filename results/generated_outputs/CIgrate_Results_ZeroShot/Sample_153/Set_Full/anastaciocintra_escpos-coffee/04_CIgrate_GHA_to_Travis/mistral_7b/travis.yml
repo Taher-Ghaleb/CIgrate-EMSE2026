@@ -1,0 +1,58 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+jobs:
+  build:
+    before_install:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+          cache: 'maven'
+
+    script:
+      - mvn install --settings .travis/settings.xml -DskipTests -Dmaven.javadoc.skip=true -B
+
+  deploy:
+    depends_on: build
+    if: $TRAVIS_EVENT_TYPE == 'push' && $TRAVIS_BRANCH == 'master'
+
+    before_install:
+      - install: actions/checkout@v4
+
+    before_script:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temuris'
+          java-version: '8'
+          cache: 'maven'
+
+    script:
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: $GPG_PRIVATE_KEY
+          passphrase: $GPG_PASSPHRASE
+
+      - env:
+          OSSRH_USERNAME: $OSSRH_USERNAME
+          OSSRH_PASSWORD: $OSSRH_PASSWORD
+        run: mvn clean deploy --settings .travis/settings.xml -DskipTests=true -B
+
+deploy:
+  on:
+    tags: true
+  deploy:
+    provider: releases
+    api_key: $GITHUB_API_TOKEN
+    file: dist/my-artifact.jar
+    skip_cleanup: true

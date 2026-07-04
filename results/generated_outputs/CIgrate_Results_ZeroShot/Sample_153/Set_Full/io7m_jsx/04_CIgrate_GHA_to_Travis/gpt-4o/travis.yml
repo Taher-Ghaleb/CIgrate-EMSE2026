@@ -1,0 +1,33 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - main
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+services:
+  - docker
+
+before_install:
+  - git clone --depth=1 https://github.com/actions/checkout.git
+  - git clone --depth=1 https://github.com/actions/setup-java.git
+  - git clone --depth=1 https://github.com/codecov/codecov-action.git
+  - git clone --depth=1 https://github.com/rectalogic/notify-irc.git
+
+install:
+  - ./setup-java/setup-java.sh --distribution temurin --java-version 11 --cache maven
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f ./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml || echo "Codecov did not collect coverage reports"
+  - |
+    if [ "$TRAVIS_TEST_RESULT" = "0" ]; then
+      python notify-irc/notify-irc.py --server irc.libera.chat --port 6697 --channel '#io7m' --nickname travis-ci-jsx --message "[${TRAVIS_REPO_SLUG}] Build $TRAVIS_TEST_RESULT - $TRAVIS_COMMIT_MESSAGE ($TRAVIS_COMMIT)"
+    fi

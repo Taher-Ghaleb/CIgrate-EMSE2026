@@ -1,0 +1,21 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn -B package --file pom.xml
+script:
+  script:
+    mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+directories: ~/.maven-
+include:
+  if: type in (pull_request, push)
+global:
+  secure: token
+apt:
+  packages: jdk-8-jdk
+sonarcloud:
+  organization: jmrozanec-github

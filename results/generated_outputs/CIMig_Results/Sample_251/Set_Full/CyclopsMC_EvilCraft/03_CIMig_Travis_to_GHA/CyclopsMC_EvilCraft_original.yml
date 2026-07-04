@@ -1,0 +1,31 @@
+with:
+  distribution: zulu
+
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+      with:
+        clean: TRUE
+        draft: TRUE
+        server-id: sonatype-releases
+        dependencies-cache-enabled: FALSE
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run: ./gradlew uploadArchives -S
+
+env:
+  term: dumb
+  github_token: ${{ github.token }}
+
+uses: actions/setup-java@version
+

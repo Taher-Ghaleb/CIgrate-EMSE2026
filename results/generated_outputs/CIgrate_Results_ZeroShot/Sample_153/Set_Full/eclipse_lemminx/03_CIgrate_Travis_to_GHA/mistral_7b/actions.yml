@@ -1,0 +1,58 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Remove SNAPSHOT dependencies
+        run: |
+          rm -rf ~/.m2/repository/**/*-SNAPSHOT
+
+      - name: Install and run Maven
+        run: ./mvnw clean verify
+
+      - name: Upload coverage to SonarCloud (TODO: replace with SonarCloud action)
+        # TODO: Implement SonarCloud action
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    continue-on-error: true
+
+    # TODO: Implement SonarCloud action for SonarCloud notifications
+
+workflow:
+  branches:
+    branches:
+      - '*'
+    tags:
+      - '*'
+```
+
+This GitHub Actions workflow maintains the semantics of the provided Travis CI configuration while adhering to the specified migration rules. It includes a single job called `build-test` that runs on an Ubuntu runner, sets up JDK 8, caches Maven dependencies, removes SNAPSHOT dependencies, installs and runs Maven, and sends notifications via email (though the email action is not included due to the migration rule

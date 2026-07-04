@@ -1,0 +1,76 @@
+Here is the migrated Travis CI configuration:
+
+```yaml
+language: java
+jdk:
+  - oraclejdk8
+install: true
+script:
+  -./gradlew test
+  -./gradlew build
+  - mkdir -p src/main/resources
+  - echo "$BUILD_NUMBER" > src/main/resources/build.txt
+  - cat src/main/resources/build.txt
+after_success:
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test
+  -./gradlew build
+  -./gradlew test

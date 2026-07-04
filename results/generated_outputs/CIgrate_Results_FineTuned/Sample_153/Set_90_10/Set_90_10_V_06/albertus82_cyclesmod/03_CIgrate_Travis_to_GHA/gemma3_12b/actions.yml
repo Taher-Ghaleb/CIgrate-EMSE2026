@@ -1,0 +1,35 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-latest]
+        jdk: [oraclejdk11, oraclejdk8, openjdk7]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Before script
+        if: matrix.os == 'ubuntu-20.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ant-optional lib32ncurses5 lib32z1 openjdk-6-jdk
+          sudo add-apt-repository ppa:wine/wine-builds
+          sudo apt-get update
+          sudo apt-get install -y winehq-stable
+      - name: Before install (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install wine ant
+      - name: Before script diagnostics
+        run: ant -diagnostics
+      - name: Build
+        run: ant all

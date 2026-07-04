@@ -1,0 +1,32 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      env:
+        github_token: ${{ github.token }}
+      with: java-version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        java-version: ${{ matrix.java }}
+        prerelease: TRUE
+        server-id: sonatype-releases
+        clean: TRUE
+        draft: TRUE
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run: gradle build
+    - name: Placeholder
+    - name: Placeholder
+

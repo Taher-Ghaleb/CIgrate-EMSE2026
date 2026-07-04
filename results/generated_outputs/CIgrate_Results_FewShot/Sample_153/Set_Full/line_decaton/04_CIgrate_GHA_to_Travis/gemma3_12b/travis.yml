@@ -1,0 +1,21 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+branches:
+  only:
+    - main
+    - develop
+  except:
+    - /^feature\/.+$/
+matrix:
+  allow_failures: true
+cache:
+  directories:
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+before_install:
+  - chmod +x gradlew
+script:
+  - ./gradlew build integrationTest

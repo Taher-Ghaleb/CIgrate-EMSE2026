@@ -1,0 +1,17 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  sudo apt-get update && sudo apt-get install -qq raptor2-utils
+script:
+  script:
+    cd http-tests
+stages:
+  name: docker-cmd
+services: docker-compose down

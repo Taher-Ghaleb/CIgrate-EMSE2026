@@ -1,0 +1,41 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk9
+  
+matrix:
+  include:
+    - jdk-version: 8
+      distribution: zulu
+      name: Zulu 8 (Oracle JDK 8 equivalent)
+      jdk: openjdk8
+    - jdk-version: 8
+      distribution: temurin
+      name: Temurin 8 (OpenJDK 8)
+      jdk: openjdk8
+    - jdk-version: 9
+      distribution: zulu
+      name: Zulu 9 (Oracle JDK 9 - EOL)
+      jdk: openjdk9
+  
+  allow_failures: true
+  
+before_install:
+  - echo "Before install"
+  
+install:
+  - echo "Install"
+  
+before_script:
+  - echo "Before script"
+  
+script:
+  - chmod +x gradlew
+  - ./gradlew check
+  - ./gradlew runFunctionalTest
+  
+after_success:
+  - echo "After success"
+  
+after_failure:
+  - echo "After failure"

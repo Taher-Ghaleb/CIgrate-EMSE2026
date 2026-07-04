@@ -1,0 +1,24 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: build with maven-
+    run: mvn package -Dmaven.javadoc.skip=true -Dsource.skip=true -Dgpg.skip=true -B -ntp
+
+env:
+  ci: TRUE
+

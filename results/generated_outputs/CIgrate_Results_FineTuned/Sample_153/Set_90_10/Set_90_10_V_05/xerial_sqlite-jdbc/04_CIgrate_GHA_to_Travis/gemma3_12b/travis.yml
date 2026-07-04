@@ -1,0 +1,14 @@
+language: java
+jdk:
+  - openjdk6
+  - openjdk7
+  - openjdk7
+  - openjdk8
+env:
+  - DISTRIBUTION=zulu
+  - DISTRIBUTION=temurin
+script: mvn -q -B test
+branches:
+  only:
+  - master
+  - develop

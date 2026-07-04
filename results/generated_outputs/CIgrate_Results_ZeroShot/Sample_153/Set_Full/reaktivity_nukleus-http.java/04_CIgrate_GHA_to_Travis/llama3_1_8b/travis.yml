@@ -1,0 +1,61 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - apt-get update
+  - apt-get install -y default-jdk:8
+
+install:
+  - echo "Installing Maven"
+  - apt-get install -y maven
+
+before_script:
+  - echo "Setting up Maven cache"
+  - mkdir -p ~/.m2/repository
+
+script:
+  - echo "Verifying with Maven"
+  - mvn -B -nsu verify
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: implement deployment script"
+
+deploy:
+  provider: script
+  on:
+    tags: true
+  script:
+    - echo "Deploying to production"
+    - echo "TODO: implement deployment script"
+
+matrix:
+  include:
+    - java-version: '8'
+      os: linux
+      dist: ubuntu
+      cache: true
+  allow_failures: true
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - 'ppa:openjdk/ppa'
+
+branches:
+  only:
+    - main
+    - feature/new-feature
+  except:
+    - release/**
+    -'release/**'
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com

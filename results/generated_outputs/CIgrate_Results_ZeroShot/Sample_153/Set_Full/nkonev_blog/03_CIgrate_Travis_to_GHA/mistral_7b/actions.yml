@@ -1,0 +1,66 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  JAVA_HOME: ${{ secrets.JAVA_HOME }}
+  DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  CONNECT_LINE: ${{ secrets.CONNECT_LINE }}
+  UPDATE_COMMAND: ${{ secrets.UPDATE_COMMAND }}
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    strategy:
+      matrix:
+        jdk:
+          - openjdk13
+        node:
+          - 14
+          - 12
+        python:
+          - 3.8
+          - 3.7
+        go:
+          - 1.15
+          - 1.14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          distribution-version: ${{ matrix.jdk }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Update and Install Dependencies
+        run: sudo apt update && sudo apt install -y chromium-browser
+        env:
+          encrypted_7051ac01cf89_key: ${{ secrets.encrypted_7051ac01cf89_key }}
+          encrypted_7051ac01cf89_iv: ${{

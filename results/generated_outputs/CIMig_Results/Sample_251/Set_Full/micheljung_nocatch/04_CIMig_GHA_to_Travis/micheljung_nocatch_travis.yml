@@ -1,0 +1,15 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: main
+before_install:
+  chmod +x gradlew
+script:
+  script:
+    ./gradlew build
+include:
+  stage: Build

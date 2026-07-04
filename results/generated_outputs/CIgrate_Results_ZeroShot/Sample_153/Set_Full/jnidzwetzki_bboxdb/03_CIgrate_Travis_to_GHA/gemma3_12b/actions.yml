@@ -1,0 +1,43 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ZK: "apache-zookeeper-3.7.0-bin"
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Install zookeeper
+        run: |
+          mkdir /tmp/zookeeper
+          wget https://archive.apache.org/dist/zookeeper/zookeeper-3.7.0/$ZK.tar.gz
+          tar xzf $ZK.tar.gz -C /tmp/zookeeper
+          cp /tmp/zookeeper/$ZK/conf/zoo_sample.cfg /tmp/zookeeper/$ZK/conf/zoo.cfg
+          /tmp/zookeeper/$ZK/bin/zkServer.sh start
+          cat /tmp/zookeeper/$ZK/logs/*
+      - name: Configure
+        run: |
+          sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" conf/bboxdb.yaml
+          echo "#####################################################################"
+          cat conf/bboxdb.yaml
+          echo "#####################################################################"
+      - name: Create directories
+        run: mkdir -p /tmp/bboxdb/data
+      - name: Codecov
+        if: always()
+        run: bash <(curl -s https://codecov.io/bash)
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2

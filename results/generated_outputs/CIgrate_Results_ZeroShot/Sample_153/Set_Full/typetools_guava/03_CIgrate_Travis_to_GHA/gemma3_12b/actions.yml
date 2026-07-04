@@ -1,0 +1,48 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+    branches:
+      - master
+      - /^release\..*$/
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk8
+          - openjdk11
+        root_pom:
+          - pom.xml
+          - android/pom.xml
+    env:
+      global:
+        - secure: "********************"
+        - secure: "********************"
+        - secure: "********************"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install
+        run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f ${{ matrix.root_pom }}
+      - name: Script
+        run: |
+          mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f ${{ matrix.root_pom }}
+          travis_wait 60
+      - name: After Success
+        if: success()
+        run: |
+          ./util/deploy_snapshot.sh
+          ./util/update_snapshot_docs.sh
+      - name: After Failure
+        if: failure()
+        run: ./util/print_surefire_reports.sh
+    cache:
+      path: ~/.m2
+      key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}

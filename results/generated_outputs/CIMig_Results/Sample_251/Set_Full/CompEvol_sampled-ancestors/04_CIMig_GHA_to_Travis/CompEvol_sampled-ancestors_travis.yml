@@ -1,0 +1,9 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+services: docker build -t tests .

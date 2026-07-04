@@ -1,0 +1,19 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  chmod +x gradlew
+script:
+  script:
+    ./gradlew build -x dependencyCheckAnalyze
+include:
+  if: type in (pull_request, push)
+apt:
+  packages: jdk-8-jdk

@@ -1,0 +1,44 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: localstack
+      AWS_SECRET_ACCESS_KEY: localstack
+      AWS_DEFAULT_REGION: eu-central-1
+    services:
+      docker:
+        image: localstack/localstack
+        options: --entrypoint /bin/sh
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Install dependencies
+        run: /bin/true
+
+      - name: Run tests
+        run: ./gradlew check
+
+      - name: Generate code coverage report
+        if: success()
+        run: ./gradlew jacocoRootReport
+
+      - name: Upload to Codecov
+        if: success()
+        run: bash <(curl -s https://codecov.io/bash)

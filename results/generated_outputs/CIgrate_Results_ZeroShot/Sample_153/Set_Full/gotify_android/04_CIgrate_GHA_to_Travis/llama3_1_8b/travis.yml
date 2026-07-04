@@ -1,0 +1,52 @@
+language: java
+
+services:
+  android:
+    image: android/android-emulator:latest
+    command: emulator -avd Android_28
+
+before_install:
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk
+  - apt-get install -y android-sdk
+  - add-apt-repository ppa:maarten-fonville/android-sdk
+  - apt-get update
+  - apt-get install -y android-sdk-platform-tools
+  - apt-get install -y android-sdk-build-tools
+  - apt-get install -y android-sdk-extras
+
+install:
+  - sdkmanager "platform-tools"
+  - sdkmanager "build-tools;28.0.3"
+  - sdkmanager "platforms;android-28"
+  - sdkmanager "extras;google;m2repository"
+  - sdkmanager "extras;android;m2repository"
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  -./gradlew clean build --stacktrace
+
+after_success:
+  -./gradlew assembleRelease --stacktrace
+
+deploy:
+  on:
+    tags: true
+  if: startsWith(github.ref,'refs/tags/') && github.repository == 'gotify/android'
+  before_deploy:
+    - apt-get update
+    - apt-get install -y openjdk-8-jdk
+    - apt-get install -y android-sdk
+    - add-apt-repository ppa:maarten-fonville/android-sdk
+    - apt-get update
+    - apt-get install -y android-sdk-platform-tools
+    - apt-get install -y android-sdk-build-tools
+    - apt-get install -y android-sdk-extras
+  deploy:
+    -./gradlew clean assembleRelease --stacktrace
+    - openssl aes-256-cbc -K "$KEYSTORE_KEY" -iv "$KEYSTORE_IV" -in gotify-release-key.jks.enc -out gotify-release-key.jks -d
+    - jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore gotify-release-key.jks -storepass "$STOREPASS" -keypass "$KEYPASS" app/build/outputs/apk/release/app-release-unsigned.apk gotify-release-key
+    - jarsigner -verify app/build/outputs/apk/release/app-release-unsigned.apk
+    - "${ANDROID_HOME}/build-tools/28.0.3/zipalign" -v 4 app/build/outputs/apk

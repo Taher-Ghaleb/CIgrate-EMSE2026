@@ -1,0 +1,29 @@
+Migrate this GitHub Actions workflow to a complete Travis CI YAML configuration.
+
+# OUTPUT RULES:
+- Output YAML only (no prose).
+- Do NOT output a snippet only.
+- Must not start with just "script:".
+- Must start with "language".
+- Needs to be complete migrated Travis CI configuration YAML output.
+- Your output MUST include: language and script.
+- Use Travis lifecycle keys (before_install, install, before_script, script, after_success/failure, deploy) as needed.
+
+# MIGRATION RULES:
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map jobs/steps -> Travis lifecycle; strategy.matrix -> language versions or matrix.include; continue-on-error -> matrix.allow_failures.
+- Env: ${{ secrets.FOO }} -> $FOO (assume configured).
+- Caches: actions/cache -> cache: directories (e.g., ~/.m2/repository, ~/.gradle/*, $HOME/.npm).
+- Services: GHA services -> Travis services/addons; keep docker-compose and wait loops in hooks.
+- Triggers: on: branches/tags -> branches: only/except; releases -> deploy.on.tags: true.
+- Do NOT introduce tools/registries not in the source. If no 1 to 1 equivalent, add a short "# TODO:".
+- Maintain 1 to 1, JDK, Git version numbers, branch names as in source. Do not introduce new names or brances or numbers.
+- DO NOT repeat to sequence JDK or git version numbers, use as given in the Github Actions and stick to it.
+- DO NOT repeat sections, like deploy, script, before_install, install, matrix etc. MUST NOT be duplicated.
+- DO NOT repeat the child properties as well in a section like inside matrix and others.
+
+{{ FEW_SHOT_EXAMPLES }}
+
+Now migrate below input section Github Actions workflow to equivalent complete Travis CI configuration and return ONLY the complete .travis.yml maintaining the above OUTPUT and MIGRATION rules:
+
+{{ INPUT_CODE }}

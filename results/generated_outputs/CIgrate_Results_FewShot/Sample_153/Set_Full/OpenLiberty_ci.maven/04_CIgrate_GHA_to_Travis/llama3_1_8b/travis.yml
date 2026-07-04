@@ -1,0 +1,33 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+install: true
+timeout-minutes: 45
+fail-fast: false
+max-parallel: 4
+jdk:
+  - openjdk8
+  - openjdk11
+script:
+  - echo "Deleting old.m2 artifacts..."
+  - rm -rf $HOME/.m2/repository/net/wasdev
+  - rm -rf $HOME/.m2/repository/io/openliberty
+  - echo 'Installing ci.common lib...'
+  - git clone https://github.com/OpenLiberty/ci.common.git./ci.common
+  - cd./ci.common
+  - mvn clean install
+  - cd..
+  - mvn verify -Ponline-its -Dinvoker.streamLogs=true \
+    -Druntime=ol \
+    -DruntimeVersion=19.0.0.6
+  - mvn verify -Ponline-its -Dinvoker.streamLogs=true \
+    -Druntime=wlp \
+    -DruntimeVersion=19.0.0.3
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that I've removed the `matrix` section as it's not directly equivalent in Travis CI. Instead, I've duplicated the `script` section to run the `mvn verify` command for each combination of `runtime` and `runtime-version`.

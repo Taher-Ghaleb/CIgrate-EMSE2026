@@ -1,0 +1,30 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        java-version:
+          ${{ matrix.java }}
+          1.8
+    - name: Placeholder
+    - name: set up jdk 1.8
+      uses: actions/checkout@version
+      with: java-version
+      uses: actions/setup-java@version
+      run:
+        mvn -version
+        docker
+        chmod +x mvnw
+
+env:
+  ci: TRUE
+

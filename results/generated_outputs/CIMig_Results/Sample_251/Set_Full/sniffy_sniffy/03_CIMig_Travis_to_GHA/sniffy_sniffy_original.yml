@@ -1,0 +1,42 @@
+matrix:
+  language: java
+  os:
+    windows-latest
+    ubuntu-latest
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        java-version:
+          ${{ matrix.java }}
+          1.8
+        path: ~/.maven-~/.sonar/cache\n!**/*edelta*\n
+      env:
+        ci: TRUE
+        github_token: ${{ github.token }}
+      with: key
+      with: java-version
+      uses: actions/setup-java@version
+    - name: set up jdk 1.8
+      uses: actions/checkout@version
+    run: mvn clean package jacoco:report coveralls:report sonar:sonar -U
+
+macos:
+  jdk: oraclejdk8
+

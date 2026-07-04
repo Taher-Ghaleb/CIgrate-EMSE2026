@@ -1,0 +1,38 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+env:
+  matrix:
+    - ARCH=$(uname -m)
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y gcc-arm-linux-gnueabihf
+
+script:
+  - echo "Architecture: $ARCH"
+  - echo "Java Home: $JAVA_HOME"
+  - java -version
+  - mvn -version
+  - mvn clean install -Drelease-build
+
+deploy:
+  on:
+    tags: true
+  script:
+    - mvn deploy
+
+after_success:
+  - actions/upload-artifact@v4 \
+    - name: build-artifacts \
+      path: |
+        **/target/*.jar \
+        **/target/*.war \
+      retention-days: 7

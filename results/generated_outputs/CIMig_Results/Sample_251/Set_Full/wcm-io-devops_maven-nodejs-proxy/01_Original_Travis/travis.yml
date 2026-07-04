@@ -1,0 +1,22 @@
+
+language: java
+
+jdk:
+- oraclejdk8
+
+sudo: false
+
+install: "mvn -s ./.travis.maven-settings.xml clean"
+
+script:
+- "mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install"
+- rm -rf $HOME/.m2/repository/io/wcm
+
+branches:
+  except:
+  - /^.*\-\d+(\.\d+\.\d+)?(\..*|\-.*)?$/
+
+cache:
+  directories:
+  - '$HOME/.m2/repository'
+

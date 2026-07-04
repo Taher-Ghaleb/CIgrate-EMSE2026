@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - '**-[0-9]+.**'
+  pull_request:
+    branches:
+      - master
+      - '**-[0-9]+.**'
+
+env:
+  SECRET_1: Opsl2dwJiaSAz6Ys2MFoP/pipdabp1WGNgGOuF0xuuzNLHUBWE6BFXJPKIE40qfSqOOjyWWooXn4Pj/6yMpmJn3o1ywKTvBRex5RdCCkOtmal6YmpKB1t41R8zMYqRrHupKvZWgbTM4OaXSoBq205ov2ChSvlhL8bv9c02pbOVQ=
+  SECRET_2: epi748ryQFhLW8woW0U8zYCng3sFSP61JSXqsHr/JZ90sZEhPQcc8H7C5tx1uvBAvTai0JnXgjaU7ai4kRfdbPoodhIF1sY97GW7HYdXUoZeTpxU1y8EyGX7YhmuZcNZlckQyyOn9jHr4qHi7NYiRQh8VqbMJxR/gQARpJBA1o4=
+  SECRET_3: TPnUJQmRV6YAwccdMQDMMawRYFJvJW35xIQsAXybqPkaO+b7idIS5YqF5jHWJ+YhwSoeKMg35i5dsqlP4Co2SzhxiyR2geAoublAttl6ODpVFJUuT8CdPdck8Yi5ZCpLXTsl/0ql0lNTav6z1FQ9od1F5mvC4QPiw/dcFI//eMc=
+  SECRET_4: tZj87LHyeRXJCf00Pn6ayRXQhDd0B+b2ZecZqA/ZNXqenuPVw1ztVqmujKfU1OWIOUxmKHHW9sNuxdPDDwZ3rwe9SXu9VNZ28bCIv9Oqdo/lfA+cSz6RH5tsy4yrJSAt4dVyJgqu19aAMiBoOjSj6s0vQud3smAl/EZVuBzNxEA=
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Run build script
+        run: .travis/build.sh

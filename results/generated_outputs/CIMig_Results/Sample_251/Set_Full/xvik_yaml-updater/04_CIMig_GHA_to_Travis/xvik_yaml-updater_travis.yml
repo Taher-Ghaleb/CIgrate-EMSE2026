@@ -1,0 +1,18 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  chmod +x gradlew\n./gradlew assemble --no-daemon\n
+script:
+  script:
+    yarn run test
+    ./gradlew check --no-daemon
+name: placeholder_Name
+tags: TRUE
+include:
+  if: type in (pull_request, push)
+  stage: Build

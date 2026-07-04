@@ -1,0 +1,27 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      with: java-version
+      uses: actions/setup-java@version
+      env:
+        ci: TRUE
+        github_token: ${{ github.token }}
+      uses: actions/checkout@version
+      run:
+        mvn -version
+        mvn -version
+    - name: Placeholder
+
+macos:
+  jdk: openjdk8
+

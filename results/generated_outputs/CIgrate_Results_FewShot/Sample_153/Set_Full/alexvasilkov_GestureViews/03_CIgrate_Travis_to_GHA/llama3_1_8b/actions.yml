@@ -1,0 +1,48 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platforms;android-29"
+      - name: Cache Gradle
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Cache Gradle directories
+        uses: actions/cache@v4
+        with:
+          path: |
+            $HOME/.gradle/caches/
+            $HOME/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Run tests and checkstyle
+        run:./gradlew assembleDebug checkstyle lintDebug --stacktrace
+      - name: Publish sample
+        if: github.event.push.branch =='master'
+        run:./gradlew publishSample --stacktrace
+```
+Note that I've used the `github.event.push.branch` syntax to check if the push is to the master branch, as the `if` condition in the original Travis CI configuration uses the `branch` keyword which is not a valid GitHub Actions syntax.

@@ -1,0 +1,53 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+    - /^(\d+)$/
+    - /^release\/(\d+)$/
+    - /^hotfix\/(\d+)$/
+    - /^feature\/.+$/
+    - /^bugfix\/(\d+)$/
+    - /^chore\/.+$/
+    - /^docs\/(\d+)$/
+    - /^refactor\/(\d+)$/
+    - /^test\/(\d+)$/
+    - /^fixup\/(\d+)$/
+    - /^merge\/(\d+)$/
+    - /^ci\/(\d+)$/
+    - /^release-candidate\/(\d+)$/
+    - /^release-candidate-pre\/(\d+)$/
+    - /^pre-release\/(\d+)$/
+    - /^pre-release-pre\/(\d+)$/
+    - /^experimental\/(\d+)$/
+    - /^experimental-pre\/(\d+)$/
+    - /^alpha\/(\d+)$/
+    - /^alpha-pre\/(\d+)$/
+    - /^beta\/(\d+)$/
+    - /^beta-pre\/(\d+)$/
+    - /^rc\/(\d+)$/
+    - /^rc-pre\/(\d+)$/
+    - /^stable\/(\d+)$/
+    - /^stable-pre\/(\d+)$/
+    - /^edge\/(\d+)$/
+    - /^edge-pre\/(\d+)$/
+    - /^nightly\/(\d+)$/
+    - /^nightly-pre\/(\d+)$/
+    - /^snapshot\/(\d+)$/
+    - /^snapshot-pre\/(\d+)$/
+    - /^milestone\/(\d+)$/
+    - /^milestone-pre\/(\d+)$/
+    - /^patch\/(\d+)$/
+    - /^patch-pre\/(\d+)$/
+    - /^minor\/(\d+)$/
+    - /^minor-pre\/(\d+)$/
+    - /^major\/(\d+)$/
+    - /^major-pre\/(\d+)$/
+    - /^next\/(\d+)$/
+    - /^next-pre\/

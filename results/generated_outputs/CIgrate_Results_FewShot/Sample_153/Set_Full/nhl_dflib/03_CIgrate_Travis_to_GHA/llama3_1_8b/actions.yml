@@ -1,0 +1,66 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  branches:
+    only:
+      - master
+
+env:
+  DB_PROFILE: ${{ secrets.DB_PROFILE }}
+  DB_PROFILE_DERBY: derby
+  DB_PROFILE_MYSQL: mysql
+  DB_PROFILE_POSTGRESQL: postgresql
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Run Maven verify
+        run: mvn verify -P${{ secrets.DB_PROFILE }}
+      - name: Cache Maven settings
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/settings.xml
+          key: ${{ runner.os }}-m2-settings-${{ hashFiles('travis_settings.xml') }}
+          restore-keys: ${{ runner.os }}-m2-settings-
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Set DB profile
+        env:
+          DB_PROFILE: ${{ secrets.DB_PROFILE }}
+        run: |
+          echo "DB_PROFILE=${{ secrets.DB_PROFILE }}" >> $GITHUB_ENV
+      - name: Run deploy
+        run: |
+          mvn clean source:jar javadoc:javadoc deploy -DskipTests --settings ~/.m2/settings.xml
+        env:
+          DB_PROFILE: ${{ secrets.DB_PROFILE }}
+          DB_PROFILE_DERBY: derby
+          DB_PROFILE_MYSQL: mysql
+          DB_PROFILE_POSTGRESQL: postgresql
+        if: ${{ github.event.repository.owner.login == 'nhl' && github.event.repository.name == 'dflib' && github.event.action == 'push' && github.ref =='refs/heads/master' }}
+```
+Note that I've used the `secrets` feature to store the `DB_PROFILE` value, and used the `needs` keyword to specify that the `deploy` job depends on the

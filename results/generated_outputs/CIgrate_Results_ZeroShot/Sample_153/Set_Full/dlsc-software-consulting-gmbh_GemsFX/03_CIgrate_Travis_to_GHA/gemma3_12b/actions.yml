@@ -1,0 +1,52 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  TAG_BRANCH: ${{ github.sha }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 12
+      - name: Install apt packages
+        if: ${{ env.TRAVIS_OS_NAME == 'linux' }}
+        run: sudo apt-get update && sudo apt-get install -y p7zip-full
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - name: Build with Maven
+        run: mvn package -q
+
+  deploy:
+    if: github.ref == 'refs/tags/'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare deploy
+        run: chmod +x .github/deploy_prepare.sh && .github/deploy_prepare.sh
+      - name: Deploy to Bintray Central
+        run: chmod +x .github/deploy_bintray_central.sh && .github/deploy_bintray_central.sh
+      - name: Create Release
+        if: github.ref == 'refs/tags/'
+        run: |
+          echo "Release $TRAVIS_TAG"
+          echo "See [CHANGELOG.md](https://github.com/$TRAVIS_REPO_SLUG/blob/$TAG_BRANCH/CHANGELOG.md)"
+        env:
+          TAG_BRANCH: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # TODO: Implement release creation using GitHub CLI or a dedicated action.

@@ -1,0 +1,26 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+sudo: false
+install: true
+jdk:
+  - openjdk11
+  - openjdk17
+matrix:
+  - profiles=chrome
+  - profiles=chrome,headless-mode
+  - profiles=chrome,headless-mode,chrome
+  - profiles=chrome,headless-mode,chrome,headless-mode
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome
+  - profiles=chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome,headless-mode,chrome

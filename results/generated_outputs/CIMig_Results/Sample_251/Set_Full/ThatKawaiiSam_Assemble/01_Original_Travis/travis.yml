@@ -1,0 +1,21 @@
+
+sudo: false
+
+language: java
+
+cache:
+  directories:
+    - $HOME/.m2
+
+install:
+  - mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+deploy:
+  provider: releases
+  api_key:
+    secure: <Your travis encrypted github release key here>
+  file: target/release.jar
+  skip_cleanup: true
+  # Modify this to build on every commit
+  on:
+    tags: true

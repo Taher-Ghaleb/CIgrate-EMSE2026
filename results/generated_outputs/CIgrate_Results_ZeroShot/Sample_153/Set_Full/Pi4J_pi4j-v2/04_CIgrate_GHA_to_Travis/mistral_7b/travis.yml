@@ -1,0 +1,52 @@
+name: CI
+
+branches:
+  only:
+    - master
+  pr:
+    - master
+
+services:
+  - docker
+  - docker-compose
+
+before_install:
+  - install: |
+      apt-get update -qq
+      apt-get install -y gcc-arm-linux-gnueabihf
+
+script:
+  - run: |
+      echo "Architecture: $(uname -m)"
+      echo "Java Home: $JAVA_HOME"
+      java -version
+      mvn -version
+      mvn clean install -Drelease-build
+
+language: java
+
+jdk:
+  - openjdk:11
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+
+before_script:
+  - setup: java
+    args:
+      distribution: temurin
+      java-version: '11'
+      cache: maven
+
+deploy:
+  on:
+    tags: true
+  script: |
+    # TODO: Add deploy script here
+
+notifications:
+  on_success:
+    - slack
+    - email

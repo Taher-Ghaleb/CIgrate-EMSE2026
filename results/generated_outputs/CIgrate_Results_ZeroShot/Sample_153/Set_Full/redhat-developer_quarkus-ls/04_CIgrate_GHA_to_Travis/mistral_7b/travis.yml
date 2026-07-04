@@ -1,0 +1,50 @@
+language: java
+
+sudo: required
+
+branches:
+  only:
+    - master
+    - develop
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+install:
+  - command: |
+      curl -sSL https://get.sdkman.io | bash
+      sdk install java 8.0.262-temurin-1.8
+      sdk use java 8.0.262-temurin-1.8
+
+before_script:
+  - cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.m2/wrapper
+      key: ${{ os }}-m2-${{ hashFiles('**/pom.xml') }}
+      restore_keys: |
+        ${{ os }}-m2-
+
+script:
+  - run: |
+      cd quarkus.jdt.ext && ./mvnw clean verify
+      cd quarkus.ls.ext/com.redhat.quarkus.ls && ./mvnw clean verify
+
+after_success:
+  - run: rm -rf $HOME/.m2/repository/**/*-SNAPSHOT
+
+matrix:
+  include:
+    - java:
+        - 8
+  allow_failures:
+    - java: 8

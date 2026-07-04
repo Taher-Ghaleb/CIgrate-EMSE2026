@@ -1,0 +1,29 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platform-tools"
+          sdkmanager "tools"
+          sdkmanager "build-tools;25"
+          sdkmanager "system-images;android-17;default;x86"
+      - name: Run build
+        run:./gradlew build
+```
+Note: The `android` section in the original Travis CI configuration is not directly equivalent to a GitHub Actions workflow. The `android` section is used to specify the Android SDK components to be installed, but in GitHub Actions, we use the `sdkmanager` command to install the components. The `jdk` section is used to specify the JDK version, which is equivalent to the `java-version` input in the `actions/setup-java` action.

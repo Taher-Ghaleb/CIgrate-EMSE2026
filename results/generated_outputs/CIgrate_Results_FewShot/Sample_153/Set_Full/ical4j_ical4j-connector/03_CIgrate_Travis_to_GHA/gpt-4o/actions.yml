@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    tags: '*'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '7']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Run Gradle Check
+        run: ./gradlew check
+      - name: Assemble Distribution
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: ./gradlew assembleDist
+      - name: Deploy to GitHub Releases
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            build/distributions/ical4j-${{ github.ref_name }}.zip
+            build/distributions/ical4j-${{ github.ref_name }}.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Import Sonar Certificate
+        run: |
+          sudo keytool -import -alias sonar -keystore $JAVA_HOME/jre/lib/security/cacerts -file sonar_cert.pem -storepass changeit -noprompt
+      - name: Run SonarQube Analysis
+        if: github.event_name == 'push' && github.repository == 'ical4j/ical4j-connector' && github.ref == 'refs/heads/master'
+        run: ./gradlew sonarqube

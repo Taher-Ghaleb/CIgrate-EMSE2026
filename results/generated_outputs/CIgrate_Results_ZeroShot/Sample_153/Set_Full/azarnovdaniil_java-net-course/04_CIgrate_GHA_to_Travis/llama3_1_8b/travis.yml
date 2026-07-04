@@ -1,0 +1,68 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 11"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-11
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - mvn clean package
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: Add deploy script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: Add deploy script"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - mvn deploy
+
+matrix:
+  allow_failures:
+    - java
+  include:
+    - java: 11
+
+services:
+  - docker
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - your_email@example.com
+
+branches:
+  only:
+    - main
+  except:
+    - dev
+
+jdk:
+  - temurin-11
+
+git:
+  - 2.34.1
+
+env:
+  FOO: ${{ secrets.FOO }}

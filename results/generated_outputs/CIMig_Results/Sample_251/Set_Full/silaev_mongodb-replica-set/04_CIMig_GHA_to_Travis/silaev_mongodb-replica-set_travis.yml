@@ -1,0 +1,26 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  chmod +x gradlew
+  java -version
+script:
+  script:
+    ./gradlew clean build --no-daemon -DmongoReplicaSetProperties.mongoDockerImageName=mongo:${{ matrix.mongodb-version }}
+stage:
+  coverage
+  build
+apt:
+  packages: jdk-8-jdk
+directories:
+  ~/.gradle
+  ~/.gradle-3
+  ~/.gradle-2
+  ~/.jdk
+  ~/.maven-
+services: docker-compose -f docker-compose-it-test.yml up -d;\ndocker wait run-it-test-mongodb-replica-set;\ndocker logs run-it-test-mongodb-replica-set;\nif [[ $(docker inspect run-it-test-mongodb-replica-set --format='{{.State.ExitCode}}') == '1' ]]; then\necho $(docker inspect run-it-test-mongodb-replica-set --format='{{json .State}}');\nexit 1;\nfi\n
+sudo: FALSE

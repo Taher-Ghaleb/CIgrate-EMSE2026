@@ -1,0 +1,39 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  CC_TEST_REPORTER_ID: 430594ee361ff2e93ebf0a942f639b8092c6f17b7c5098f9c75abc404311dfc7
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        jdk: ['8', '9']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Download and run CodeClimate test reporter
+        uses: actions/download-artifact@v3
+        with:
+          name: cc-test-reporter
+          url: https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64
+      - name: Run CodeClimate test reporter before build
+        run: |
+          chmod +x ./cc-test-reporter
+          ./cc-test-reporter before-build
+      - name: Build and generate coverage
+        run: ./gradlew clean build jacocoTestReport
+      - name: Format and upload coverage to CodeClimate
+        run: |
+          JACOCO_SOURCE_PATH=src/main/java ./cc-test-reporter format-coverage ./build/reports/jacoco/test/jacocoTestReport.xml --input-type jacoco
+          ./cc-test-reporter upload-coverage -r $CC_TEST_REPORTER_ID
+
+notifications:
+  slack:
+    secure: ${{ secrets.SLACK_TOKEN }}

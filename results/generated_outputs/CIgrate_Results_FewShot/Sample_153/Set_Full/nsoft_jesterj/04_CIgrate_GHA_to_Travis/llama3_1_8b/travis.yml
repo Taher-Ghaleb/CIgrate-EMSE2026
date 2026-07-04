@@ -1,0 +1,29 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+
+script:
+  - cd $TEST_DIR
+  - if [ -e./gradlew ]; then
+     ./gradlew jacocoTestReport
+    else
+      gradle jacocoTestReport
+    fi
+
+after_success:
+  - codecov
+    token: ${{ secrets.CODECOV_TOKEN }}
+    files:./${TEST_DIR}/build/reports/jacoco/test/jacocoTestReport.xml
+    fail_ci_if_error: true
+    verbose: true
+
+cache:
+  directories:
+    - '$TEST_DIR/gradle'
+    - '$TEST_DIR/.gradle'
+```
+
+Note that I've used the `after_success` lifecycle hook to run the Codecov action, as it's a good practice to run it only when the build is successful. I've also used the `cache` directive to cache the Gradle cache directories, as specified in the original workflow.

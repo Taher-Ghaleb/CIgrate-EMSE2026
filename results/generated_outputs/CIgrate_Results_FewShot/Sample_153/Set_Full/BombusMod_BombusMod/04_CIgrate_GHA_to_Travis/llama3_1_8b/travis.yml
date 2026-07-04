@@ -1,0 +1,27 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+sudo: false
+install: true
+cache: gradle
+before_install:
+  - export TERM=dumb
+android:
+  components:
+    - build-tools-28.0.3
+    - platforms-android-28
+    - system-images-x86_64-android-28
+    - extra-google-m2repository
+    - extra-android-m2repository
+  licenses:
+    - 'android-sdk-preview-license-52d11cd2'
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
+script:
+  -./gradlew --no-daemon check
+```
+
+Note that I've removed the `env` section as it's not necessary in Travis CI, and the `before_script` section is not needed as the `script` section can handle the Gradle wrapper execution.

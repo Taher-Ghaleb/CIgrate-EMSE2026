@@ -1,0 +1,81 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - '[0-9]+.[0-9]+'
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+before_script:
+  - docker-compose pull
+  - docker-compose build
+
+script:
+  - docker-compose run --rm build
+  - mvn -q clean verify -B
+
+before_deploy:
+  - if: $TRAVIS_TAG && $TRAVIS_BRANCH == 'master'
+    script:
+      - docker-compose pull
+      - docker-compose build
+
+deploy:
+  on:
+    tags: true
+
+  only:
+    branches:
+      - master
+
+  script:
+    - chmod +x .travis.deploy.artifacts.sh
+    - bash .travis.deploy.artifacts.sh
+
+addons:
+  sshkeys:
+    - ${{ secrets.SSH_KEY }}
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+env:
+  global:
+    - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+matrix:
+  include:
+    - java:
+        - oraclejdk:8
+        - openjdk:11
+
+  allow_failures:
+    - java: oraclejdk:8
+
+before_install:
+  - run: |
+      if [ -f ~/.java-version ]; then
+        . ~/.java-version
+      else
+        echo "export JAVA_HOME=$(type -p java | sed 's/java/JAVA_HOME/')" >> ~/.bashrc
+        echo "export PATH=$JAVA_HOME/bin:$PATH" >> ~/.bashrc
+      fi
+
+install:
+  - run: |
+      if [ -f ~/.java-version ]; then
+        . ~/.java-version
+      else
+        echo

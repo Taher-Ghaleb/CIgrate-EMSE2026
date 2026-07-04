@@ -1,0 +1,202 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - uses: browser-actions/setup-chrome@v1
+    - uses: browser-actions/setup-firefox@v1
+
+    - name: Before install
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libappindicator1 fonts-liberation
+        echo "CHROME_BIN=/usr/bin/google-chrome" >> $GITHUB_ENV
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches/
+          ~/.gradle/wrapper/
+          ~/.sonar/cache/
+        key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-sonar-
+
+    - name: Script
+      run: ./gradlew check --no-daemon --console=plain
+
+    - name: After script
+      if: always()
+      run: ./.upload_reports.sh
+
+    - name: Before cache
+      if: always()
+      run: |
+        rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+  check_sonar:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      TRAVIS_BRANCH: ${{ github.ref_name }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - uses: browser-actions/setup-chrome@v1
+    - uses: browser-actions/setup-firefox@v1
+
+    - name: Before install
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libappindicator1 fonts-liberation
+        echo "CHROME_BIN=/usr/bin/google-chrome" >> $GITHUB_ENV
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches/
+          ~/.gradle/wrapper/
+          ~/.sonar/cache/
+        key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-sonar-
+
+    - name: Script
+      run: ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${SONAR_ORG} -Dsonar.host.url=${SONAR_HOST} -Dsonar.login=${SONAR_LOGIN} -Dsonar.branch.name=${TRAVIS_BRANCH}
+
+    - name: After script
+      if: always()
+      run: ./.upload_reports.sh
+
+    - name: Before cache
+      if: always()
+      run: |
+        rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+  grid:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - uses: browser-actions/setup-chrome@v1
+    - uses: browser-actions/setup-firefox@v1
+
+    - name: Before install
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libappindicator1 fonts-liberation
+        echo "CHROME_BIN=/usr/bin/google-chrome" >> $GITHUB_ENV
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches/
+          ~/.gradle/wrapper/
+          ~/.sonar/cache/
+        key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-sonar-
+
+    - name: Script
+      run: ./gradlew grid --no-daemon --console=plain -i
+
+    - name: After script
+      if: always()
+      run: ./.upload_reports.sh
+
+    - name: Before cache
+      if: always()
+      run: |
+        rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+  firefox:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - uses: browser-actions/setup-firefox@v1
+
+    - name: Before install
+      run: sudo apt-get update && sudo apt-get install -y libappindicator1 fonts-liberation
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches/
+          ~/.gradle/wrapper/
+          ~/.sonar/cache/
+        key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-sonar-
+
+    - name: Script
+      run: ./gradlew firefox_headless --no-daemon --console=plain -i
+
+    - name: After script
+      if: always()
+      run: ./.upload_reports.sh
+
+    - name: Before cache
+      if: always()
+      run: |
+        rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+  chrome:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - uses: browser-actions/setup-chrome@v1
+
+    - name: Before install
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libappindicator1 fonts-liberation
+        echo "CHROME_BIN=/usr/bin/google-chrome" >> $GITHUB_ENV
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches/
+          ~/.gradle/wrapper/
+          ~/.sonar/cache/
+        key: ${{ runner.os }}-gradle-sonar-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-sonar-
+
+    - name: Script
+      run: ./gradlew chrome_headless --no-daemon --console=plain -i
+
+    - name: After script
+      if: always()
+      run: ./.upload_reports.sh
+
+    - name: Before cache
+      if: always()
+      run: |
+        rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        rm -fr $HOME/.gradle/caches/*/plugin-resolution/

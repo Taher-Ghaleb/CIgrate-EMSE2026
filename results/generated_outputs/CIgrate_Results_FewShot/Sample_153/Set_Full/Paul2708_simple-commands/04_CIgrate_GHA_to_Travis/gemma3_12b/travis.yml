@@ -1,0 +1,27 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+jdk:
+  - openjdk8
+
+script:
+  - mvn clean install -DskipTests=false
+
+if: success()
+before_success:
+  - mvn checkstyle:check
+
+if: always()
+after_success:
+  - if [ -d "target/surefire-reports/" ] || [ -d "target/failsafe-reports/" ]; then
+      echo "Uploading test results..."
+      echo "::set-output name=test_results_uploaded::true"
+      echo "Uploading build artifacts..."
+      echo "::set-output name=build_artifacts_uploaded::true"
+    else
+      echo "No test results or build artifacts found."
+      echo "::set-output name=test_results_uploaded::false"
+      echo "::set-output name=build_artifacts_uploaded::false"
+    fi

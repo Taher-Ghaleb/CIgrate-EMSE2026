@@ -1,0 +1,27 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path: ~/.gradle\n~/.gradle\n
+    - name: Placeholder
+      uses: actions/checkout@version
+      run: ./gradlew --version
+    run: ./gradlew --scan publish -x check
+    run: ./gradlew --scan publish -x check
+
+matrix:
+  java:
+    18-ea
+    19-ea
+
+env:
+  github_token: ${{ github.token }}
+

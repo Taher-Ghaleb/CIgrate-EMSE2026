@@ -1,0 +1,37 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '11']
+    env:
+      PROFILES: ''
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install Firefox Geckodriver
+        run: sudo apt-get -y install firefox-geckodriver
+      - name: Clone Primefaces
+        run: git clone https://github.com/primefaces/primefaces && cd primefaces && mvn install && cd ..
+      - name: Clone Primefaces Extensions Selenium
+        run: git clone https://github.com/primefaces-extensions/primefaces-selenium && cd primefaces-selenium && mvn install && cd ..
+      - name: Create symlink for geckodriver
+        run: ln -s /usr/bin/geckodriver geckodriver
+      - name: Install ChromeDriver
+        run: source .travis/install-chromedriver.sh # TODO: Replace with a more robust solution
+      - name: Maven Build
+        run: mvn -B -V clean install -P${{ env.PROFILES }}
+    cache:
+      directories:
+        - ~/.m2/repository
+    addons:
+      apt:
+        update: true

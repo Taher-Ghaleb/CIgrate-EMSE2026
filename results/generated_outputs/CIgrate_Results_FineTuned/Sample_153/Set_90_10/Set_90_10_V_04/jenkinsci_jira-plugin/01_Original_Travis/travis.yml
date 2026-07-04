@@ -1,0 +1,29 @@
+language: java
+dist: bionic
+sudo: false
+
+git:
+  depth: false
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+install: skip       # skip install phase as no deps are required
+
+script:
+  - mvn -Penable-jacoco -Dsonar.projectKey=jenkins-jira-plugin -Dsonar.coverage.jacoco.xmlReportPaths=/home/travis/build/jenkinsci/jira-plugin/target/site/jacoco/jacoco.xml clean verify coveralls:report sonar:sonar
+
+addons:
+  sonarcloud:
+    organization: "warden"
+    token:
+      secure: "********************"
+
+before_cache:
+  - rm -fr $HOME/.m2/repository/org/jenkins-ci/plugins/jira
+
+cache:
+  directories:
+    - "$HOME/.m2/repository"
+    - "$HOME/.sonar/cache"

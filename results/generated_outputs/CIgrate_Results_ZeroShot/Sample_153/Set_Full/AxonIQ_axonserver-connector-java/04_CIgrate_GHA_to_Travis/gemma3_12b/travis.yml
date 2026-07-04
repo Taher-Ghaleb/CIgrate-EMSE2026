@@ -1,0 +1,19 @@
+language: java
+jdk:
+  - '8'
+  - '11'
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+    - /^(\([0-9]+|[a-zA-Z0-9._-]+)\.?)?fix(\/\w*|\/\w+\/\w+)?$/
+    - /^(\([0-9]+|[a-zA-Z0-9._-]+)\.?)?feature(\/\w*|\/\w+\/\w+)?$/
+    - /^(\([0-9]+|[a-zA-Z0-9._-]+)\.?)?hotfix(\/\w*|\/\w+\/\w+)?$/
+script:
+  - chmod +x mvnw
+  - mvn -B -U -Possrh clean verify

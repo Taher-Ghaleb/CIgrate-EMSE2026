@@ -1,0 +1,34 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK_VERSIONS: oraclejdk8,oraclejdk7,openjdk6
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [$JDK_VERSIONS]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: ${{ matrix.jdk }}
+      - name: Install Oracle Java 8
+        uses: actions/apt@v1
+        with:
+          apt:
+            packages:
+              - oracle-java8-installer
+      - name: Run ant
+        run: ant -f make-jar.xml
+```
+
+Note: The `os` key in the Travis CI configuration is not directly supported in GitHub Actions, so I've used the `runs-on` key to specify the operating system. The `addons.apt` key in the Travis CI configuration is also not directly supported in GitHub Actions, so I've used the `actions/apt` action to install the required packages.

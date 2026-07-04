@@ -1,0 +1,66 @@
+language: java
+jdk: openjdk8
+sudo: required
+addons:
+  chrome:
+    version: v1
+  firefox:
+    version: v1
+
+env:
+  matrix:
+    - TRAVIS_BRANCH: ${{ github.ref_name }}
+
+script:
+  - sudo apt-get update
+  - sudo apt-get install -y libappindicator1 fonts-liberation
+  - echo "CHROME_BIN=/usr/bin/google-chrome" >> $GITHUB_ENV
+  - chmod +x gradlew
+
+matrix:
+  include:
+    - check:
+        cache: gradle
+    - check_sonar:
+        cache: gradle
+        if: $TRAVIS_BRANCH != 'master'
+    - grid:
+        cache: gradle
+    - firefox:
+        services:
+          - firefox
+    - chrome:
+        services:
+          - chrome
+
+before_install:
+  - sudo apt-get update
+
+check:
+  script:
+    - ./gradlew check --no-daemon --console=plain
+
+check_sonar:
+  script:
+    - ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${{ secrets.SONAR_ORG }} -Dsonar.host.url=${{ secrets.SONAR_HOST }} -Dsonar.login=${{ secrets.SONAR_LOGIN }} -Dsonar.branch.name=${TRAVIS_BRANCH}
+
+grid:
+  script:
+    - ./gradlew grid --no-daemon --console=plain -i
+
+firefox:
+  script:
+    - ./gradlew firefox_headless --no-daemon --console=plain -i
+
+chrome:
+  script:
+    - ./gradlew chrome_headless --no-daemon --console=plain -i
+
+after_script:
+  - ./.upload_reports.sh
+
+before_cache:
+  if: always()
+  script:
+    - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+    - rm -fr $HOME/.gradle/caches/*/plugin-resolution/

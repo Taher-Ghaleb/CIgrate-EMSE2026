@@ -1,0 +1,18 @@
+language: android
+jdk: openjdk8
+
+sudo: required
+
+before_install:
+  - chmod +x project/gradlew
+
+android:
+  components:
+    - build-tools-29.0.2
+    - android-29
+  licenses:
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
+
+script:
+  - ./project/gradlew test

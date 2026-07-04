@@ -1,0 +1,21 @@
+language: java
+sudo: required
+env:
+  TERM: dumb
+  DISPLAY: ':99.0'
+
+jdk: openjdk11
+
+addons:
+  xvfb:
+    port: 99
+
+script:
+  - actions/checkout@v4
+  - actions/setup-java@v4
+  - gradle/actions/setup-gradle@v4
+  - |
+    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+  - chmod +x gradlew
+  - ./gradlew --version
+  - ./gradlew clean build --console=plain -S --scan

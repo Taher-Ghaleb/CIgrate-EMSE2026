@@ -1,0 +1,18 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  mvn -B package
+script:
+  script:
+    mvn -B deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml
+include:
+  name: openjdk java 11
+  if: type in (pull_request, push)
+directories: ~/.m2/repository

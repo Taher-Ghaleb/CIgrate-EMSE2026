@@ -1,0 +1,53 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run:./gradlew --no-daemon --no-color --console=plain --info dependencies
+      - name: Run tests and coverage
+        run:./gradlew --no-daemon --no-color --console=plain --info clean build jacocoTestReport jacocoFix -PbuildNumber=$GITHUB_RUN_NUMBER --scan
+      - name: Build Docker image
+        run: |
+          docker build --no-cache --pull -t wisvch/events:$GITHUB_RUN_NUMBER.
+      - name: Login to Docker Hub
+        run: |
+          echo ${{ secrets.DOCKER_USERNAME }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      - name: Push Docker image
+        run: |
+          docker tag wisvch/events:$GITHUB_RUN_NUMBER wisvch/events:latest
+          docker push wisvch/events:$GITHUB_RUN_NUMBER
+          docker push wisvch/events:latest
+      - name: Format and upload coverage
+        run: |
+          cd src/main/java/
+         ../../../cc-test-reporter format-coverage -d -t jacoco
+         ../../../cc-test-reporter upload-coverage -d
+```
+
+Note that I've used the `GITHUB_RUN_NUMBER` environment variable instead of `TRAVIS_BUILD_NUMBER` as it is the equivalent variable in GitHub Actions. Also, I've used the `secrets` feature to store the Docker username and password securely.

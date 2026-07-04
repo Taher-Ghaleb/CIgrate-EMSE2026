@@ -1,0 +1,67 @@
+language: ubuntu
+
+branches:
+  only:
+    - devel
+
+deploy:
+  on:
+    push:
+      branches:
+        - devel
+    pull_request:
+      branches:
+        - devel
+
+script:
+  - unset GEM_PATH
+  - |
+    mvn install
+    mvn package -f muikku/pom.xml -Popenshift
+    python travis-prepare-maven.py
+    mvn deploy --settings ~/.m2/mySettings.xml
+
+before_install:
+  - run: echo 'Starting JDK setup'
+
+install:
+  - uses: actions/checkout@v4
+
+  - name: Set up JDK 7
+    uses: sfoley/setup-jdk@v1
+    with:
+      jdk: 7
+      distribution: zulu
+
+before_script:
+  - run: echo 'Starting build'
+
+script:
+  - mvn install
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - docker:
+      - image: openjdk:7
+      - image: oracle/openjdk:7
+
+env:
+  - name: GITHUB_TOKEN
+    secure: ${{ secrets.GITHUB_TOKEN }}
+
+deploy:
+  if: '$GITHUB_REF == "refs/heads/devel" && $GITHUB_EVENT_NAME == "push"'
+  before_deploy:
+    - run: echo 'Starting deployment'
+  script:
+    - mvn install
+    - mvn package -f muikku/pom.xml -Popenshift
+    - python travis-prepare-maven.py
+    - mvn deploy --settings ~/.m2/mySettings.xml
+  after_success:
+    - run: echo 'Deployed'

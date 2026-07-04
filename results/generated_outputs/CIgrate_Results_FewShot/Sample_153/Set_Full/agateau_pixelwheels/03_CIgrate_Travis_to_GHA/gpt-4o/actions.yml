@@ -1,0 +1,17 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:stable-dind
+        options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker Image
+        run: ci/build-docker-image
+      - name: Build Game
+        run: ci/docker-build-game

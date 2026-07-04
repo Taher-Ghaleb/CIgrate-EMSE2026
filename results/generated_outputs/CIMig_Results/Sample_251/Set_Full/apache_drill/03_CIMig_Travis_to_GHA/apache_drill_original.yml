@@ -1,0 +1,24 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        java-version: ${{ matrix.java }}
+        bundler-cache: TRUE
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+    - name: Placeholder
+    - name: build with maven-
+      run: if [ $PHASE = \"tests\" ]; then \\\n  mvn install --batch-mode -DexcludedGroups=\"org.apache.drill.categories.SlowTest,org.apache.drill.categories.UnlikelyTest,org.apache.drill.categories.SecurityTest\" -DforkCount=1 -DmemoryMb=2560 -DdirectMemoryMb=4608 -Ptravis; \\\nelif [ $PHASE = \"build_checkstyle_protobuf\" ]; then \\\n  MAVEN_OPTS=\"-Xms1G -Xmx1G\" mvn install -Drat.skip=false -Dlicense.skip=false --batch-mode -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -DskipTests=true -Dmaven.javadoc.skip=true -Dmaven.source.skip=true && \\\n  pushd protocol && mvn process-sources -P proto-compile && popd && \\\n  mkdir contrib/native/client/build && pushd contrib/native/client/build && cmake -G \"Unix Makefiles\" .. && make cpProtobufs && popd; \\\nfi\n
+
+macos:
+  jdk: openjdk8
+

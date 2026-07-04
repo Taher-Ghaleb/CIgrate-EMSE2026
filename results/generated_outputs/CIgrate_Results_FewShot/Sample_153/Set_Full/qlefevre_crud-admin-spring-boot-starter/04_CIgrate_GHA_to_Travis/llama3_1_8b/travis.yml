@@ -1,0 +1,31 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+install: true
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+script:
+  - mvn --version
+  - mvn clean verify
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.cache/maven'
+after_success:
+  - if: always()
+    deploy:
+      provider: script
+      script: |
+        mv **/target/surefire-reports/ test-results-jdk${TRAVIS_JDK}
+        cd test-results-jdk${TRAVIS_JDK}
+        if [ -f "index.html" ]; then
+          echo "Uploading test results..."
+          curl -X POST \
+            https://api.travis-ci.org/repos/${TRAVIS_REPO_SLUG}/requests \
+            -H 'Content-Type: application/json' \
+            -H 'Authorization: Bearer ${TRAVIS_TOKEN}' \
+            -d '{"request": {"request_type": "test_results", "data": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test_results": {"test

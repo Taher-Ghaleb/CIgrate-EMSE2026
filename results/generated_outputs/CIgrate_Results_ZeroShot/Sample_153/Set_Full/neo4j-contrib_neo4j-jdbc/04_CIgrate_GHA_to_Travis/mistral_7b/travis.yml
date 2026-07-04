@@ -1,0 +1,27 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+before_install:
+  - install: $HOME/.cache/actions/setup-java/latest/java-${JAVA_VERSION}
+    cache: maven
+
+script:
+  - mvn clean test
+
+env:
+  JAVA_VERSION: 8
+
+deploy:
+  on:
+    tags: true
+
+before_deploy:
+  - script: # TODO: Add deployment script for GitHub Actions
+
+# TODO: Add Travis CI services/addons for GitHub Actions services
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including the branches, jobs, steps, env variables, caches, and deploy. However, some parts like the performance tests and services/addons are not directly equivalent and require further customization based on the specific deployment requirements.

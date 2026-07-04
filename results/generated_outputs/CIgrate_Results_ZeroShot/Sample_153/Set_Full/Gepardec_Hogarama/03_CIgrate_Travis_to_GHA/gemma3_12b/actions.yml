@@ -1,0 +1,22 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_OPTS: -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Build with Maven
+        run: |
+          cd Hogajama
+          mvn clean
+          mvn install ${{ env.MAVEN_OPTS }}

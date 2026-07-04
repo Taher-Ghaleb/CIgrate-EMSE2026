@@ -1,0 +1,41 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+env:
+  SONATYPE_USERNAME: ralscha23
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_script:
+  - java -version
+  - mvn -version
+
+script:
+  - mvn install
+
+after_success:
+  - python addsettings.py
+  - mvn clean deploy -DskipTests=true --settings ~/.m2/mySettings.xml
+
+deploy:
+  on:
+    tags: true
+
+before_deploy:
+  - mvn clean deploy -DskipTests=true --settings ~/.m2/mySettings.xml
+
+# TODO: Add deploy script for your deployment service

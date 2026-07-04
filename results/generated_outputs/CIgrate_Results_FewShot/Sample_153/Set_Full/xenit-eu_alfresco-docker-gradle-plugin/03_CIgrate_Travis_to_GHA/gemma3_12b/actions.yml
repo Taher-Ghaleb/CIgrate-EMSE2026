@@ -1,0 +1,52 @@
+name: Gradle Plugin Build and Publish
+
+on:
+  push:
+    tags: true
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        gradle_integration_test_versions:
+          - '5.3'
+          - '5.6'
+          - '6.0'
+          - '6.6'
+    env:
+      GRADLE_INTEGRATION_TEST_VERSIONS: ${{ matrix.gradle_integration_test_versions }}
+      PUBLISH_SONAR: ${{ github.event.ref && startsWith(github.event.ref, 'refs/tags/') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+      - name: Pull Docker Images
+        run: |
+          docker pull alfresco/alfresco-content-repository-community:6.0.7-ga
+          docker pull tomcat:7-jre8
+          docker pull hello-world
+          docker pull alpine:edge
+      - name: Run Gradle Tasks
+        run: |
+          GRADLE_ARGS="check -i -PintegrationTestGradleVersions=$GRADLE_INTEGRATION_TEST_VERSIONS"
+          if [[ "$PUBLISH_SONAR" == "true" && "${{ secrets.TRAVIS_SECURE_ENV_VARS }}" == "true" ]]; then
+            GRADLE_ARGS="${GRADLE_ARGS} sonarqube -Dsonar.projectKey=xenit-eu_alfresco-docker-gradle-plugin -Dsonar.organization=xenit-eu -Dsonar

@@ -1,0 +1,62 @@
+language: bash
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+env:
+  TERM: dumb
+  GIT_STRATEGY: none
+  JAVA_HOME: ${{ env.HOME }}/.sdkman/candidates/java/current
+  ANDROID_HOME: ${{ env.HOME }}/.android
+
+services:
+  - docker
+
+before_install:
+  - cache: gradle
+
+install:
+  - checkout
+  - java_setup
+  - android_setup
+
+script:
+  - sdkmanager --install "build-tools;28.0.3"
+  - sdkmanager --install "platforms;android-28"
+  - sdkmanager --install "system-images;android-28;default;x86_64"
+  - sdkmanager --install "extras;google;m2repository"
+  - sdkmanager --install "extras;android;m2repository"
+  - yes | sdkmanager --licenses
+  - chmod +x ./gradlew
+  - ./gradlew --no-daemon check
+
+before_script:
+  - sdkmanager --list
+
+after_success:
+  - cache: gradle
+
+after_failure:
+  - cache: gradle
+
+cache:
+  directories:
+    - ~/.sdkman/candidates/java
+    - ~/.android
+
+java_setup:
+  image: openjdk:8
+  script: sdkman install java 8
+
+android_setup:
+  uses: android-actions/setup-android@v3
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including the use of caches, services, branch filters, and deploy triggers. It also preserves the JDK and Android SDK versions, as well as the script steps for setting up the JDK, Android SDK, and building the project. The environment variables are also mapped accordingly.

@@ -1,0 +1,52 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+  pull_request:
+    branches:
+      -'main'
+      - 'feature/*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      selenium:
+        image: selenium/standalone-chrome
+        ports:
+          - 4444:4444
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: 'temurin'
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+          git clone https://github.com/primefaces/primefaces && cd primefaces && mvn install && cd..
+          git clone https://github.com/primefaces-extensions/primefaces-selenium && cd primefaces-selenium && mvn install && cd..
+      - name: Install geckodriver
+        run: |
+          apt-get update
+          apt-get install -y firefox-geckodriver
+      - name: Link geckodriver
+        run: |
+          ln -s /usr/bin/geckodriver geckodriver
+      - name: Install chromedriver
+        run: |
+          source.install-chromedriver.sh
+      - name: Build and test
+        run: |
+          mvn -B -V clean install -P${{ secrets.PROFILES }}
+    env:
+      PROFILES: ${{ secrets.PROFILES }}
+    cache:
+      actions/cache@v4:
+        key: ${{ runner.os }}-maven-project
+        paths:
+          - $HOME/.m2/repository
+    continue-on-error: true

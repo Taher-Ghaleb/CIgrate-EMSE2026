@@ -1,0 +1,13 @@
+language: java
+sudo: false
+branches:
+  only:
+    - main
+    - develop
+  except:
+    - release/**
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+script:
+  - mvn -B -nsu verify

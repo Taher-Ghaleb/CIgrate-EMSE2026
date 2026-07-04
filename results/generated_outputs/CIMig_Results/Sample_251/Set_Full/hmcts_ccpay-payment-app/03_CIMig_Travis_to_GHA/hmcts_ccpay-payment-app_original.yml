@@ -1,0 +1,21 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run:
+        bash <(curl -s https://codecov.io/bash)
+        ./gradlew build
+        docker
+

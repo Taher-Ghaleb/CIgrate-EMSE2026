@@ -1,0 +1,38 @@
+name: Java CI with Maven
+
+on:
+  push:
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SONAR_ORGANIZATION: "utarwyn-github"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: sonar-cache
+      - run: |
+          if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+            mvn clean verify sonar:sonar -Pcoverage
+          fi
+      - run: |
+          if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+            mvn clean install
+          fi
+      # TODO: Add SonarCloud configuration using actions/sonarcloud if needed.  Current configuration is embedded in the mvn command.

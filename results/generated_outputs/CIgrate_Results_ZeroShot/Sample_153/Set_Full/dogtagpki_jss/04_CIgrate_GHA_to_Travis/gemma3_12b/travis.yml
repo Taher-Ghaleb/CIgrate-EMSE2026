@@ -1,0 +1,58 @@
+language: bash
+dist: xenial
+sudo: required
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - docker
+
+branches:
+  only:
+    - main
+    - /^(\d+\.\d+)\.(.*)$/ # Matches branches like "1.0.x"
+
+matrix:
+  include:
+    - FEDORA: 38
+    - FEDORA: 39
+    - FEDORA: 40
+  allow_failures: true
+
+before_install:
+  - docker info
+
+install:
+  - # TODO: Add any install steps if needed
+
+before_script:
+  - docker pull registry.fedoraproject.org/fedora:${FEDORA}
+
+script:
+  - docker run \
+      --name=container \
+      --detach \
+      -i \
+      -v $(pwd):/root/jss \
+      registry.fedoraproject.org/fedora:${FEDORA}
+  - docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+  - docker exec container dnf copr -y enable @pki/10.6
+  - docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+  - docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+  - docker exec container rpm -Uvh /root/build/jss/RPMS/*
+
+after_success:
+  - # TODO: Add any after_success steps if needed
+
+after_failure:
+  - # TODO: Add any after_failure steps if needed
+
+deploy:
+  provider:
+    # TODO: Add deploy provider details
+  on:
+    tags: true

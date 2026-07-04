@@ -1,0 +1,39 @@
+language: java
+
+jdk:
+  - openjdk7
+
+cache:
+  directories:
+    - $HOME/.m2
+
+services:
+  - docker
+
+before_install:
+  - echo "Setting up environment"
+
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - mvn test -B
+
+after_success:
+  - >
+    if [ "$TRAVIS_BRANCH" == "main" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+      echo "Deploying snapshot..."
+      cat > ~/settings.xml <<EOF
+      <settings><servers><server><id>ossrh</id><username>$OSSRH_USER</username><password>$OSSRH_PASS</password></server></servers></settings>
+      EOF
+      mvn deploy --settings ~/settings.xml
+    fi
+
+env:
+  global:
+    - OSSRH_USER=$OSSRH_USER
+    - OSSRH_PASS=$OSSRH_PASS
+
+branches:
+  only:
+    - main

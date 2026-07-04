@@ -1,0 +1,43 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update apt packages
+        run: sudo apt-get update
+      - name: Install raptor2-utils
+        run: sudo apt-get install -qq raptor2-utils
+      - name: Build Docker image
+        run: docker build -t atomgraph/processor .
+      - name: Start Docker Compose services
+        run: |
+          cd http-tests
+          docker-compose up -d
+      - name: Wait for processor-ct to start
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8080 | grep "404" ; do sleep 1 ; done
+      - name: Wait for processor-ct-write to start
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8081 | grep "404" ; do sleep 1 ; done
+      - name: Wait for processor-ngt to start
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8082 | grep "404" ; do sleep 1 ; done
+      - name: Wait for processor-ngt-write to start
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8083 | grep "404" ; do sleep 1 ; done
+      - name: Wait for processor-custom to start
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8084 | grep "404" ; do sleep 1 ; done
+      - name: Wait for processor-custom-write to start
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8085 | grep "404" ; do sleep 1 ; done
+      - name: Run tests
+        run: cd http-tests && bash ./run.sh
+      - name: Shutdown Docker Compose services
+        if: always()
+        run: |
+          cd http-tests
+          docker-compose down
+          docker-compose rm -f
+      - name: Email notification
+        if: always()
+        run: |
+          # TODO: Configure email notifications to martynas@atomgraph.com

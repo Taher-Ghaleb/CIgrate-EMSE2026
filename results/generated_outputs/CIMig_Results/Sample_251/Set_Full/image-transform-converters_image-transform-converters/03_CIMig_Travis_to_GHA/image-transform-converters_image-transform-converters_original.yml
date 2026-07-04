@@ -1,0 +1,23 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      run:
+        .github/PATH-OR-URL
+        sudo apt-get update
+
+env:
+  github_token: ${{ github.token }}
+  ci: TRUE
+
+macos:
+  jdk: openjdk8
+

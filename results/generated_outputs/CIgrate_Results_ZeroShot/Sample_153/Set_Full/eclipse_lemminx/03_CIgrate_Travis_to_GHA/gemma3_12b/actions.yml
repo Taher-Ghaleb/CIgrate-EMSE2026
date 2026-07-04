@@ -1,0 +1,50 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  MAVEN_OPTS: -Dorg.slf4j.simpleMappin=true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFile('pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2
+      - run: rm -rf $HOME/.m2/repository/**/*-SNAPSHOT
+      - run: ./mvnw clean verify
+      # TODO: SonarCloud analysis integration
+      # - run: ./mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent verify sonar:sonar -fae
+
+  notify:
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Email Notification
+        if: always()
+        uses: dawidd6/action-send-email@v3
+        with:
+          to: ${{ secrets.EMAIL_RECIPIENTS }}
+          from: ${{ secrets.EMAIL_FROM }}
+          subject: Build Status - ${{ github.repository }}
+          body: |
+            Build Status: ${{ job.status }}
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+          attachments: []

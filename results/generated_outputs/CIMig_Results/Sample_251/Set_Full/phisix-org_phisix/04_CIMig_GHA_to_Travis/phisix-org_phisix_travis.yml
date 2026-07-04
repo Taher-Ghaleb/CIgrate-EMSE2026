@@ -1,0 +1,15 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn -B clean package appengine:deploy -Pphisix-2 --file pom.xml
+script:
+  script:
+    mvn -B clean org.jacoco:jacoco-maven-plugin:prepare-agent verify --file pom.xml
+directories: ~/.maven-

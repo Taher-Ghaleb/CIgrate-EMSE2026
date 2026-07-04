@@ -1,0 +1,17 @@
+language: java
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+install:
+  - mvn clean install -DskipTests -B -V
+
+script:
+  - mvn test
+  - sh ./tools/check_format.sh
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

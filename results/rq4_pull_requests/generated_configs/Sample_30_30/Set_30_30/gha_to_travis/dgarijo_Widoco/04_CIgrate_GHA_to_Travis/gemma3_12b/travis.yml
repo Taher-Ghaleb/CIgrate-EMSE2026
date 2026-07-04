@@ -1,0 +1,68 @@
+language: java
+
+services:
+  - docker
+
+before_install:
+  - export REGISTRY=ghcr.io
+  - export IMAGE_NAME=${TRAVIS_REPO_SLUG}
+  - export FOO=$FOO
+
+install:
+  - mvn -version
+  - docker -v
+
+script:
+  - mvn -e --batch-mode package
+
+after_success:
+  - fn=$(ls JAR/*.jar); mv ${FN} ${FN/_JDK-${TRAVIS_JDK_VERSION}.jar}
+  - bash <(curl -s https://widoco.github.io/travis-install)
+
+deploy:
+  provider: docker
+  server: ghcr.io
+  email: $EMAIL
+  password:
+    secure: "********************"
+  on:
+    tags: true
+    jdk: openjdk11
+    jdk: openjdk14
+    jdk: openjdk17
+    repo: $TRAVIS_REPO_SLUG
+    condition: $TRAVIS_JDK_VERSION =~ ^(11|14|17)$
+    # NOTE: condition on JDK version is not possible in Docker Travis config, use tags instead
+
+notifications:
+  email: false
+
+addons:
+  apt:
+    packages:
+      - docker-ce-compose
+      - docker-ce-plugin
+      - git-lfs
+      - curl
+      - docker-ce-plugin
+      - docker-ce-curl
+      - docker-ce-docker-compose
+      - docker-ce-docker-plugin-cri
+      - docker-ce-docker-plugin-nslookup
+      - docker-ce-docker-plugin-vpc-ext
+      - docker-ce-docker-plugin-vpc-nslookup
+      - docker-ce-docker-plugin-vpc
+      - git
+  git:
+    quiet: true
+    # https://github.com/wayfarer/github-actions-helper/issues/24
+    # NOTE: git version 2.38.0 is used in Github Actions, stick to this in Travis config
+    version: v2.38.0
+  apt:
+    update: true
+    packages:
+      - git
+      - curl
+      - docker-ce-compose
+      - docker-ce-plugin
+      - docker-ce

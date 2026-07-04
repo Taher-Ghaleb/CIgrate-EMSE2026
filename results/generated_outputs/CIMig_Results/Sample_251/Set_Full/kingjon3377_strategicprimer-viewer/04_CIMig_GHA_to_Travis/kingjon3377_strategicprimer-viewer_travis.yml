@@ -1,0 +1,22 @@
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+before_script:
+  cd-cmd
+  sudo apt-get install ant-optional ant-contrib icnsutils icoutils genisoimage python3-pip
+  r --version
+script:
+  script:
+    ./install-deps.sh
+    python-cmd
+    .travis/PATH-OR-URL
+after_success:
+  bash <(curl-cmd
+deploy:
+  github_token: $github_token
+stages:
+  name: build and deploy snapshots

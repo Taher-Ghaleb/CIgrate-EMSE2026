@@ -1,0 +1,44 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ORG_TOKEN: ${{ secrets.ORG_TOKEN }}
+  SECURE_TOKEN_1: ${{ secrets.SECURE_TOKEN_1 }}
+  SECURE_TOKEN_2: ${{ secrets.SECURE_TOKEN_2 }}
+  SECURE_TOKEN_3: ${{ secrets.SECURE_TOKEN_3 }}
+  SECURE_TOKEN_4: ${{ secrets.SECURE_TOKEN_4 }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 7
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '7'
+      - name: Run Maven
+        run: mvn package -DskipTests=true
+      - name: Deploy to GitHub Pages
+        uses: shiki/deploy-github-pages@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          local_dir: target/staging
+          branch: master
+      - name: Deploy to script provider
+        uses: actions/deploy-script@v1
+        with:
+          token: ${{ secrets.ORG_TOKEN }}
+          script: mvn --settings.travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+          skip_cleanup: true
+          on:
+            branch: master
+```
+
+Note: The `deploy` section has been split into two separate jobs, one for GitHub Pages and one for the script provider, as the `deploy` keyword is not a valid keyword in GitHub Actions.

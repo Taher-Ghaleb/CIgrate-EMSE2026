@@ -1,0 +1,40 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - export CODECOV_TOKEN=${{ env.CODECOV_TOKEN }}
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+script:
+  - checkout
+  - java -version
+  - mvn -B -U clean verify cobertura:cobertura
+
+before_script:
+  - java -version
+  - mvn -B -DskipTests -DfailAtEnd=false dependencies:go-offline
+
+install:
+  - actions/setup-java@v4 -distribution temurin -java-version '8'
+
+after_success:
+  - codecov/codecov-action@v4 -token $CODECOV_TOKEN -files target/site/cobertura/coverage.xml -fail_ci_if_error true -verbose true
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - mvn -B -DskipTests -DfailAtEnd=false deploy

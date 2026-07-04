@@ -1,0 +1,37 @@
+language: java
+jdk:
+  - openjdk8
+
+branches:
+  only:
+    - main
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+jobs:
+  include:
+    - stage: build
+      script:
+        - mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+        - mvn test -B
+      before_install:
+        - chmod +x mvnw
+      after_success:
+        - if [[ $TRAVIS_TAG ]]; then
+            mv target/release.jar release.jar;
+            travis-artifacts upload --path release.jar;
+          fi
+
+    - stage: deploy
+      if: tag IS present
+      script:
+        - travis-artifacts download --path release.jar
+      deploy:
+        provider: releases
+        api_key: $GITHUB_TOKEN
+        file: release.jar
+        skip_cleanup: true
+        on:
+          tags: true

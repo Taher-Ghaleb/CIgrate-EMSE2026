@@ -1,0 +1,32 @@
+matrix:
+  os:
+    ubuntu-latest
+    windows-latest
+  java
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: java-version
+      uses: actions/setup-java@version
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/checkout@version
+    - name: Placeholder
+    - name: Placeholder
+
+macos:
+  jdk: openjdk8
+

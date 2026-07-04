@@ -1,0 +1,32 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        java:
+          19-ea
+          18-ea
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      with:
+        java-version: 1.8
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+      run: mvn -V --no-transfer-progress
+    - name: set up jdk 1.8
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+    run: mvn -V --no-transfer-progress
+
+macos:
+  jdk: openjdk8
+

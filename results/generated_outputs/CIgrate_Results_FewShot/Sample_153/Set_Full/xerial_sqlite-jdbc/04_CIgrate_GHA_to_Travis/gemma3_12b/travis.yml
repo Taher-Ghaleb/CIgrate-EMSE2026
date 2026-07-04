@@ -1,0 +1,19 @@
+language: java
+branches:
+  only:
+    - master
+    - develop
+  except:
+    - /^(\d+)$/ # Exclude tag names
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+matrix:
+  include:
+    - distribution: zulu
+      java: 7
+    - distribution: temurin
+      java: 8
+script:
+  - mvn install -B

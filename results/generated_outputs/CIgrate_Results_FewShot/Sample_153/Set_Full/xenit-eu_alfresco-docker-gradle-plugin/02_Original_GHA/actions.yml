@@ -1,0 +1,72 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - GRADLE_INTEGRATION_TEST_VERSIONS: '5.3,5.6'
+            PUBLISH_SONAR: 'true'
+          - GRADLE_INTEGRATION_TEST_VERSIONS: '6.0,6.6'
+            PUBLISH_SONAR: 'false'
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+        cache: 'gradle'
+
+    - name: Prepull Docker images
+      run: bash -c "docker pull alfresco/alfresco-content-repository-community:6.0.7-ga& docker pull tomcat:7-jre8& docker pull hello-world& docker pull alpine:edge&"
+
+    - name: Make gradlew executable
+      run: chmod +x gradlew
+
+    - name: Build
+      env:
+        GRADLE_INTEGRATION_TEST_VERSIONS: ${{ matrix.GRADLE_INTEGRATION_TEST_VERSIONS }}
+        PUBLISH_SONAR: ${{ matrix.PUBLISH_SONAR }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        GRADLE_ARGS="check -i -PintegrationTestGradleVersions=$GRADLE_INTEGRATION_TEST_VERSIONS"
+        if [[ "$PUBLISH_SONAR" == "true" && -n "$SONAR_TOKEN" ]]; then
+          GRADLE_ARGS="${GRADLE_ARGS} sonarqube -Dsonar.projectKey=xenit-eu_alfresco-docker-gradle-plugin -Dsonar.organization=xenit-eu -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN"
+        fi
+        ./gradlew $GRADLE_ARGS
+
+    - name: Before cache
+      if: always()
+      run: rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+        cache: 'gradle'
+
+    - name: Make gradlew executable
+      run: chmod +x gradlew
+
+    - name: Publish Gradle plugin
+      env:
+        GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
+        GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
+      run: ./gradlew publishPlugins -Pgradle.publish.key=$GRADLE_PUBLISH_KEY -Pgradle.publish.secret=$GRADLE_PUBLISH_SECRET -x check

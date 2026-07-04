@@ -1,0 +1,67 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+      -'release/*'
+  pull_request:
+    branches:
+      -'main'
+      - 'feature/*'
+      -'release/*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        - jdk: oraclejdk11
+        - jdk: oraclejdk8
+        - jdk: openjdk7
+        - os: osx
+          jdk: oraclejdk11
+    services:
+      wine:
+        image: wine/builder
+        ports:
+          - 8080:8080
+    env:
+      JRE6_HOME: /usr/lib/jvm/java-6-openjdk-amd64/jre
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.jdk }}
+          java-version: ${{ matrix.jdk }}
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install wine ant
+      - name: Install Wine
+        run: |
+          echo 'deb https://dl.winehq.org/wine-builds/ubuntu/ trusty main' | sudo tee /etc/apt/sources.list.d/winehq.list
+          curl -o /usr/share/keyrings/winehq.key https://dl.winehq.org/wine-builds/winehq.key
+          sudo apt-get update
+          sudo apt-get install -y winehq-stable ant-optional lib32ncurses5 lib32z1
+      - name: Run diagnostics
+        run: ant -diagnostics
+      - name: Run tests
+        run: ant all
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}
+          key: ${{ runner.hash }}
+          restore-keys: |
+            ant-optional
+            lib32ncurses5
+            lib32z1
+            openjdk-6-jdk
+            winehq-stable
+```
+
+Note: The above workflow uses the `ubuntu-latest` image for the Linux matrix and `osx` image for the macOS matrix. The `wine` service is used to install and run Wine on Linux. The `actions/cache` step is used

@@ -1,0 +1,49 @@
+name: Java CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      localstack:
+        image: localstack/localstack
+        ports:
+          - 4568:4568
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: eu-central-1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+         ./gradlew assemble
+      - name: Test reachability of localstack kinesis
+        run: |
+         ./gradlew startLocalStack
+          aws --endpoint-url=http://localhost:4568 kinesis list-streams
+         ./gradlew stopLocalStack
+      - name: Run tests
+        run: |
+         ./gradlew check
+      - name: Generate Jacoco report
+        run: |
+         ./gradlew jacocoRootReport
+      - name: Upload Jacoco report to codecov
+        run: |
+          bash <(curl -s https://codecov.io/bash)
+```
+
+Note: The `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are stored as secrets in GitHub, and are referenced using the `$${{ secrets.AWS_ACCESS_KEY_ID }}` and `$${{ secrets.AWS_SECRET_ACCESS_KEY }}` syntax.

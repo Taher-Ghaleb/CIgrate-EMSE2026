@@ -1,0 +1,45 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JDBC_URL: ${{ secrets.JDBC_URL }}
+      JDBC_USER: ${{ secrets.JDBC_USER }}
+      JDBC_PASSWORD: ${{ secrets.JDBC_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      - name: Install and test
+        run: mvn clean install
+
+      - name: Test
+        uses: actions/test-runner@v2
+        with:
+          path: target/surefire-reports
+          exit-on-failure: true
+
+    strategy:
+      matrix:
+        jdk: [openjdk11]

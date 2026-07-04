@@ -1,0 +1,55 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - 2.13
+
+pull_request:
+  branches:
+    - master
+    - 2.13
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: git
+
+install:
+  - cache: maven
+    key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+    restore_keys: |
+      ${{ cacheKey }}
+      ${{ runner.os }}-maven-
+
+script:
+  - mvn -B clean verify
+
+before_script:
+  - java --version
+  - mvn --version
+
+env:
+  global:
+    - GIT_STRATEGY: none
+
+matrix:
+  include:
+    - jdk: 8
+    - jdk: 11
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+addons:
+  docker:
+    - docker:latest

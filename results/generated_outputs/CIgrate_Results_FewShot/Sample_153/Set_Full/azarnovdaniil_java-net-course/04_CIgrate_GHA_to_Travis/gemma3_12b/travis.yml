@@ -1,0 +1,9 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+jdk:
+  - openjdk11
+script:
+  - mvn clean package

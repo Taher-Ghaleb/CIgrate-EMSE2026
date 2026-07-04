@@ -1,0 +1,57 @@
+language: java
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - master
+    - /^release\S+$/
+  except:
+    - tags
+deploy:
+  on:
+    tags: false
+matrix:
+  include:
+    - java: 8
+      root_pom: pom.xml
+    - java: 11
+      root_pom: pom.xml
+    - java: 8
+      root_pom: android/pom.xml
+    - java: 11
+      root_pom: android/pom.xml
+before_install:
+  - echo "Before install"
+install:
+  - echo "Install"
+before_script:
+  - echo "Before script"
+script:
+  - chmod +x util/*.sh
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f ${root_pom}
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f ${root_pom}
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" || "$TRAVIS_BRANCH" == "release*" ]; then
+  - echo "After success"
+  - else
+  - echo "Skipping after success"
+  - fi
+after_failure:
+  - if [ "$TRAVIS_BRANCH" == "master" || "$TRAVIS_BRANCH" == "release*" ]; then
+  - util/print_surefire_reports.sh
+  - else
+  - echo "Skipping after failure"
+  - fi
+  
+deploy:
+  if: $TRAVIS_BRANCH == "master" || $TRAVIS_BRANCH =~ /^release/
+  script:
+    - chmod +x util/*.sh
+    - util/deploy_snapshot.sh
+    - util/update_snapshot_docs.sh
+  env:
+    global:
+      SECRET_1: $SECRET_

@@ -1,0 +1,72 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - growthcraftce
+  pull_request:
+    branches:
+      - main
+      - growthcraftce
+  tags:
+    - growthcraftce
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      sonarcloud:
+        image: sonarcloud/sonar-scanner-cli
+        options: --organization="growthcraftce" --token=$SONAR_TOKEN
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('.gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+      - name: Install dependencies
+        run: |
+          chmod +x./gradlew
+         ./gradlew setupCIWorkspace -S
+      - name: Build and test
+        run: |
+         ./gradlew build
+         ./gradlew sonarqube
+      - name: Deploy to GitHub
+        uses: actions/upload-artifact@v3
+        with:
+          name: growthcraft-*.jar
+          path: build/libs/growthcraft-*.jar
+      - name: Upload checksums
+        uses: actions/upload-artifact@v3
+        with:
+          name: checksums.txt
+          path: checksums.txt
+      - name: Deploy to GitHub Releases
+        uses: softprops/action-github-releases@v1
+        with:
+          github_token: $GITHUB_OAUTH
+          draft: false
+          prerelease: false
+          assets: |
+            build/libs/growthcraft-*.jar
+            checksums.txt
+          release_name: $GITHUB_REF
+          release_title: $GITHUB_REF
+          release_body: Automated release from GitHub Actions
+          release_notes: Automated release from GitHub Actions
+          changelog: Automated release from GitHub Actions
+          labels: |
+            growthcraftce
+          description: Automated release from GitHub Actions
+          title: Automated release from GitHub Actions
+          tag

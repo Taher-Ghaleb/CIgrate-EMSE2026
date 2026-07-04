@@ -1,0 +1,55 @@
+language: java
+sudo: required
+branches:
+  only:
+    - master
+    - main
+  except:
+    - /^release\/.*$/
+
+env:
+  global:
+    BUILD_NUMBER: ${GITHUB_RUN_NUMBER}
+
+cache:
+  directories:
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+
+before_install:
+  - chmod +x gradlew
+
+install:
+  - gradle wrapper --stacktrace
+
+script:
+  - ./gradlew test
+  - ./gradlew build
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" || "$TRAVIS_BRANCH" == "main" ]; then
+    - mkdir -p src/main/resources
+    - echo "$BUILD_NUMBER" > src/main/resources/build.txt
+    - cat src/main/resources/build.txt
+    fi
+
+  - if [ "$TRAVIS_BRANCH" == "master" || "$TRAVIS_BRANCH" == "main" ]; then
+    - if [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
+      - if [ "$TRAVIS_TAG" == "" ]; then
+        - tag_name="build-${BUILD_NUMBER}"
+      else
+        - tag_name="$TRAVIS_TAG"
+      fi
+      - echo "Creating release: $tag_name"
+      - curl -H "Authorization: token ${GITHUB_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d '{"tag_name": "'"$tag_name"'", "name": "Beta Build ${BUILD_NUMBER}", "body": "Automated beta build ${BUILD_NUMBER}\n\nCommit: ${TRAVIS_COMMIT}\nBranch: ${TRAVIS_BRANCH}", "prerelease": true, "generate_release_notes": true}' \
+        https://api.github.com/repos/${GITHUB_REPOSITORY}/releases
+      - curl -H "Authorization: token ${GITHUB_TOKEN}" \
+        -H "Content-Type: application/octet-stream" \
+        --data-binary "@build/libs/*.jar" \
+        https://upload.github.com/repos/${GITHUB_REPOSITORY}/releases/assets?release_id=${tag_name}
+    fi
+  fi
+
+notifications:

@@ -1,0 +1,54 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  windows-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install JDK 8
+        run: |
+          choco install jdk8 -params 'installdir=c:\\java8' -y
+          echo "JAVA_HOME=c:\java8" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "c:\java8\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: powershell
+      
+      - name: Install Maven
+        run: |
+          choco install maven --version 3.6.3 -y
+          echo "C:\ProgramData\chocolatey\lib\maven\apache-maven-3.6.3\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: powershell
+      
+      - name: Build with Gradle
+        run: .\gradlew.bat build -x test --stacktrace --console=plain --no-daemon
+        shell: cmd
+
+  linux-build:
+    needs: windows-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+          cache: 'gradle'
+      
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+      
+      - name: Check Java version
+        run: java -version
+      
+      - name: Build and test with coverage
+        run: ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false

@@ -1,0 +1,64 @@
+language: java
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: |
+      git config --global --add safe.directory '*'
+      git config --global core.autocrlf false
+      git config --global core.filemode false
+
+install:
+  - name: Checkout code
+    git: shallow: false
+
+  - name: Set up JDK 8
+    cache: directories:
+      - ~/.m2/repository
+      - ~/.gradle/
+      - $HOME/.npm
+    script: |
+      wget -qO- https://adoptopenjdk.jfrog.io/adoptopenjdk/api/v1/packages/archive/adoptopenjdk/8/latest/openjdk8-jdk_8u322b07-0ubuntu1~20.04_amd64.deb | sudo dpkg -i -
+
+  - name: Setup Gradle
+    cache: directories:
+      - ~/.m2/repository
+      - ~/.gradle/
+      - $HOME/.npm
+    script: |
+      curl -sSL https://get.gradle.org/gradle-6.7.1-all.zip -o gradle-6.7.1-all.zip
+      unzip gradle-6.7.1-all.zip
+      export GRADLE_HOME=$(pwd)/gradle-6.7.1
+      export PATH=$GRADLE_HOME/bin:$PATH
+
+  - name: Make gradlew executable
+    script: chmod +x gradlew
+
+script:
+  - ./gradlew test
+
+before_deploy:
+  - script: |
+      # TODO: Add your pre-deploy script here
+
+deploy:
+  on:
+    tags: true
+
+  script: |
+    # TODO: Add your deployment script here
+
+  environment:
+    - GIT_USERNAME
+    - GIT_E

@@ -1,0 +1,22 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Clone target repository
+        run: |
+          git clone -b travis `git config --get remote.origin.url` target/travis
+      - name: Maven Build and Deploy/Verify
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "push" && "${GITHUB_REF}" == "refs/heads/develop" ]]; then
+            mvn clean deploy --settings target/travis/settings.xml
+          else
+            mvn clean verify --settings target/travis/settings.xml
+          fi
+        env:
+          secure: "********************"
+          secure: "********************"

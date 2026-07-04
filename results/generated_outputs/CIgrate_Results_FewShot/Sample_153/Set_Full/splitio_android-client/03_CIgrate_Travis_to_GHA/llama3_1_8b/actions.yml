@@ -1,0 +1,32 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "build-tools;29.0.2"
+          sdkmanager "platforms;android-29"
+      - name: Change directory to project
+        run: cd project
+      - name: Run tests
+        run:./gradlew test
+```
+
+Note: The `android` section in the original Travis CI configuration is not directly equivalent to a GitHub Actions workflow. In the migrated workflow, I've used the `android-actions/setup-android` action to set up the Android SDK, and then installed the required components. The `cd project` step is used to change the directory to the project directory, and the `./gradlew test` step is used to run the tests.

@@ -1,0 +1,16 @@
+language: java
+sudo: false
+jdk:
+  - oraclejdk8
+
+script:
+  - cd quarkus.jdt.ext && mvn clean verify
+  - cd quarkus.ls.ext/com.redhat.quarkus.ls && mvn clean verify
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.m2/wrapper'
+
+before_script:
+  - rm -rf $HOME/.m2/repository/**/*-SNAPSHOT

@@ -1,0 +1,47 @@
+language: java
+jdk:
+  - openjdk11
+  - openjdk8
+  - openjdk7
+git:
+  - git-v1.8.2
+before_install:
+  - chmod +x generate_artifacts.sh
+  - chmod +x upload_artifacts.sh
+  - chmod +x update_readme.sh
+  - chmod +x scripts/create_release_info.sh
+  - git config --global user.email "${{ github.user.email }}"
+  - git config --global user.name "${{ github.user.name }}"
+install: true
+before_script:
+  - cd scripts
+  - chmod +x create_release_info.sh
+  - cd ../out
+script:
+  - generate_artifacts.sh "${{ github.event.inputs.build_meta }}" "${{ github.event.inputs.mvn_version }"
+  - upload_artifacts.sh "${{ github.event.inputs.build_meta }}" "${{ github.event.inputs.mvn_version }"
+  - cd ../
+  - update_readme.sh "${{ github.event.inputs.build_meta }}" "${{ github.event.inputs.mvn_version }"
+  - create_release_info.sh "${{ github.event.inputs.build_meta }}" "https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}" "${{github.run_number}}" "${{ github.event.inputs.mvn_version }"
+deploy:
+  provider: releases
+  api_key:
+    secure: "********************"
+  file: "out/maven_central_repository/build_meta.json"
+  skip_cleanup: true
+  on:
+    tags: true
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+matrix:
+  allow_failures:
+    - stage: deploy
+    - jdk: openjdk7
+    - git: git-v1.8.2
+model_version: "2023-12-28T00:53:01-cff5d10c-1"
+name: maven-release
+on: [workflow_dispatch]
+jobs:

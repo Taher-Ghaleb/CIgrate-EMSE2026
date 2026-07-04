@@ -1,0 +1,42 @@
+name: C Build and Test
+
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      - docker
+    env:
+      JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update apt
+        run: apt-get update
+
+      - name: Install Raptor2 Utils
+        run: apt-get install -qq raptor2-utils
+
+      - name: Build Docker Image
+        run: docker build -t atomgraph/processor .
+
+      - name: Checkout HTTP Tests
+        working-directory: http-tests
+
+      - name: Start Containers
+        run: |
+          docker-compose up -d
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8080 | grep "404" ; do sleep 1 ; done
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8081 | grep "404" ; do sleep 1 ; done
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8082 | grep "404" ; do sleep 1 ; done
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8083 | grep "404" ; do sleep 1 ; done
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8084 | grep "404" ; do sleep 1 ; done
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8085 | grep "404" ; do sleep 1 ; done
+
+      - name: Run Tests
+        run: bash ./run.sh
+
+      - name: Stop and Remove Containers
+        run

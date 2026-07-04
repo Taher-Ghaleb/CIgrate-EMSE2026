@@ -1,0 +1,54 @@
+language: java
+jdk: 8
+env:
+  global:
+    - BUILD_NUMBER: $GITHUB_RUN_NUMBER
+    - GITHUB_TOKEN: $GITHUB_TOKEN # Assume configured
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - master
+    - main
+  except:
+    - /^release\/.*$/
+notifications:
+  email:
+    recipients:
+      -
+    on_success: change
+    on_failure: change
+before_install:
+  - git config --global user.email "ci@travis-ci.org"
+  - git config --global user.name "Travis CI"
+install:
+  - chmod +x gradlew
+  - mkdir -p src/main/resources
+  - echo $BUILD_NUMBER > src/main/resources/build.txt
+  - cat src/main/resources/build.txt
+script:
+  - ./gradlew test
+  - ./gradlew build
+  - echo "Test results will be uploaded as artifacts"
+  - echo "Build artifacts will be uploaded as release"
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ] || [ "$TRAVIS_BRANCH" == "main" ]; then
+      if [ -d "build/libs" ]; then
+        echo "Creating release..."
+        tag="build-${BUILD_NUMBER}"
+        echo "Tag: $tag"
+        ghr -t $GITHUB_TOKEN -d $GITHUB_REPOSITORY -r PepperLola/playerinfo -b "Automated beta build $BUILD_NUMBER\n\nCommit: $TRAVIS_COMMIT\nBranch: $TRAVIS_BRANCH" -t "$tag" build/libs/*.jar --prerelease
+      else
+        echo "No build artifacts found."
+      fi
+    fi
+  - echo "Upload test results as artifacts"
+  - echo "Build artifacts will be uploaded as release"
+  - echo "Test results will be uploaded as artifacts"
+  - echo "Build artifacts will be uploaded as release"
+  - echo "Upload test results as artifacts"
+  - echo "Build artifacts will be uploaded as release"
+  - echo "Upload test results as artifacts"

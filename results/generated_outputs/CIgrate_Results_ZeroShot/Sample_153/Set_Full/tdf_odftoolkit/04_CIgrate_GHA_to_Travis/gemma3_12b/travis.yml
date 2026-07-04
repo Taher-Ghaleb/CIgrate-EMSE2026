@@ -1,0 +1,15 @@
+language: java
+jdk: 11
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.m2/
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+script:
+  - mvn clean install -Ppedantic

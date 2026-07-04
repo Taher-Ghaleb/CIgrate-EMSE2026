@@ -1,0 +1,16 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+
+script:
+  - mvn clean install
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+before_script:
+  - if [ "${matrix.jdk}" = "11" ]; then set -e; fi

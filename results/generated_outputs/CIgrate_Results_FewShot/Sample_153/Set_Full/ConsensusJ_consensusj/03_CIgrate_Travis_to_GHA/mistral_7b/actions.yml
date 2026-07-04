@@ -1,0 +1,33 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JAVA_VERSIONS: |
+    openjdk8
+    openjdk9
+    openjdk11
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        jdk: ${{ env.JAVA_VERSIONS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update and install Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+      - name: Check Java version
+        run: java -version
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Build, scan, and stacktrace
+        run: ./gradlew buildCI --scan --stacktrace --info

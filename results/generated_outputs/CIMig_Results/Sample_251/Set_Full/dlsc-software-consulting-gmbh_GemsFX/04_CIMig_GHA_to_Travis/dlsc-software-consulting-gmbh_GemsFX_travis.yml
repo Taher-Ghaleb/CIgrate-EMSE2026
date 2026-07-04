@@ -1,0 +1,22 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  echo \"USE_SONAR=-sonar\" >> $GITHUB_ENV
+  java -version
+  ./mvnw -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+script
+deploy:
+  github_token: $github_token
+directories:
+  ~/.m2
+  ~/.sonar/cache
+stage:
+  Build
+  sonarcloud
+  ☕ 11

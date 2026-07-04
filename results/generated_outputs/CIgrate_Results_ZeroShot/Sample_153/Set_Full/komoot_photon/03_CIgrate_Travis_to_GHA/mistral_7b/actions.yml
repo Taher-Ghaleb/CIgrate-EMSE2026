@@ -1,0 +1,58 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [oraclejdk8, oraclejdk9]
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ matrix.jdk }}
+
+      - name: Install and build
+        run: mvn clean install -DskipTests
+
+      - name: Test
+        run: mvn test
+
+      - name: Deploy to Docker Hub (if success)
+        if: ${{ success() }}
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ matrix.jdk }}
+          dockerfile: Dockerfile
+
+      - name: Deploy to production (if success)
+        if: ${{ success() }}
+        uses: JamesIves/kubernetes-deploy-action@v4
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          namespace: my-namespace
+          image: ${{ matrix.jdk }}
+          dockerfile: Dockerfile
+          command: up
+          wait: 300

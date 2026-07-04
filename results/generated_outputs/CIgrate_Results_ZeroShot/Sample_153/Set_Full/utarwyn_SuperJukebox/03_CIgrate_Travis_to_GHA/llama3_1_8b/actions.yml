@@ -1,0 +1,51 @@
+name: Java Maven SonarQube
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      sonarcloud:
+        image: sonarcloud/sonar-scanner-cli
+        options: --organization="utarwyn-github"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y default-jdk
+      - name: Run Maven
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            mvn clean verify sonar:sonar -Pcoverage
+          else
+            mvn clean install
+          fi
+      - name: Cache SonarQube cache
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.sonar/cache
+          key: ${{ runner.os }}-sonar-cache-${{ hashFiles('**/sonar-project.properties') }}
+          restore-keys: ${{ runner.os }}-sonar-cache-

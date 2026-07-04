@@ -1,0 +1,55 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - '^release.*$'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        - postgres
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SECRET_1: ${{ secrets.SECRET_1 }}
+      SECRET_2: ${{ secrets.SECRET_2 }}
+      ROOT_POM: ${{ needs.set_root_pom.outputs.root_pom }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8,11
+
+      - name: Set up Maven
+        uses: actions/setup-maven@v4
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Set root pom
+        id: set_root_pom
+        run: |
+          if [ -f pom.xml ]; then
+            echo "::set-output name=root_pom::pom.xml"
+          elif [ -f android/pom.xml ]; then
+            echo "::set-output name=root_pom::android/pom.xml"
+          fi
+
+      - name: Install and verify
+        run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f ${{ needs.set_root_pom.outputs.root_pom }}
+
+      - name: Wait for build

@@ -1,0 +1,71 @@
+name: Atomgraph Processor Tests
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+  pull_request:
+    branches:
+      - main
+      - feature/*
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      fuseki:
+        image: atomgraph/fuseki
+        ports:
+          - 8080:8080
+      processor:
+        image: atomgraph/processor
+        ports:
+          - 8081:8081
+      processor-ct:
+        image: atomgraph/processor-ct
+        ports:
+          - 8082:8082
+      processor-ngt:
+        image: atomgraph/processor-ngt
+        ports:
+          - 8083:8083
+      processor-ngt-write:
+        image: atomgraph/processor-ngt-write
+        ports:
+          - 8084:8084
+      processor-custom:
+        image: atomgraph/processor-custom
+        ports:
+          - 8085:8085
+      processor-custom-write:
+        image: atomgraph/processor-custom-write
+        ports:
+          - 8086:8086
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '11'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -qq raptor2-utils
+
+    - name: Build and start containers
+      run: |
+        docker build -t atomgraph/processor.
+        docker-compose up -d
+
+    - name: Wait for containers to start
+      run: |
+        while! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8080 | grep "404" ; do sleep 1 ; done
+        while! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8081 | grep "404" ; do sleep 1 ; done
+        while! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8082 | grep "404" ; do sleep 1 ; done
+        while! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:808

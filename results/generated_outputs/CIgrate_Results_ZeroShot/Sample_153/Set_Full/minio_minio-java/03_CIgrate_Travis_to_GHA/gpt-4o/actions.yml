@@ -1,0 +1,33 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [oraclejdk8, openjdk8, oraclejdk9]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: ${{ matrix.jdk }}
+    - name: Run Gradle Check
+      run: ./gradlew check
+    - name: Run Functional Tests
+      run: ./gradlew runFunctionalTest
+    - name: Slack Notification
+      if: always()
+      run: echo "Sending notification to Slack"
+      env:
+        SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+      # TODO: Implement Slack notification using a GitHub Action or custom script

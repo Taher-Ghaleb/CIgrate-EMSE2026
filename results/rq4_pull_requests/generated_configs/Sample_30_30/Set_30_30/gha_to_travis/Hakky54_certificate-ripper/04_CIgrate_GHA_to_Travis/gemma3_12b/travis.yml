@@ -1,0 +1,51 @@
+language: java
+
+os:
+  - linux
+  - osx
+  - windows
+
+jdk:
+  - openjdk11
+  - openjdk17
+  - openjdk21
+
+branches:
+  only:
+    - master
+
+install:
+  - mvn clean install --no-transfer-progress
+
+script:
+  - mvn clean verify --no-transfer-progress
+
+before_cache:
+  - rm -f  $HOME/.m2/repository/org/glassfish/javax.el/3.0.1-b08
+
+cache:
+  directories:
+    - $HOME/.m2/repository/
+    - $HOME/.gradle/caches/
+    - $HOME/.npm/
+
+addons:
+  apt:
+    packages:
+      - docker-ce
+  docker:
+    compose: docker-compose
+    engine: docker
+    version: 19.03.6
+
+before_script:
+  - unset GEM_PATH
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then pip install --user codecov; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then curl -Lo ./sonarcloud/SonarCloud-2.2.1-linux.tgz https://sonarcloud.io/github-oss/releases/download/SonarCloud-2.2.1/SonarCloud-2.2.1-linux.tgz; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then tar xzf ./sonarcloud/SonarCloud-2.2.1-linux.tgz; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then mv ./sonarcloud/SonarCloud-2.2.1-linux /usr/local/bin/sonarcloud; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then chmod +x /usr/local/bin/sonarcloud; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then python3 -c "import os; print(os.path.join($HOME, '.cache'))"; fi
+
+after_success:
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then python3 -c "import os; print(

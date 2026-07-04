@@ -1,0 +1,26 @@
+language: java
+branches:
+  only:
+    - master
+    - "2.13"
+  except:
+    - /^(\d+\.\d+)$/ # Exclude tags
+pull_request:
+  branches:
+    - master
+    - "2.13"
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+matrix:
+  allow_failures: true
+  fast_finish: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+
+script:
+  - mvn -B clean verify

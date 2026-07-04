@@ -1,0 +1,53 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+      -'release/*'
+  pull_request:
+    branches:
+      -'main'
+      - 'feature/*'
+      -'release/*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-8
+        options: --privileged
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: temurin
+        java-version: '8'
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at: cache-maven-dependencies
+        path: $HOME/.m2
+        key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-dependencies-
+    - name: Install dependencies
+      run: |
+        mvn install -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+    - name: Run tests
+      run: |
+        mvn test -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+    - name: Code coverage
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+    - name: Send notifications
+      uses: derrickbailey/send-notifications@v1
+        recipients:
+          - travis-j@ibissource.org
+          - travis-j2@ibissource.org
+          - travis-n@ibissource.org
+          - travis-p@ibissource.org
+          - travis-g@ibissource.org
+```
+Note: The `derrickbailey/send-notifications` action is used to send notifications as there is no 1:1 equivalent in GitHub Actions.

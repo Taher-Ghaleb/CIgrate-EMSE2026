@@ -1,0 +1,50 @@
+name: Java CI
+
+on:
+  push:
+    tags: true
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      OSSRH_JIRA_USERNAME: ${{ secrets.OSSRH_JIRA_USERNAME }}
+      OSSRH_JIRA_PASSWORD: ${{ secrets.OSSRH_JIRA_PASSWORD }}
+      GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+    strategy:
+      matrix:
+        jdk: [8]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
+      - name: Verify with Maven
+        run: mvn verify
+
+      - name: Generate coverage report
+        if: success()
+        run: mvn clean test jacoco:report coveralls:report
+
+      - name: Create release properties
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: release/createReleaseProperties.sh
+
+      - name: Import GPG keys
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: |
+          echo $GPG_SECRET_KEYS | base64 --decode | gpg --import
+          echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
+          gpg -v --keyserver hkp://p80.pool.sks-keyservers.net:80 --refresh-keys
+          gpg -v --list-keys
+
+      - name: Deploy
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        run: mvn -X release:perform --settings release/mvnsettings.xml -Darguments="-DskipTests"

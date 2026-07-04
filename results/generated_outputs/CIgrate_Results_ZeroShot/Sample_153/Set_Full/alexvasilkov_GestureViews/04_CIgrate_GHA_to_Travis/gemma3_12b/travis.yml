@@ -1,0 +1,46 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  only:
+    - master
+
+services:
+  - android
+
+env:
+  SECRET_KEY_1: $TRAVIS_SECRET_1
+  SECRET_KEY_2: $TRAVIS_SECRET_2
+
+cache:
+  directories:
+    - ~/.gradle/caches/
+    - ~/.gradle/wrapper/
+  key: ${RUNNER_OS}-gradle-${hashFiles('**/*.gradle*', '**/gradle-wrapper.properties')}
+  restore_keys:
+    - ${RUNNER_OS}-gradle-
+
+before_install:
+  - chmod +x ./gradlew
+
+install:
+  - # TODO: Android SDK setup (equivalent to android-actions/setup-android)
+
+script:
+  - ./gradlew assembleDebug checkstyle lintDebug --stacktrace
+
+before_success:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+deploy:
+  on:
+    tags: true
+  script:
+    - chmod +x ./gradlew
+    - ./gradlew publishSample --stacktrace
+  before_install:
+    - chmod +x ./gradlew
+  install:
+    - # TODO: Android SDK setup (equivalent to android-actions/setup-android)

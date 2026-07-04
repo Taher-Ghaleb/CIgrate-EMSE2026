@@ -1,0 +1,36 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10.0
+        env:
+          DOCKER_TLS_CERTDIR: ''
+        ports:
+          - 2375:2375
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Build and test
+        run:./gradlew clean build
+```
+Note: The `dist` field is not a valid field in Travis CI, so it has been removed. The `services` field is used to run a Docker service, and the `cache` field is used to cache the Maven repository. The `sudo` field is not needed in GitHub Actions, as the workflow runs as the `ubuntu-latest` image, which has the necessary permissions.

@@ -1,0 +1,1987 @@
+instruction,input,output,direction,project
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","
+language: java
+sudo: false
+
+cache:
+  directories:
+  - ""$HOME/.m2""
+
+install: true
+jdk: openjdk8
+script: mvn clean install -e -B -V -nsu -P run-its -DskipITs -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+branches:
+  only:
+  - master
+","# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# ""License""); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# ""AS IS"" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: Verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Verify
+    uses: apache/maven-gh-actions-shared/.github/workflows/maven-verify.yml@v2
+    with:
+      jdk-matrix: '[ ""8"", ""11"", ""17"", ""18-ea"" ]'
+      ff-jdk: '18-ea'
+      ff-goal: 'clean install site site:stage -nsu'
+      ff-site-goal: '-v'
+      verify-goal: 'clean install -nsu -P run-its'
+      verify-fail-fast: false
+      failure-upload-path: |
+        surefire-its/target/*/log.txt
+        surefire-its/target/**/surefire-reports/*
+        surefire-its/target/**/failsafe-reports/*
+      timeout-minutes: 600
+",travis_to_gha,apache_maven-surefire
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+sudo: false # faster builds
+script: mvn install -P eclipse
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t 096c9f99-8956-4429-84af-c12f09980218
+","# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+    - name: Build with Maven
+      run: mvn -B install --file pom.xml -P eclipse
+    - name: Codecov
+      uses: codecov/codecov-action@v3.1.0
+      with:
+        token: 096c9f99-8956-4429-84af-c12f09980218
+
+",travis_to_gha,encircled_Joiner
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+
+branches:
+  only:
+    - master
+    #tag xx.yy-zz or xx.yy.zz-anythinglikeexperimental
+    - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+    #hotfix branches (not being too strict on purpose)
+    - /^hf-.*$/
+
+script:
+  - mvn test -B
+  - mvn pitmp:run
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+deploy:
+  provider: script
+  script: deploy/deploy.sh
+  on:
+    tags: true
+","name: Build OpenML
+
+on:
+  push:
+    branches:
+      - master
+      - 'hf-*'    # hotfix branches
+    tags:
+      - '*.*.*'   # release tag xx.yy.zz
+  pull_request:
+    branches:
+      - master
+      - 'hf-*'
+
+jobs:
+
+  # Build and test job
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: |
+          git fetch -f --tags
+          echo exit code $?
+          git tag --list
+
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
+      - name: Cache Maven packages
+        uses: actions/cache@v2.1.4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Build and test
+        run: mvn test -B
+
+      - uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
+",travis_to_gha,feedzai_feedzai-openml
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","sudo: required
+
+language: java
+
+services:
+  - docker
+before_cache:
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+before_install:
+cache:
+  directories:
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
+script:
+  - ./gradlew build
+  - ./gradlew jacocoTestReport
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+","# This workflow will have a CI flow for Payment Java(Gradle) project
+name: payment - CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Build gradle application
+        run: ./gradlew build
+      - name: Generate code coverage report
+        run: ./gradlew codeCoverageReport
+      - name: Publish report to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+      - name: Cleanup Gradle Cache
+        run: |
+          rm -f ~/.gradle/caches/modules-2/modules-2.lock
+          rm -fr ~/.gradle/caches/modules-2/*/plugin-resolution/
+",travis_to_gha,hmcts_ccpay-payment-app
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+
+jdk:
+  - openjdk8
+
+sudo: required
+
+branches:
+  only:
+  - master
+  - /^release-.*$/
+  - /^test-.*$/
+
+install: mvn compile -Dmaven.javadoc.skip=true | grep -v ""Downloading\|Downloaded""
+
+before_script:
+  - $TRAVIS_DIR/install-hugegraph-from-source.sh $TRAVIS_BRANCH | grep -v ""Downloading\|Downloaded""
+
+script:
+  - mvn test -Dtest=UnitTestSuite
+  - mvn test -Dtest=ApiTestSuite
+  - mvn test -Dtest=FuncTestSuite
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+env:
+  global:
+  - TRAVIS_DIR=assembly/travis
+  - COMMIT_ID=c0dff5b233e853716ca6f3f28a5cda05e6f3d639
+","name: hugegraph-client ci
+
+on:
+  push:
+    branches:
+      - master
+      - /^release-.*$/
+      - /^test-.*$/
+  pull_request:
+    branches:
+      - master
+      - /^release-.*$/
+      - /^test-.*$/
+
+jobs:
+  build:
+    runs-on: ubuntu-16.04
+    env:
+      TRAVIS_DIR: assembly/travis
+      COMMIT_ID: 9ee9fe12f3349a54bbceb161d002200d3689863c
+    steps:
+      - name: Install JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Compile
+        run: |
+          mvn compile -Dmaven.javadoc.skip=true | grep -v ""Downloading\|Downloaded""
+
+      - name: Prepare env and service
+        run: |
+          $TRAVIS_DIR/install-hugegraph-from-source.sh $COMMIT_ID | grep -v ""Downloading\|Downloaded""
+
+      - name: Run test
+        run: |
+          mvn test -Dtest=UnitTestSuite
+          mvn test -Dtest=ApiTestSuite
+          mvn test -Dtest=FuncTestSuite
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: target/jacoco.xml
+",travis_to_gha,hugegraph_hugegraph-client
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+
+jobs:
+  include:
+    - name: ""Build and Test""
+      script:
+        - ./gradlew build
+
+      before_cache:
+        - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+        - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+      cache:
+        directories:
+          - $HOME/.gradle/caches/
+          - $HOME/.gradle/wrapper/
+
+    - name: ""Docker Build""
+      services:
+        - docker
+      script:
+        - docker build -t hl7_validator .
+","# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Java CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [8.x, 14.x]
+
+    name: Java ${{ matrix.java }} Build
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup java
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Cache Gradle packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-${{ matrix.java }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.java}}-gradle
+      - name: Build with Gradle
+        run: ./gradlew build
+",travis_to_gha,inferno-framework_fhir-validator-wrapper
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+install: true
+
+jdk:
+  - oraclejdk8
+  - oraclejdk11
+  - oraclejdk12
+
+script:
+  - ./gradlew build --scan -s
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+","name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        distribution: [ 'adopt','zulu' ]
+        java: [ '8', '11', '13', '15' ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use JDK ${{ matrix.java }}
+        uses: actions/setup-java@v2
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
+      - name: Build with Gradle
+        run: ./gradlew build
+        env:
+          GH_PACKAGES_READ_TOKEN: ${{ secrets.GH_PACKAGES_READ_TOKEN }}
+          GH_PACKAGES_WRITE_TOKEN: ${{ secrets.GH_PACKAGES_WRITE_TOKEN }}
+          IPREGISTRY_API_KEY: ${{ secrets.IPREGISTRY_API_KEY }}
+",travis_to_gha,ipregistry_ipregistry-java
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: android
+os: linux
+dist: trusty
+jdk:
+  - oraclejdk8
+
+notifications:
+  email: null
+
+env:
+ global:
+ - ANDROID_API=30
+ - ANDROID_BUILD_TOOLS=30.0.2
+
+android:
+  components:
+  - tools
+  - tools # Running this twice get's the latest build tools (https://github.com/codepath/android_guides/wiki/Setting-up-Travis-CI)
+  - platform-tools
+  - build-tools-${ANDROID_BUILD_TOOLS}
+  - android-${ANDROID_API}
+
+before_install:
+  - echo yes | sdkmanager ""platforms;android-${ANDROID_API}""
+
+script:
+  - ""./gradlew clean test build""
+","# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called ""build""
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
+      - name: Build with Gradle
+        id: build
+        run: ./gradlew build
+        
+      - name: Run Unit Tests
+        id: tests
+        run: ./gradlew test
+",travis_to_gha,justdave_MCStatus
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","
+language: java
+jdk:
+  - openjdk7 # not really openjdk7 - we're just using this travis placeholder for our own Oracle JDK 7 installation
+  - oraclejdk8
+  - oraclejdk9
+  - openjdk10
+
+before_install:
+  - echo ""TRAVIS_JDK_VERSION is ${TRAVIS_JDK_VERSION}""
+  - |
+    if [[ ""${TRAVIS_JDK_VERSION}"" == ""openjdk7"" ]]; then
+      
+      export MAVEN_OPTS=""-Dhttps.protocols=TLSv1.2 -Xmx512m -XX:MaxPermSize=128m""
+      export JAVA_HOME=""/usr/lib/jvm/java-7-oracle"" # Set JAVA_HOME to where we want to install Oracle JDK 7
+      export PATH=""${JAVA_HOME}/bin:${PATH}""
+      
+      if [[ ! -d ""${JAVA_HOME}"" ]]; then
+        # Download and install Oracle JDK 7:
+        wget https://s3.amazonaws.com/d2fbee19-5fe2-425f-ae11-cd25b35dc99a/jdk-7u80-linux-x64.tar.gz -O /tmp/jdk-7u80-linux-x64.tar.gz
+        tar xvfz /tmp/jdk-7u80-linux-x64.tar.gz -C /tmp
+        sudo mv /tmp/jdk1.7.0_80 ""${JAVA_HOME}""
+      fi
+      
+      # Download and install JCE Unlimited Strength Crypto policies for Oracle JDK 7:
+      curl -q -L -C - https://238dj3282as03k369.s3-us-west-1.amazonaws.com/UnlimitedJCEPolicyJDK7.zip -o /tmp/UnlimitedJCEPolicyJDK7.zip
+      sudo unzip -oj -d ""$JAVA_HOME/jre/lib/security"" /tmp/UnlimitedJCEPolicyJDK7.zip \*/\*.jar
+      rm /tmp/UnlimitedJCEPolicyJDK7.zip
+    fi
+  # If on JDK 8, ensure build coverage assertions are run (we only need to run this on one JDK to reduce overall build times):
+  - export BUILD_COVERAGE=""$([ $TRAVIS_JDK_VERSION == 'oraclejdk8' ] && echo 'true')""
+
+install: true
+
+script:
+  - mvn install
+  - test -z ""$BUILD_COVERAGE"" || { mvn clean clover:setup test && mvn -pl . clover:clover clover:check coveralls:report; }
+","name: CI
+
+on:
+  pull_request: # all pull requests
+  push:
+    branches:
+      - master
+
+jobs:
+  temurin:
+    strategy:
+      matrix:
+        java: [ '8', '11', '17', '18' ]
+    runs-on: 'ubuntu-latest'
+    env:
+      MVN_CMD: ./mvnw --no-transfer-progress -B
+    name: jdk-${{ matrix.java }}-temurin
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: 'maven'
+          check-latest: true
+      - name: Build
+        # run a full build, just as we would for a release (i.e. the `ossrh` profile), but don't use gpg
+        # to sign artifacts, since we don't want to mess with storing signing credentials in CI:
+        run: ${{env.MVN_CMD}} verify -Possrh -Dgpg.skip=true
+      - name: Code coverage
+        if:  matrix.java == '8'
+        run: |
+          ${{env.MVN_CMD}} clean clover:setup test
+          ${{env.MVN_CMD}} -pl . clover:clover clover:check coveralls:report \
+            -DrepoToken=""${{ secrets.GITHUB_TOKEN }}"" \
+            -DserviceName=github \
+            -DserviceBuildNumber=""${{ env.GITHUB_RUN_ID }}""
+
+  zulu:
+    strategy:
+      matrix:
+        java: [ '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18' ]
+    runs-on: 'ubuntu-latest'
+    env:
+      MVN_CMD: ./mvnw --no-transfer-progress -B
+      JDK_MAJOR_VERSION: ${{ matrix.java }}
+    name: jdk-${{ matrix.java }}-zulu
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'zulu'
+          cache: 'maven'
+          check-latest: true
+      - name: Build
+        # run a full build, just as we would for a release (i.e. the `ossrh` profile), but don't use gpg
+        # to sign artifacts, since we don't want to mess with storing signing credentials in CI:
+        run: |
+          if [ ""$JDK_MAJOR_VERSION"" == ""7"" ]; then export MAVEN_OPTS=""-Xmx512m -XX:MaxPermSize=128m""; fi
+          ${{env.MVN_CMD}} verify -Possrh -Dgpg.skip=true
+
+  jdk-7-oracle:
+    runs-on: 'ubuntu-latest'
+    env:
+      MVN_CMD: ./mvnw --no-transfer-progress -B
+      MAVEN_OPTS: ""-Dhttps.protocols=TLSv1.2 -Xmx512m -XX:MaxPermSize=128m""
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          download_url=""https://238dj3282as03k369.s3-us-west-1.amazonaws.com/jdk-7u80-linux-x64.tar.gz""
+          wget -O $RUNNER_TEMP/java_package.tar.gz $download_url
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'jdkfile'
+          jdkFile: ${{ runner.temp }}/java_package.tar.gz
+          java-version: '7'
+          architecture: x64
+          cache: 'maven'
+      - name: ""Download and install JCE Unlimited Strength Crypto policies for Oracle JDK 7""
+        run: |
+          curl -q -L -C - https://238dj3282as03k369.s3-us-west-1.amazonaws.com/UnlimitedJCEPolicyJDK7.zip -o $RUNNER_TEMP/UnlimitedJCEPolicyJDK7.zip
+          unzip -oj -d ""$JAVA_HOME/jre/lib/security"" $RUNNER_TEMP/UnlimitedJCEPolicyJDK7.zip \*/\*.jar
+          rm $RUNNER_TEMP/UnlimitedJCEPolicyJDK7.zip
+      - name: Build
+        # run a full build, just as we would for a release (i.e. the `ossrh` profile), but don't use gpg
+        # to sign artifacts, since we don't want to mess with storing signing credentials in CI:
+        run: ${{env.MVN_CMD}} verify -Possrh -Dgpg.skip=true
+",travis_to_gha,jwtk_jjwt
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+git:
+  depth: false # All branches will be checked out allowing spotless to do its thing
+jdk:
+  - openjdk14
+install:
+  - ./gradlew autogenerate
+  - ./gradlew assemble
+script:
+  - ./gradlew  -q --console plain dependencyInfo
+  - ./gradlew test
+  - ./gradlew spotlessJavaCheck
+","# This workflow will build a Java project with Gradle
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-gradle
+
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ SNAPSHOT ]
+  pull_request:
+    branches: [ SNAPSHOT ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        submodules: true
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Test Spotless
+      run: ./gradlew spotlessJavaCheck
+    - name: Auto Generate Code
+      run: ./gradlew autogenerate
+    - name: Build with Gradle
+      run: ./gradlew assemble
+    - name: Print Dependency Info
+      run: ./gradlew -q --console plain dependencyInfo
+    - name: Unit Tests
+      run: ./gradlew test
+",travis_to_gha,lessthanoptimal_BoofCV
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","sudo: false
+language: java
+jdk:
+  - openjdk8
+  - oraclejdk9
+
+script:
+  - mvn clean test jacoco:report
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+","name: ""Build""
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 11, 16 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Install JDK ${{ matrix.java }}
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+
+      - name: Build & Test
+        run: mvn clean verify
+
+      - name: Javadoc etc
+        run: mvn clean verify -Prelease -Dgpg.skip -DskipTests
+
+      - name: RAT check
+        run: mvn clean -Prelease apache-rat:check
+",travis_to_gha,messaginghub_pooled-jms
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+
+jdk:
+  - oraclejdk8
+
+script: 
+  - mvn clean test
+  #- mvn clean test -Pperformance-test
+
+branches:
+ only:
+   - master
+","name: CI
+
+on:
+  push:
+    branches: '**'
+  pull_request:
+    branches: '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Cache ~/.m2/repository
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Build with Maven
+        run: mvn --batch-mode --show-version clean test
+",travis_to_gha,neo4j-contrib_neo4j-jdbc
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","sudo: false
+language: java
+script: mvn -Dmaven.test.skip=true clean source:jar deploy --settings mvn_settings.xml --fail-at-end
+jdk:
+  - oraclejdk8
+branches:
+  only:
+    - master
+notifications:
+  email: false
+before_install:
+  - export TZ=Asia/Shanghai
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the ""travis encrypt"" command using the project repo's public key
+   - secure: ""E1z+6z9M4iTdAXZ2a1rYSrxfIOq6PkdXEMutAbIn/bp1e/Qvb5IVoAS0heo7SPwcIlHlN8mDiOtKdzbcu9q8VaftfHwFjff6AoKyuWtfDqE1ecTfflebWwzmtXKJmT5uxBPvu442dS4sIc2zx3zjvnxMsSmvrdSwbMxwdbAKvDc=""
+   - SONATYPE_USERNAME=wendal
+   - secure : ""BaXmGpodQiuU23YgtUThWCHf7Vig2Gv3UfpBjo3FATgn1LRF3i2IOgY5sCSi+XJYqx+05fVNdwVYccxS/9UfhPNSqQuslIwgmg0y9f26DYaX2gaW+jk8padhZRkeBrY3fO+g9nQuu+Epgqi0ITru6+IjH932O0m1JR7iJu2RNhs=""
+","# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ ""dev"" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: maven
+    - name: Build with Maven
+      run: mvn -Dmaven.test.skip=true -B package source:jar deploy --file pom.xml -s mvn_settings.xml -DS_NUTZMAVEN_USER_ID=${{secrets.S_NUTZMAVEN_USER_ID}} -DS_NUTZMAVEN_USER_PWD=${{secrets.S_NUTZMAVEN_USER_PWD}}
+      env:
+         S_NUTZMAVEN_USER_ID : ${{secrets.S_NUTZMAVEN_USER_ID}}
+         S_NUTZMAVEN_USER_PWD : ${{secrets.S_NUTZMAVEN_USER_PWD}}
+",travis_to_gha,nutzam_nutzboot
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+dist: xenial
+sudo: false
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+env:
+  - PROFILES=headless-mode
+  - PROFILES=headless-mode,chrome
+
+before_install:
+  - sudo apt-get -y install firefox-geckodriver
+install:
+  - git clone https://github.com/primefaces/primefaces && cd primefaces && mvn install && cd ..
+  - git clone https://github.com/primefaces-extensions/primefaces-selenium && cd primefaces-selenium && mvn install && cd ..
+script:
+  - ln -s /usr/bin/geckodriver geckodriver
+  - source .travis/install-chromedriver.sh
+  - mvn -B -V clean install -P${PROFILES}
+
+addons:
+  apt:
+    update: true
+cache:
+  directories:
+    - ""$HOME/.m2/repository""
+","name: Java CI
+
+#on: [push, pull_request]
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Java ${{ matrix.java }}
+    strategy:
+        matrix:
+            java: [8, 11]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: checkout PrimeFaces
+        uses: actions/checkout@master
+        with:
+          repository: primefaces/primefaces
+          path: primefaces
+      - name: build PrimeFaces
+        run: cd primefaces && mvn install && cd ..
+      - name: checkout PrimeFaces Selenium
+        uses: actions/checkout@master
+        with:
+          repository: primefaces-extensions/primefaces-selenium
+          path: primefaces-selenium
+      - name: build PrimeFaces Selenium
+        run: cd primefaces-selenium && mvn install && cd ..
+      - name: Build with Maven
+        run: mvn -B -V clean install -Pheadless-mode
+",travis_to_gha,primefaces-extensions_primefaces-integration-tests
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","stages:
+  - ""tests for compatible with the byteman 4""
+  - ""integration tests""
+
+jobs:
+  include:
+    - stage: ""tests for compatible with the byteman 4""
+      language: java
+      jdk:
+        - oraclejdk8
+      sudo: false
+      cache:
+        directories:
+          - $HOME/.m2
+      script: mvn clean install -P !main,byteman4_compatible
+      dist: trusty
+
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
+
+    - stage: ""integration tests""
+      language: java
+      jdk:
+        - oraclejdk8
+      sudo: false
+      cache:
+        directories:
+          - $HOME/.m2
+      script: mvn clean install
+      dist: trusty
+
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
+
+      deploy:
+        provider: script
+        script: bash .travis/release.sh
+        on:
+          tags: true
+          branch: release
+","name: Build application
+
+on: [push]
+
+jobs:
+  build:
+    name: ""Compilation and unit tests""
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Build with Maven
+      run: mvn clean install -P !main,byteman4_compatible
+  integration_tests:
+    needs: [build]
+    name: ""Integration tests""
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Build with Maven
+        run: mvn clean install
+  publish:
+    name: ""Publish to the Maven Central Repository""
+    needs: [integration_tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Publish to the Maven Central Repository
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: .travis/release.sh
+        env:
+          MAVEN_USERNAME: ${{ secrets.BMUNIT_EXT_MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.BMUNIT_EXT_MAVEN_PASSWORD }}
+          ENCRYPTION_PASSWORD: ${{ secrets.BMUNIT_EXT_ENCRYPTION_PASSWORD }}",travis_to_gha,starnowski_bmunit-extension
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+sudo: false
+
+os:
+  - linux
+  - osx
+
+jdk:
+  - oraclejdk8
+  - oraclejdk7
+  - openjdk6
+
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
+
+script: ant -f make-jar.xml
+","name: Java CI
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+          architecture: x64
+      - name: Build with Ant
+        run: ant -noinput -buildfile make-jar.xml
+      - name: Upload jar
+        uses: actions/upload-artifact@v2
+        with:
+          name: ct-Sim
+          path: bin/build-jar/ct-Sim.jar
+",travis_to_gha,tsandmann_ct-sim
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","sudo: required
+services:
+  - docker
+  - postgresql
+language: java
+jdk: oraclejdk8
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+  - psql -c 'create database events;' -U postgres
+script:
+  - ""./gradlew clean build jacocoTestReport jacocoFix -PbuildNumber=$TRAVIS_BUILD_NUMBER --scan""
+  - docker build --no-cache --pull -t wisvch/events:$TRAVIS_BUILD_NUMBER .
+after_success:
+  - if [ ""${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"" == ""master"" ]; then
+    docker login -u=""$DOCKER_USERNAME"" -p=""$DOCKER_PASSWORD"";
+    docker push wisvch/events:$TRAVIS_BUILD_NUMBER;
+    fi
+after_script:
+  - cd src/main/java/
+  - ../../../cc-test-reporter format-coverage -d -t jacoco
+  - ../../../cc-test-reporter upload-coverage -d
+notifications:
+  slack: false
+  email: false
+","name: Test and Deploy
+on:
+  push:
+jobs:
+  testAndDeploy:
+    name: Test and Deploy Docker Image
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env: 
+          POSTGRES_USER: postgres
+          POSTGRES_DB: events
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Setup JDK
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Setup for test report
+      run: |
+        curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+        chmod +x ./cc-test-reporter
+        ./cc-test-reporter before-build
+    - name: Test Coverage
+      run: ./gradlew clean build jacocoTestReport jacocoFix --scan
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v3
+      with:
+        images: wisvch/events
+        tags: type=sha, prefix={{date 'YYYYMMDD'}}-
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Quay login
+      uses: docker/login-action@v1
+      with: 
+        registry: quay.io
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Push to Quay
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        push: ${{ github.ref == 'refs/heads/master' }}
+",travis_to_gha,WISVCH_events
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+git:
+  depth: false
+
+addons:
+  apt:
+    packages:
+      - docker-ce
+services:
+  - docker
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/modules-2/
+    - $HOME/.gradle/wrapper/
+
+jobs:
+  include:
+    - stage: deploy
+      script: skip
+      deploy:
+        provider: script
+        skip_cleanup: true
+        on:
+          tags: true
+        script: ./gradlew publishPlugins -Pgradle.publish.key=$GRADLE_PUBLISH_KEY -Pgradle.publish.secret=$GRADLE_PUBLISH_SECRET -x check
+
+stages:
+  - test
+  - deploy
+
+env:
+  - GRADLE_INTEGRATION_TEST_VERSIONS=5.3,5.6 PUBLISH_SONAR=true
+  - GRADLE_INTEGRATION_TEST_VERSIONS=6.0,6.6
+
+before_script:
+  - 'bash -c ""docker pull alfresco/alfresco-content-repository-community:6.0.7-ga& docker pull tomcat:7-jre8& docker pull hello-world& docker pull alpine:edge&""'
+
+script:
+  - >
+    GRADLE_ARGS=""check -i -PintegrationTestGradleVersions=$GRADLE_INTEGRATION_TEST_VERSIONS"";
+    if [[ ""$PUBLISH_SONAR"" == ""true"" && ""$TRAVIS_SECURE_ENV_VARS"" == ""true"" ]]; then
+      GRADLE_ARGS=""${GRADLE_ARGS} sonarqube -Dsonar.projectKey=xenit-eu_alfresco-docker-gradle-plugin -Dsonar.organization=xenit-eu -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN""
+    fi;
+    ./gradlew $GRADLE_ARGS;
+","name: CI
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 1'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+        matrix:
+            gradle-versions:
+                - 5.3,5.4
+                - 5.5,5.6
+                - 6.0,6.1,6.2
+                - 6.3,6.4,6.5
+                - 6.6,6.7
+            publish:
+                - false
+            include:
+                - gradle-versions: 6.7
+                  publish: true
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Pull docker images
+        run: 'bash -c ""docker pull alfresco/alfresco-content-repository-community:6.0.7-ga& docker pull tomcat:7-jre8& docker pull hello-world& docker pull alpine:edge&""'
+      - name: Check
+        run: ./gradlew check -PintegrationTestGradleVersions=${{ matrix.gradle-versions }}
+      - name: Upload analysis to sonarcloud
+        if: ${{ matrix.publish }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./gradlew sonarqube -Dsonar.projectKey=xenit-eu_alfresco-docker-gradle-plugin -Dsonar.organization=xenit-eu -Dsonar.host.url=https://sonarcloud.io
+      - name: Publish
+        if: ${{ startsWith(github.ref, 'refs/tags/') && matrix.publish }}
+        env:
+          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PLUGINS_PUBLISH_KEY }}
+          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PLUGINS_PUBLISH_SECRET }}
+        run: ./gradlew publishPlugins -Pgradle.publish.key=$GRADLE_PUBLISH_KEY -Pgradle.publish.secret=$GRADLE_PUBLISH_SECRET
+",travis_to_gha,xenit-eu_alfresco-docker-gradle-plugin
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","if: branch = master
+
+language: android
+sudo: false
+
+env:
+  global:
+  - secure: sw5+BZqf7awCM2X8w7JbGIaT4J8/ES4fWhoo3qZxCTOdJ4ubfNH/2D/VSRCDMOENgGIgBr0NXeO1wyRvA0PBRut0+44Db+2KLycPA1DFU95rzKA/szfWurkc54rnt1Gw3UXS54hIjz+uDZ0h7SbV+uQiTkTpqQJ0b2LgUFMdiuKTp5dfuZqJTfXp/EJuT+EuJeCXolEBlbtMZLSalDq2TWPjTsg6B/JmREChalUwmyIryZsjS3z5RFy0HX4Fy4ucf9f76AuwSgfabZsa/7+/fYQbLRL9dFiPTY5A3M3fKoZ7j35mhb9KUBQC2kp1M4TyttWXressvHeWUUaLingzNJmW7r0xQrFzNFoyKIIUklvfFR1jU+E0Bl4fQEWghpAw15Xm6jPXRDi46wkg4TfMCi3bkCogCDP9OdnwVBFDcz+mKibkduQ3cCBJhtQX0gdpTnxVsyq6GPHYMEY6Mf9DDF2keH4cJy+ehni/GxinYNxCMB4gDcX+9jB6AY8ShyWtwGqBcb2xahF7/CK00CsAkCmmKO8rUJXuTD11a+RN6zTwFUPAs/btS/47mFtsRNvDTfHIe4/hZwpGCDwUKtYqDFG8uuhWQtuPFtscjRkSU2zPcnmAgcH9s/NkYqYmx2rnSvUbyNvGrY/QfRv+pd0+LFu+XAG4Vir4eVK9fK5wOTk=
+  - secure: PKHWXUtajn32/anqhi2fx6PZyBbywHTdVkw1ljoa+kOg+mYPDudDAm0BkDF99G16eTBLHacy6zOks1dJyQih3Rg2Efk3182RZ2a+Fq+0NlQnSdoTYamp/V782ABX9Yvw8YX4Ow2rKHgHaMCCn0qVgZqGdttKDbqBZRRP/f93k88sKWnEAXvWgWRr/CQUixB+Xx8l+sXnAK66JsBl0nBHD0NO/XJpnMNixN1B5/6u2wseHLomOjg16P1dOAFZhXDG7sZYByNRMRgPyW54cl+0RCpIrEmHMv0JSnxFvzcU+D4eTfZ87pr0k3LqotI2QMsD+gZOXaSGRolG1irc9n1m260tc9CezJdvf3eKRm2H12AR1lYp8+gUbt1AZnuAA8WSgntqsyUN+eL8bzK6B3EChR8ffp46gcZWgPJTuXMscFVIv6qtimZypFnGHxwypwj89xTVLQi07tuJO1n4KOTlJKGG34G2WiT5KiBKODARLz4uC2nlODqbbm1oKzNtP/O0LO6VkhR6pXaNTSFKORCcAeeOamb9T90wpzOqtJOpboXy187jC0j+RxkGPKuvIKz+x4v5///Q4I4j+Jsllb3Mm0bWAfPd/A5xHG/u7d44Fs22F9HZNKl6ux4IDUjOGSnUcsMn44cGPy4QNs4Qlgib0FOrwQ+oIpSadoObT4IvTwU=
+
+android:
+  components:
+  - tools
+  - build-tools-28.0.3
+  - android-29
+
+before_install:
+  - yes | sdkmanager ""platforms;android-29""
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+
+jobs:
+  include:
+  - stage: test
+    script:
+    - ./gradlew assembleDebug checkstyle lintDebug --stacktrace
+
+  - stage: deploy
+    if: branch = master AND type = push
+    script:
+    - git fetch --unshallow # Build number will be incorrect for shallow copy
+    - ./gradlew publishSample --stacktrace
+","name: Build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
+      - name: Build and test
+        run: |
+          ./gradlew assembleDebug checkstyle lintDebug --stacktrace
+
+      - name: Piblish sample app
+        if: github.event_name == 'push'
+        env:
+          ENCRYPT_KEY: ${{ secrets.ENCRYPT_KEY }}
+          UPLOAD_KEYSTORE_PWD: ${{ secrets.UPLOAD_KEYSTORE_PWD }}
+        run: |
+          git fetch --unshallow # Build number will be incorrect for shallow copy
+          ./gradlew publishSample --stacktrace
+",travis_to_gha,alexvasilkov_GestureViews
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+branches:
+  only:
+    - master
+    - ""2.13""
+
+script: mvn -B clean verify
+","name: Build and Deploy Snapshot
+on:
+  push:
+    branches:
+    - master
+    - ""3.0""
+    - ""2.13""
+    paths-ignore:
+    - ""README.md""
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        java_version: ['8', '14']
+        os: ['ubuntu-20.04']
+    env:
+      JAVA_OPTS: ""-XX:+TieredCompilation -XX:TieredStopAtLevel=1""
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v2
+      with:
+        distribution: ""adopt""
+        java-version: ${{ matrix.java_version }}
+        server-id: sonatype-nexus-snapshots
+        server-username: CI_DEPLOY_USERNAME
+        server-password: CI_DEPLOY_PASSWORD
+    - uses: actions/cache@v2.1.6
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - name: Build
+      run: ./mvnw -V -B -ff -ntp verify
+    - name: Deploy snapshot
+      if: github.event_name != 'pull_request' && matrix.java_version == '8'
+      env:
+        CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}
+        CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
+        # MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+      run: ./mvnw -V -B -ff -DskipTests -ntp source:jar deploy
+",travis_to_gha,FasterXML_jackson-jr
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","dist: trusty
+language: java
+jdk:
+  - openjdk8
+
+install: echo 'Skipping separate install phase'
+
+script:
+  - mvn install -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+
+cache:
+  directories:
+  - $HOME/.m2
+
+notifications:
+  email:
+    recipients:
+      - travis-j@ibissource.org
+      - travis-j2@ibissource.org
+      - travis-n@ibissource.org
+      - travis-p@ibissource.org
+      - travis-g@ibissource.org
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+","# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [master, 7.5-release]
+  pull_request:
+    branches: [master, 7.5-release]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+    - name: Build with Maven
+      env:
+        CI_SERVICE: GITHUB
+        TZ: Europe/Amsterdam
+      run: mvn -B -V -T1 package -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+",travis_to_gha,ibissource_iaf
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+
+jdk:
+  - oraclejdk9
+
+install: true
+
+script:
+  - mvn --errors clean verify site
+  - bash <(curl -s https://codecov.io/bash) -f com.io7m.jeucreader.core/target/site/jacoco/jacoco.xml
+
+notifications:
+  irc: ""chat.freenode.net#io7m""
+","name: main-openjdk_current-windows
+
+on:
+  push:
+    branches: [ develop, feature/*, release/* ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 15
+      - name: Build
+        run: mvn --errors clean verify site
+",travis_to_gha,io7m_jeucreader
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","dist: trusty
+language: java
+jdk:
+  - oraclejdk8
+install: true
+script: mvn -B -nsu verify
+cache:
+  directories:
+    - $HOME/.m2
+branches:
+  except:
+  - /^release\/.*$/
+","name: Java CI with Maven
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 9, 11, 14 ]
+
+    steps:
+    - name: Checkout GitHub sources
+      uses: actions/checkout@v2
+    - name: Setup JDK ${{ matrix.java }}
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Cache Maven packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+    - name: Build with Maven
+      run: ./mvnw -B -nsu verify
+",travis_to_gha,reaktivity_nukleus-http.java
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+sudo: false
+before_script:
+  - pip install --user codecov
+install: mvn install -DskipTests=true -Dgpg.skip=true -B -V
+jdk:
+  - openjdk8
+after_success:
+  - codecov
+","name: ci-sauce CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+        - master
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform: [ ubuntu-latest, macos-latest, windows-latest ]
+      fail-fast: false
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install JDK 8
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 8
+          cache: 'maven'
+
+      - name: Build
+        shell: bash
+        run: ./mvnw install -Dgpg.skip=true -B -V
+
+      # As per https://github.com/codecov/codecov-action/issues/295 the repo needs to be
+      # registered to be able to use https://github.com/codecov/codecov-action
+      - name: Upload coverage to Codecov
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov
+",travis_to_gha,saucelabs_ci-sauce
+"You are an Expert DevOps Engineer specializing in Travis CI to GitHub Actions migrations. Migrate this Travis CI config to a COMPLETE GitHub Actions workflow.
+
+OUTPUT RULES
+- Output YAML only (no prose). Your output MUST start with ""name:"" and include top-level keys: name, on, jobs.
+- Include at least one job with: runs-on, steps.
+- Do NOT output a snippet (must not start with ""- uses:"" or ""- run:"").
+
+CONVERSION RULES
+- Preserve semantics: env (global/matrix), caches, services/addons, branch/tag filters, deploys, notifications.
+- Map Travis lifecycle to GHA steps: before_install, install, before_script, script, after_success/failure, deploy.
+- Map matrices: jdk/node_js/python/go -> strategy.matrix; allow_failures -> continue-on-error.
+- Env: env.global -> env (workflow/job/step). $FOO secrets -> ${{ secrets.FOO }}.
+- Caches: cache: directories -> actions/cache@v4 with stable keys.
+- Services/addons: services (dbs) -> jobs.<job>.services; addons.apt -> apt-get steps.
+- Docker/Compose: preserve docker build/push and docker-compose up/down; keep wait loops verbatim.
+- Triggers: preserve original branch/tag names; do not invent ""main"" or ""master"".
+- Use modern actions: actions/checkout@v4; actions/setup-java@v4 (distribution: temurin), setup-node@v4, setup-python@v5, setup-go@v5.
+- Do NOT introduce tools/registries not in the source (Buildx, login actions, GHCR, Sonar, custom email actions). If no 1:1 equivalent, add a short ""# TODO:"" comment.
+
+Now migrate below input section Travis CI configuration to equivalent complete GitHub Actions workflow and return ONLY the complete migrated YAML maintaining the above OUTPUT and CONVERSION rules.","language: java
+install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
+
+after_success:
+  - mvn clean cobertura:cobertura coveralls:report
+","# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        distribution: 'adopt'
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
+    - name: Compute code coverage
+      run: mvn -B clean cobertura:cobertura coveralls:report --file pom.xml
+",travis_to_gha,tdebatty_java-string-similarity

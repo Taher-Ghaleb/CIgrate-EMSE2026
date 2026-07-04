@@ -1,0 +1,58 @@
+name: Open Liberty Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+      - release/*
+  pull_request:
+    branches:
+      - main
+      - feature/*
+      - release/*
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        RUNTIME: [ol, wlp]
+        RUNTIME_VERSION: [19.0.0.6, 19.0.0.3]
+    services:
+      - name: maven
+        image: maven:3-jdk-11
+        env:
+          MAVEN_OPTS: -Dmaven.repo.remote=*https://repo1.maven.org/maven2/*
+    env:
+      RUNTIME: ${{ matrix.RUNTIME }}
+      RUNTIME_VERSION: ${{ matrix.RUNTIME_VERSION }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ~/.m2/*
+      - name: Install Maven
+        run: |
+          echo "Installing Maven..."
+          curl -fsSL https://download.oracle.com/java/18u22/oth-JPR/jdk-18.0.2_linux-x64_bin.tar.gz | tar -xvz -C /tmp
+          export JAVA_HOME=/tmp/jdk-18.0.2_linux-x64_bin
+          export PATH=$JAVA_HOME/bin:$PATH
+      - name: Install Open Liberty
+        run: |
+          echo "Installing Open Liberty..."
+          curl -fsSL https://github.com/OpenLiberty/ci.common/releases/download/v1.0/ci.common-1.0.tar.gz | tar -xvz -C /tmp
+          export PATH=/tmp/ci.common-1.0/bin:$PATH
+      - name: Build and test
+        run: |
+          echo "Building and testing..."
+          mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=$RUNTIME -DruntimeVersion=$RUNTIME_VERSION
+      - name: Wait
+        run: |
+          echo "Waiting for 30 seconds..."
+          sleep 30

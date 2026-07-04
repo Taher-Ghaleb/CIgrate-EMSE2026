@@ -1,0 +1,40 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - '**-[0-9]+.**'
+
+scripts:
+  prepare:
+    - checkout
+
+    - install:
+        name: Set up JDK 8
+        script: |
+          wget -q https://download.java.net/java/GA/jdk8/8u275/bin/linux/x64/jdk-8u275-linux-x64.tar.gz
+          tar -xzf jdk-8u275-linux-x64.tar.gz -C $HOME
+          export JAVA_HOME=$HOME/jdk1.8.0_275
+          export PATH=$JAVA_HOME/bin:$PATH
+          export M2_HOME=$HOME/jdk1.8.0_275
+          export PATH=$M2_HOME/bin:$PATH
+
+    - run: chmod +x .travis/build.sh
+
+    - name: Build
+      script: .travis/build.sh
+
+before_install:
+  - cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle
+        - $HOME/.npm
+
+deploy:
+  on:
+    tags: true
+
+  script: deploy script here
+
+# TODO: Add Travis services/addons for GHA services

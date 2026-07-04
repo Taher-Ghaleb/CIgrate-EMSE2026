@@ -1,0 +1,56 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - FIREBASE_KEY: $FIREBASE_KEY
+    - FIREBASE_IV: $FIREBASE_IV
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.npm
+    - ~/.cache/firebase
+
+services:
+  - postgresql
+  - redis
+  - docker
+
+before_install:
+  - export PATH=$PATH:$HOME/.gradle/bin
+
+install:
+  - npm install -g firebase-tools
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  - firebase emulators:exec --only auth --project turma-de-elite-app './gradlew test'
+
+deploy:
+  on:
+    tags: true
+    branch: release
+  if: github.ref == 'refs/heads/release' && github.event_name == 'push'
+  script:
+    - openssl aes-256-cbc -K $FIREBASE_KEY -iv $FIREBASE_IV -in firebase/firebase-sdk-key.json.enc -out firebase/firebase-sdk-key.json -d
+    - echo "Deploying to Heroku..."
+    - echo "Heroku API Key: $HEROKU_API_KEY"
+    - echo "Heroku Email: $HEROKU_EMAIL"
+    - echo "Heroku App Name: turma-de-elite"
+    - echo "Branch: release"
+    - |
+      if [ -n "$HEROKU_API_KEY" ]; then
+        curl -D -v https://api.heroku.com/apps/turma-de-elite -H "Accept: application/vnd.heroku+json" -H "Authorization: Bearer $HEROKU_API_KEY"
+      else
+        echo "Heroku API Key not found. Skipping deployment."
+      fi
+  deploy_provider: heroku
+  deploy_app: turma-de-elite
+  deploy_branch: release
+  deploy_key: $HEROKU_API_KEY
+  deploy_email: $HEROKU_EMAIL

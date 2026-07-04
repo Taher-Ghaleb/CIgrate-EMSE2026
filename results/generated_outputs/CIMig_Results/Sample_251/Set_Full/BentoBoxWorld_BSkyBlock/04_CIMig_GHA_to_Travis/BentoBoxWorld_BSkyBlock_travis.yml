@@ -1,0 +1,22 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: develop
+before_install:
+  java -version
+  mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+script
+deploy:
+  github_token: $github_token
+stage:
+  Build
+  sonarcloud
+directories:
+  ~/.m2
+  ~/.sonar/cache

@@ -1,0 +1,38 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK: oraclejdk8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Set up Scala 2.11.7
+        uses: scala-actions/setup-sbt@v1
+        with:
+          scala: 2.11.7
+      - name: Cache Ivy, SBT boot, and SBT launchers
+        uses: actions/cache@v4
+        with:
+          path: |
+            $HOME/.ivy2
+            $HOME/.sbt/boot
+            $HOME/.sbt/launchers
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+      - name: Install SBT
+        run: |
+          curl -s "https://get.sbt.org" | sbt/sbt install -s /tmp/sbt
+      - name: Update SBT
+        run: sbt update
+      - name: Compile and test
+        run: sbt compile test

@@ -1,0 +1,17 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  chmod +x gradlew
+  java -version
+script:
+  script:
+    ./gradlew stopLocalStack
+sudo: FALSE
+stage:
+  ☕ 11
+  Build

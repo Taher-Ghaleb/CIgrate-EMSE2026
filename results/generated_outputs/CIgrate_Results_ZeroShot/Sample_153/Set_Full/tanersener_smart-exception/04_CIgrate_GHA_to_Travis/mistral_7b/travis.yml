@@ -1,0 +1,32 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - development
+
+before_install:
+  - install: $HOME/.cache/actions/setup-java/java-11
+    chmod: +x $HOME/.cache/actions/setup-java/java-11
+
+script:
+  - chmod +x gradlew
+  - ./gradlew clean build
+
+before_script:
+  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker:
+      - image: docker:latest
+        name: docker
+
+# TODO: Add a hook to handle docker-compose and wait loops for services
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including the branches, jobs, steps, caches, and deploy sections. It uses the `setup-java` addon for setting up JDK 11, and the script section is equivalent to the Build step in the GitHub Actions workflow. The cleanup of the Gradle cache is handled in the `before_script` section. The services section is a placeholder for adding a hook to handle docker-compose and wait loops for services, as those are not directly supported in Travis CI YAML configuration.

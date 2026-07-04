@@ -1,0 +1,60 @@
+language: java
+jdk:
+  - 8
+env:
+  global:
+    - DOCKER_COMPOSE_VERSION: 1.29.2
+    - VERSION: $GITHUB_SHA
+    - REGISTRY_HOST: proxy.cadc.dao.nrc.ca
+  secure:
+    - DOCKER_USERNAME: ${DOCKER_USERNAME}
+    - DOCKER_PASSWORD: ${DOCKER_PASSWORD}
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.npm
+before_install:
+  - echo "Waiting for Travis CI to become available..."
+  - sleep 10
+install:
+  - wget https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m) -O docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin/
+  - docker --version
+  - docker-compose --version
+before_script:
+  - echo "Adding hosts entry..."
+  - sudo sh -c "echo '127.0.0.1 proxy.cadc.dao.nrc.ca' >> /etc/hosts"
+script:
+  - echo "Running Gradle build and tests..."
+  - gradle -i clean build test
+  - echo "Building Docker images..."
+  - mkdir docker
+  - cp Dockerfile docker/
+  - cp build/libs/*.war docker/
+  - docker build -t opencadc/cadc-target-resolver:SNAPSHOT -t opencadc/cadc-target-resolver:alpine -t opencadc/cadc-target-resolver:${VERSION} -f docker/Dockerfile docker/
+  - echo "Starting integration test services..."
+  - cd integrationTest
+  - docker-compose up -d
+  - echo "Waiting for services to start..."
+  - sleep 10
+  - docker ps -a
+  - echo "Checking service logs..."
+  - cd integrationTest
+  - docker-compose logs cadc-target-resolver.cadc.dao.nrc.ca || true
+  - docker-compose logs proxy.cadc.dao.nrc.ca || true
+  - echo "Configuring log level..."
+  - curl -vL -d 'level=DEBUG' http://proxy.cadc.dao.nrc.ca/cadc-target-resolver/logControl || echo "Log configuration failed, continuing..."
+  - echo "Running integration tests..."
+  - cd integrationTest
+  - gradle -i -b ../build.gradle -Dca.nrc.cadc.reg.client.RegistryClient.host=$REGISTRY_HOST clean intTest
+  - echo "Stopping integration test services..."
+  - cd integrationTest
+  - docker-compose down -v || true
+  - echo "Cleaning up..."
+  - rm -rf docker
+deploy:
+  on:
+    tags: true
+  if

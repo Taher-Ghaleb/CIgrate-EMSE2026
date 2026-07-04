@@ -1,0 +1,49 @@
+name: Java Build and SonarQube Analysis
+on: [push, pull_request]
+
+jobs:
+  build_and_analyze:
+    runs-on: ubuntu-latest
+    services:
+      sonarcloud:
+        version: 7.3
+        args:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          distribution-version: 11
+
+      - name: Install Gradle
+        run: |
+          wget https://services.gradle.org/distributions/gradle-6.7.1-all.zip
+          unzip gradle-6.7.1-all.zip
+          export GRADLE_HOME=$(pwd)/gradle-6.7.1
+          export PATH=$GRADLE_HOME/bin:$PATH
+
+      - name: Cleanup Gradle caches
+        run: |
+          rm -f $HOME/.sonar/cache/*/*.zip
+          rm -fr $HOME/.sonar/cache/*/plugin-resolution/
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+      - name: Checkout and build
+        run: ./gradlew clean check sonarqube --info --stacktrace --warning-mode all
+
+      - name: Upload SonarQube analysis
+        uses: sonarsource/sonarcloud-scanner-maven@4.1.0.1228
+        with:
+          sonarcloud.login: ${{ secrets.SONAR_TOKEN }}
+          sonarcloud.projectKey: kaklakariada-github
+          sonarcloud.projectName: ${{ github.repository }}
+          sonarcloud.sonar.host.url: https://sonarcloud.io
+          sonarcloud.son

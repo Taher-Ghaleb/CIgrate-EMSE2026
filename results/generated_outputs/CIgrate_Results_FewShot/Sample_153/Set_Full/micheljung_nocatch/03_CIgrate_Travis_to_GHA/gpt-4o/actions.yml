@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - coverity_scan
+  release:
+    types: [published]
+
+env:
+  TERM: dumb
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Build and Test
+        run: ./gradlew test jacocoTestReport && ./gradlew coveralls bintrayUpload
+      - name: Coverity Scan
+        if: github.ref == 'refs/heads/coverity_scan'
+        run: |
+          ./gradlew clean
+          ./gradlew build
+        env:
+          COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+      - name: Deploy
+        if: github.event_name == 'release' && github.event.action == 'published'
+        run: echo "Deploying on release"
+        # TODO: Add deployment steps here

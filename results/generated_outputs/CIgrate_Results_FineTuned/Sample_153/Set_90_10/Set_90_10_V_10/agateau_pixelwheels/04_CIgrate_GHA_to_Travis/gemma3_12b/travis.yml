@@ -1,0 +1,18 @@
+language: c
+
+os: linux
+
+dist: xenial
+
+sudo: false
+
+services:
+  - docker
+
+before_install:
+
+after_success:
+
+script:
+  - ci/build-docker-image
+  - ci/docker-build-game

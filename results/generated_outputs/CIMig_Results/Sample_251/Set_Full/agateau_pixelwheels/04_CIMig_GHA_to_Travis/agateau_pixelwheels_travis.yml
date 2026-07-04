@@ -1,0 +1,16 @@
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+android:
+  components:
+    platform-tools
+    extra-android-maven-repository
+after_success:
+  bash <(curl-cmd
+include:
+  if: type in (pull_request, push)
+stage:
+  docker-cmd
+  Build

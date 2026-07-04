@@ -1,0 +1,28 @@
+cache:
+  directories: ~/.maven-
+env: global
+sudo: FALSE
+language:
+  components:
+    platform-tools
+    extra-android-maven-repository
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    tools
+    extra-android-maven-repository
+branches: master
+before_install:
+  chmod +x /home/runner/work/constellation/constellation/.githubutilities/sonar.sh\ndocker pull \"${RUNNER_IMAGE}\"\ndocker run --mount \"type=bind,source=/home/runner/work/constellation/constellation/,target=/home/runner/work/constellation/constellation/\" --mount \"type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache\" --workdir /home/runner/work/constellation/constellation/ \"${RUNNER_IMAGE}\" .githubutilities/sonar.sh \"${GITHUB_REPOSITORY}\" \"${PULL_REQUEST_NUMBER}\" \"${DESTINATION_BRANCH}\" \"${SOURCE_BRANCH}\" \"${SONAR_TOKEN}\"     
+before_script:
+  mkdir -p ${HOME}/.ivy2/cache
+  wget-cmd
+deploy:
+  github_token: $github_token
+include:
+  stage: Unit Tests
+sonarcloud:
+  organization: powsybl-ci-github

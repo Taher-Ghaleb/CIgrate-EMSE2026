@@ -1,0 +1,40 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  branches:
+    only:
+      - master
+
+env:
+  JDK_VERSION: 11
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ JDK_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ JDK_VERSION }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Run tests without authentication
+        run: mvn clean verify -P without-authentication
+      - name: Run tests with one way authentication
+        run: mvn clean verify -P with-one-way-authentication
+      - name: Run tests with two way authentication by trusting each other
+        run: mvn clean verify -P with-two-way-authentication-by-trusting-each-other
+      - name: Run tests with two way authentication by trusting root ca
+        run: mvn clean verify -P with-two-way-authentication-by-trusting-root-ca
+```
+
+Note that I've used the `actions/checkout@v4` action to checkout the code, and the `actions/setup-java@v4` action to set up the JDK. I've also used the `actions/cache@v4` action to cache the Maven repository. The `jobs.include` syntax is not needed in GitHub Actions, so I've replaced it with a single `jobs.build` job.

@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:stable-dind
+        options: --privileged
+    env:
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      CONNECT_LINE: ${{ secrets.CONNECT_LINE }}
+      UPDATE_COMMAND: ${{ secrets.UPDATE_COMMAND }}
+      encrypted_7051ac01cf89_key: ${{ secrets.ENCRYPTED_7051AC01CF89_KEY }}
+      encrypted_7051ac01cf89_iv: ${{ secrets.ENCRYPTED_7051AC01CF89_IV }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 13
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '13'
+      - name: Cache Maven and Node
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2
+            frontend/node
+            frontend/node_modules
+          key: ${{ runner.os }}-maven-node-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-node-
+      - name: Install Chromium
+        run: sudo apt update && sudo apt install -y chromium-browser
+      - name: Decrypt SSH Key
+        run: |
+          openssl aes-256-cbc -K ${{ env.encrypted_7051ac01cf89_key }} -iv ${{ env.encrypted_7051ac01cf89_iv }} -in ./.travis/id_rsa.enc -out ~/.ssh/id_rsa -d
+          chmod 600 ~/.ssh/id_rsa
+      - name: Verify Java Installation
+        run: |
+          java -version
+          echo $JAVA_HOME
+      - name: Start Docker Compose
+        run: (cd docker; docker-compose up -d)
+      - name: Build and Test
+        run: |
+          DATE_VERSION=$(date +%Y%m%d.%H.%M)
+          rm ~/.m2/settings.xml
+          ./mvnw -U -q -Drevision=$DATE_VERSION -P frontend -P jacoco -P docker -P webdriver-chrome -P webdriver-firefox -Dcustom.selenium.headless=true clean install
+      - name: Stop Docker Compose
+        run: (cd docker; docker-compose down)
+      - name: Deploy Test
+        run: ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+      - name: Clean Up
+        run: |
+          rm -rf ~/.m2/repository/com/github/nkonev/blog
+          rm -rf $GITHUB_WORKSPACE/frontend/node_modules/.cache
+      - name: Upload Coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+      - name: Conditional Docker Push and Deploy
+        if: github.ref == 'refs/heads/master' && success() && github.event_name != 'schedule'
+        run: |
+          echo "Will push docker image"
+          docker login -u="${{ env.DOCKER_LOGIN }}" -p="${{ env.DOCKER_PASSWORD }}"
+          docker push nkonev/blog:latest
+          ssh -o "BatchMode yes" -o StrictHostKeyChecking=no -q ${{ env.CONNECT_LINE }} ${{ env.UPDATE_COMMAND }}
+      - name: Skip Docker Push and Deploy
+        if: github.ref != 'refs/heads/master' || failure() || github.event_name == 'schedule'
+        run: echo "Won't push docker image and deploy"

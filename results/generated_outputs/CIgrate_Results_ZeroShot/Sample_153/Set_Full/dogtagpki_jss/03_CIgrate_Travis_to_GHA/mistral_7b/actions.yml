@@ -1,0 +1,49 @@
+name: Build and deploy JSS
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  FEDORA: ${{ toUpper(format('{0}.{1}', github.ref_name.split('/')[2], github.ref_name.split('/')[3])) }}:27, ${{ toUpper(format('{0}.{1}', github.ref_name.split('/')[2], github.ref_name.split('/')[3])) }}:28
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          distribution-version: 11
+
+      - name: Set up Docker
+        uses: docker/setup-docker@v4
+
+      - name: Build Docker image
+        run: |
+          docker pull registry.fedoraproject.org/${{ env.FEDORA }}
+          docker run --name=container --detach -i -v $(pwd):/root/jss registry.fedoraproject.org/${{ env.FEDORA }}
+          docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+          docker exec container dnf copr -y enable @pki/10.6
+          docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+          docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+
+      - name: Cache RPMs
+        uses: actions/cache@v4
+        with:
+          key: rpm-${{ env.FEDORA }}
+          path: /root/build/jss/RPMS
+          restore-keys: |
+            rpm-${{ env.F

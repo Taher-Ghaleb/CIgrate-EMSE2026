@@ -1,0 +1,58 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - KEYSTORE_KEY: $KEYSTORE_ENCRYPTION_KEY
+    - KEYSTORE_IV: $KEYSTORE_ENCRYPTION_IV
+    - STOREPASS: $KEYSTORE_PASSWORD
+    - KEYPASS: $KEY_PASSWORD
+    - ANDROID_HOME: $ANDROID_HOME
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.npm
+
+before_install:
+  - export JAVA_HOME=${JAVA_HOME}
+
+install:
+  - sdkmanager "platform-tools" "build-tools;28.0.3" "platforms;android-28" "extras;google;m2repository" "extras;android;m2repository"
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew clean build --stacktrace
+
+branches:
+  only:
+    - main
+  except:
+    - tags
+
+deploy:
+  provider: script
+  script:
+    - openssl aes-256-cbc -K "$KEYSTORE_KEY" -iv "$KEYSTORE_IV" \
+      -in gotify-release-key.jks.enc -out gotify-release-key.jks -d
+    - jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+      -keystore gotify-release-key.jks \
+      -storepass "$STOREPASS" -keypass "$KEYPASS" \
+      app/build/outputs/apk/release/app-release-unsigned.apk gotify-release
+    - jarsigner -verify app/build/outputs/apk/release/app-release-unsigned.apk
+    - "${ANDROID_HOME}/build-tools/28.0.3/zipalign" -v 4 \
+      app/build/outputs/apk/release/app-release-unsigned.apk \
+      app/build/outputs/apk/release/Gotify.apk
+  on:
+    tags: true
+  skip_cleanup: true
+  
+matrix:
+  allow_failures: true
+  include:
+    - language: java
+      jdk:

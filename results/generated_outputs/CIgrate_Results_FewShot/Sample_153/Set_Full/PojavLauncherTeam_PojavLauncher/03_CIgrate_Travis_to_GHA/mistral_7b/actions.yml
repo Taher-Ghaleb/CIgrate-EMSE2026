@@ -1,0 +1,43 @@
+name: CI
+
+on: [push]
+
+env:
+  ANDROID_API_LEVEL: 26
+  ANDROID_BUILD_TOOLS_VERSION: 26.0.0
+  ANDROIDs: [armeabi-v7a, x86, armeabi_v7a]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "platforms;android-$ANDROID_API_LEVEL"
+          sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION"
+          sdkmanager "platforms;android-28"
+          sdkmanager "build-tools;28.0.3"
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Create AVDs
+        run: |
+          for abi in ${{ env.ANDROIDs }}
+          do
+            echo no | avdmanager create avd --force --name test-$abi --package "system-images;android-$ANDROID_API_LEVEL;default;$abi" --abi $abi
+          done
+      - name: Start emulators
+        run: |
+          emulator -avd test-armeabi-v7a -no-skin -no

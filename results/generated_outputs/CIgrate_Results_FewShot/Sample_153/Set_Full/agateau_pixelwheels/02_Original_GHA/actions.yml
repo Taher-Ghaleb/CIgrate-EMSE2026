@@ -1,0 +1,21 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest 
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x ci/build-docker-image
+          chmod +x ci/docker-build-game
+      
+      - name: Build Docker image
+        run: ./ci/build-docker-image
+      
+      - name: Build game in Docker
+        run: ./ci/docker-build-game

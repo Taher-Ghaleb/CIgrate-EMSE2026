@@ -1,0 +1,26 @@
+language: java
+os:
+  - windows
+  - linux
+
+env:
+  global:
+    - JAVA_HOME: c:\java8
+
+matrix:
+  include:
+    - os: windows
+      before_install:
+        - choco install jdk8 -params 'installdir=c:\\java8' -y
+        - choco install maven --version 3.6.3 -y
+      script:
+        - .\gradlew.bat build -x test --stacktrace --console=plain --no-daemon
+    - os: linux
+      jdk: openjdk8
+      before_install:
+        - chmod +x ./gradlew
+      script:
+        - java -version
+        - ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon
+      after_success:
+        - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN

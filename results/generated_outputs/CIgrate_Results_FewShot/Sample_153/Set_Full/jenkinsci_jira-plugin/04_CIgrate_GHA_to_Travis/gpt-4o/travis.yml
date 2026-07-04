@@ -1,0 +1,28 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+
+matrix:
+  allow_failures:
+    - jdk: openjdk8
+    - jdk: openjdk11
+  fast_finish: false
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.sonar/cache'
+
+before_install:
+  - git fetch --unshallow
+
+script:
+  - mvn -Penable-jacoco -Dsonar.projectKey=jenkins-jira-plugin -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml clean verify
+  - mvn sonar:sonar
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -f target/site/jacoco/jacoco.xml || true
+
+after_script:
+  - rm -rf $HOME/.m2/repository/org/jenkins-ci/plugins/jira

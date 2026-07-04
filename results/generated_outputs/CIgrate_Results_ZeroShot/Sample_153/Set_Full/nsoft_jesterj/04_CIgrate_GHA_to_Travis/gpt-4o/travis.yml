@@ -1,0 +1,31 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - TEST_DIR=code/ingest
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+
+before_install:
+  - chmod +x $TEST_DIR/gradlew || true
+  - chmod +x ./gradlew || true
+
+install:
+  - cd $TEST_DIR
+  - ./gradlew assemble
+
+script:
+  - ./gradlew jacocoTestReport
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f $TEST_DIR/build/reports/jacoco/test/jacocoTestReport.xml -v
+
+branches:
+  only:
+    - main
+    - master

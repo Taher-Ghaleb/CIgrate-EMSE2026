@@ -1,0 +1,18 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  global:
+    - TERM=dumb
+    - DISPLAY=':99.0'
+
+services:
+  - xvfb
+
+before_install:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew --version
+  - ./gradlew clean build --console=plain -S --scan

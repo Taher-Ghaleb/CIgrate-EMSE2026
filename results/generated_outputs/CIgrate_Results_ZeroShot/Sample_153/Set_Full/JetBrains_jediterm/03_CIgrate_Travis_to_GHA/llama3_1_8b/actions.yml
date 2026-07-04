@@ -1,0 +1,69 @@
+name: Java Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/* 
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+         ./gradlew install
+      - name: Run tests
+        run:./gradlew test
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}-${GITHUB_RUN_NUMBER}
+          restore-keys: |
+            ~/.gradle/caches
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}-${GITHUB_RUN_NUMBER}
+          restore-keys: |
+            ~/.gradle/wrapper
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/modules-2
+          key: ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}-${GITHUB_RUN_NUMBER}
+          restore-keys: |
+            ~/.gradle/caches/modules-2
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/modules-2/filecache
+          key: ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}-${GITHUB_RUN_NUMBER}
+          restore-keys: |
+            ~/.gradle/caches/modules-2/filecache
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/modules-2/modules-2.lock
+          key: ${{ runner.os }}-gradle-${GITHUB_REPOSITORY}-${GITHUB_RUN_NUMBER}
+          restore-keys: |
+            ~/.gradle/caches/modules-2/modules-2.lock
+      - name: Cache dependencies
+        uses: actions/cache@v4

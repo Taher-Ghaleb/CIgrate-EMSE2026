@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - release
+  pull_request:
+    branches:
+      - release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decrypt Firebase SDK Key
+        run: openssl aes-256-cbc -K ${{ secrets.FIREBASE_SDK_KEY_KEY }} -iv ${{ secrets.FIREBASE_SDK_KEY_IV }} -in firebase/firebase-sdk-key.json.enc -out firebase/firebase-sdk-key.json -d
+      - name: Install Firebase Tools
+        run: curl -sL https://firebase.tools | bash
+      - name: Run Tests with Firebase Emulators
+        run: firebase emulators:exec --only auth --project turma-de-elite-app './gradlew test'
+    deploy:
+      provider: heroku
+      skip_cleanup: true
+      strategy: git
+      api_key: ${{ secrets.HEROKU_API_KEY }}
+      app: turma-de-elite
+      on:
+        branch: release
+        condition: release
+    before_cache:
+      - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+      - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+    cache:
+      npm: true
+      directories:
+      - "$HOME/.cache/firebase"
+      - "$HOME/.gradle/caches/"
+      - "$HOME/.gradle/wrapper/"
+    env:
+      global:
+      - secure: ${{ secrets.GLOBAL_ENV_VAR_1 }}
+      - secure: ${{ secrets.GLOBAL_ENV_VAR_2 }}

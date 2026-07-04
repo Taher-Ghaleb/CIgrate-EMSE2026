@@ -1,0 +1,41 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk11
+
+script:
+  - mvn --errors clean verify site
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+after_success:
+  - codecov:
+      token: $CODECOV_TOKEN
+      files:./com.io7m.jproperties.core/target/site/jacoco/jacoco.xml
+      fail_ci_if_error: false
+
+notifications:
+  irc:
+    server: irc.libera.chat
+    port: 6697
+    channel: '#io7m'
+    nickname: github-actions-jproperties
+    message: |
+      [${{ repository }}] Build ${{ status }} - ${{ actor }}: ${{ event.head_commit.message }} (${{ sha }})
+      Details: ${{ server_url }}/${{ repository }}/actions/runs/${{ run_id }}
+```
+
+Note that I've used the following mappings:
+
+- `on: [push, pull_request]` -> `notifications` section with `irc` configuration
+- `jobs: build` -> `script` section
+- `steps` -> `script` section
+- `actions/checkout@v4` -> no equivalent, as it's a GitHub Actions workflow step
+- `actions/setup-java@v4` -> `jdk` section with `openjdk11` configuration
+- `mvn --errors clean verify site` -> `script` section
+- `codecov/codecov-action@v4` -> `after_success` section with `codecov` configuration
+- `notify-irc@v2` -> `notifications` section with `irc` configuration

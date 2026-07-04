@@ -1,0 +1,26 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: java-version
+      uses: actions/setup-java@version
+      run: ./PATH-OR-URL
+    - name: Placeholder
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/checkout@version
+      if: ${{ always() }}
+    run: mvn -q clean verify -B
+    run: mvn -q clean verify -B
+
+jdk: [8,11,oraclejdk8]
+

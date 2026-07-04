@@ -1,0 +1,28 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      with:
+        java-version: ${{ matrix.java }}
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run:
+        bash <(curl -s https://codecov.io/bash)
+        mvn install -B -V -T1 -Dmaven.javadoc.skip=true -Pibissource,codecoverage
+        echo 'Skipping separate install phase'
+
+macos:
+  jdk: openjdk8
+

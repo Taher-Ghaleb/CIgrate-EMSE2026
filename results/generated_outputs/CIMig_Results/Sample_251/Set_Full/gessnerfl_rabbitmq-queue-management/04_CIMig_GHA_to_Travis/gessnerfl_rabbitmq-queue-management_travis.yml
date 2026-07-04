@@ -1,0 +1,20 @@
+env: global
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: **
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew build jacocoTestReport sonarqube --info
+deploy:
+  github_token: $github_token
+stage: ☕ 11

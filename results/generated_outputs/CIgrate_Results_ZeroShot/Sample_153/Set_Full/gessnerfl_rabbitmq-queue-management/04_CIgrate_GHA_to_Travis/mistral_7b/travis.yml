@@ -1,0 +1,43 @@
+language: java
+
+sudo: required
+
+services:
+  - name: rabbitmq
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    options:
+      - --health-cmd "rabbitmq-diagnostics -q ping"
+      - --health-interval 10s
+      - --health-timeout 5s
+      - --health-retries 5
+
+branches:
+  only:
+    - main
+    - feature/*
+
+before_install:
+  - checkout
+
+install:
+  - actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+      cache: 'gradle'
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew --stacktrace build
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - # TODO: Add deploy script here

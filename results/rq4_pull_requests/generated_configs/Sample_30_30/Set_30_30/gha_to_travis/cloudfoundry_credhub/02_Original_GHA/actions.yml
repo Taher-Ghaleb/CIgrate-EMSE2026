@@ -1,0 +1,21 @@
+name: unit-test
+
+on: 
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'liberica'
+          java-version: '21'
+      - name: Build and test with Gradle
+        run: ./gradlew clean build

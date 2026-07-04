@@ -1,0 +1,49 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - oraclejdk8
+install: true
+script:
+  - chmod +x./gradlew
+  -./gradlew setupCIWorkspace -S
+  -./gradlew build
+  -./gradlew sonarqube
+  - ls -la build/libs
+deploy:
+  on:
+    tags: true
+  if: startsWith(github.ref,'refs/tags/')
+  env:
+    matrix:
+      - GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+    global:
+      - SONAR_TOKEN=${{ secrets.SONAR_TOKEN }}
+      - SONAR_HOST_URL=https://sonarcloud.io
+      - SONAR_ORGANIZATION=growthcraftce
+  before_deploy:
+    -./gradlew build
+  on:
+    branch: master
+    if: github.event_name == 'push'
+  before_deploy:
+    -./gradlew sonarqube
+  on:
+    branch: master
+    if: github.event_name == 'push'
+  deploy:
+    provider: releases
+    api_key:
+      secure: $GITHUB_TOKEN
+    file_glob: true
+    file: 'build/libs/growthcraft-*.jar'
+    release_name: $TRAVIS_BRANCH
+    draft: false
+    prerelease: false
+    wait_for_ci: true
+    on:
+      branch: master
+      if: github.event_name == 'push'
+```
+Note that the `deploy` section is used to create a GitHub Release, and the `on` section is used to specify the conditions under which the release should be created. The `before_deploy` section is used to run the SonarQube analysis before creating the release.

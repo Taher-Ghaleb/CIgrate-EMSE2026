@@ -1,0 +1,16 @@
+language: java
+jdk:
+  - openjdk7
+script:
+  - mvn clean test
+after_success:
+  - cat > ~/settings.xml <<'EOF'
+  <settings><servers><server><id>ossrh</id><username>${env.OSSRH_USER}</username><password>${env.OSSRH_PASS}</password></server></servers></settings>
+  EOF
+  - mvn deploy --settings ~/settings.xml
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"

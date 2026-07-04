@@ -1,0 +1,95 @@
+language: java
+
+before_install:
+  - export CHANGE_MINIKUBE_NONE_USER=true
+
+install:
+  - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+  - chmod +x kubectl
+  - sudo ln -s $(pwd)/kubectl /usr/local/bin/kubectl
+  - wget https://github.com/kubernetes/minikube/releases/download/v0.28.2/minikube-linux-amd64 -q -O minikube
+  - chmod +x minikube
+  - sudo ln -s $(pwd)/minikube /usr/local/bin/minikube
+
+script:
+  - cd finish
+  - chmod +x../scripts/travisTest.sh
+  - sudo mount --make-rshared /
+  - minikube start --vm-driver=none --bootstrapper=localkube
+  - cd finish
+  -../scripts/travisTest.sh
+
+after_success:
+  - echo "Tests passed"
+
+after_failure:
+  - echo "Tests failed"
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: temurin
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  - travis-encrypt: $FOO
+
+branches:
+  only:
+    - master
+    - qa
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production"
+  on:
+    branch: master
+  environment:
+    - FOO=bar
+  skip_cleanup: true
+  on:
+    push:
+      branches:
+        - master
+      tags:
+        - 'v1.0'
+  on:
+    pull_request:
+      branches:
+        - master
+  on:
+    schedule:
+      - cron: 0 8 * * *
+  on:
+    release:
+      type: draft
+      event: created
+  on:
+    release:
+      type: latest
+      event: published
+  on:
+    deploy:
+      environment: production
+      provider: script
+      script:
+        - echo "Deploying to production"
+      on:
+        branch: master
+      environment:
+        - FOO=bar
+      skip_cleanup: true
+  on:
+    deploy:
+      environment: staging

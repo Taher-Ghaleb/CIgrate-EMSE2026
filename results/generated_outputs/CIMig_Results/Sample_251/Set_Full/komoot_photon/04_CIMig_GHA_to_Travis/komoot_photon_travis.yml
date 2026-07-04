@@ -1,0 +1,18 @@
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn --no-transfer-progress test\n
+script
+allow_failures:
+  name: openjdk 11
+include:
+  if: type in (pull_request, push)
+directories: ~/.m2

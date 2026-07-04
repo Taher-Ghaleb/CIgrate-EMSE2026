@@ -1,0 +1,183 @@
+name: owlcms
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'semver number for the release'
+        required: true
+        default: '63.2.3'
+      buildImages:
+        description: 'Build and push Docker images (set to "false" to skip)'
+        required: false
+        default: 'true'
+
+env:
+  REPO_OWNER: owlcms
+  MAVEN_OPTS: '-Xmx2048m'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      REVISION: ${{ github.event.inputs.revision }}
+      RELEASE_SUFFIX: ${{ contains(github.event.inputs.revision, '-') && '-prerelease' || '' }}
+      DOCKER_TAG: ${{ contains(github.event.inputs.revision, '-') && 'prerelease' || 'stable' }}
+    steps:
+      - name: Checkout Dev Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          fetch-depth: 1
+          persist-credentials: false # Disable credential persistence
+
+      - name: Verify runner Java and Maven (fail fast)
+        run: |
+          set -euo pipefail
+          echo "Checking Java and Maven on runner..."
+          if ! command -v java >/dev/null 2>&1; then
+            echo "ERROR: java not found on runner. Please enable actions/setup-java or use a runner with Java 17." >&2
+            exit 1
+          fi
+          if ! command -v mvn >/dev/null 2>&1; then
+            echo "ERROR: mvn (Maven) not found on runner. Please ensure Maven is available on PATH or install it." >&2
+            exit 1
+          fi
+          java -version 2>&1 | sed -n '1p'
+          mvn -v
+          # Ensure Java 17 is installed (fail if not)
+          if ! java -version 2>&1 | grep -qE '"17|openjdk 17|Temurin.*17|jdk-17'; then
+            echo "ERROR: Java 17 is required but not found. Runner java output:" >&2
+            java -version 2>&1 | sed -n '1,5p' >&2 || true
+            exit 1
+          fi
+          # Export JAVA_HOME based on the java binary location so tools that need it work reliably
+          JAVA_BIN_PATH=$(readlink -f "$(which java)") || true
+          if [ -n "$JAVA_BIN_PATH" ]; then
+            JAVA_HOME=$(dirname $(dirname "$JAVA_BIN_PATH"))
+            echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+            echo "PATH=$JAVA_HOME/bin:$PATH" >> $GITHUB_ENV
+            echo "Set JAVA_HOME to $JAVA_HOME"
+          fi
+          
+      - name: Cache Maven dependencies
+        id: cache-maven
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('pom.xml', 'shared/pom.xml', 'owlcms/pom.xml', 'publicresults/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-${{ hashFiles('pom.xml', 'shared/pom.xml', 'owlcms/pom.xml', 'publicresults/pom.xml') }}
+            ${{ runner.os }}-maven-
+      
+      - name: Build and Install owlcms
+        run: mvn -B clean install -Pproduction -am -pl owlcms -Drevision=${{ env.REVISION }} -Dmaven.test.skip
+          
+      - name: Build and Install publicresults
+        run: mvn -B clean install -Pproduction -am -pl publicresults -Drevision=${{ env.REVISION }} -Dmaven.test.skip
+          
+      - name: Build and Push Docker Images
+        if: ${{ github.event.inputs.buildImages == 'true' }}
+        run: mvn -B deploy -f owlcms-docker/pom.xml -Ddockerfile.skip=false -Drevision=${{ env.REVISION }}
+        env:
+          DOCKER_REG: ${{ secrets.DOCKER_REG }}
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+          DOCKER_TAG: ${{ env.DOCKER_TAG }}
+          
+      - name: Pre-process Documentation and Release Notes
+        env:
+          REPO_OWNER: owlcms
+          O_REPO_NAME: owlcms4${{ env.RELEASE_SUFFIX }}
+        run: |
+          mvn -B package --non-recursive -Dmaven.test.skip -Drevision=${{ env.REVISION }}
+          if [[ "${{ env.REVISION }}" == *"-alpha"* ]]; then
+            cat src/main/markdown/alpha.md ReleaseNotes.md > temp.md && mv temp.md ReleaseNotes.md
+          elif [[ "${{ env.REVISION }}" == *"-beta"* ]]; then
+            cat src/main/markdown/beta.md ReleaseNotes.md > temp.md && mv temp.md ReleaseNotes.md
+          elif [[ "${{ env.REVISION }}" == *"-rc"* ]]; then
+            cat src/main/markdown/rc.md ReleaseNotes.md > temp.md && mv temp.md ReleaseNotes.md
+          else
+            cat src/main/markdown/release.md ReleaseNotes.md > temp.md && mv temp.md ReleaseNotes.md
+          fi
+
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh -y
+
+      - name: Authenticate GitHub CLI for Target Repo
+        env:
+          GH_TOKEN: ${{ secrets.OWLCMS_ORG_TOKEN }}
+        run: gh auth setup-git
+
+      - name: Check Authentication Status
+        env:
+          GH_TOKEN: ${{ secrets.OWLCMS_ORG_TOKEN }}
+        run: gh auth status
+
+      - name: Clone Target Repository
+        run: |
+          set -x
+          mkdir ../new-repo
+          git clone https://github.com/owlcms/owlcms4${{ env.RELEASE_SUFFIX }}.git ../new-repo
+          cd ../new-repo
+          git checkout master # Explicitly check out master
+          git config --local credential.helper ""
+          cd -
+          set +x
+
+      - name: Force-copy the new documentation
+        run: |
+          rm -rf ../new-repo/* # we only want the docs directory
+          cp -a docs ../new-repo/docs
+          echo ${{ env.REVISION }} > ../new-repo/version.txt
+
+      - name: Push Updated Documentation to Target Repository
+        env:
+          GH_TOKEN: ${{ secrets.OWLCMS_ORG_TOKEN }}
+        run: |
+          set -x
+          cd ../new-repo
+          git remote set-url origin https://x-access-token:${{ secrets.OWLCMS_ORG_TOKEN }}@github.com/owlcms/owlcms4${{ env.RELEASE_SUFFIX }}.git
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git config user.name "${{ github.actor }}"
+          git add -A
+          git commit -m "Update documentation" --allow-empty
+          git tag ${{ env.REVISION }}
+          git push origin master --force
+          git push origin ${{ env.REVISION }}
+          cd -
+          set +x
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.OWLCMS_ORG_TOKEN }}
+        run: |
+          set -x
+          pwd
+          ls -l owlcms/target publicresults/target || true
+          mv owlcms/target/owlcms*.zip owlcms/target/owlcms_${{ env.REVISION }}.zip
+          mv publicresults/target/publicresults*.zip publicresults/target/publicresults_${{ env.REVISION }}.zip
+          ls -l owlcms/target publicresults/target || true
+          gh release create ${{ env.REVISION }} \
+            --repo owlcms/owlcms4${{ env.RELEASE_SUFFIX }} \
+            --title "${{ env.REVISION }}" \
+            --notes-file ReleaseNotes.md \
+            owlcms/target/owlcms_${{ env.REVISION }}.zip \
+            publicresults/target/publicresults_${{ env.REVISION }}.zip
+          set +x
+          
+      - name: Update Source Repository
+        env:
+          GH_TOKEN: ${{ secrets.OWLCMS_ORG_TOKEN }}
+        run: |
+          set -x
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git config user.name "${{ github.actor }}"
+          # add the release notes
+          # git add ReleaseNotes.md
+          # git commit -m "Update Release Notes for ${{ env.REVISION }}" --allow-empty
+          # git push origin
+          # tag
+          git tag ${{ env.REVISION }}
+          git push origin ${{ env.REVISION }}
+          set +x

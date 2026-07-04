@@ -1,0 +1,22 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.gradle
+
+before_install:
+  - chmod +x gradlew
+
+install:
+  - ./gradlew build
+
+script:
+  - ./gradlew jacocoTestReport
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"

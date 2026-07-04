@@ -1,0 +1,73 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - export MAVEN_HOME=/usr/share/maven
+  - export PATH=$MAVEN_HOME/bin:$PATH
+
+script:
+  - echo "Running build script"
+  - export SECRET_1=$SECRET_1
+  - export SECRET_2=$SECRET_2
+  - export SECRET_3=$SECRET_3
+  - export SECRET_4=$SECRET_4
+  - chmod +x.travis/build.sh
+  -./travis/build.sh
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: Add deploy script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: Add deploy script"
+
+deploy:
+  on:
+    tags: true
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: 'temurin'
+      cache:'maven'
+    - java-version: '11'
+      distribution: 'adopt'
+      cache:'maven'
+    - java-version: '17'
+      distribution: 'corretto'
+      cache:'maven'
+
+services:
+  - docker-compose
+
+addons:
+  cache:
+    - cache_name: maven
+      directory: $HOME/.m2/repository
+    - cache_name: gradle
+      directory: $HOME/.gradle
+    - cache_name: npm
+      directory: $HOME/.npm
+
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+    recipients:
+      - user@example.com

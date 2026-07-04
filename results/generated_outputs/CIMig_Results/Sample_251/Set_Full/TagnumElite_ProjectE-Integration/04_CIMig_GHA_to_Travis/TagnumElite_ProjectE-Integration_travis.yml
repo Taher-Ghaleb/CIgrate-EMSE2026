@@ -1,0 +1,19 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+script:
+  script:
+    jdk8
+    ./gradlew build javadoc
+deploy:
+  target-branch: gh-pages
+include:
+  if: type in (pull_request, push)
+apt:
+  packages: jdk-8-jdk

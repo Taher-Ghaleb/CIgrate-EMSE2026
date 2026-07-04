@@ -1,0 +1,32 @@
+env: global
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+sudo: FALSE
+language:
+  components:
+    tools
+    extra-android-maven-repository
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    tools
+    extra-android-maven-repository
+branches: qa
+before_install:
+  java -version
+  chmod +x ../scripts/travisTest.sh && sudo ../scripts/travisTest.sh
+before_script:
+  unset _JAVA_OPTIONS
+  cd-cmd
+  chmod-cmd
+include:
+  stage: tests
+email:
+  on_failure: always
+apt:
+  packages: jdk-8-jdk

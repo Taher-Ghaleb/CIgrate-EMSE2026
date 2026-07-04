@@ -1,0 +1,51 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+env:
+  GIT_NAME: ${{ env.GIT_NAME }}
+  GIT_EMAIL: ${{ env.GIT_EMAIL }}
+  CI_DEPLOY_USERNAME: ${{ env.CI_DEPLOY_USERNAME }}
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+install:
+  - name: Set up JDK 8
+    script: |
+      wget --quiet https://download.java.net/java/GA/jdk8u275-b01/29500016/jdk-8u275-linux-x64.tar.gz
+      tar -xzf jdk-8u275-linux-x64.tar.gz -C /usr/local
+      export JAVA_HOME=/usr/local/jdk1.8.0_275
+      export PATH=$JAVA_HOME/bin:$PATH
+      export MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
+
+before_script:
+  - name: Configure Git
+    script: |
+      git config user.name "$GIT_NAME"
+      git config user.email "$GIT_EMAIL"
+      git config credential.helper "store --file=.git/credentials"
+      echo "https://${{ env.GH_TOKEN }}:@github.com" > .git/credentials
+
+script:
+  - name: Install Asciidoctor
+    script: gem install asciidoctor
+
+  - name: Make mvnw executable
+    script: chmod +x mvnw
+
+  - name: Install and generate docs
+    script: |
+      ./mvnw install -P docs -q -U -DskipTests=true -Dmaven.test.redirectTestOutputToFile=true
+      ./docs

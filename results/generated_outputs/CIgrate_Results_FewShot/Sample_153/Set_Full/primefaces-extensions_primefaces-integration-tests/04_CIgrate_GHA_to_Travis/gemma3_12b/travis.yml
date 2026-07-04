@@ -1,0 +1,58 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '~/primefaces-install'
+  maven:
+    artifacts: true
+
+jdk:
+  - openjdk11
+  - openjdk17
+
+env:
+  matrix:
+    - jdk: openjdk11
+      profiles: 'headless-mode'
+    - jdk: openjdk11
+      profiles: 'headless-mode,chrome'
+    - jdk: openjdk17
+      profiles: 'headless-mode'
+    - jdk: openjdk17
+      profiles: 'headless-mode,chrome'
+
+before_install:
+  - echo no | android create avd --force --name test --target $ANDROID_TARGET --abi $ANDROID_ABI
+  - emulator -avd test -no-skin -no-audio -no-window &
+  - android-wait-for-emulator
+  - adb devices
+
+install: true
+
+script:
+  - mvn -B -V clean install -P${matrix.profiles}
+
+after_success:
+  - echo "Build and tests completed successfully."
+
+after_failure:
+  - echo "Build or tests failed."
+
+addons:
+  chrome: stable
+  firefox: latest
+
+artifacts:
+  paths:
+    - **/target/surefire-reports/
+    - **/target/failsafe-reports/
+  retention: 7
+  name: test-results-jdk${matrix.jdk}-${matrix.profiles}
+
+build_artifacts:
+  paths:
+    - **/target/*.jar
+    - **/target/*.war
+  retention: 7
+  name: build-jdk${matrix.jdk}-${matrix.profiles}

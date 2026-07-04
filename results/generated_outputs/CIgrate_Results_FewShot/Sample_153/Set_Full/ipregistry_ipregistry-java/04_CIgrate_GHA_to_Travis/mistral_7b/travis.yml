@@ -1,0 +1,17 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+
+script:
+  - chmod +x gradlew
+  - ./gradlew build --scan -s
+
+cache:
+  directories:
+    - '$HOME/.gradle'
+```
+
+This Travis CI configuration maintains the semantics of the GitHub Actions workflow, including the use of multiple JDK versions, matrix strategy, caching of Gradle, and the build command. It does not include the fail-fast option as it does not have a direct equivalent in Travis CI. The Makefile command is not included as it is not a standard tool in Travis CI. The env section is not included as it was not present in the source workflow. The steps are combined into a single script section to maintain the 1 to 1 mapping.

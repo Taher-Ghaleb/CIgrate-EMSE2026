@@ -1,0 +1,68 @@
+name: Android Build
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+      -'release/*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      android-emulator:
+        image: ghcr.io/actions-emulator/android-emulator:latest
+        privileged: true
+        ports:
+          - 5554:5554
+          - 5555:5555
+          - 8601:8601
+        env:
+          ANDROID_HOME: /opt/android
+          ANDROID_SDK_TOOLS: /opt/android/sdk-tools
+          ANDROID_BUILD_TOOLS: /opt/android/build-tools-25.0.2
+          ANDROID_PLATFORM: android-22
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Setup Android
+      run: |
+        export ANDROID_HOME=/opt/android
+        export ANDROID_SDK_TOOLS=/opt/android/sdk-tools
+        export ANDROID_BUILD_TOOLS=/opt/android/build-tools-25.0.2
+        export ANDROID_PLATFORM=android-22
+    - name: Install Android dependencies
+      run: |
+       ./gradlew androidDependencies
+    - name: Build Android
+      run: |
+       ./gradlew build
+    - name: Cache dependencies
+      uses: actions/cache@v4
+        at: 'gradle-project'
+        key: ${{ runner.os }}-gradle-project-${{ hashFiles('gradlew') }}
+        restore-keys: ${{ runner.os }}-gradle-project-${{ hashFiles('gradlew') }}
+    - name: Continue on error
+      continue-on-error: true
+    - name: Deploy
+      run: |
+        # TODO: Add deploy logic here
+    - name: Notify
+      uses: actions/notify@v2
+        dependencies: true
+        on: 
+          push:
+            branches:
+              - main
+              - 'feature/*'
+              -'release/*'
+          pull_request:
+            branches:
+              - main
+              - 'feature/*'
+              -'release/*'

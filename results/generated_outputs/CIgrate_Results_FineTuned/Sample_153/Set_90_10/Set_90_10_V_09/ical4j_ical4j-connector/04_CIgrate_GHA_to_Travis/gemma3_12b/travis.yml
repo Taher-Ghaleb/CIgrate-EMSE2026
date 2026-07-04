@@ -1,0 +1,29 @@
+language: java
+
+jdk:
+  - openjdk8
+  - openjdk7
+
+script:
+  - ./gradlew check
+
+before_install:
+  - sudo keytool -import -alias sonar -keystore $JAVA_HOME/lib/security/cacerts -file sonar_cert.pem -storepass changeit -noprompt
+
+sonar:
+  organization: "kaklakariada-github"
+  projectKey: ical4j-connector
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "********************"
+  file_glob: true
+  file:
+    - build/distributions/ical4j-*.zip
+    - build/distributions/ical4j-*.tar.gz
+  skip_cleanup: true
+  on:
+    repo: ical4j/ical4j-connector
+    branch: master
+    tags: true

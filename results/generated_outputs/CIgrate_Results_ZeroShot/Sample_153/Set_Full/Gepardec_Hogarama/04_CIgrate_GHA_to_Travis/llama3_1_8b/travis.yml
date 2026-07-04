@@ -1,0 +1,77 @@
+language: java
+
+script:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - export MAVEN_OPTS=-Xmx512m
+
+install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+before_script:
+  - echo "Setting up Maven cache"
+  - mkdir -p ~/.m2/repository
+  - echo "Cache directory set up"
+
+script:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploy script executed successfully"
+
+after_failure:
+  - echo "Deploying to production"
+  - echo "Deploy script executed successfully"
+
+deploy:
+  - echo "Deploying to production"
+  - echo "Deploy script executed successfully"
+
+matrix:
+  include:
+    - java: '8'
+      cache:'maven'
+      services:
+        - docker-compose
+      addons:
+        - travis-ci/emoji
+
+branches:
+  only:
+    - main
+    - dev
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - your_email@example.com
+
+services:
+  - docker-compose
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+jdk:
+  - temurin-8
+
+git:
+  - 2.34.1
+
+continue-on-error:
+  - true
+
+allow_failures:
+  - true

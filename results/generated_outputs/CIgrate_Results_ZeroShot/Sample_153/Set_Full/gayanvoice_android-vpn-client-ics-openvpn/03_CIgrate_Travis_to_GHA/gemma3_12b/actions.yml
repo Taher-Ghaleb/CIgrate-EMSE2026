@@ -1,0 +1,26 @@
+name: Android Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build with Gradle
+        run: ./gradlew
+    env:
+      ANDROID_SDK_ROOT: /usr/local/android-sdk
+    services:
+      - name: android
+        entrypoint: /bin/bash
+        command: -c "echo 'Android service started'"

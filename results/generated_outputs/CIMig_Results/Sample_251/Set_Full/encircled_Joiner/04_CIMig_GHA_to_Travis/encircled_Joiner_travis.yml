@@ -1,0 +1,17 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn -B install --file pom.xml -P eclipse
+script
+after_success:
+  Codecov
+  python-cmd
+directories: ~/.maven-
+stage: ☕ 11

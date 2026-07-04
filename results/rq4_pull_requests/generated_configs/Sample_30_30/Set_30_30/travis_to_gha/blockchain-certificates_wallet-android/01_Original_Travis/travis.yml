@@ -1,0 +1,40 @@
+dist: focal
+language: android
+jdk:
+  - oraclejdk17
+
+env:
+  global:
+    - TARGET_VERSION=35
+    - ANDROID_BUILD_TOOLS_VERSION=35.0.0
+    - ANDROID_HOME=$HOME/android-sdk
+
+android:
+  components:
+    - build-tools;$ANDROID_BUILD_TOOLS_VERSION
+    - platforms;android-$TARGET_VERSION
+    - system-images;android-$TARGET_VERSION;google_apis;x86_64
+    - extra-android-support
+    - extra-google-m2repository
+    - extra-android-m2repository
+  licenses:
+    - 'android-sdk-preview-license-52d11cd2'
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
+
+git:
+  submodules: false
+
+before_install:
+  # Fix for Travis SSH URL in submodules
+  - sed --in-place -e "s/git@github.com:/https:\/\/github.com\//" .gitmodules
+  - git submodule update --init --recursive
+
+jobs:
+  include:
+    - stage: test
+      if: branch = master AND type = pull_request
+      name: "Run Automated Tests: Master PR"
+      script:
+        - pushd LearningMachine
+        - ./gradlew clean testDevDebug -PdisablePreDex -PdevBuild --console=plain

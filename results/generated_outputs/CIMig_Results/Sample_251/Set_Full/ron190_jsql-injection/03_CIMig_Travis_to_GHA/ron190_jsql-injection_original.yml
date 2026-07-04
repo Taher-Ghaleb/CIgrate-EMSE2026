@@ -1,0 +1,41 @@
+matrix:
+  os:
+    windows-latest
+    ubuntu-latest
+  java
+
+name: placeholder
+
+on:
+  pull_request: master
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    strategy:
+      matrix
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      env:
+        github_token: ${{ github.token }}
+      with:
+        java-version: 1.8
+      with: key
+    - name: set up jdk 1.8
+      with:
+        java-version: ${{ matrix.java }}
+        path: ~/.maven-~/.sonar/cache\n!**/*edelta*\n
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run: docker
+
+macos:
+  jdk: openjdk8
+

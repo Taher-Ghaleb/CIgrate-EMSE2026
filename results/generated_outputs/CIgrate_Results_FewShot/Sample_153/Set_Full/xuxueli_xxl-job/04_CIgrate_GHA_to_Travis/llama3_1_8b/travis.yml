@@ -1,0 +1,25 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true
+  - mvn clean package
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note that I've used the following mappings:
+
+- `language: java` to specify the language as Java
+- `jdk: openjdk8` to specify the JDK version as OpenJDK 8
+- `install: true` to enable the install step
+- `script` to specify the script commands
+- `cache` to specify the cache directories
+- `mvn install` to install dependencies
+- `mvn clean package` to build the package
+- `cache` to cache the Maven repository directory

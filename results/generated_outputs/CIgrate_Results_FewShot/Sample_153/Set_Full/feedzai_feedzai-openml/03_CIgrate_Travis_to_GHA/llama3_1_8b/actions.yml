@@ -1,0 +1,35 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  branches:
+    - master
+    - '^\d+\.\d+(\.\d+)?(-\S*)?$'
+    - '^hf-.*$'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Run tests
+        run: mvn test -B
+      - name: Run PIT
+        run: mvn pitmp:run
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+      - name: Deploy
+        uses: actions/deploy@v1
+        with:
+          script: deploy/deploy.sh
+          on:
+            tags: true
+```
+
+Note: The `deploy` step is using the `actions/deploy@v1` action, which is a generic deploy action. You may need to customize this to fit your specific deployment needs.

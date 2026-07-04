@@ -1,0 +1,31 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - oraclejdk8
+sudo: false
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.cache'
+
+before_install:
+  - echo no | android create avd --force --name test --target android-21 --abi armeabi-v7a
+  - emulator -avd test -no-skin -no-audio -no-window &
+  - android-wait-for-emulator
+  - adb devices
+  - adb shell input keyevent 82 &
+  - adb shell svc power stayon true
+
+script:
+  - mvn clean test
+  -./gradlew --stacktrace connectedFdroidDebugAndroidTest -i
+  -./gradlew --stacktrace testDebug jacocoTestReport coveralls
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+```
+
+Note that I have removed the commented out step "Run performance tests" as it is not present in the original GitHub Actions workflow. Also, I have kept the `android` section as it is present in the original workflow, but it seems to be related to Android testing, which is not clear from the provided information. If you can provide more context or clarify the purpose of this section, I can help you further.

@@ -1,0 +1,68 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+script:
+  - run: |
+      chmod +x mvnw
+      rm -rf ~/.m2/repository/org/glassfish/javax.el/3.0.1-b08
+      ./mvnw --batch-mode --no-transfer-progress \
+        clean install \
+        -DskipTests=false \
+        -DskipIntegrationTests=false \
+        -Dcheckstyle.skip=false \
+        -Drat.skip=false \
+        -Dmaven.javadoc.skip=true
+
+before_install:
+  - uses: actions/setup-java@v4
+    with:
+      java-version: ${{ matrix.java }}
+      distribution: 'temurin'
+      cache: 'm2'
+
+matrix:
+  include:
+    - java: 8
+    - java: 11
+    - matrix.allow_failures: true
+
+before_script:
+  - if: ${{ matrix.java == '8' }}
+    run: |
+      addons:
+        name: openjdk8
+      script: |
+        export JAVA_HOME=$(which java)
+        export PATH=$JAVA_HOME/bin:$PATH
+
+  - if: ${{ matrix.java == '11' }}
+    run: |
+      addons:
+        name: openjdk11
+      script: |
+        export JAVA_HOME=$(which java)
+        export PATH=$JAVA_HOME/bin:$PATH
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: ${{ secrets.CODECOV_TOKEN }}
+      fail_ci_if_error: false
+
+after_failure:
+  - run: echo "Build failed for JDK ${{ matrix.java }}"

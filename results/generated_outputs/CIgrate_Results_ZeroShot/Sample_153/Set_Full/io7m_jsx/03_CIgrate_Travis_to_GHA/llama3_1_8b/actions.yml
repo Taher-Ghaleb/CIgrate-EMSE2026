@@ -1,0 +1,63 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '9'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y maven
+      - name: Run Maven
+        run: |
+          mvn --errors clean verify site
+      - name: Run Codecov
+        run: |
+          bash <(curl -s https://codecov.io/bash) -f./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Deploy
+        uses: octo/action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.repository }}
+          branch: ${{ github.branch }}
+          dir:.
+      - name: Send notification
+        uses: dbrgn/action-irc-notifier@v1
+        with:
+          server: chat.freenode.net
+          channel: #io7m
+          message: "CI completed successfully"

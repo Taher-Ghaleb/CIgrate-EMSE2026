@@ -1,0 +1,58 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+      - /^\d+\.\d+$/
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        jdk: ['openjdk8', 'openjdk11']
+    runs-on: ubuntu-latest
+    if: type != 'pull_request' && jdk == 'openjdk11'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2
+          restore-keys: ${{ runner.os }}-m2-
+      - run: mvn -q clean verify -B
+
+  apollo-link-tests:
+    name: "Apollo Link tests"
+    runs-on: ubuntu-latest
+    jdk: openjdk8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Apollo Link tests
+        run: |
+          cd vertx-web-graphql
+          mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer -Dexec.classpathScope=test > ${HOME}/ApolloTestsServer.log 2>&1 &
+          echo $! > ${HOME}/ApolloTestsServer.pid
+          ( tail -f ${HOME}/ApolloTestsServer.log & ) | grep -q "Apollo tests server started"
+      - name: Run Apollo Link tests
+        run: |
+          cd tests/apollo
+          npm install
+          npm run test
+      - name: Display Apollo Tests Server Log on Failure
+        if: failure()
+        run: cat ${HOME}/ApolloTestsServer.log
+      - name: Kill Apollo Tests Server
+        run: cat ${HOME}/ApolloTestsServer.pid | xargs kill -9
+
+  deploy:
+    name: "Deploy to Sonatype's snapshots repository"
+    runs-on: ubuntu-latest
+    jdk: openjdk8
+    if: type != 'pull_request' && env.SONATYPE_NEXUS_USERNAME
+    steps:

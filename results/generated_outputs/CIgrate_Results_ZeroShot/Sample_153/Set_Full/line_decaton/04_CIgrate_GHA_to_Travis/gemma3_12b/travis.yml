@@ -1,0 +1,24 @@
+language: java
+jdk:
+  - 8
+  - 11
+branches:
+  only:
+    - main
+    - develop
+    - release/*
+    - /^feature\/.+$/
+    - /^bugfix\/.+$/
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+before_install:
+  - "export JAVA_HOME=$(/usr/libexec/java_home)"
+install:
+  - chmod +x ./gradlew
+before_script:
+  - echo "Starting build..."
+script:
+  - ./gradlew build integrationTest

@@ -1,0 +1,56 @@
+name: maven-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_meta:
+        description: 'Build meta to use as source'
+        required: true
+      mvn_version:
+        description: 'Maven version to use'
+        required: true
+
+jobs:
+  maven-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY2 }}
+          passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+      - name: Create artifacts
+        run: chmod +x generate_artifacts.sh && ./generate_artifacts.sh ${{ github.event.inputs.build_meta }} ${{ github.event.inputs.mvn_version }}
+      - name: Publish to Apache Maven Central
+        run: chmod +x upload_artifacts.sh && ./upload_artifacts.sh ${{ github.event.inputs.build_meta }} ${{ github.event.inputs.mvn_version }}
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+      - name: Update README.md
+        run: |
+          chmod +x update_readme.sh
+          ./update_readme.sh ${{ github.event.inputs.build_meta }} ${{ github.event.inputs.mvn_version }}
+      - name: Generate release info
+        run: |
+          cd scripts
+          chmod +x create_release_info.sh
+          ./create_release_info.sh ${{ github.event.inputs.build_meta }} https://github.com/${{github.repository}}/actions/runs/${{github.run_id}} ${{github.run_number}} ${{ github.event.inputs.mvn_version }}
+      - name: Create Release
+        run: |
+          gh release create ${{env.release_tag_name}} --title "${{env.release_name}}" --notes-file release_info/release_message.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add build_meta.json
+        run: |
+          gh release upload ${{env.release_tag_name}} release_info/build_meta.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload artifacts to GitHub release
+        run: |
+          cd out
+          gh release upload ${{env.release_tag_name}} $(find . -type f -name "*.jar" -printf "%p ")
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

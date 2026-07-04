@@ -1,0 +1,15 @@
+language: java
+sudo: required
+jdk:
+  - openjdk8
+
+script:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y ant
+  - ant -buildfile ./framework/build.xml test
+
+after_success:
+  - if [ -d "**/TEST-*.xml" ] || [ -d "**/build/test-results/" ]; then
+      echo "Uploading test results..."
+      echo "Artifacts will be available after the build completes."
+    fi

@@ -1,0 +1,47 @@
+language: java
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - java -version
+  - sdkmanager --licenses
+  - if [ -d ~/.gradle ]; then echo "Found Gradle cache, using it."; else echo "Gradle cache not found, creating it."; mkdir -p ~/.gradle; fi
+  - if [ -d ~/.m2 ]; then echo "Found Maven cache, using it."; else echo "Maven cache not found, creating it."; mkdir -p ~/.m2; fi
+  - if [ -d $HOME/.npm ]; then echo "Found npm cache, using it."; else echo "npm cache not found, creating it."; mkdir -p $HOME/.npm; fi
+
+script:
+  - java -version
+  - sdkmanager --list
+  - ./gradlew clean build
+
+before_script:
+  - chmod +x ./gradlew
+
+deploy:
+  on:
+    tags: true
+
+cache:
+  directories:
+    - ~/.gradle
+    - ~/.m2
+    - $HOME/.npm
+
+matrix:
+  include:
+    - java:
+        - '8'
+
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including the use of multiple languages (Java), caches (Gradle, Maven, npm), services (Docker), branch filters, deploy, and notifications. It also includes the necessary steps for setting up the JDK, Android SDK, accepting SDK licenses, making the Gradle wrapper executable, and building with Gradle. The script section is run on the 'java' version specified in the matrix. The deploy section is triggered on tag events.

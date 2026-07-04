@@ -1,0 +1,25 @@
+language: java
+sudo: false
+jdk:
+- oraclejdk8
+install: true
+script:
+  - mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+  - mvn clean compile assembly:single
+deploy:
+  - provider: docker
+    image: twasi/nocatch
+    tag: "dev-${{ github.run_number }}"
+    username: twasi
+    password:
+      secure: "********************"
+    on:
+      branch: dev
+  - provider: script
+    script: |
+      cp .travis.settings.xml $HOME/.m2/settings.xml
+      sed -i "s/LIVE/${{ github.run_number }}/g" pom.xml
+      mvn clean compile assembly:single deploy
+    on:
+      branch: dev
+      jdk: oraclejdk8

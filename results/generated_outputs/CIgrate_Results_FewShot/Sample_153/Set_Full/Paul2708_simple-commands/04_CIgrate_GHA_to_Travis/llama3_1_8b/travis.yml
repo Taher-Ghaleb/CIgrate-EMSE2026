@@ -1,0 +1,43 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - mvn clean install -DskipTests=false
+before_script:
+  - mvn checkstyle:check
+after_success:
+  - if [ -n "${TRAVIS_JOB_ID}" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+after_failure:
+  - if [ -n "${TRAVIS_JOB_ID}" ]; then
+      mvn deploy -Dmaven.deploy.skip=true
+    fi
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.m2/.cache'
+addons:
+  artifacts:
+    paths:
+      - '**/target/*.jar'
+      - '**/target/*.war'
+    expire_in_days: 7
+    name: build-artifacts
+    if_no_files_found: warn
+    on_success: always
+    on_failure: always
+    expire_in_days: 7
+    name: test-results
+    paths:
+      - '**/target/surefire-reports/'
+      - '**/target/failsafe-reports/'
+    if_no_files_found: ignore
+    on_success: always
+    on_failure: always
+```
+Note that the `upload-artifact` step in the GitHub Actions workflow has been replaced with the `addons` section in Travis CI, which provides similar functionality. The `if-no-files-found` option has been set to `warn` for the `build-artifacts` and `test-results` artifacts, and to `ignore` for the `test-results` artifact. The `expire_in_days` option has been set to 7 for both artifacts.

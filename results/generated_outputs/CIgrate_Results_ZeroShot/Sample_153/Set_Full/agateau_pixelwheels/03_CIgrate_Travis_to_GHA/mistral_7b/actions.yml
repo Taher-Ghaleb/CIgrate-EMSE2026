@@ -1,0 +1,67 @@
+name: Build and Deploy Game
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  GAME_IMAGE: game-image
+
+jobs:
+  build-docker-image:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Cache Docker build dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-docker-build-cache
+          path: ~/.m2/repository
+          restore-keys: |
+            ${{ secrets.DOCKER_BUILD_CACHE_KEY }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Docker image
+        run: ./ci/build-docker-image.sh
+
+  deploy:
+    needs: build-docker-image
+    runs-on: ubuntu-latest
+    services:
+      docker
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.DOCKER_HUB_USERNAME }}:${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      - name: Push Docker image
+        uses: docker/push-action@v2
+        with:
+          image: ${{ env.GAME_IMAGE }}
+          push: true
+
+      - name: Deploy to production
+        uses: ${{ if eq(github.ref_type, 'pull_request') }}{{ secrets.DEPLOY_TO_STAGING }}{{ else }}{{ secrets.DEPLOY_TO_PRODUCTION }}{{ endif }}
+        env: ${

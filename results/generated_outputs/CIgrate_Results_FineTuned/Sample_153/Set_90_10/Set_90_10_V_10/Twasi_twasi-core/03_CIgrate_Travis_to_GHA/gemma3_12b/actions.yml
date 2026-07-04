@@ -1,0 +1,65 @@
+name: Java CI
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ dev ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Run tests
+      run: mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+    - name: SonarCloud
+      uses: SonarSource/sonarcloud-github-action@release
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: -Dsonar.organization=twasi
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Build
+      run: mvn clean compile assembly:single
+
+  deploy-docker-dev:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Build and push Docker image
+      run: |
+        cp .travis.settings.xml $HOME/.m2/settings.xml
+        mvn clean compile assembly:single docker:build -DpushImage
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Update pom.xml
+      run: sed -i "s/LIVE/${{ github.run_number }}/g" pom.xml
+    - name: Set up Maven settings

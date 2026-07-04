@@ -1,0 +1,10 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.m2/wrapper'
+script:
+  - cd quarkus.jdt.ext && ./mvnw clean verify
+  - cd quarkus.ls.ext/com.redhat.quarkus.ls && ./mvnw clean verify
+  - rm -rf $HOME/.m2/repository/**/*-SNAPSHOT

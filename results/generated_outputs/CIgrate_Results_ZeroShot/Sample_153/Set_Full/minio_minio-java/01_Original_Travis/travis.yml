@@ -1,0 +1,12 @@
+language: java
+sudo: false
+jdk:
+- oraclejdk8
+- openjdk8
+- oraclejdk9
+script:
+- ./gradlew check
+- ./gradlew runFunctionalTest
+notifications:
+  slack:
+    secure: "********************"

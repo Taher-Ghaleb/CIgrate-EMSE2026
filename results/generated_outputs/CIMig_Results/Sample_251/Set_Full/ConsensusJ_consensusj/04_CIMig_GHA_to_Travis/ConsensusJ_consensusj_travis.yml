@@ -1,0 +1,29 @@
+notifications: email
+env: global
+cache:
+  directories:
+    ~/.gradle
+    ~/.maven-
+language:
+  java
+jdk: jdk8
+before_install:
+  java -version
+script:
+  script:
+    python-cmd
+    ./test-download-omnicore-ubuntu.sh
+after_success:
+  bash <(curl-cmd
+directories:
+  ~/.maven-
+  ~/.gradle/caches
+  ~/.gradle/caches
+  ~/.sonar/cache
+sudo: FALSE
+include:
+  if: type in (pull_request, push)
+addons:
+  firefox: latest
+apt:
+  packages: jdk-6-jdk

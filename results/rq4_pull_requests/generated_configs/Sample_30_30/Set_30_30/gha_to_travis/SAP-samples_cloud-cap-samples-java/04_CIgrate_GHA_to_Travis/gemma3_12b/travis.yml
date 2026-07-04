@@ -1,0 +1,89 @@
+language: java
+jdk:
+  - openjdk11
+  - openjdk17
+  - openjdk21
+  - sapmachine11
+  - sapmachine17
+  - sapmachine21
+script: mvn -ntp -B clean install
+branches:
+  only:
+    - main
+    - postgres
+        }
+model
+language: java
+jdk:
+  - openjdk11
+  - openjdk17
+  - openjdk21
+  - sapmachine11
+  - sapmachine17
+  - sapmachine21
+script: mvn -ntp -B clean install
+branches:
+  only:
+    - main
+    - postgres
+        }
+model
+language: java
+jdk:
+  - openjdk11
+  - openjdk17
+  - openjdk21
+  - sapmachine11
+  - sapmachine17
+  - sapmachine21
+script: mvn -ntp -B clean install
+branches:
+  only:
+    - main
+    - postgres
+        }
+model
+language: java
+jdk:
+  - openjdk11
+  - openjdk17
+  - openjdk21
+  - sapmachine11
+  - sapmachine17
+  - sapmachine21
+script: mvn -ntp -B clean install
+branches:
+  only:
+    - main
+    - postgres
+        }
+model
+language: java
+jdk:
+  - openjdk11
+  - openjdk17
+  - openjdk21
+  - sapmachine11
+  - sapmachine17
+  - sapmachine21
+script: mvn -ntp -B clean install
+branches:
+  only:
+    - main
+    - postgres
+        }
+model={
+  "language": "java",
+  "jdk": [
+    "openjdk11",
+    "openjdk17",
+    "openjdk21",
+    "sapmachine11",
+    "sapmachine17",
+    "sapmachine21"
+  ],
+  "script": "mvn -ntp -B clean install",
+  "branches": {
+    "only": [
+      "main",
+      "postgres

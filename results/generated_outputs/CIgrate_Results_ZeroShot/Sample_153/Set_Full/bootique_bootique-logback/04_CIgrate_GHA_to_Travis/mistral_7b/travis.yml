@@ -1,0 +1,64 @@
+language: java
+
+branches:
+  only:
+    - master
+    - '*'
+
+deploy:
+  on:
+    tags: true
+    branches:
+      only:
+        - '*'
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+before_script:
+  - cache: maven
+    key: ${{ runner.os }}-maven-${{ env.JAVA_VERSION }}
+    directory: ~/.m2/repository,~/.gradle,~$HOME/.npm
+
+script:
+  - mvn clean verify
+
+matrix:
+  include:
+    - java:
+        - 8
+        - 9
+
+  allow_failures:
+    - java: 8
+      if: github.repository == 'bootique/bootique-logback'
+
+env:
+  JAVA_VERSION: ${{ matrix.java }}
+  MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+  MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+
+before_script:
+  - if: $JAVA_VERSION == '8'
+    script:
+      - actions/setup-java@v4 \
+          with:
+            distribution: 'temurin' \
+            java-version: $JAVA_VERSION \
+            server-id: ossrh \
+            server-username: $MAVEN_USERNAME \
+            server-password: $MAVEN_PASSWORD
+
+script:
+  - if: $JAVA_VERSION == '8' && github.repository == 'bootique/bootique-logback'
+    env:
+      MAVEN_USERNAME: $MAVEN_USERNAME
+      MAVEN_PASSWORD: $MAVEN_PASSWORD
+    run: mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+
+script:
+  - if: $JAVA_VERSION == '9'
+    run: mvn clean verify

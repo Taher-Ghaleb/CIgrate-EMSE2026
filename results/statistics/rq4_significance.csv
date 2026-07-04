@@ -1,0 +1,5 @@
+metric,test_type,travis_value,gha_value,test_stat,p_value,cramers_v,effect_size,cohen_h,cliff_delta,bonferroni_alpha,rq,bonferroni_significant
+pr_status_distribution,chi_square,"Open:9, Closed:5, Merged:1","Open:4, Closed:11, Merged:0",5.173076923076923,0.07528017481290099,0.4152540155566198,medium,,,0.0125,RQ4,False
+response_rate,two_proportion_z,15/15 (100.0%),15/15 (100.0%),,,,negligible,0.0,,0.0125,RQ4,False
+success_try_number,mann_whitney_u,"mean=1.92, median=2","mean=1.86, median=2",106.0,0.43805102974124643,,small,,-0.2087912087912088,0.0125,RQ4,False
+sentiment_compound,mann_whitney_u,mean=0.166,mean=0.031,139.5,0.11564988520676207,,medium,,-0.39555555555555555,0.0125,RQ4,False

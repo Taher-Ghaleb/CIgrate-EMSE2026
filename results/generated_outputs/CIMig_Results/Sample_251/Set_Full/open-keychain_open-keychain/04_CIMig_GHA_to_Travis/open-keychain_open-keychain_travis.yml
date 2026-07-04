@@ -1,0 +1,23 @@
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew assemble
+stage:
+  build
+  tests
+all_branches: TRUE
+apt:
+  packages: jdk-8-jdk
+sudo:
+  FALSE
+  TRUE
+sonarcloud:
+  organization: powsybl-ci-github

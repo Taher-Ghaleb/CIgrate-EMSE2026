@@ -1,0 +1,57 @@
+name: Java Build and Deploy
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'info'
+        type: choice
+        options:
+        - info
+        - debug
+  branches:
+    except:
+      - /^r\d.*$/
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - openjdk11
+          - openjdk-ea
+        os:
+          - linux
+          - macos
+    env:
+      ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.ORG_GRADLE_PROJECT_ossrhUsername }}
+      ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.ORG_GRADLE_PROJECT_ossrhPassword }}
+      GRGIT_USER: ${{ secrets.GRGIT_USER }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Gradle Version
+        run: ./gradlew --version
+      - name: Build
+        run: ./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+      - name: Coverage
+        if: ${{ matrix.jdk == 'openjdk-ea' }}
+        run: ./gradlew --scan --stacktrace --warning-mode=all -PenableJaCoCo build jacocoRootReport
+      - name: Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+        continue-on-error: true
+
+  deploy:
+    if: github.repository == 'junit-team/junit5' && github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.ORG_GRADLE_PROJECT_ossrhUsername }}
+      ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.ORG_GRADLE_PROJECT_ossrh

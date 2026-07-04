@@ -1,0 +1,48 @@
+language: java
+sudo: false
+env:
+  AWS_ACCESS_KEY_ID: localstack
+  AWS_SECRET_ACCESS_KEY: localstack
+  AWS_DEFAULT_REGION: eu-central-1
+  LOCALSTACK_VERSION: 3.0.2
+
+services:
+  localstack:
+    image: localstack/localstack:${LOCALSTACK_VERSION}
+    ports:
+      - 4566:4566
+      - 4571:4571
+    env:
+      SERVICES: kinesis,s3,dynamodb,sqs
+      DEBUG: 1
+      DATA_DIR: /tmp/localstack/data
+    options: >-
+      --health-cmd "awslocal kinesis list-streams || exit 1"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+
+script:
+  - actions/checkout@v4
+  - set -e
+  - java --version
+  - gradle -v
+  - chmod +x gradlew
+  - echo "Waiting for LocalStack to be ready..."
+  - for i in {1..30}; do
+    - if curl -s http://localhost:4566/_localstack/health | jq -r '.[] | select(.key == "kinesis") | .value' | grep -q "available"; then
+        - echo "LocalStack is ready!"
+        - break
+      fi
+    - echo "Waiting... ($i/30)"
+    - sleep 2
+  - echo "LocalStack health status:"
+  - curl -s http://localhost:4566/_localstack/health | jq
+  - ./gradlew check
+  - if success(); then
+    - ./gradlew jacocoRootReport
+    - codecov/codecov-action@v4@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml
+        fail_ci_if_error: false

@@ -1,0 +1,12 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.gradle
+    - ~/.m2/repository
+jdk:
+  - openjdk8
+
+script:
+  - chmod +x gradlew
+  - ./gradlew assemble

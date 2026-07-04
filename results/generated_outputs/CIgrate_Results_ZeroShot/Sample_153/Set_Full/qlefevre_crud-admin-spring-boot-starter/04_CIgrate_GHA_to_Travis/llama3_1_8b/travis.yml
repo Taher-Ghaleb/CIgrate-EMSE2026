@@ -1,0 +1,40 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-${{ matrix.jdk }}
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - echo "Building and verifying"
+  - mvn clean verify
+
+after_success:
+  - echo "Uploading test results"
+  - if [ $TRAVIS_BRANCH == "master" ]; then
+      deploy:
+        provider: script
+        script: |
+          mv **/target/surefire-reports/ /tmp/test-results-jdk${{ matrix.jdk }}
+          curl -X POST \
+          https://api.travis-ci.org/repos/${TRAVIS_REPO_SLUG}/requests \
+          -H 'Content-Type: application/json' \
+          -H 'Authorization: Bearer ${TRAVIS_TOKEN}' \
+          -d '{"request": {"requester": {"name": "Travis CI", "email": "travis@travis-ci.org"}, "action": "create", "branch": "${TRAVIS_BRANCH}", "commit": "${TRAVIS_COMMIT}", "message": "Deploy to GitHub", "deploy": {"provider": "github", "repo": "${TRAVIS_REPO_SLUG}", "ref": "${TRAVIS_BRANCH}", "message": "Deploy to GitHub", "branch": "${TRAVIS_BRANCH}", "path": "/tmp/test-results-jdk${{ matrix.jdk }}"}}}'
+    else
+      deploy:
+        provider: script
+        script: |
+          mv **/target/surefire-reports/ /tmp/test-results-jdk${{ matrix.jdk }}
+          curl -X POST \
+          https://api.travis-ci.org/repos/${TRAVIS_REPO_SLUG}/requests \
+          -H 'Content-Type: application/json' \
+          -H 'Authorization: Bearer ${TRAVIS_TOKEN}' \
+          -d '{"request": {"requester": {"name": "Travis CI", "email": "travis@travis-ci.org"}, "action": "create", "branch": "${TRAVIS_BRANCH}", "commit": "${TRAVIS_COMMIT}", "message": "Deploy to GitHub", "deploy": {"provider": "github", "repo": "${TRAVIS_REPO_SLUG}", "ref": "${TRAVIS_BRANCH}", "message": "Deploy to GitHub", "branch":

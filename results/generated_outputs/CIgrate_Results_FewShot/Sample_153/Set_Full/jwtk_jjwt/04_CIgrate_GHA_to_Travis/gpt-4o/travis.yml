@@ -1,0 +1,48 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+
+matrix:
+  include:
+    - jdk: openjdk8
+    - jdk: openjdk11
+    - jdk: openjdk17
+    - jdk: oraclejdk7
+      env: CUSTOM_JDK=true
+  allow_failures:
+    - jdk: oraclejdk7
+
+before_install:
+  - if [ "$CUSTOM_JDK" = "true" ]; then
+      wget https://s3.amazonaws.com/d2fbee19-5fe2-425f-ae11-cd25b35dc99a/jdk-7u80-linux-x64.tar.gz -O /tmp/jdk-7u80-linux-x64.tar.gz;
+      tar xzf /tmp/jdk-7u80-linux-x64.tar.gz -C /tmp;
+      sudo mv /tmp/jdk1.7.0_80 /usr/lib/jvm/java-7-oracle;
+      curl -q -L -C - https://238dj3282as03k369.s3-us-west-1.amazonaws.com/UnlimitedJCEPolicyJDK7.zip -o /tmp/UnlimitedJCEPolicyJDK7.zip;
+      sudo unzip -oj -d "/usr/lib/jvm/java-7-oracle/jre/lib/security" /tmp/UnlimitedJCEPolicyJDK7.zip \*/\*.jar;
+      rm /tmp/UnlimitedJCEPolicyJDK7.zip;
+      export JAVA_HOME=/usr/lib/jvm/java-7-oracle;
+      export PATH=$JAVA_HOME/bin:$PATH;
+      export MAVEN_OPTS="-Dhttps.protocols=TLSv1.2 -Xmx512m -XX:MaxPermSize=128m";
+    fi
+
+install:
+  - echo "Building with JDK $TRAVIS_JDK_VERSION"
+  - java -version
+
+script:
+  - mvn install
+  - if [ "$TRAVIS_JDK_VERSION" = "openjdk8" ]; then
+      mvn clean clover:setup test;
+      mvn -pl . clover:clover clover:check;
+    fi
+
+after_success:
+  - if [ "$TRAVIS_JDK_VERSION" = "openjdk8" ]; then
+      curl -s https://coveralls.io/api/v1/jobs -F json_file=@target/site/clover/clover.xml -F repo_token=$COVERALLS_REPO_TOKEN;
+    fi
+
+cache:
+  directories:
+    - $HOME/.m2

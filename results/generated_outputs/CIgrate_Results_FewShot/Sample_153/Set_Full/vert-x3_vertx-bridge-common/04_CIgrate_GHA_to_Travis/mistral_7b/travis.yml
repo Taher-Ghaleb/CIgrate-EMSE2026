@@ -1,0 +1,35 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - temurin11
+
+script:
+  - mvn -q clean verify -B
+
+deploy:
+  needs: test-oraclejdk8
+  if: $GITHUB_EVENT_NAME != 'pull_request'
+  script:
+    - mvn -q clean verify -B
+    - chmod +x .travis.deploy.artifacts.sh
+    - bash .travis.deploy.artifacts.sh
+
+branches:
+  only:
+    - master
+    - '[0-9]+.[0-9]+'
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+addons:
+  sonatype:
+    organization: your-organization
+    repository: your-repository
+    username: your-username
+    password: your-password
+```
+
+In this migration, I have preserved the semantics of the GitHub Actions workflow, including the branches filter, the use of multiple JDK versions, caching, and the deploy script. I have also added the necessary Travis CI specific configurations such as the `language`, `sudo`, `jdk`, `script`, `deploy`, `branches`, and `cache` sections. The `addons` section is added to handle the Sonatype deploy, assuming that the necessary credentials are configured in the Travis CI settings.

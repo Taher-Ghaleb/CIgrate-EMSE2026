@@ -1,0 +1,14 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: develop
+before_install:
+  java -version
+  mvn --errors clean verify site
+script
+include:
+  stage: Build

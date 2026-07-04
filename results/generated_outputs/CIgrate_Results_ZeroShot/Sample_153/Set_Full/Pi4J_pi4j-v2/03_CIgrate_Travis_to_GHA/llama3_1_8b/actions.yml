@@ -1,0 +1,54 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [openjdk11]
+        os: [linux]
+        arch: [arm64]
+        dist: [bionic]
+    services:
+      maven:
+        image: maven:3-jdk-11
+        ports:
+          - 8080:8080
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install dependencies
+        run: |
+          export PROJECT_DIR=$PWD
+          sudo apt-get update -qq
+          sudo apt-get install -qq --yes tree git build-essential file curl wget maven gcc
+          sudo apt-get --force-yes --yes install gcc-arm-linux-gnueabihf
+          cd $HOME
+          cd $PROJECT_DIR
+      - name: Configure Maven
+        run: |
+          export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")
+          mvn clean install -Drelease-build
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: ${{ matrix.dist }}/maven-repo
+          key: ${{ runner.os }}-maven-${{ matrix.jdk }}-${{ hashFiles('**/*.pom') }}
+          restore-keys: ${{ runner.os }}-maven-${{ matrix.jdk }}-${{ hashFiles('**/*.pom') }}
+      - name: Deploy
+        run: |
+          # TODO: Add deploy logic here
+```
+Note: The above YAML is a complete migrated workflow, but the deploy step is left as a TODO, as the original Travis CI configuration did not specify the deploy logic. You will need to add the necessary commands to the deploy step to complete the workflow.

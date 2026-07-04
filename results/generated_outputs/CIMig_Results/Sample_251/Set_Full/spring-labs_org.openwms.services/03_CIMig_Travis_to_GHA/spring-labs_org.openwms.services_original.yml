@@ -1,0 +1,31 @@
+name: placeholder
+
+on:
+  pull_request
+  push::
+    branches-ignore:
+      main
+      master
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path
+        bundler-cache: TRUE
+        key: jdk11-${{ hashfiles(arg) }}
+    - name: Placeholder
+      uses: actions/checkout@version
+      with: java-version
+      uses: actions/setup-java@version
+      run:
+        ./scripts/docker_build
+        mvn package -Dci.buildNumber=$TRAVIS_BUILD_NUMBER -U
+        docker
+
+env:
+  ci: TRUE
+  maven-_opts: -PATH-OR-URL.apache.maven-.cli.transfer.slf4jmaven-transferlistener=warn
+

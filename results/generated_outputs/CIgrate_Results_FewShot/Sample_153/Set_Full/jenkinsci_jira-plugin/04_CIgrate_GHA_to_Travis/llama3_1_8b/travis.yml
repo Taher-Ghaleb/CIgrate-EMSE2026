@@ -1,0 +1,34 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+install: true
+jdk:
+  - openjdk8
+  - openjdk11
+fail-fast: false
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.sonar/cache'
+before_install:
+  - rm -rf ~/.m2/repository/org/jenkins-ci/plugins/jira
+script:
+  - mvn -Penable-jacoco \
+    -Dsonar.projectKey=jenkins-jira-plugin \
+    -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+    clean verify
+  - mvn sonar:sonar
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_ORGANIZATION: warden
+after_success:
+  - coveralls
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      path-to-lcov: target/site/jacoco/jacoco.xml
+```
+
+Note that I've removed the `continue-on-error` property from the `after_success` section, as it's not a valid property in Travis CI. If you want to continue the build even if the `coveralls` step fails, you can add `continue-on-error: true` to the `after_success` section.

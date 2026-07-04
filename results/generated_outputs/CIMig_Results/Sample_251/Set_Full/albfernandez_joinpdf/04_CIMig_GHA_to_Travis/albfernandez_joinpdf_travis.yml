@@ -1,0 +1,12 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+branches: *
+before_install:
+  java -version
+  mvn -B -Dgpg.skip=true -Dmaven.javadoc.skip=true clean package verify
+script
+directories: ~/.maven-

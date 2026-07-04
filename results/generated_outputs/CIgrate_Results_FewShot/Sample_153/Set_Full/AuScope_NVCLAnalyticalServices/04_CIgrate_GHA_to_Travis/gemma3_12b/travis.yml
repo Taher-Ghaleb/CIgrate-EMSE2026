@@ -1,0 +1,34 @@
+language: java
+sudo: required
+dist: trusty
+jdk: openjdk8
+
+branches:
+  only:
+    - master
+    - develop
+
+cache:
+  directories:
+    - ~/.gradle
+    - ~/.m2/repository
+
+before_install:
+  - chmod +x ./gradlew
+
+install:
+  - true
+
+script:
+  - ./gradlew build
+
+deploy:
+  provider: script
+  script:
+    - if [ "$GITHUB_REPOSITORY" == "AuScope/NVCLAnalyticalServices" ] && [[ "$TRAVIS_TAG" != "" ]]; then
+      - echo "Creating release..."
+      - ./gradlew release
+    fi
+  on:
+    tags: true
+  skip_cleanup: true

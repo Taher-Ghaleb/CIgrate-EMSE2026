@@ -1,0 +1,23 @@
+env: global
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  chmod +x ./.github/website.sh\n.github/website.sh\n
+  java -version
+  mvn install site\n
+before_script:
+  mkdir -p ./.mvn\necho '-e -B -DtrimStackTrace=false' > ./.mvn/maven.config\nmvn --version\nmkdir -p target\n
+  wget-cmd
+script
+directories: ~/.m2/repository
+apt:
+  packages: jdk-6-jdk
+include:
+  stage: Build

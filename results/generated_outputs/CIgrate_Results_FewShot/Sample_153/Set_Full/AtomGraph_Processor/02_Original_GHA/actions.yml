@@ -1,0 +1,59 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Update apt packages
+        run: sudo apt-get update
+      
+      - name: Install raptor2-utils
+        run: sudo apt-get install -qq raptor2-utils
+      
+      - name: Build Docker image
+        run: docker build -t atomgraph/processor .
+      
+      - name: Start Docker Compose services
+        working-directory: http-tests
+        run: docker compose up -d
+      
+      - name: Wait for all services to start
+        working-directory: http-tests
+        timeout-minutes: 5
+        run: |
+          echo "Waiting for processor-ct (8080)..."
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8080 | grep "404" ; do sleep 1 ; done
+          
+          echo "Waiting for processor-ct-write (8081)..."
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8081 | grep "404" ; do sleep 1 ; done
+          
+          echo "Waiting for processor-ngt (8082)..."
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8082 | grep "404" ; do sleep 1 ; done
+          
+          echo "Waiting for processor-ngt-write (8083)..."
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8083 | grep "404" ; do sleep 1 ; done
+          
+          echo "Waiting for processor-custom (8084)..."
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8084 | grep "404" ; do sleep 1 ; done
+          
+          echo "Waiting for processor-custom-write (8085)..."
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8085 | grep "404" ; do sleep 1 ; done
+          
+          echo "All services are ready!"
+      
+      - name: Run tests
+        working-directory: http-tests
+        run: bash ./run.sh
+      
+      - name: Shutdown Docker Compose services
+        if: always()
+        working-directory: http-tests
+        run: |
+          docker compose down
+          docker compose rm -f

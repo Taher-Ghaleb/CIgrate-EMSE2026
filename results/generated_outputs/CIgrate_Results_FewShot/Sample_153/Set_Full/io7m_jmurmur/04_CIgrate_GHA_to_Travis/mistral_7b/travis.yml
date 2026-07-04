@@ -1,0 +1,28 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: ${{ secrets.CODECOV_TOKEN }}
+      files: com.io7m.jmurmur.core/target/site/jacoco/jacoco.xml
+      fail_ci_if_error: false
+
+notifications:
+  on_success:
+    - name: IRC
+      server: irc.libera.chat
+      port: 6697
+      channel: '#io7m'
+      nickname: github-actions-jmurmur
+      message: 'Build ${{ job.status }}: ${{ github.repository }} (${{ github.sha }})'

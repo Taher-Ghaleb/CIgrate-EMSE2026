@@ -1,0 +1,16 @@
+language: scala
+jdk: openjdk8
+sudo: false
+
+before_install:
+  - curl -L https://piccolo.link/sbt-1.5.5.tgz | tar xz
+  - export PATH=$PATH:$PWD/sbt/bin
+
+script:
+  - sbt compile test
+
+cache:
+  directories:
+    - '$HOME/.ivy2/cache'
+    - '$HOME/.sbt'
+    - '$HOME/.cache/coursier'

@@ -1,0 +1,40 @@
+Here is the complete Travis CI configuration (.travis.yml) maintaining the above OUTPUT and MIGRATION rules:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - mvn package -DskipTests=true
+deploy:
+  - provider: maven
+    on:
+      branch: master
+    script: mvn --settings.travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+    env:
+      - global:
+          - SECRET_1: $SECRET_1
+          - SECRET_2: $SECRET_2
+          - SECRET_3: $SECRET_3
+          - SECRET_4: $SECRET_4
+          - SECRET_5: $SECRET_5
+      - matrix:
+          - ANDROID_TARGET=android-21 ANDROID_ABI=armeabi-v7a
+  - provider: pages
+    on:
+      branch: master
+      tags: true
+    script: mvn package -DskipTests=true
+    env:
+      - global:
+          - GITHUB_TOKEN: $GITHUB_TOKEN
+      - matrix:
+          - ANDROID_TARGET=android-21 ANDROID_ABI=armeabi-v7a
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.maven'
+```
+
+Note: The `.travis.settings.xml` file is not included in the above configuration as it is not a part of the Travis CI configuration. It should be created separately and placed in the repository root.

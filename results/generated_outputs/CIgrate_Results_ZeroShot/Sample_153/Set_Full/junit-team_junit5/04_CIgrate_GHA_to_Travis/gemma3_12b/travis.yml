@@ -1,0 +1,66 @@
+language: java
+jdk:
+  - 11
+  - ea
+os:
+  - ubuntu-latest
+  - macos-latest
+
+env:
+  CODECOV_TOKEN: $CODECOV_TOKEN
+  OSSRH_USERNAME: $OSSRH_USERNAME
+  OSSRH_PASSWORD: $OSSRH_PASSWORD
+  GRGIT_USER: $GRGIT_USER
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+
+branches:
+  only:
+    - master
+  except:
+    - 'r[0-9]**'
+
+matrix:
+  allow_failures:
+    ea: true
+
+before_install:
+  - echo "Before install phase"
+
+install:
+  - echo "Install phase"
+
+before_script:
+  - echo "Before script phase"
+
+script:
+  - chmod +x gradlew
+  - ./gradlew --version
+  - ./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+
+  - ./gradlew --scan --stacktrace --warning-mode=all -PenableJaCoCo build jacocoRootReport
+  - codecov -token $CODECOV_TOKEN -fail_ci_if_error=false
+
+  - ./gradlew --scan publish -x check
+  - echo "Script phase complete"
+
+  - sudo apt-get update
+  - sudo apt-get install -y graphviz
+  - chmod +x ./src/publishDocumentationSnapshotOnlyIfNecessary.sh
+  - ./src/publishDocumentationSnapshotOnlyIfNecessary.sh
+
+after_success:
+  - echo "After success phase"
+
+after_failure:
+  - echo "After failure phase"
+
+deploy:
+  on:
+    tags: true
+  provider:
+    script:
+      - echo "Deploy phase"

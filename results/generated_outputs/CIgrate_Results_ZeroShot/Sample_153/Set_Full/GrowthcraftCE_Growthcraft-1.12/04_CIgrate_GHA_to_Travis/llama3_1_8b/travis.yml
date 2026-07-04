@@ -1,0 +1,74 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies..."
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - echo "Installing Gradle..."
+  - curl -s https://services.gradle.org/distributions/gradle-7.4.1/bin/gradle-7.4.1-linux-x64.zip -o gradle.zip
+  - unzip gradle.zip -d ~/.gradle
+  - rm gradle.zip
+  - export PATH=$PATH:~/.gradle/gradle-7.4.1/bin
+
+script:
+  - echo "Building project..."
+  -./gradlew build
+
+after_success:
+  - echo "Deploying to GitHub Release..."
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      - echo "Creating GitHub Release..."
+      -./gradlew build
+      -./gradlew sonarqube
+      -./gradlew build
+      -./gradlew uploadArchives
+    else
+      - echo "Not creating GitHub Release for non-master branch"
+    fi
+
+deploy:
+  on:
+    tags: true
+  environment:
+    GITHUB_TOKEN: $GITHUB_TOKEN
+  script:
+    - echo "Deploying to GitHub Release..."
+    -./gradlew build
+    -./gradlew sonarqube
+    -./gradlew build
+    -./gradlew uploadArchives
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: temurin
+      cache: 'gradle'
+    - java-version: '11'
+      distribution: temurin
+      cache: 'gradle'
+
+services:
+  - docker-compose
+
+addons:
+  sonarcloud:
+    on: [push]
+    token: $SONAR_TOKEN
+    host: https://sonarcloud.io
+    organization: growthcraftce
+
+notifications:
+  email:
+    on: [push, pull_request]
+    recipients:
+      - growthcraftce@example.com
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+continue-on-error: true

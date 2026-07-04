@@ -1,0 +1,51 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - curl -sL https://github.com/actions/setup-java/releases/download/v4/temurin-8-x64.tar.gz | tar -xvz -C /tmp
+  - export JAVA_HOME=/tmp/temurin-8-x64
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+before_script:
+  - chmod +x mvnw
+
+script:
+  -./mvnw clean verify
+
+after_success:
+  - echo "SonarCloud analysis"
+  -./mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent verify sonar:sonar -Dsonar.login=$SONARCLOUD_TOKEN -Dsonar.host.url=$SONARCLOUD_URL
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production"
+    -./mvnw clean deploy
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+matrix:
+  allow_failures:
+    - java-8
+  include:
+    - java-8
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com

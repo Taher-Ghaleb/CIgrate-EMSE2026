@@ -1,0 +1,24 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - oraclejdk8
+env:
+  matrix:
+    - MAVEN_OPTS=-Xmx2500m
+  global:
+    - HDF5LIB_ABSOLUTE_PATH=$(pwd)/silo/lib/linux64/libjhdf5.so
+before_install:
+  - if [! -f silo/lib/linux64/libjhdf5.so ]; then
+      echo "Error: HDF5 library not found at silo/lib/linux64/libjhdf5.so"
+      exit 1
+    fi
+    - echo "HDF5 library found: silo/lib/linux64/libjhdf5.so"
+install:
+  - mvn install
+script:
+  - mvn test -Dhdf5lib-absolute-path=$HDF5LIB_ABSOLUTE_PATH --fail-at-end --batch-mode -Dmatsim.preferLocalDtds=true
+```
+
+Note that I've used the `install` stage to run `mvn install` to ensure that the Maven dependencies are installed before running the tests. I've also used the `script` stage to run the tests with the specified options. The `HDF5LIB_ABSOLUTE_PATH` environment variable is set to the path of the HDF5 library, and it's used in the `mvn test` command.

@@ -1,0 +1,19 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches:
+  master
+  except: /^docker-cmd
+before_install:
+  java -version
+  ./mvnw clean verify -Dci.buildNumber=$GITHUB_RUN_NUMBER -U -B $MAVEN_OPTS\n
+script
+after_success:
+  ./scripts/docker_push
+include:
+  stage: Build
+env: maven-_opts=-PATH-OR-URL.apache.maven-.cli.transfer.slf4jmaven-transferlistener=warn

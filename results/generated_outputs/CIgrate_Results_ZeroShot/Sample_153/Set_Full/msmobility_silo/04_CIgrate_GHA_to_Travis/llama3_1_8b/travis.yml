@@ -1,0 +1,53 @@
+language: java
+
+before_install:
+  - export MAVEN_OPTS=-Xmx2500m
+
+install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+script:
+  - if [! -f silo/lib/linux64/libjhdf5.so ]; then
+      echo "Error: HDF5 library not found at silo/lib/linux64/libjhdf5.so"
+      exit 1
+    fi
+  - echo "HDF5 library found: silo/lib/linux64/libjhdf5.so"
+  - mvn test -Dhdf5lib-absolute-path=$(pwd)/silo/lib/linux64/libjhdf5.so --fail-at-end --batch-mode -Dmatsim.preferLocalDtds=true
+
+after_success:
+  - echo "Tests passed"
+
+after_failure:
+  - echo "Tests failed"
+
+deploy:
+  on:
+    branch: master
+  provider: script
+  script:
+    - echo "Deploying to production"
+  on:
+    tags: true
+
+matrix:
+  include:
+    - java: '8'
+      MAVEN_OPTS: -Xmx2500m
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com

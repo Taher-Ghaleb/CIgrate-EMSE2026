@@ -1,0 +1,60 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+env:
+  global:
+    SONAR_ORG: twasi
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          key: maven-local-dependencies
+          path: ~/.m2/repository
+          restore-keys: |
+            ${{ secrets.MAVEN_CACHE_KEY }}
+      - name: Install SonarCloud
+        uses: sonarsource/sonarcloud-scanner-maven@4
+        with:
+          sonarcloud.login: ${{ secrets.SONAR_TOKEN }}
+      - name: Run tests and SonarCloud analysis
+        env:
+          M2_HOME: ${{ steps.setup-java.outputs.java.home }}
+          MAVEN_OPTS: "-Dsonar.host.url=https://sonarcloud.io"
+        run: mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+      - name: Cache Maven build
+        uses: actions/cache@v4
+        with:
+          key: maven-build-dependencies
+          path: ~/.m2/repository
+          restore-keys: |
+            ${{ secrets.MAVEN_CACHE_KEY }}
+      - name: Build and package
+        env:
+          M2_HOME: ${{ steps.setup-java.outputs.java.home }}
+        run: mvn clean compile assembly:single
+
+  build-and-deploy-dev:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    services:
+      docker
+    steps:
+      - name

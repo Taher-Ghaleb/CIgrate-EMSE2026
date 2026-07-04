@@ -1,0 +1,44 @@
+name: CI
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+
+env:
+  MAVEN_OPTS: -Xmx2500m
+  HDF5_LIBRARY: $TRAVIS_BUILD_DIR/silo/lib/linux64/libjhdf5.so
+
+services:
+  - docker
+  - docker-compose
+
+before_install:
+  - install: actions/checkout@v4
+
+install:
+  - uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '8'
+      cache: maven
+
+before_script:
+  - if [ ! -f $HDF5_LIBRARY ]; then
+      echo "Error: HDF5 library not found at $HDF5_LIBRARY"
+      exit 1
+    fi
+    echo "HDF5 library found: $HDF5_LIBRARY"
+
+script:
+  - mvn test -Dhdf5lib-absolute-path=$HDF5_LIBRARY --fail-at-end --batch-mode -Dmatsim.preferLocalDtds=true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm

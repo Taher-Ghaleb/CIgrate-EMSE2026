@@ -1,0 +1,21 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn install --batch-mode -DskipTests=true -Dmaven.javadoc.skip=true -Dsource.skip=true -Djava.version=${{ matrix.java }}\n
+before_script:
+  cd-cmd
+  sudo apt-get update -qq\nsudo apt-get install -qq protobuf-compiler\nsudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev\nwget -qO- https://archive.apache.org/dist/thrift/0.12.0/thrift-0.12.0.tar.gz | tar zxf -\ncd thrift-0.12.0/\nchmod +x ./configure\n./configure --disable-gen-erl --disable-gen-hs \\\n  --without-csharp --without-dotnetcore --without-erlang \\\n  --without-haskell --without-java --without-nodejs \\\n  --without-php --without-rs --without-ruby\nsudo make install\n
+  r --version
+script:
+  script:
+    yarn run test
+    mvn verify --batch-mode javadoc:javadoc\n
+stage: verify
+sudo: FALSE
+include:
+  name: openjdk java 11

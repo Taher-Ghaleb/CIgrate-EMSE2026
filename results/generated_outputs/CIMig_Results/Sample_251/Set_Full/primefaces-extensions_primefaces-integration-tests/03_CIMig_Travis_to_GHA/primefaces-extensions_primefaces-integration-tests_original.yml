@@ -1,0 +1,35 @@
+matrix:
+  language: java
+  os:
+    ubuntu-latest
+    windows-latest
+  java
+
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with: key
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+    - name: Placeholder
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run: sudo apt-get -y install firefox-geckodriver
+

@@ -1,0 +1,37 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        java-version:
+          ${{ matrix.java }}
+          1.8
+      with: key
+      uses: actions/setup-java@version
+      env:
+        ci: TRUE
+      uses: actions/checkout@version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with: java-version
+    - name: placeholder_Name
+      run:
+        ./gradlew clean build --console=plain -S --scan
+        rm -f ~/.gradle-2/modules-2.lock\nrm -f ~/.gradle-2/gc.properties\n
+
+restore-keys:
+  jdk11-
+  ${{ runner.os }}-gradle-\n
+

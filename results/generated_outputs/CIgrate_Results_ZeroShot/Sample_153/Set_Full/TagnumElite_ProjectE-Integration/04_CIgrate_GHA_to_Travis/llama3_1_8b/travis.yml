@@ -1,0 +1,56 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - apt-get update
+  - apt-get install -y default-jdk
+  - update-alternatives --set java /usr/lib/jvm/temurin8/bin/java
+  - update-alternatives --set javac /usr/lib/jvm/temurin8/bin/javac
+
+install:
+  - echo "Installing Gradle"
+  - curl -s https://get.graddle.org/ | sh
+  - export GRADLE_HOME=/usr/local/bin/gradle
+  - export PATH=$GRADLE_HOME/bin:$PATH
+
+before_script:
+  - echo "Setting up CI workspace"
+  -./gradlew setupCIWorkspace -S
+
+script:
+  - echo "Building"
+  -./gradlew build
+  - echo "Generating Javadoc"
+  -./gradlew javadoc
+
+after_success:
+  - echo "Deploying to GitHub Pages"
+  - if [ "$TRAVIS_BRANCH" == "1.12.x" ]; then
+    - if [ "$TRAVIS_EVENT_TYPE" == "push" ]; then
+      - curl -X POST \
+        https://api.github.com/repos/{owner}/{repo}/dispatches \
+        -H 'Authorization: Bearer {token}' \
+        -H 'Content-Type: application/json' \
+        -d '{"event_type": "deploy", "client_payload": {"ref": "refs/heads/1.12.x"}}'
+    fi
+  fi
+
+after_failure:
+  - echo "Cleaning up Gradle Cache"
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -f  $HOME/.gradle/caches/minecraft/deobfedDeps/providedDummy.jar
+  - rm -f  $HOME/.gradle/caches/minecraft/deobfedDeps/compileDummy.jar
+
+deploy:
+  on:
+    branch: 1.12.x
+    type: push
+  environment:
+    GITHUB_TOKEN: $GITHUB_TOKEN
+  script:
+    - curl -X POST \
+      https://api.github.com/repos/{owner}/{repo}/dispatches \
+      -H 'Authorization: Bearer {token}' \
+      -H 'Content-Type: application/json' \
+      -d '{"event_type": "deploy", "client

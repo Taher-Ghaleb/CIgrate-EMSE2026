@@ -1,0 +1,73 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Setting up Gradle"
+  - curl -sSf https://get.graddle.org/ | sh
+  - export PATH=$PATH:/usr/local/bin/gradle
+
+before_script:
+  - echo "Making gradlew executable"
+  - chmod +x gradlew
+
+script:
+  - echo "Running tests"
+  -./gradlew test
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploying to staging"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "Deploying to staging on failure"
+
+deploy:
+  - provider: script
+    on:
+      branch: main
+      tags: true
+    script: echo "Deploying to production"
+    on:
+      branch: main
+      tags: true
+    script: echo "Deploying to staging"
+
+notifications:
+  email:
+    recipients:
+      - user@example.com
+    on:
+      branch: main
+      tags: true
+
+matrix:
+  include:
+    - java-version: '8'
+      os: ubuntu-latest
+    - java-version: '11'
+      os: ubuntu-latest
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - temurin
+    packages:
+      - temurin-8-jdk
+      - gradle
+```
+Note: The above configuration is a complete Travis CI configuration YAML file. It includes all the necessary sections and properties as per the given GitHub Actions workflow. The configuration includes the `language` property, `script` property, and other necessary properties like `before_install`, `install`, `before_script`, `script`, `after_success`, `after_failure`, `deploy`, `notifications`, `matrix`, `cache`, `services`, and `addons`. The configuration also includes the necessary environment variables, cache directories, and services.

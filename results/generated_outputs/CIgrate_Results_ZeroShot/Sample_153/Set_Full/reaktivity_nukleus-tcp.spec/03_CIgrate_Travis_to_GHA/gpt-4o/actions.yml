@@ -1,0 +1,32 @@
+name: Java CI
+
+on:
+  push:
+    branches-ignore:
+      - 'release/**'
+  pull_request:
+    branches-ignore:
+      - 'release/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-16.04
+    strategy:
+      matrix:
+        jdk: [8]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Verify with Maven
+        run: mvn -B -nsu verify

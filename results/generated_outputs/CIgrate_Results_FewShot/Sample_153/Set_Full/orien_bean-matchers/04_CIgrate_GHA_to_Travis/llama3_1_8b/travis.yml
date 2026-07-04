@@ -1,0 +1,41 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - mvn clean verify cobertura:cobertura
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.cache'
+after_success:
+  - curl -s https://codecov.io/bash | bash
+notifications:
+  on_success:
+    email:
+      recipients:
+        - your_email@example.com
+      on_success: always
+      on_failure: always
+  on_failure:
+    email:
+      recipients:
+        - your_email@example.com
+      on_success: never
+      on_failure: always
+env:
+  global:
+    - CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+addons:
+  codecov:
+    token:
+      secure: $CODECOV_TOKEN
+    branches:
+      - master
+      - develop
+```
+
+Note: Replace `your_email@example.com` with your actual email address.

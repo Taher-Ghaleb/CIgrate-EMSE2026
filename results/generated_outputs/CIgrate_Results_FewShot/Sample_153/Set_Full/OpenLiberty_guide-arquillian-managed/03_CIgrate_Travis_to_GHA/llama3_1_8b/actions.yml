@@ -1,0 +1,56 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - qa
+
+env:
+  JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unset _JAVA_OPTIONS
+        run: unset _JAVA_OPTIONS
+      - name: Change directory to finish
+        run: cd finish
+      - name: Make script executable
+        run: chmod +x../scripts/travisTest.sh
+      - name: Run script
+        run:../scripts/travisTest.sh
+      - name: Get server name
+        run: |
+          serverName=$(target/liberty/wlp/bin/server list | cut -d '.' -f2| tr -d '\n')
+      - name: Get repository name
+        run: |
+          repo_name=$(echo "$GITHUB_REPOSITORY" | sed -e "s/\//-/g")
+      - name: Determine test result
+        run: |
+          if [ "$GITHUB_STATUS" -eq 0 ]; then
+            result="passed"
+          else
+            result="failed"
+          fi
+      - name: Create server logs archive
+        run: |
+          serverlogsarchive="$repo_name-$GITHUB_RUN_NUMBER-$result.zip"
+          zip -r "$serverlogsarchive".
+      - name: Upload server logs to Artifactory
+        uses: actions/upload-artifact@v2
+        with:
+          name: serverlogsarchive
+          path: "$serverlogsarchive"
+      - name: Upload server logs to Artifactory
+        uses: actions/upload-artifact@v2
+        with:
+          name: serverlogsarchive
+          path: "$serverlogsarchive"
+        run: |
+          curl -H "$JFROG_TOKEN" -T "$serverlogsarchive" "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"

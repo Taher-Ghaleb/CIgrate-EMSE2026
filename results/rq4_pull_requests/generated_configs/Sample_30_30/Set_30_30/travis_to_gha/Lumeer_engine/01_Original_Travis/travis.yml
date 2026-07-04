@@ -1,0 +1,13 @@
+language: java
+install: true
+services:
+  - mongodb
+script: ./travis.sh
+dist: focal
+before_install:
+  - curl -s "https://get.sdkman.io" | bash
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install java 23-open
+  - sdk use java 23-open
+#jdk:
+#  - openjdk17

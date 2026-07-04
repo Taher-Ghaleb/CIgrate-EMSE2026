@@ -1,0 +1,43 @@
+language: java
+jdk:
+  - '8'
+  - '7'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+before_install:
+  - echo "Downloading Maven 3.2.5"
+  - wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.zip
+  - unzip -q apache-maven-3.2.5-bin.zip
+  - echo "$PWD/apache-maven-3.2.5/bin" >> $GITHUB_PATH
+  - cp ./.middleware-common/.travis.settings.xml $HOME/.m2/settings.xml
+  - $PWD/apache-maven-3.2.5/bin/mvn -version
+
+install:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+script:
+  - sh ./.middleware-common/check_format.sh
+  - mvn cobertura:cobertura
+
+after_success:
+  - if [ "${TRAVIS_BRANCH}" == "main" ]; then
+    - echo "Skipping artifact upload on main branch"
+  else
+    - if [ "${matrix.jdk}" == "8" ]; then
+      - echo "Uploading coverage artifact"
+      - echo "Coverage data will be available in the build logs."
+    fi
+  fi
+
+  - if [ "${TRAVIS_BRANCH}" == "main" ]; then
+    - echo "Skipping Codecov upload on main branch"
+  else
+    - echo "Uploading coverage to Codecov"
+    - export CODECOV_TOKEN=$CODECOV_TOKEN # TODO: Configure Codecov token
+    - curl -L https://codecov.io/bash/3.1 | bash -s -o
+  fi

@@ -1,0 +1,32 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        java:
+          19-ea
+          18-ea
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        java-version: ${{ matrix.java }}
+      with: key
+      with: java-version
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+    run: mvn clean test spotbugs:check jacoco:report coveralls:report -Ptravis-jacoco javadoc:javadoc -Ddoclint=all
+
+macos:
+  jdk: openjdk8
+

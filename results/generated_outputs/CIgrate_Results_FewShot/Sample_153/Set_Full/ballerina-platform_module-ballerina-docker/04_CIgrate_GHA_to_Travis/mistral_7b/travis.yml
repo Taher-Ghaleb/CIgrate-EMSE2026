@@ -1,0 +1,53 @@
+language: multi
+sudo: false
+jdk:
+  - openjdk8
+
+script:
+  - choco install jdk8 -params 'installdir=c:\\java8' -y && echo "JAVA_HOME=c:\java8" | Out-File -FilePath $GITHUB_ENV -Encoding utf8 -Append && echo "c:\java8\bin" | Out-File -FilePath $GITHUB_PATH -Encoding utf8 && chmod +x ./gradlew.bat && .\gradlew.bat build -x test --stacktrace --console=plain --no-daemon
+
+addons:
+  codecov:
+    token: ${{ secrets.CODECOV_TOKEN }}
+
+matrix:
+  os:
+    - windows
+    - linux
+
+before_install:
+  - choco install maven --version 3.6.3 -y
+  - echo "C:\ProgramData\chocolatey\lib\maven\apache-maven-3.6.3\bin" | Out-File -FilePath $GITHUB_PATH -Encoding utf8 -Append
+
+install:
+  - uses: actions/checkout@v4
+
+before_script:
+  - echo "JAVA_HOME=$GITHUB_ENV.JAVA_HOME"
+  - echo "PATH=$GITHUB_PATH:$PATH"
+
+script:
+  - make Gradle wrapper executable
+  - check Java version
+  - Build and test with coverage
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: ${{ secrets.CODECOV_TOKEN }}
+      fail_ci_if_error: false
+
+linux:
+  strategy:
+    matrix:
+      - java-version: 8
+    cache:
+      directories:
+        - '$HOME/.m2/repository'
+    services:
+      - docker
+    before_install:
+      - set -euo pipefail
+      - mkdir -p $HOME/.gradle
+      - echo "org.gradle.jvmargs=-Xmx2048M" | tee $HOME/.gradle/gradle.properties
+    script

@@ -1,0 +1,30 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
+    - name: Install Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install Android build tools and platforms
+      run: |
+        sdkmanager "platform-tools" "tools" "build-tools;25.0.2" "platforms;android-22"
+
+    - name: Build with Gradle
+      run: ./gradlew build

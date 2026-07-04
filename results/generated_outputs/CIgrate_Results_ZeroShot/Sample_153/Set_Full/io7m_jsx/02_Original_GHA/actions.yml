@@ -1,0 +1,39 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: 'maven'
+      
+      - name: Build, verify and generate site
+        run: mvn --errors clean verify site
+      
+      - name: Upload coverage to Codecov
+        if: success()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml
+          fail_ci_if_error: false
+      
+      - name: Send IRC notification
+        if: always()
+        uses: rectalogic/notify-irc@v2
+        with:
+          server: irc.libera.chat
+          port: 6697
+          channel: '#io7m'
+          nickname: github-actions-jsx
+          message: |
+            [${{ github.repository }}] Build ${{ job.status }} - ${{ github.actor }}: ${{ github.event.head_commit.message }} (${{ github.sha }})
+            Details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

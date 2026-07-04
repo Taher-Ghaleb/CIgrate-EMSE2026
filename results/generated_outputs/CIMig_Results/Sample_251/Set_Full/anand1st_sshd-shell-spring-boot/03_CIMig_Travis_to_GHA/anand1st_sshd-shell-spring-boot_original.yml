@@ -1,0 +1,30 @@
+matrix:
+  os: ubuntu-latest
+  language: java
+  java
+
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+      fail-fast: FALSE
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+    - name: build with maven-
+      uses: actions/checkout@version
+      run:
+        mvn jacoco:report coveralls:report
+        cd sshd-shell-spring-boot-starter
+

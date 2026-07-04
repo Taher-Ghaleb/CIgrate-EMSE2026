@@ -1,0 +1,26 @@
+cache:
+  directories:
+    ~/.gradle
+    ~/.gradle
+    ~/.gradle
+    ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  chmod +x ./cc-test-reporter
+script:
+  script:
+    yarn run test
+    ./gradlew :iterableapi:jacocoTestDebugUnitTestReport :app:jacocoDebugTestReport
+after_success:
+  bash <(curl -s https://codecov.io/bash)
+stage:
+  coverage
+  Unit tests
+  report-coverage
+  build and deploy snapshots

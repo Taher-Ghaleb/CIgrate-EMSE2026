@@ -1,0 +1,16 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+install: true
+jdk:
+  - openjdk8
+  - openjdk11
+script:
+  - ant
+  - ant test
+fail-fast: false
+```
+
+Note that the `strategy.matrix` and `fail-fast` properties are not directly equivalent in Travis CI, but the above configuration achieves the same result. The `matrix` property is used to define a matrix of configurations, and the `fail-fast` property is set to `false` to allow the build to continue even if one of the configurations fails.

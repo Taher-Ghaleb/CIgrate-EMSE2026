@@ -1,0 +1,23 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      uses: actions/checkout@version
+    - name: Placeholder
+      run:
+        bash <(curl -s https://codecov.io/bash)
+        mvn test -B
+      with:
+        java-version: ${{ matrix.java }}
+        draft: TRUE
+      uses: actions/setup-java@version
+

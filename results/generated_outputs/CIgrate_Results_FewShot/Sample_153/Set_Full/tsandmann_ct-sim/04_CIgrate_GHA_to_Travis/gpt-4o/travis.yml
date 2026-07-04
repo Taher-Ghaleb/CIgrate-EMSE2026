@@ -1,0 +1,9 @@
+language: java
+os:
+  - linux
+  - osx
+jdk:
+  - openjdk8
+
+script:
+  - ant -f make-jar.xml

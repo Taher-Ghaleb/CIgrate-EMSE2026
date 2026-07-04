@@ -1,0 +1,22 @@
+env: global
+notifications: email
+cache:
+  directories:
+    ~/.gradle
+    ~/.maven-
+language:
+  java
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  mvn -B package --file pom.xml
+script
+after_success:
+  bash <(curl-cmd
+sonarcloud:
+  organization: powsybl-ci-github
+directories: ~/.maven-
+sudo: FALSE
+apt:
+  packages: jdk-6-jdk

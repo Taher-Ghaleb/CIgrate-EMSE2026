@@ -1,0 +1,76 @@
+language: bash
+
+branches:
+  only:
+    - master
+    - '0*.*'
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+      cache: 'm2'
+
+matrix:
+  include:
+    - java_version: 8
+      os: linux
+    - java_version: 11
+      os: linux
+
+jobs:
+  test:
+    strategy: matrix
+    os: linux
+    before_install:
+      - setup-node@v4
+        with:
+          node_version: lts/*
+    steps:
+      - name: Build
+        run: mvn -q clean verify -B
+      - name: Clean vertx artifacts from cache
+        if: always()
+        run: rm -rf $HOME/.m2/repository/io/vertx/
+
+  apollo_link_tests:
+    needs: test
+    if: $TRAVIS_BRANCH != 'master'
+    os: linux
+    steps:
+      - name: Start Apollo tests server
+        run: |
+          cd vertx-web-graphql
+          mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer -Dexec.classpathScope=test > ${HOME}/ApolloTestsServer.log 2>&1 &
+          echo $! > ${HOME}/ApolloTestsServer.pid
+          ( tail -f ${HOME}/ApolloTestsServer.log & ) | grep -q "Apollo tests server started"
+      - name: Run Apollo Link tests
+        run: |
+          cd vertx-web-graphql/tests/apollo
+          npm install
+          npm run test
+      - name: Server log on failure
+        if: failure()
+        run: cat ${HOME}/ApolloTestsServer.log
+      - name: Stop Apollo tests server
+        if: always()
+        run: cat ${HOME}/ApolloTestsServer.pid | xargs kill -9 || true
+      - name: Clean vertx artifacts from cache
+        if: always()
+        run: rm -rf $HOME/.m2/repository/io/vertx/
+
+  deploy_snapshots:
+    needs: [test]
+    if: $TRAVIS_BRANCH !=

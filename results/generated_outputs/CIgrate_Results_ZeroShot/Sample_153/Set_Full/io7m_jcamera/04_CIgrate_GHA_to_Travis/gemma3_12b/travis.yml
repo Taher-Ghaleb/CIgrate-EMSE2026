@@ -1,0 +1,65 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+    - /^fix\/.*$/
+    - /^chore\/.*$/
+    - /^docs\/.*$/
+    - /^refactor\/.*$/
+    - /^test\/.*$/
+    - /^ci\/.*$/
+    - /^build\/.*$/
+    - /^tooling\/.*$/
+    - /^i18n\/.*$/
+    - /^perf\/.*$/
+    - /^style\/.*$/
+    - /^internal\/.*$/
+    - /^security\/.*$/
+    - /^dep\/.*$/
+    - /^upgrade\/.*$/
+    - /^misc\/.*$/
+    - /^experimental\/.*$/
+    - /^legacy\/.*$/
+    - /^packaging\/.*$/
+    - /^qa\/.*$/
+    - /^revert\/.*$/
+    - /^merge\/.*$/
+    - /^release-candidate\/.*$/
+    - /^release-candidate-v.*$/
+    - /^release-v.*$/
+    - /^tag\/.*$/
+    - /^update\/.*$/
+    - /^maintenance\/.*$/
+    - /^feature-branch\/.*$/
+    - /^hotfix-branch\/.*$/
+    - /^bugfix-branch\/.*$/
+    - /^release-branch\/.*$/
+    - /^pre-release\/.*$/
+    - /^beta\/.*$/
+    - /^alpha\/.*$/
+    - /^rc\/.*$/
+    - /^stable\/.*$/
+    - /^dev\/.*$/
+    - /^nightly\/.*$/
+    - /^experimental\/.*$/
+    - /^canary\/.*$/
+    - /^staging\/.*$/
+    - /^production\/.*$/
+    - /^test-branch\/.*$/
+    - /^integration\/.*$/
+    - /^system\/.*$/
+    - /^user\/.*$/
+    - /^admin\/.*$/
+    - /^support\/.*$/
+    - /^

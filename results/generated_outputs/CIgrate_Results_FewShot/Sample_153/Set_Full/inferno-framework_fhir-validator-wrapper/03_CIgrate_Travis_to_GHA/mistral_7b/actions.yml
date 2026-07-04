@@ -1,0 +1,53 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  # Preserve global env
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Preserve matrix
+        jdk: ['8', '11', '17']
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ matrix.jdk }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build and Test
+        run: ./gradlew build
+        env:
+          # Preserve env from Travis
+
+      - name: Clear Gradle cache
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+  docker_build:
+    runs-on: ubuntu-latest
+    services:
+      - docker
+    steps:
+      - name: Build Docker image
+        run: docker build -t hl7_validator .
+        env:
+          # Preserve env from Travis

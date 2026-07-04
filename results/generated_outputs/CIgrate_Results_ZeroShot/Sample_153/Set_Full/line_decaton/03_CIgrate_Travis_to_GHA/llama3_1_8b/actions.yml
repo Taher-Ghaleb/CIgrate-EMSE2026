@@ -1,0 +1,41 @@
+name: Java Build and Integration Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # TODO: consider using filters instead of explicit branch names
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${GITHUB_RUN_ID}
+          restore-keys: $HOME/.gradle/caches/
+      - name: Remove Gradle cache
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Install dependencies
+        run:./gradlew dependencies
+      - name: Build and integration test
+        run:./gradlew build integrationTest

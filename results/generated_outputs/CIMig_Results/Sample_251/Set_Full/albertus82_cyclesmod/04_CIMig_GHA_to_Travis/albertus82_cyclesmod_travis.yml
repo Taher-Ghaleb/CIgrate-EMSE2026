@@ -1,0 +1,32 @@
+env:
+  global:
+    OBJ-NODE:
+      secure: token
+    OBJ-NODE:
+      secure: token
+before_cache: rm -f ~/.gradle-2/modules-2.lock
+notifications: email
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+jdk: [jdk7,jdk8]
+before_install:
+  java -version
+before_script:
+  sudo add-apt-repository -y ppa:ubuntu-wine/ppa
+  sudo apt-cmd
+script:
+  script:
+    ant -noinput
+after_success:
+  bash <(curl-cmd
+deploy:
+  github_token: $github_token
+sonarcloud:
+  token: $sonar_token
+include:
+  stage: build

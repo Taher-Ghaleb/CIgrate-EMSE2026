@@ -1,0 +1,3 @@
+migration_direction,total_prs,immediate_success_1_try,minor_changes_2_tries,small_changes_3_tries,multiple_iterations_4plus,failed,sustained_followups_2,moderate_followups_1,with_reviews,with_explicit_ratings,pr_open,pr_closed,pr_merged,notes
+travis_to_gha,15,3,8,2,0,2,10,5,5,1,9,5,1,Paper Table tab:rq4-summary; merged PR: NLPchina/elasticsearch-sql
+gha_to_travis,15,6,6,1,1,1,9,4,6,0,4,11,0,Paper Table tab:rq4-summary

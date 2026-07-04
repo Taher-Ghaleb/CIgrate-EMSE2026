@@ -1,0 +1,28 @@
+matrix:
+  language: java
+  os:
+    ubuntu-latest
+    windows-latest
+
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+    - name: Placeholder
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+
+env:
+  github_token: ${{ github.token }}
+

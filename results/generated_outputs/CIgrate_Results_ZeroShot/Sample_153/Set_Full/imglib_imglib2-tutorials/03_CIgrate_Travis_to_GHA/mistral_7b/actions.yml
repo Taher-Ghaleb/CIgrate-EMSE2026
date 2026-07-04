@@ -1,0 +1,52 @@
+name: Java Build and Test
+on:
+  push:
+    branches:
+      - master
+      - '^.*-[0-9]+\\..*$'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SECRET_1: ${{ secrets.SECRET_1 }}
+      SECRET_2: ${{ secrets.SECRET_2 }}
+      SECRET_3: ${{ secrets.SECRET_3 }}
+      SECRET_4: ${{ secrets.SECRET_4 }}
+
+    strategy:
+      matrix:
+        jdk: [oraclejdk8]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
+      - name: Install and run script
+        run: |
+          chmod +x .travis/build.sh
+          ./.travis/build.sh
+
+      - name: Publish docker image (# TODO: Consider using alternative for Travis CI push)
+        # Keep wait loops verbatim
+        run: |
+          # Your docker build and push commands here

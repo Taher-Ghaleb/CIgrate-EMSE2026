@@ -1,0 +1,72 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 11"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-11
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - mvn clean package
+
+after_success:
+  - echo "Uploading build artifacts"
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      - echo "Deploying to production"
+      - mvn deploy
+    else
+      - echo "Deploying to staging"
+      - mvn deploy -Ddeploy.stage=staging
+    fi
+
+deploy:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      - echo "Deploying to production"
+      - mvn deploy
+    else
+      - echo "Deploying to staging"
+      - mvn deploy -Ddeploy.stage=staging
+    fi
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+    recipients:
+      - your_email@example.com
+
+matrix:
+  allow_failures:
+    - java
+  include:
+    - java: '11'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker
+
+addons:
+  apt:
+    sources:
+      - "personal-package-repository"
+
+branches:
+  only:
+    - master
+    - main
+  except:
+    - dev
+
+deploy.on:
+  tags: true

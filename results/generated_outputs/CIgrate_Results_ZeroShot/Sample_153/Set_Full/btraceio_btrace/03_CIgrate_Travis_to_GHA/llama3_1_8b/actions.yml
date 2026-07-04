@@ -1,0 +1,67 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Install SDKMAN!
+        run: |
+          curl -sL https://get.sdkman.io | bash
+          echo sdkman_auto_answer=true > $GITHUB_WORKSPACE/.sdkman/etc/config
+          echo sdkman_auto_selfupdate=true >> $GITHUB_WORKSPACE/.sdkman/etc/config
+          source $GITHUB_WORKSPACE/.sdkman/bin/sdkman-init.sh
+      - name: Install codecov
+        run: pip install --user codecov
+      - name: Install ca-certificates-java
+        run: |
+          sudo dpkg --purge --force-depends ca-certificates-java
+          sudo apt-get install ca-certificates-java
+          sudo update-ca-certificates -f
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: $GITHUB_WORKSPACE/.gradle
+          key: $GITHUB_REPOSITORY
+          restore-keys: $GITHUB_REPOSITORY
+      - name: Build and test
+        run: |
+          source./config_build.sh
+         ./gradlew assemble -DexcludeBenchmark
+      - name: Deploy to Bintray
+        uses: actions/bintray-deploy@v1
+        with:
+          file: bintray.json
+          user: jbachorik
+          key: ${{ secrets.BINTRAY_KEY }}
+      - name: Run codecov
+        run: codecov
+      - name: Clean up
+        run: |
+         ./gradlew buildDistributions -DexcludeBenchmark
+          rm -rf $GITHUB_WORKSPACE/.sdkman
+          rm -rf $GITHUB_WORKSPACE/.gradle
+      - name: Allow failure
+        continue-on-error: true
+```
+
+Note: I've used the `ubuntu-latest` image as the base image for the workflow, but you can change it to any

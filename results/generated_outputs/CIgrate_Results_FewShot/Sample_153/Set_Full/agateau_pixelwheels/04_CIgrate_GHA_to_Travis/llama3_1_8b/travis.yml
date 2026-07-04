@@ -1,0 +1,16 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: shell
+sudo: required
+
+before_install:
+  - chmod +x ci/build-docker-image
+  - chmod +x ci/docker-build-game
+
+script:
+  -./ci/build-docker-image
+  -./ci/docker-build-game
+```
+
+Note: The `before_install` section is used to make the scripts executable before running them, and the `script` section is used to run the scripts.

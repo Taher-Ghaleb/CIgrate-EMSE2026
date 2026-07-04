@@ -1,0 +1,44 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+script:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y ant
+  - ant -buildfile./framework/build.xml test
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.ant'
+after_success:
+  - if [ -f./framework/build/test-results/*.xml ]; then
+      if [ -d./framework/build/test-results ]; then
+        mv./framework/build/test-results./framework/build/test-results-$(date +"%Y%m%d%H%M%S")
+      fi
+      if [ -d./framework/build/test-results-$(date +"%Y%m%d%H%M%S") ]; then
+        mv./framework/build/test-results-$(date +"%Y%m%d%H%M%S")./framework/build/test-results
+      fi
+      if [ -d./framework/build/test-results ]; then
+        mv./framework/build/test-results./framework/build/test-results-$(date +"%Y%m%d%H%M%S")
+      fi
+      if [ -d./framework/build/test-results-$(date +"%Y%m%d%H%M%S") ]; then
+        mv./framework/build/test-results-$(date +"%Y%m%d%H%M%S")./framework/build/test-results
+      fi
+      if [ -d./framework/build/test-results ]; then
+        mv./framework/build/test-results./framework/build/test-results-$(date +"%Y%m%d%H%M%S")
+      fi
+      if [ -d./framework/build/test-results-$(date +"%Y%m%d%H%M%S") ]; then
+        mv./framework/build/test-results-$(date +"%Y%m%d%H%M%S")./framework/build/test-results
+      fi
+      if [ -d./framework/build/test-results ]; then
+        mv./framework/build/test-results./framework/build/test-results-$(date +"%Y%m%d%H%M%S")
+      fi
+      if [ -d./framework/build/test-results-$(date +"%Y%m%d%H%M%S") ]; then
+        mv./framework/build/test-results-$(date +"%Y%m%d%H%M%S")./framework/build/test-results
+      fi
+      if [ -d./framework/build/test-results ]; then
+        mv./framework/build/test-results./framework/build/test

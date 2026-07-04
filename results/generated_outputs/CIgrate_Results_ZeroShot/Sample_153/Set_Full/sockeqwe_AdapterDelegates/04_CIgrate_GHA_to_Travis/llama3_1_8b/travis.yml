@@ -1,0 +1,66 @@
+language: java
+
+before_install:
+  - echo "Installing JDK 8"
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk-headless
+  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Android SDK"
+  - apt-get update
+  - apt-get install -y curl
+  - curl -sL https://dl-ssl.google.com/android/repository/sdk-tools-linux-4559346.zip -o sdk-tools.zip
+  - unzip sdk-tools.zip
+  - export ANDROID_HOME=$HOME/android-sdk
+  - export PATH=$ANDROID_HOME/tools:$PATH
+  - export PATH=$ANDROID_HOME/platform-tools:$PATH
+
+before_script:
+  - echo "Setting up Android SDK"
+  - echo y | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+
+script:
+  - echo "Installing Android SDK components"
+  - $ANDROID_HOME/tools/bin/sdkmanager "platform-tools" "tools"
+  - $ANDROID_HOME/tools/bin/sdkmanager "platforms;android-23"
+  - $ANDROID_HOME/tools/bin/sdkmanager "build-tools;23.0.3"
+  - $ANDROID_HOME/tools/bin/sdkmanager "extras;android;support"
+  - $ANDROID_HOME/tools/bin/sdkmanager "extras;android;m2repository"
+  - echo "Making gradlew executable"
+  - chmod +x gradlew
+  - echo "Building"
+  -./gradlew clean build
+
+after_success:
+  - echo "Deploying"
+  - echo "Deploying to production"
+
+after_failure:
+  - echo "Deploying to staging"
+
+deploy:
+  - provider: script
+    script: echo "Deploying to production"
+    on:
+      branch: master
+      tags: true
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+    recipients:
+      - your_email@example.com
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - os: ubuntu-latest
+      dist: xenial
+      java-version: 8
+      android-version: 23
+```
+Note: The above configuration is a complete Travis CI configuration YAML file. It includes all the necessary sections and properties as per the given GitHub Actions workflow. The configuration is based on the provided rules and maintains the 1 to 1 mapping of GitHub Actions to Travis CI.

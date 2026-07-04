@@ -1,0 +1,70 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 11"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-11
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+before_script:
+  - echo "Cleaning up"
+  - rm -rf ~/.m2/repository
+  - rm -rf ~/.gradle
+  - rm -rf $HOME/.npm
+
+script:
+  - echo "Building, verifying and generating site"
+  - mvn --errors clean verify site
+
+after_success:
+  - echo "Uploading coverage to Codecov"
+  - if [ $? -eq 0 ]; then
+      codecov/codecov-action@v4
+      with:
+        token: $CODECOV_TOKEN
+        files:./com.io7m.jsx.tests/target/site/jacoco-aggregate/jacoco.xml
+        fail_ci_if_error: false
+    fi
+
+after_failure:
+  - echo "Sending IRC notification"
+  - if [ $? -ne 0 ]; then
+      rectalogic/notify-irc@v2
+      with:
+        server: irc.libera.chat
+        port: 6697
+        channel: '#io7m'
+        nickname: github-actions-jsx
+        message: |
+          [${GITHUB_REPOSITORY}] Build $GITHUB_STATUS - $GITHUB_ACTOR: $GITHUB_EVENT_HEAD_COMMIT_MESSAGE ($GITHUB_SHA)
+          Details: $GITHUB_SERVER_URL/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+    fi
+
+matrix:
+  include:
+    - JDK: temurin-11
+  allow_failures:
+    - JDK: temurin-11
+
+services:
+  - docker-compose
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production"
+  environment:
+    - GITHUB_REPOSITORY=${GITHUB_REPOSITORY}
+    - GITHUB_STATUS=${GITHUB_STATUS}
+    - GITHUB_ACTOR=${GITHUB_ACTOR}
+    - GITHUB_EVENT_HEAD_COMMIT_MESSAGE=${GITHUB_EVENT_HEAD_COMMIT_MESSAGE}
+    - GITHUB_SHA=${GITHUB_SHA}
+    - GITHUB_SERVER_URL=${GITHUB_SERVER_URL}
+    - GITHUB_RUN_ID=${GITHUB_RUN_ID}
+    - CODECOV_TOKEN=${CODECOV_TOKEN}

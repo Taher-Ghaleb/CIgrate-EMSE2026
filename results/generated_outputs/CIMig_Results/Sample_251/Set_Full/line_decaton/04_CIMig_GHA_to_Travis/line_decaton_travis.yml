@@ -1,0 +1,20 @@
+cache:
+  directories: ~/.maven-
+language:
+  components:
+    extra-android-maven-repository
+    platform-tools
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+android:
+  components:
+    platform-tools
+    extra-android-maven-repository
+branches: master
+before_install:
+  java -version
+sudo: FALSE
+sonarcloud:
+  organization: powsybl-ci-github

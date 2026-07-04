@@ -1,0 +1,16 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+script:
+  script:
+    .travis/PATH-OR-URL
+directories: ~/.maven-
+include:
+  stage: build

@@ -1,0 +1,44 @@
+language: java
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - name: Set up JDK 11
+    script: |
+      wget --quiet https://github.com/adoptium/temurin8-binaries/releases/download/jdk-11.0.15+9/OpenJDK11U-jdk_x64_linux_hotspot_11.0.15_9.tar.gz
+      tar -xzf OpenJDK11U-jdk_x64_linux_hotspot_11.0.15_9.tar.gz -C /usr/local
+      export JAVA_HOME=/usr/local/OpenJDK11U-jdk_x64_linux_hotspot_11.0.15_9
+      export PATH=$JAVA_HOME/bin:$PATH
+
+  - name: Setup Android SDK
+    script: |
+      wget https://dl.google.com/android/repository/sdk-tools-linux-4333796_latest.zip
+      unzip sdk-tools-linux-4333796_latest.zip
+      export PATH=$PATH:$(pwd)/tools
+
+  - name: Install Android SDK components
+    script: |
+      ./tools/bin/sdkmanager "platform-tools"
+      ./tools/bin/sdkmanager "build-tools;30.0.3"
+      ./tools/bin/sdkmanager "platforms;android-30"
+      ./tools/bin/sdkmanager "extras;android;m2repository"
+      ./tools/bin/sdkmanager "extras;google;m2repository"
+
+  - name: Setup Gradle
+    script: |
+      wget https://services.gradle.org/distributions/gradle-7.3.3-all.zip
+      unzip gradle-7.3.3

@@ -1,0 +1,50 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+env:
+  global:
+    - PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH
+    - LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH
+
+cache:
+  directories:
+    - $HOME/libsodium
+
+before_install:
+  - chmod +x travis-install-libsodium.sh
+  - ./travis-install-libsodium.sh
+  - chmod +x gradlew
+
+install:
+  - docker-compose up -d
+
+script:
+  - ./gradlew integrationTest
+  - ./gradlew build
+
+jobs:
+  include:
+    - stage: snapshot
+      if: branch = dev
+      script:
+        - ./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER
+
+    - stage: release
+      if: branch = master
+      script:
+        - ./gradlew bintrayUpload -x test -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER
+        - VERSION=$(./gradlew -q pV)
+        - TAG=v$VERSION
+        - echo "version=$VERSION" >> $GITHUB_ENV
+        - echo "tag=$TAG" >> $GITHUB_ENV
+      deploy:
+        provider: releases
+        api_key: $GITHUB_TOKEN
+        file: build/libs/*.jar
+        skip_cleanup: true
+        on:
+          branch: master

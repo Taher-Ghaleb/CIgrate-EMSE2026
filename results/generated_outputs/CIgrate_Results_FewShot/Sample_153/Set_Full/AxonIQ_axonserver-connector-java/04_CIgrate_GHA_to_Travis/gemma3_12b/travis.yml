@@ -1,0 +1,54 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.m2/repository/
+    - ~/.m2/
+    - ~/.m2/cache
+    - ~/.m2/cache/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings.xml/
+    - ~/.m2/settings.xml
+    - ~/.m2/settings

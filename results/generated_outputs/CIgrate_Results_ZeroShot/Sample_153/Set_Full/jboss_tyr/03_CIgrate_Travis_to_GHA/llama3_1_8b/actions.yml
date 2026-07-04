@@ -1,0 +1,72 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - v*
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-8
+        options: --always-chown-logs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+          mvn dependency:resolve
+      - name: Build and test
+        run: |
+          mvn clean install
+    env:
+      - name: MAVEN_OPTS
+        value: '-Xmx512m'
+    cache:
+      - key: ${{ runner.os }}-maven-project
+        paths:
+          - '**/*.class'
+          - '**/*.jar'
+          - '**/*.war'
+          - '**/*.ear'
+          - '**/*.pom'
+          - '**/*.xml'
+          - '**/*.properties'
+          - '**/*.txt'
+          - '**/*.log'
+          - '**/*.jar!/lib/**
+          - '**/*.jar!/META-INF/**
+          - '**/*.jar!/src/**
+          - '**/*.jar!/target/**
+          - '**/*.jar!/src/main/**
+          - '**/*.jar!/src/main/java/**
+          - '**/*.jar!/src/main/resources/**
+          - '**/*.jar!/src/test/**
+          - '**/*.jar!/src/test/java/**
+          - '**/*.jar!/src/test/resources/**
+          - '**/*.jar!/target/**
+          - '**/*.jar!/target/classes/**
+          - '**/*.jar!/target/test-classes/**
+          - '**/*.jar!/target/test-results/**
+          - '**/*.jar!/target/classes/**
+          - '**/*.jar!/target/test-classes/**
+          - '**/*.jar!/target/test-results/**
+          - '**/*.jar!/target/classes/**
+          - '**/*.jar!/target/test-classes/**
+          - '**/*.jar!/target/test-results/**
+          - '**/*.jar!/target/classes/**
+          - '**/*.jar!/target/test-classes/**
+          - '**/*.jar!/target/test-results/**
+          - '**/*.jar!/target/classes/**
+          - '**/*.jar!/target/test-classes/**
+          - '**/*.jar!/target/test-results/**
+          - '**/*.jar!/target/classes

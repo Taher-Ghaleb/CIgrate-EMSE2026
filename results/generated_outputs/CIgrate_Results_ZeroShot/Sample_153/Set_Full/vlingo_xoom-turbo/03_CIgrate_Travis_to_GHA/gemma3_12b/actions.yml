@@ -1,0 +1,58 @@
+name: Java CI
+
+on:
+  push:
+  pull_request:
+  tag:
+
+env:
+  MAVEN_OPTS: -Dorg.slf4j.simpleMappin=true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+      - name: Remove old repository
+        run: rm -rf $HOME/.m2/repository/io/vlingo
+      - name: Copy Maven settings
+        run: cp .travis/settings.xml $HOME/.m2/settings.xml
+      - name: Maven Help
+        run: mvn deploy:help versions:help help:help
+      - name: Maven Install
+        run: mvn install -PTravisCI
+      - name: Cache Maven Repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven
+  deploy:
+    if: github.ref == 'refs/tags/' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Maven Deploy (Tags)
+        if: github.ref == 'refs/tags/'
+        run: mvn deploy -DskipTests
+      - name: Maven Deploy (Master)
+        if: github.ref == 'refs/heads/master'
+        run: mvn deploy -DskipTests
+      # TODO: Secure deployment key.  Needs a secret and deployment provider.
+      # - name: Deploy with Key
+      #   run: |
+      #     echo "Deploying with key"
+      #     # ... your deployment script using the key ...
+      #   env:
+      #     DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+  after_deploy:
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Make trigger script executable
+        run: chmod u+x .travis/trigger_deps.sh
+      - name: Trigger Dependencies (Tags)
+        if: env

@@ -1,0 +1,69 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  release:
+    types: [published]
+
+env:
+  global:
+    secure: ${{ secrets.SECRET_1 }}
+    secure: ${{ secrets.SECRET_2 }}
+    secure: ${{ secrets.SECRET_3 }}
+    secure: ${{ secrets.SECRET_4 }}
+    secure: ${{ secrets.SECRET_5 }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 7
+
+      - name: Cache Maven Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies
+          restore-keys: |
+            ${{ runner.os }}-maven-dependencies
+
+      - name: Install Maven
+        run: apt-get update && apt-get install -y maven
+
+      - name: Checkout Settings
+        uses: actions/checkout@v4
+        with:
+          ref: refs/heads/master
+          path: .travis.settings.xml
+
+      - name: Install Maven
+        run: mvn -version
+
+      - name: Build
+        run: mvn package -DskipTests=true
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ needs.build.succeeded }}
+    steps:
+      - name: Deploy to Sonatype Nexus
+        uses: actions/checkout@v4
+        with:
+          ref: refs/tags/v*
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages

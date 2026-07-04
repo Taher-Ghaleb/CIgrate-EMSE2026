@@ -1,0 +1,36 @@
+language: java
+branches:
+  only:
+    - develop
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+before_install:
+  - echo "Before install"
+install:
+  - echo "Install"
+before_script:
+  - echo "Before script"
+script:
+  - echo "Script"
+  - git clone -b travis \
+    https://x-access-token:$GITHUB_TOKEN@github.com/${CI_REPO_URL} \
+    target/travis
+  - if [ "$TRAVIS_EVENT_NAME" == "pull_request" ]; then
+    mvn clean verify --settings target/travis/settings.xml
+  fi
+  - if [ "$TRAVIS_EVENT_NAME" == "push" ] && [ "$TRAVIS_BRANCH" == "develop" ]; then
+    mvn clean deploy --settings target/travis/settings.xml
+    env:
+      MAVEN_USERNAME: $MAVEN_USERNAME
+      MAVEN_PASSWORD: $MAVEN_PASSWORD
+  fi
+after_success:
+  - echo "After success"
+after_failure:
+  - echo "After failure"
+deploy:
+  on:
+    tags: true

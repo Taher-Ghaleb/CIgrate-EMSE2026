@@ -1,0 +1,38 @@
+language: java
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+  except:
+    - tags
+pull_request:
+  branches:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+  except:
+    - tags
+
+sudo: required
+cache:
+  directories:
+    - ~/.m2/repository
+    - ./.m2/repository
+
+before_install:
+  - chmod +x ./.travis/build.sh
+
+script:
+  - ./.travis/build.sh
+  - echo "SECRET_1: $SECRET_1"
+  - echo "SECRET_2: $SECRET_2"
+  - echo "SECRET_3: $SECRET_3"
+  - echo "SECRET_4: $SECRET_4"
+env:
+  SECRET_1: $SECRET_1
+  SECRET_2: $SECRET_2
+  SECRET_3: $SECRET_3
+  SECRET_4: $SECRET_4
+jdk:
+  - openjdk8

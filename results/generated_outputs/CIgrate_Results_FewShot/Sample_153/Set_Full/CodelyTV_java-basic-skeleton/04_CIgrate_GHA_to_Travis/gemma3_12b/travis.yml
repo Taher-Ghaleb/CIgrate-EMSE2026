@@ -1,0 +1,22 @@
+language: java
+sudo: required
+os:
+  - ubuntu-latest
+  - macos-latest
+jdk:
+  - openjdk11
+
+cache:
+  directories:
+    - '$HOME/.gradle/caches'
+    - '$HOME/.gradle/wrapper'
+
+script:
+  - chmod +x gradlew
+  - ./gradlew assemble --warning-mode all
+  - ./gradlew check --warning-mode all
+
+before_install:
+  - if [ "${TRAVIS_OS_NAME}" == "macos" ]; then
+    brew update
+    fi

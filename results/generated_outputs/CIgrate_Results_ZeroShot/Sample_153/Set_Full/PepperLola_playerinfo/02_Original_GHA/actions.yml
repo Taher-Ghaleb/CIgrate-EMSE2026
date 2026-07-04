@@ -1,0 +1,82 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+
+permissions:
+  contents: write  # Required for creating releases and pushing tags
+
+env:
+  BUILD_NUMBER: ${{ github.run_number }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for proper git operations
+    
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '8'
+    
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: 8.5  # Modern version, compatible with JDK 8
+        cache-read-only: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/main' }}
+    
+    - name: Make gradlew executable
+      run: chmod +x gradlew
+    
+    - name: Create build number file
+      run: |
+        mkdir -p src/main/resources
+        echo "$BUILD_NUMBER" > src/main/resources/build.txt
+        cat src/main/resources/build.txt
+    
+    - name: Run tests
+      run: ./gradlew test
+    
+    - name: Build artifacts
+      run: ./gradlew build
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          **/build/reports/tests/
+          **/build/test-results/
+        retention-days: 7
+    
+    - name: Create release and upload artifacts
+      if: success() && github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && github.repository == 'PepperLola/playerinfo'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: build-${{ env.BUILD_NUMBER }}
+        name: Beta Build ${{ env.BUILD_NUMBER }}
+        body: |
+          Automated beta build ${{ env.BUILD_NUMBER }}
+          
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref_name }}
+        files: |
+          build/libs/*.jar
+        prerelease: true
+        fail_on_unmatched_files: true
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

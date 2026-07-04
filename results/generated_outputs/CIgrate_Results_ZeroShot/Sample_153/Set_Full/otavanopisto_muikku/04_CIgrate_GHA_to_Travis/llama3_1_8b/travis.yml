@@ -1,0 +1,57 @@
+language: java
+
+before_install:
+  - unset GEM_PATH
+
+install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+script:
+  - mvn install
+
+after_success:
+  - mvn package -f muikku/pom.xml -Popenshift
+  - python travis-prepare-maven.py
+  - mvn deploy --settings ~/.m2/mySettings.xml
+
+deploy:
+  on:
+    branch: devel
+  if: true
+  script:
+    - echo 'Starting deployment'
+  after_success:
+    - echo 'Deployed'
+
+matrix:
+  include:
+    - jdk: oraclejdk7
+    - jdk: openjdk7
+
+jdk:
+  oraclejdk7:
+    java-version: '7'
+    distribution: 'zulu'
+  openjdk7:
+    java-version: '7'
+    distribution: 'zulu'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on_success: always
+    on_failure: always
+```
+
+Note: The `continue-on-error` equivalent in Travis CI is `matrix.allow_failures`, which is set to `true` by default. If you want to continue on error, you can set it to `true`.

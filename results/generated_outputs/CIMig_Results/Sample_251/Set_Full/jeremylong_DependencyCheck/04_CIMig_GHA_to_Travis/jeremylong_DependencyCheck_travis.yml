@@ -1,0 +1,28 @@
+env: global
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches:
+  main
+  except: /^docker-cmd
+before_install:
+  java -version
+  mvn -s settings.xml package -DskipTests=true --no-transfer-progress --batch-mode
+script:
+  script:
+    docker-cmd
+    docker-cmd
+    docker-cmd
+    mvn -s settings.xml -Prelease clean package verify source:jar javadoc:jar gpg:sign deploy -DreleaseTesting --no-transfer-progress --batch-mode -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
+stages:
+  build
+  test
+apt:
+  packages: jdk-8-jdk
+directories: ~/.m2/repository
+email:
+  on_failure: always

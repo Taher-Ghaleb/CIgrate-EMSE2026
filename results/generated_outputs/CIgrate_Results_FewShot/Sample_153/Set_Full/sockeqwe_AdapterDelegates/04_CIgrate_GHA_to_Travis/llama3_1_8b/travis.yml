@@ -1,0 +1,27 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+sudo: false
+install: true
+before_install:
+  - chmod +x gradlew
+android:
+  components:
+    - platform-tools
+    - tools
+    - platforms;android-23
+    - build-tools;23.0.3
+    - extra-android-support
+    - extra-android-m2repository
+  licenses:
+    - 'android-sdk-preview-license-52d11cd2'
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
+script:
+  -./gradlew clean build
+```
+
+Note that I've removed the `branches-ignore` section as it's not a valid Travis CI configuration. If you want to ignore certain branches, you can use the `branches` section in the Travis CI configuration.

@@ -1,0 +1,28 @@
+matrix:
+  os:
+    ubuntu-latest
+    windows-latest
+  language: java
+  java
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix
+      fail-fast: FALSE
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      uses: actions/checkout@version
+      env:
+        ci: TRUE
+    - name: Placeholder
+      with: java-version
+      uses: actions/setup-java@version
+

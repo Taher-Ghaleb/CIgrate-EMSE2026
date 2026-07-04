@@ -1,0 +1,29 @@
+language: java
+jdk: 11
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+branches:
+  only:
+    - master
+    - development
+  except:
+    - /^(\d+)$/ # Exclude tag names
+notifications:
+  email:
+    recipients:
+      - your_email@example.com # TODO: Configure email notifications
+before_install:
+  - echo "Before install phase"
+install:
+  - echo "Install phase"
+before_script:
+  - echo "Before script phase"
+  - chmod +x gradlew
+script:
+  - bash ./gradlew clean build
+after_success:
+  - echo "After success phase"
+after_failure:
+  - echo "After failure phase"

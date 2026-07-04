@@ -1,0 +1,22 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+
+matrix:
+  allow_failures:
+    - jdk: openjdk8
+    - jdk: openjdk11
+
+before_install:
+  - chmod +x mvnw
+
+install: true
+
+script:
+  - mvn -version
+  - mvn -B -U -Possrh clean verify
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

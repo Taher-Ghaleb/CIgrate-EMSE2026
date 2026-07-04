@@ -1,0 +1,29 @@
+language: java
+sudo: false
+
+cache:
+  directories:
+    - ~/.m2/repository
+
+env:
+  global:
+    - CODECOV_TOKEN: $CODECOV_TOKEN
+
+jobs:
+  build:
+    script:
+      - mvn --errors clean verify site
+    if_success:
+      - bash <(curl -s https://codecov.io/bash)
+    if: always()
+    services:
+      - irc:
+          server: irc.libera.chat
+          port: 6697
+          channel: '#io7m'
+          nickname: github-actions-jproperties
+          message: |
+            [${{ github.repository }}] Build ${{ job.status }} - ${{ github.actor }}: ${{ github.event.head_commit.message }} (${{ github.sha }})
+            Details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    jdk:
+      - openjdk11

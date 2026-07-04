@@ -1,0 +1,40 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      RUNTIME: ol
+      RUNTIME_VERSION: 19.0.0.6
+    strategy:
+      matrix:
+        jdk: ['8', '11']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven artifacts
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Delete old .m2 artifacts
+        run: rm -rf $HOME/.m2/repository/net/wasdev
+      - name: Delete old .m2 artifacts
+        run: rm -rf $HOME/.m2/repository/io/openliberty
+      - name: Clone ci.ant
+        run: git clone https://github.com/OpenLiberty/ci.ant.git ./ci.ant
+      - name: Install ci.ant
+        run: cd ./ci.ant && mvn clean install && cd ..
+      - name: Clone ci.common
+        run: git clone https://github.com/OpenLiberty/ci.common.git ./ci.common
+      - name: Install ci.common
+        run: cd ./ci.common && mvn clean install && cd ..
+      - name: Run tests
+        run: travis_wait 30 mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=$RUNTIME -DruntimeVersion=$RUNTIME_VERSION

@@ -1,0 +1,45 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  COVERITY_CERT: ${{ secrets.COVERITY_CERT }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Download and configure Zookeeper
+        uses: actions/setup-ubuntu@v4
+        with:
+          ubuntu-image: trusty
+        env:
+          ZK: apache-zookeeper-3.7.0-bin
+        steps:
+          - name: Download Zookeeper
+            run: wget https://archive.apache.org/dist/zookeeper/zookeeper-3.7.0/$ZK.tar.gz
+          - name: Extract Zookeeper
+            run: tar xzf $ZK.tar.gz -C /tmp/zookeeper
+          - name: Configure Zookeeper
+            run: |
+              cp /tmp/zookeeper/$ZK/conf/zoo_sample.cfg /tmp/zookeeper/$ZK/conf/zoo.cfg
+              sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" /tmp/zookeeper/$ZK/conf/zoo.cfg
+          - name: Start Zookeeper
+            run: /tmp/zookeeper/$ZK/bin/zkServer.sh start
+          - name: Log Zookeeper
+            run: cat /tmp/zookeeper/$ZK/logs/*
+      - name: Change BboxDB config
+        run: |
+          sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" conf/bboxdb.yaml
+          echo "################################################################

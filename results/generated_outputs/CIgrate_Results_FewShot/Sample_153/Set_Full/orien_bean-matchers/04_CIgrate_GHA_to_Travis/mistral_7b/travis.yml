@@ -1,0 +1,23 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+
+env:
+  matrix:
+    - CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+script:
+  - mvn clean verify cobertura:cobertura
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: $CODECOV_TOKEN
+      files: target/site/cobertura/coverage.xml
+      fail_ci_if_error: true
+      verbose: true
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

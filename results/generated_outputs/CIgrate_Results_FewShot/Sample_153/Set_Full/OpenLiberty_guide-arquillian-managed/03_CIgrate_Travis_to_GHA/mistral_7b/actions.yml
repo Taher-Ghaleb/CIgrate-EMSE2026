@@ -1,0 +1,43 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch: [master, qa]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Unset _JAVA_OPTIONS
+        run: unset _JAVA_OPTIONS
+      - name: Change directory to finish
+        run: cd finish
+      - name: Make script executable
+        run: chmod +x ../scripts/travisTest.sh
+      - name: Run script
+        run: ../scripts/travisTest.sh
+      - name: Archive logs
+        run: |
+          serverName=$(target/liberty/wlp/bin/server list | cut -d '.' -f2| tr -d '\n')
+          repo_name=$(echo "$TRAVIS_REPO_SLUG" | sed -e "s/\//-/g")
+          if [ "$TRAVIS_TEST_RESULT" -eq 0 ]; then result="passed"; else result="failed"; fi;
+          serverlogsarchive="$repo_name-$TRAVIS_BUILD_NUMBER-$result.zip";
+          zip -r "$serverlogsarchive" .;
+      - name: Upload logs to Artifactory
+        uses: actions/upload-artifact@v3
+        with:
+          name: serverlogsarchive
+          path: ${{ env.serverlogsarchive }}
+          repo-token: ${{ secrets.JFROG_TOKEN }}

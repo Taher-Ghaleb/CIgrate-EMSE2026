@@ -1,0 +1,45 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+env:
+  matrix:
+    - JAVA=8
+    - ROOT_POM=pom.xml
+    - JAVA=11
+    - ROOT_POM=android/pom.xml
+  global:
+    - SECRET_1=$SECRET_1
+    - SECRET_2=$SECRET_2
+    - SECRET_3=$SECRET_3
+
+sudo: required
+before_install:
+  - chmod +x util/*.sh
+
+install:
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f $ROOT_POM
+
+script:
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f $ROOT_POM
+
+after_failure:
+  - util/print_surefire_reports.sh
+
+deploy:
+  if: success() && branch =~ ^refs/heads/(master|release.*)
+  needs: build
+  env:
+    SECRET_1=$SECRET_1
+    SECRET_2=$SECRET_2
+    SECRET_3=$SECRET_3
+  script:
+    - chmod +x util/*.sh
+    - util/deploy_snapshot.sh
+    - util/update_snapshot_docs.sh
+```
+
+Note that I've used the `language: java` directive to specify that this is a Java project, and the `jdk` directive to specify the Java versions to use. I've also used the `env` directive to set the environment variables, and the `before_install` directive to make the scripts executable. The `install` directive is used to run the `mvn install` command, and the `script` directive is used to run the `mvn verify` command. The `after_failure` directive is used to run the `util/print_surefire_reports.sh` script after a failure. The `deploy` directive is used to run the `util/deploy_snapshot.sh` and `util/update_snapshot_docs.sh` scripts after a successful build on the `master` or `release` branch.

@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - "/.*-[0-9]+\\..*/"
+  pull_request:
+    branches:
+      - master
+      - "/.*-[0-9]+\\..*/"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # TODO: Add secure environment variables here
+    strategy:
+      matrix:
+        jdk: [oraclejdk8]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
+      - name: Install dependencies
+        run: true
+
+      - name: Run script
+        run: .travis/build.sh

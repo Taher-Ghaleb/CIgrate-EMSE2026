@@ -1,0 +1,31 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  global:
+    - TERM=dumb
+
+jobs:
+  include:
+    - stage: build
+      script:
+        - chmod +x gradlew
+        - ./gradlew test jacocoTestReport
+      after_success:
+        - bash <(curl -s https://codecov.io/bash) -f build/reports/jacoco/test/jacocoTestReport.xml || true
+
+    - stage: coverity-scan
+      if: branch = coverity_scan
+      script:
+        - chmod +x gradlew
+        - ./gradlew build
+      addons:
+        coverity_scan:
+          project:
+            name: "micheljung/nocatch"
+            description: "Build submitted via Travis CI"
+          notification_email: michel.jung89@gmail.com
+          build_command_prepend: ""
+          build_command: "./gradlew build"
+          branch_pattern: coverity_scan

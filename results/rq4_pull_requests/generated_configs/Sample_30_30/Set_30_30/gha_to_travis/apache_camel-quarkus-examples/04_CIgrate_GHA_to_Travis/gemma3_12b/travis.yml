@@ -1,0 +1,126 @@
+language: java
+
+jdk:
+  - openjdk17
+
+os:
+  - linux
+  - windows-latest
+
+env:
+  - LANG=en_US.UTF-8
+  - MAVEN_OPTS=-Xmx4000m
+  - MAVEN_ARGS=-V -ntp -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -e
+  - TESTCONTAINERS_RYUK_DISABLED=true
+  - FOO=********************
+
+addons:
+  apt:
+    packages:
+      - groovy
+  docker:
+    compose:
+      version: "2.19"
+      # NOTE: docker-compose >= 3.0 has a git pull on every startup
+      # Workaround: Pull image on every build (slower, but simpler)
+      pull_image: true
+      wait: true
+
+services:
+  - docker
+
+before_install:
+  - git clone --depth 1 --branch main https://github.com/apache/camel-quarkus.git ${HOME}/camel-quarkus
+  - cd ${HOME}/camel-quarkus
+  - echo "Current Camel Quarkus commit:" $(git rev-parse HEAD)
+  - cd ../..
+
+install:
+  - ./mvnw-for-each.sh ${MAVEN_ARGS} license:check formatter:validate impsort:check
+
+before_script:
+  - sudo apt install groovy -y --no-install-recommends
+  - TEST_GROUPS=$(groovy .github/generate-test-groups.groovy)
+  - echo "matrix=$TEST_GROUPS" > ${HOME}/TEST_MATRIX
+
+script:
+  - BUILD_FAILURES=()
+  - for MODULE in ${TEST_MODULES//,/ }; do
+      cd $MODULE
+      ../mvnw ${MAVEN_ARGS} clean verify \
+        -Dformatter.skip -Dimp_sort.skip \
+        -Dquarkus.native.builder-image.pull=missing \
+        -Pnative,docker,ci
+      if [[ $? -ne 0 ]]; then
+        BUILD_FAILURES[${#BUILD_FAILURES[@]}]=$MODULE
+      fi
+      cd ..
+    done
+  - if [[ ${#BUILD_FAILURES[@]} -gt 0 ]]; then
+      echo -e "\nBuild errors were encountred in the following projects:\n"
+      for FAILURE in ${BUILD_FAILURES[@]}; do
+        echo "* $FAILURE"
+      done
+      echo -e "\nCheck build logs for further information."
+      exit 1
+    fi
+
+after_success:
+  - git status
+
+deploy:
+  provider: script
+  script: tar -czf ${HOME}/maven-repo.tgz -C ~ .m2/repository
+  skip_cleanup: true
+  on:
+    tags: true
+
+notifications:
+  email: false
+  slack:
+    secure: "********************"
+model
+language: java
+
+jdk:
+  - openjdk17
+
+os:
+  - linux
+  - windows-latest
+
+env:
+  - LANG=en_US.UTF-8
+  - MAVEN_OPTS=-Xmx4000m
+  - MAVEN_ARGS=-V -ntp -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -e
+  - TESTCONTAINERS_RYUK_DISABLED=true
+  - FOO=********************
+
+addons:
+  apt:
+    packages:
+      - groovy
+  docker:
+    compose:
+      version: "2.19"
+      # NOTE: docker-compose >= 3.0 has a git pull on every startup
+      # Workaround: Pull image on every build (slower, but simpler)
+      pull_image: true
+      wait: true
+
+services:
+  - docker
+
+before_install:
+  - git clone --depth 1 --branch main https://github.com/apache/camel-quarkus.git ${HOME}/camel-quarkus
+  - cd ${HOME}/camel-quarkus
+  - echo "Current Camel Quarkus commit:" $(git rev-parse HEAD)
+  - cd ../..
+
+install:
+  - ./mvnw-for-each.sh ${MAVEN_ARGS} license:check formatter:validate impsort:check
+
+before_script:
+  - sudo apt install groovy -y --no-install-recommends
+  - TEST_GROUPS=$(groovy .github/generate-test-groups.groovy)
+  - echo "matrix=$TEST_GRO

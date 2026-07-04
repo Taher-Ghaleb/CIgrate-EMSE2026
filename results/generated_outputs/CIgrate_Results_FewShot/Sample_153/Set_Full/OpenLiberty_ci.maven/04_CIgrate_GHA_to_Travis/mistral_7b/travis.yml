@@ -1,0 +1,44 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+
+script:
+  - echo "Deleting old .m2 artifacts..."
+    && rm -rf $HOME/.m2/repository/net/wasdev
+    && rm -rf $HOME/.m2/repository/io/openliberty
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+before_install:
+  - git clone https://github.com/OpenLiberty/ci.common.git ./ci.common
+  - cd ./ci.common
+    && mvn clean install
+    && cd ..
+
+install:
+  - mvn -Ponline-its -Dinvoker.streamLogs=true \
+    -Druntime=${{ matrix.runtime }} \
+    -DruntimeVersion=${{ matrix.runtime-version }} verify
+
+matrix:
+  include:
+    - java-version: 8
+      runtime: ol
+      runtime-version: 19.0.0.6
+    - java-version: 8
+      runtime: wlp
+      runtime-version: 19.0.0.3
+    - java-version: 11
+      runtime: ol
+      runtime-version: 19.0.0.3
+    - java-version: 11
+      runtime: wlp
+      runtime-version: 19.0.0.6
+
+strategy:
+  fail-fast: false
+  max-parallel: 4

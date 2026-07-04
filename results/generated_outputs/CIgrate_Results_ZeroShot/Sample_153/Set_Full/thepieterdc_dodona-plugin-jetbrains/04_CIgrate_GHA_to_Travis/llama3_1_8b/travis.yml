@@ -1,0 +1,39 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk
+
+install:
+  - echo "Installing Gradle"
+  - curl -s https://get.sdkman.io | sh
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install gradle 7.4
+
+before_script:
+  - echo "Setting up Gradle cache"
+  - mkdir -p ~/.gradle
+  - mkdir -p ~/.m2/repository
+
+script:
+  - echo "Assembling the project"
+  -./gradlew assemble
+
+after_success:
+  - echo "Deploying to production"
+  - travis encrypt --add deploy.api-key ${{ secrets.API_KEY }} --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.token ${{ secrets.TOKEN }} --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.branch $TRAVIS_BRANCH --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit $TRAVIS_COMMIT --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-message $TRAVIS_COMMIT_MESSAGE --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-author $TRAVIS_COMMIT_AUTHOR --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-email $TRAVIS_COMMIT_AUTHOR_EMAIL --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-date $TRAVIS_COMMIT_DATE --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-tz $TRAVIS_COMMIT_DATE_TZ --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-hash $TRAVIS_COMMIT_HASH --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-url $TRAVIS_COMMIT_URL --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-message-url $TRAVIS_COMMIT_MESSAGE_URL --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-author-url $TRAVIS_COMMIT_AUTHOR_URL --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-email-url $TRAVIS_COMMIT_AUTHOR_EMAIL_URL --repo $TRAVIS_REPO_SLUG
+  - travis encrypt --add deploy.commit-date-tz-url $TRAVIS_COMMIT_DATE_TZ

@@ -1,0 +1,56 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - chmod +x mvnw
+
+install:
+  - checkout
+  - java -version
+  - maven -version
+  - cache: maven
+    key: ${{ env.JAVA_VERSION }}-${{ env.MAVEN_CACHE_KEY }}-${{ runner.os }}
+    directory: ~/.m2/repository,~/.gradle,~$HOME/.npm
+
+script:
+  - ./mvnw clean verify
+
+before_script:
+  - java -version
+  - maven -version
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - ./mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent verify sonar:sonar -fae
+
+env:
+  JAVA_VERSION: 8
+  MAVEN_CACHE_KEY: maven-cache
+
+matrix:
+  java:
+    - openjdk8
+  maven:
+    - 3.6.3
+    - 3.6.1
+  maven_cache:
+    - maven-cache-1
+    - maven-cache-2
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+# TODO: Add SonarCloud service/addon configuration

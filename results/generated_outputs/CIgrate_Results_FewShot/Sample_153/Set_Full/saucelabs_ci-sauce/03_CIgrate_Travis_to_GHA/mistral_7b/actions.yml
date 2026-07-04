@@ -1,0 +1,27 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+      - name: Install pip
+        run: python -m pip install --user codecov
+      - name: Install Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install dependencies
+        run: mvn install -DskipTests=true -Dgpg.skip=true -B -V
+      - name: Upload coverage to Codecov
+        run: |
+          mvn codecov:report
+          codecov

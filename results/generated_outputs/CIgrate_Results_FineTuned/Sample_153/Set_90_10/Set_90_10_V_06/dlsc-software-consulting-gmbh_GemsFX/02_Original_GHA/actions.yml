@@ -1,0 +1,100 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  MAVEN_OPTS: -Xmx2500m
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 12
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '12'
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Install p7zip
+        run: sudo apt-get install -y p7zip-full
+      - name: Setup display for Linux
+        run: |
+          export DISPLAY=:99.0
+          sudo /etc/init.d/xvfb start || true
+      - name: Build package
+        run: mvn package -q
+
+  deploy-prepare:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') && (contains(github.ref, 'master') || contains(github.ref, 'master-11'))
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 12
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '12'
+      - name: Prepare deployment
+        run: |
+          chmod +x .github/deploy_prepare.sh
+          .github/deploy_prepare.sh
+
+  deploy-github-release:
+    needs: deploy-prepare
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') && (contains(github.ref, 'master') || contains(github.ref, 'master-11'))
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 12
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '12'
+      - name: Build artifacts
+        run: mvn package -q
+      - name: Get tag branch
+        id: get_branch
+        run: |
+          TAG_BRANCH=$(git ls-remote origin | sed -n "\|${{ github.sha }}\s\+refs/heads/|{s///p}")
+          echo "tag_branch=$TAG_BRANCH" >> $GITHUB_OUTPUT
+      - name: Deploy to GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
+            --notes "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ steps.get_branch.outputs.tag_branch }}/CHANGELOG.md)" \
+            javadoc.zip \
+            **/target/*.jar
+
+  deploy-bintray-central:
+    needs: deploy-github-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') && (contains(github.ref, 'master') || contains(github.ref, 'master-11'))
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 12
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '12'
+      - name: Deploy to Bintray and Central
+        run: |
+          chmod +x .github/deploy_bintray_central.sh
+          .github/deploy_bintray_central.sh

@@ -1,0 +1,32 @@
+name: Java Maven Build
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3.5.0-jdk-8
+        env:
+          MAVEN: 3.5.0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Install dependencies
+        run: |
+          mvn dependency:resolve
+      - name: Build and test
+        run: |
+          mvn clean verify

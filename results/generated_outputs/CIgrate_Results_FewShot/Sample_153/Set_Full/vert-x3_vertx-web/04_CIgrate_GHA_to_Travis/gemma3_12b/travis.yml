@@ -1,0 +1,52 @@
+language: java
+sudo: required
+branches:
+  only:
+    - master
+    - "[0-9]*.[0-9]*"
+  except:
+    - pull_request
+
+matrix:
+  include:
+    - jdk: openjdk8
+      env:
+        - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      script:
+        - mvn -q clean verify -B
+        - rm -rf $HOME/.m2/repository/io/vertx/
+    - jdk: openjdk11
+      if: github.event_name != 'pull_request'
+      env:
+        - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+      script:
+        - mvn -q clean verify -B
+        - rm -rf $HOME/.m2/repository/io/vertx/
+    - jdk: openjdk8
+      if: github.event_name == 'pull_request'
+      env:
+        - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      script:
+        - cd vertx-web-graphql
+        - mvn exec:java -Dexec.mainClass=io.vertx.ext.web.handler.graphql.ApolloTestsServer -Dexec.classpathScope=test > ${HOME}/ApolloTestsServer.log 2>&1 &
+        - echo $! > ${HOME}/ApolloTestsServer.pid
+        - ( tail -f ${HOME}/ApolloTestsServer.log & ) | grep -q "Apollo tests server started"
+        - cd vertx-web-graphql/tests/apollo
+        - npm install
+        - npm run test
+        - cat ${HOME}/ApolloTestsServer.log
+        - cat ${HOME}/ApolloTestsServer.pid | xargs kill -9 || true
+        - rm -rf $HOME/.m2/repository/io/vertx/
+    - jdk: openjdk8
+      if: env.SONATYPE_NEXUS_USERNAME != ''
+      needs: [test_jdk8, apollo_link_tests]
+      if: github.event_name != 'pull_request'
+      env:
+        - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      script:
+        - chmod +x .travis.deploy.artifacts.sh
+        - bash .travis.deploy.artifacts.sh
+        - rm -rf $HOME/.m2/repository/io/vertx/
+cache:
+  directories:
+    - '$HOME/.m2/repository'

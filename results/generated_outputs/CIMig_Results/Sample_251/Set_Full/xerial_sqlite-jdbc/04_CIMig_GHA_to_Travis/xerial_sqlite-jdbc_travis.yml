@@ -1,0 +1,25 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn --no-transfer-progress versions:set -DremoveSnapshot -DgenerateBackupPoms=false\necho \"RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)\" | tee -a $GITHUB_ENV\n
+  echo \"PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)\" | tee -a $GITHUB_ENV\n
+before_script:
+  jdk_switcher use $jdk
+script:
+  script:
+    yarn run test
+    mvn --batch-mode --no-transfer-progress -P native test
+Deploy
+local_dir
+sonarcloud:
+  organization: powsybl-ci-github
+include:
+  env: adoptopenjdk=11
+  os: windows
+directories: ~/.maven-
+stage: ☕ 11

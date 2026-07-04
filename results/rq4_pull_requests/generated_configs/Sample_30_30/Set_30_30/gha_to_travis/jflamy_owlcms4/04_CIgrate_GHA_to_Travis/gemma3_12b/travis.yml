@@ -1,0 +1,68 @@
+language: java
+jdk:
+  - openjdk17
+git:
+  - v2.34.1
+install: true
+script:
+  - mvn -B clean install -Pproduction -am -pl owlcms -Drevision=${REVISION} -Dmaven.test.skip
+  - mvn -B clean install -Pproduction -am -pl publicresults -Drevision=${REVISION} -Dmaven.test.skip
+  - mvn -B deploy -f owlcms-docker/pom.xml -Ddockerfile.skip=false -Drevision=${REVISION}
+  - mvn -B package --non-recursive -Dmaven.test.skip -Drevision=${REVISION}
+  - cat src/main/markdown/alpha.md ReleaseNotes.md > temp.md && mv temp.md ReleaseNotes.md
+  - cat src/main/markdown/beta.md ReleaseNotes.md > temp.md && mv temp.md ReleaseNotes.md
+  - cat src/main/markdown/rc.md ReleaseNotes.md > temp.md && mv temp.md ReleaseNotes.md
+  - cat src/main/markdown/release.md ReleaseNotes.md > temp.md && mv temp.md ReleaseNotes.md
+  - sudo apt-get install gh -y
+  - gh auth setup-git
+  - gh auth status
+  - git clone https://github.com/owlcms/owlcms4${RELEASE_SUFFIX}.git ../new-repo
+    cd ../new-repo
+    git checkout master
+    git config --local credential.helper ""
+    cd -
+  - rm -rf ../new-repo/*
+    cp -a docs ../new-repo/docs
+    echo ${REVISION} > ../new-repo/version.txt
+  - cd ../new-repo
+    git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/owlcms/owlcms4${RELEASE_SUFFIX}.git
+    git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+    git config user.name "${GITHUB_ACTOR}"
+    git add -A
+    git commit -m "Update documentation" --allow-empty
+    git tag ${REVISION}
+    git push origin master --force
+    git push origin ${REVERSION}
+    cd -
+  - mv owlcms/target/owlcms*.zip owlcms/target/owlcms_${REVISION}.zip
+    mv publicresults/target/publicresults*.zip publicresults/target/publicresults_${REVISION}.zip
+  - gh release create ${REVISION} \
+    --repo owlcms/owlcms4${RELEASE_SUFFIX} \
+    --title "${REVISION}" \
+    --notes-file ReleaseNotes.md \
+    owlcms/target/owlcms_${REVISION}.zip \
+    publicresults/target/publicresults_${REVISION}.zip
+  - git config user.email "${GITHUB_ACTOR}@users.noreplay.github.com"
+    git config user.name "${GITHUB_ACTOR}"
+    git add ReleaseNotes.md
+    git commit -m "Update Release Notes for ${REVISION}" --allow-empty
+    git push origin
+    git tag ${REVISION}
+    git push origin ${REVERSION}
+env:
+  global:
+    - REPO_OWNER=owlcms
+    - MAVEN_OPTS=-Xmx2048m
+  matrix:
+    - REVISION=${TRAVIS_TAG} RELEASE_SUFFIX=${TRAVIS_TAG=}-alpha DOCKER_TAG=prerelease
+    - REVISION=${TRAVIS_TAG} RELEASE_SUFFIX=${TRAVIS_TAG=}-beta DOCKER_TAG=prerelease
+    - REVISION=${TRAVIS_TAG} RELEASE_SUFFIX=${TRAVIS_TAG=}-rc DOCKER_TAG=prerelease
+    - REVISION=${TRAVIS_TAG} RELEASE_SUFFIX=${TRAVIS_TAG} DOCK  DOCK_TAG=stable
+branches:
+  only:
+    - master
+notifications:
+  slack:
+    secure: "********************"
+model_version: "2023-11-28"
+reason: "Migrate this GitHub Actions workflow to Travis CI: name: owlcms on: [workflow_dispatch, releases] inputs: revision: type: string default: 63.2.3 buildImages: type: boolean default: true env: REPO_OWNER=owlcms MAVEN_OPTS=-Xmx2048m REVISION=${{ github.event.inputs.

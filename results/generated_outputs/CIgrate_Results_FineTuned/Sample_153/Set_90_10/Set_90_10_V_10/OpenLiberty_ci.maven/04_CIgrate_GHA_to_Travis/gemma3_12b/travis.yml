@@ -1,0 +1,52 @@
+language: java
+
+services:
+  - docker
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+before_install:
+  - echo "Deleting old .m2 artifacts..."
+  - rm -rf $HOME/.m2/repository/net/wasdev
+  - rm -rf $HOME/.m2/repository/io/openliberty
+  - echo 'Installing ci.common lib...'
+  - git clone https://github.com/OpenLiberty/ci.common.git ./ci.common
+  - cd ./ci.common
+  - mvn clean install
+  - cd ..
+
+script:
+  mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=${{ matrix.RUNTIME }} -DruntimeVersion=${{ matrix.RUNTIME_VERSION }}
+
+cache:
+  directories:
+    - $HOME/.m2
+
+matrix:
+  include:
+    - java: openjdk8
+      RUNTIME: ol
+      RUNTIME_VERSION: 19.0.0.6
+    - java: openjdk8
+      RUNTIME: ol
+      RUNTIME_VERSION: 19.0.0.3
+    - java: openjdk8
+      RUNTIME: wlp
+      RUNTIME_VERSION: 19.0.0.6
+    - java: openjdk8
+      RUNTIME: wlp
+      RUNTIME_VERSION: 19.0.0.3
+    - java: openjdk11
+      RUNTIME: ol
+      RUNTIME_VERSION: 19.0.0.6
+    - java: openjdk11
+      RUNTIME: ol
+      RUNTIME_VERSION: 19.0.0.3
+    - java: openjdk11
+      RUNTIME: wlp
+      RUNTIME_VERSION: 19.0.0.6
+    - java: openjdk11
+      RUNTIME: wlp
+      RUNTIME_VERSION: 19.0.0.3

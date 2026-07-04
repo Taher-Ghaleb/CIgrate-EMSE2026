@@ -1,0 +1,46 @@
+---
+language: java
+dist: xenial
+
+services:
+  - docker
+
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk14
+
+notifications:
+  email: true
+
+env:
+  global:
+    - MVN_ARGS="--settings build/.travis.settings.xml"
+    - SERVER_AUTH_TYPE=basic SERVER_URL=http://127.0.0.1:5984 SERVER_USERNAME=admin SERVER_PASSWORD=password
+
+branches:
+  except:
+  - gh-pages
+
+cache:
+  directories:
+  - "$HOME/.m2"
+
+
+before_install:
+- sudo apt-get update
+- sudo apt-get install python
+- nvm install 12
+- npm install -g npm@6.x
+- bash scripts/setup_couch.sh
+
+before_script:
+- echo "TRAVIS_TAG = '${TRAVIS_TAG}'"
+- >-
+      [ -n "${TRAVIS_TAG}" ]
+      && mvn versions:set -DnewVersion=${TRAVIS_TAG} -DgenerateBackupPoms=false
+      || true
+
+script:
+- mvn clean verify $MVN_ARGS
+

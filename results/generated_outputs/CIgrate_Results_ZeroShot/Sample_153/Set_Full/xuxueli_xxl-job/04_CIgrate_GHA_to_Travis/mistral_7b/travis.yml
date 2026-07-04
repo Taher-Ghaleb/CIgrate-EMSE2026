@@ -1,0 +1,47 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: ${{ env.GITHUB_ACTIONS }}
+
+script:
+  - checkout
+  - java -version
+  - apt-get update && apt-get install -y openjdk-8-jdk
+  - mvn --version
+  - mvn -B -DskipTests=true -Dmaven.javadoc.skip=true install
+  - mvn -B clean package
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_script:
+  - export JAVA_HOME=$(which java)
+
+env:
+  global:
+    - GIT_STRATEGY: none
+    - JAVA_HOME: $JAVA_HOME
+
+matrix:
+  include:
+    - java:
+        - openjdk8
+    - git:
+        - 'git-2.25.0'
+
+# TODO: Add a script to handle deployments if needed

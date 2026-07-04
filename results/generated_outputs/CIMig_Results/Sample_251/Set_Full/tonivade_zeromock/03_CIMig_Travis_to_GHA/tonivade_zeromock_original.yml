@@ -1,0 +1,23 @@
+name: placeholder
+
+on:
+  pull_request: master
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path
+        coverage-reports: build/reports/jacoco/report.xml
+      with: java-version
+    - name: Placeholder
+      run:
+        wget -O ~/codacy-coverage-reporter-assembly-latest.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.1/codacy-coverage-reporter-4.0.1-assembly.jar
+        ./gradlew clean build
+
+macos:
+  jdk: openjdk8
+

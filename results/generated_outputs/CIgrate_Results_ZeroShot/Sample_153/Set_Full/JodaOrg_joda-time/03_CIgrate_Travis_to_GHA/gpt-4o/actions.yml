@@ -1,0 +1,49 @@
+name: Java CI
+
+on:
+  push:
+    tags:
+      - 'website*'
+      - 'v*'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [8]
+    env:
+      secure: ${{ secrets.SECURE }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Remove Joda Time from cache
+        run: rm -rf ${{ github.workspace }}/.m2/repository/org/joda/time
+
+      - name: Display Maven version
+        run: mvn --version
+
+      - name: Build with Maven
+        run: mvn install site -e -B
+
+      - name: Deploy website
+        if: startsWith(github.ref, 'refs/tags/website') || (startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push')
+        run: |
+          chmod +x ./.github/website.sh
+          ./.github/website.sh

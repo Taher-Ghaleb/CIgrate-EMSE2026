@@ -1,0 +1,19 @@
+sudo: FALSE
+cache:
+  directories: ~/.m2
+language:
+  java
+  addons:
+    firefox: latest
+  include:
+    os: windows
+    if: type in (pull_request, push)
+jdk: jdk8
+before_install:
+  java -version
+  mvn -B -V verify
+script
+stage:
+  Build
+  ☕ 11
+directories: ~/.m2

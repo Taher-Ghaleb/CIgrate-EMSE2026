@@ -1,0 +1,35 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      - docker
+    env:
+      AWS_ACCESS_KEY_ID: localstack
+      AWS_SECRET_ACCESS_KEY: localstack
+      AWS_DEFAULT_REGION: eu-central-1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Pull LocalStack Docker Image
+        run: docker pull localstack/localstack
+      - name: Check LocalStack Kinesis Reachability
+        run: |
+          # TODO: Implement gradle startLocalStack and stopLocalStack
+          # ./gradlew startLocalStack
+          # aws --endpoint-url=http://localhost:4568 kinesis list-streams
+          # ./gradlew stopLocalStack
+          echo "Skipping kinesis reachability test.  Requires gradle startLocalStack and stopLocalStack"
+      - name: Run Checks
+        run: ./gradlew check # --info
+      - name: Generate Jacoco Report
+        run: ./gradlew jacocoRootReport
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)

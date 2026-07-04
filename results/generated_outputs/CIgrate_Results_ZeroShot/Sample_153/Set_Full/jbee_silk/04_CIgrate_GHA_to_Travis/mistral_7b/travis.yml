@@ -1,0 +1,65 @@
+language: java
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+script:
+  - checkout
+
+install:
+  - name: Set up JDK ${{ matrix.jdk }}
+    command: |
+      wget --quiet https://download.java.net/java/GA/jdk${{ matrix.jdk }}/${{ matrix.jdk }}_linux-x64_bin.tar.gz
+      tar -xzf ${{ matrix.jdk }}_linux-x64_bin.tar.gz -C /usr/local
+      export JAVA_HOME=/usr/local/jdk${{ matrix.jdk }}
+      export PATH=$JAVA_HOME/bin:$PATH
+
+before_script:
+  - cache: -/.m2/repository -/.gradle
+
+script:
+  - ant install
+
+before_script:
+  - ant test:init
+
+script:
+  - ant test
+
+after_success:
+  - ant test:report
+
+after_failure:
+  - ant test:report
+
+matrix:
+  include:
+    - jdk: 8
+      git: '2.25.0'
+    - jdk: 11
+      git: '2.25.0'
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+
+env:
+  global:
+    - GIT_STRATEGY: none
+
+matrix:
+  allow_failures:
+    - jdk: 8

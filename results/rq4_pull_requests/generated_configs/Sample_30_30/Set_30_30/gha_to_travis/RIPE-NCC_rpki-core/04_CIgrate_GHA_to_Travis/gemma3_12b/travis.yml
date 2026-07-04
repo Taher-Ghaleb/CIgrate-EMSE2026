@@ -1,0 +1,38 @@
+language: java
+jdk:
+  - openjdk21
+os:
+  - linux
+dist:
+  - bionic
+services:
+  - docker
+  - postgresql
+before_install:
+  - git config --global user.email $GIT_EMAIL
+  - git config --global user.name $GIT_NAME
+before_script:
+  - psql -c 'listen_addresses = all;' -U postgres
+  - pg_isready
+  - docker-compose up -d
+  - ./gradlew assemble --info
+script:
+  - ./gradlew test
+after_success:
+  - ./gradlew assemble --info
+  - if [ -z "$TRAVIS_TAG" ]; then echo "No tag provided"; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi
+  - if [ -z "$TRAVIS_TAG" ]; then ./gradlew assemble --info; fi

@@ -1,0 +1,31 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+
+branches:
+  only:
+    - main
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+  - echo "JAVA_HOME=$JAVA_HOME"
+
+install:
+  - sdkmanager "platform-tools" > /dev/null 2>&1
+  - sdkmanager "platforms;android-17" > /dev/null 2>&1
+  - sdkmanager "build-tools-25.0.3" > /dev/null 2>&1
+  - yes | sdkmanager --licenses
+
+before_script:
+  - chmod +x ./gradlew
+
+script:
+  - ./gradlew build

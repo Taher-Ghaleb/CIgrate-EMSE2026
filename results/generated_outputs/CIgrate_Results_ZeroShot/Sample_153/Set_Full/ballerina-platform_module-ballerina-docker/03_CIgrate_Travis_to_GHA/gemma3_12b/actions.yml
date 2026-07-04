@@ -1,0 +1,57 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows, linux]
+        language: [shell, java]
+        jdk: [openjdk8]
+    runs-on: ${{ matrix.os == 'windows' ? 'windows-latest' : 'ubuntu-latest' }}
+    env:
+      JAVA_HOME: ${{ matrix.os == 'windows' ? 'c:\\java8' : '' }}
+      PATH: ${{ matrix.os == 'windows' ? '$PATH;C:\\ProgramData\\chocolatey\\lib\\maven\\apache-maven-3.6.3\\bin' : '$PATH' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install JDK (Windows)
+        if: matrix.os == 'windows'
+        run: |
+          choco install jdk8 -params 'installdir=c:\\java8'
+          export JAVA_HOME="c:\\java8"
+          export PATH="$PATH;$JAVA_HOME\\bin"
+        shell: bash
+
+      - name: Install Maven (Windows)
+        if: matrix.os == 'windows'
+        run: |
+          choco install maven -version 3.6.3
+          export PATH="$PATH;C:\\ProgramData\\chocolatey\\lib\\maven\\apache-maven-3.6.3\\bin"
+        shell: bash
+
+      - name: Java Version Check (Linux)
+        if: matrix.os == 'linux'
+        run: java -version
+
+      - name: Build and Code Coverage
+        run: |
+          set -e
+          if [[ "${{ matrix.language }}" == "shell" ]]; then
+            powershell -C './gradlew.bat build -x test --stacktrace --console=plain --no-daemon'
+          else
+            ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon
+          fi
+        shell: bash
+
+      - name: Codecov (Linux)
+        if: matrix.os == 'linux'
+        run: bash <(curl -s https://codecov.io/bash)
+        shell: bash
+
+    cache:
+      directories:
+        - $HOME/.m2

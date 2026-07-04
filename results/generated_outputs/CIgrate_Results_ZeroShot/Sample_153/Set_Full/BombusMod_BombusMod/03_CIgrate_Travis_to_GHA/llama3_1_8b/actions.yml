@@ -1,0 +1,62 @@
+name: Android Build
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+      -'release/*'
+  pull_request:
+    branches:
+      -'main'
+      - 'feature/*'
+      -'release/*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      android-emulator:
+        image: ghcr.io/microsoft/android-emulator:latest
+        privileged: true
+        ports:
+          - 5554:5554
+          - 5555:5555
+          - 5556:5556
+        env:
+          ANDROID_HOME: /usr/lib/android-sdk
+          ANDROID_SDK_TOOLS: /usr/lib/android-sdk/tools
+          ANDROID_EMULATOR_HOME: /usr/lib/android-sdk/emulator
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Setup Android
+        uses: actions/setup-android@v4
+        with:
+          android-version: '28'
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}
+          key: ${{ runner.hash }}
+          restore-keys: android-sdk-license-.+
+      - name: Install Android SDK
+        run: |
+          yes | sdkmanager "platforms;android-28"
+      - name: Install Gradle
+        run: |
+          yes | sdkmanager "build-tools;28.0.3"
+      - name: Configure Gradle
+        run: |
+          export TERM=dumb
+      - name: Build
+        run: |
+         ./gradlew --no-daemon check
+```
+
+Note: The above workflow uses the `ubuntu-latest` runner, which is a good default choice for most cases. If you need a specific runner, you can replace it with the desired one. Also, the `ANDROID_HOME` and `ANDROID_SDK_TOOLS` environment variables are set to the default locations on the `ubuntu-latest` runner. If you need to use a different location, you can modify these variables accordingly.

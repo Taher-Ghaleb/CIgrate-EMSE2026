@@ -1,0 +1,54 @@
+name: Java Maven Build and Deploy
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+  pull_request:
+    branches:
+      -'main'
+      - 'feature/*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        options: --always-chown-rwx
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at:'maven-dependencies'
+        path: ${{ env.HOME }}/.m2
+        key: ${{ runner.hash }}
+        restore-keys: |
+          maven-dependencies
+    - name: Install dependencies
+      run: |
+        mvn dependency:resolve -B -Dmaven.repo.local=$HOME/.m2
+    - name: Build and deploy
+      run: |
+        python addsettings.py
+        mvn clean deploy -DskipTests=true --settings ~/.m2/mySettings.xml
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+        at:'maven-dependencies'
+        path: ${{ env.HOME }}/.m2
+        key: ${{ runner.hash }}
+        restore-keys: |
+          maven-dependencies
+    - name: Notify
+      uses: dbrgn/notify-slack@v1
+        token: ${{ secrets.SLACK_TOKEN }}
+        channel: ${{ secrets.SLACK_CHANNEL }}
+        message: 'Build and deploy successful'
+    - name: Allow failure
+      continue-on-error: true

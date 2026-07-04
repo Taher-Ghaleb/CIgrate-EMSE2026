@@ -1,0 +1,52 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+
+env:
+  matrix:
+    - JDK_VERSION=11
+    - OS=linux
+    - ARCH=amd64
+    - DISTRO=ubuntu-latest
+    - ANT_VERSION=1.9.11
+  global:
+    - ADB_INSTALL_TIMEOUT=10
+
+before_install:
+  - cat /etc/hosts
+  - hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+  - cat /etc/hosts
+
+install:
+  - if [ "$OS" == "linux" ]; then
+      - sudo apt-get update
+      - sudo apt-get install -y ant
+    else
+      - brew install ant
+    fi
+
+script:
+  - ant -diagnostics
+  - ant
+
+after_failure:
+  - if [ "$OS" == "linux" ]; then
+      - sudo apt-get update
+      - sudo apt-get install -y ant
+    else
+      - brew install ant
+    fi
+
+deploy:
+  - if [ "$OS" == "linux" ]; then
+      - sudo apt-get update
+      - sudo apt-get install -y ant
+    else
+      - brew install ant
+    fi
+```
+
+Note that the `deploy` section is not typically used in Travis CI, but I've included it here to match the original GitHub Actions workflow. In a real-world scenario, you would likely use a different section, such as `after_success` or `after_failure`, to perform deployment tasks.

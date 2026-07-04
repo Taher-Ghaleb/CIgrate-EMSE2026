@@ -1,0 +1,46 @@
+name: Android Build and Test
+
+on:
+  push:
+  pull_request:
+
+env:
+  JAVA_HOME: /opt/java/jdk8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [oraclejdk8]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Install Android SDK
+        run: |
+          echo "y" | sdkmanager "platforms;android-30"
+          echo "y" | sdkmanager "tools"
+          echo "y" | sdkmanager "platform-tools"
+          echo "y" | sdkmanager "build-tools-30.0.3"
+          echo "y" | sdkmanager "android-30"
+          echo "y" | sdkmanager "extra-android-m2repository"
+          echo "y" | sdkmanager "extra-google-m2repository"
+          echo "y" | sdkmanager "extra-android-support"
+      - name: Accept Android Licenses
+        run: |
+          echo "y" | sdkmanager --licenses "android-sdk-preview-license-.+"
+          echo "y" | sdkmanager --licenses "android-sdk-license-.+"
+          echo "y" | sdkmanager --licenses "google-gdk-license-.+"
+      - name: Gradle Build
+        run: ./gradlew clean build
+      - name: Gradle Test and Coverage
+        run: ./gradlew testDebugUnitTestCoverage coveralls
+
+  cache:
+    path:
+      - $HOME/.m2
+      - $HOME/.gradle/caches/
+      - $HOME/.gradle/wrapper/

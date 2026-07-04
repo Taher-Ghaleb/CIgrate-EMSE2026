@@ -1,0 +1,52 @@
+language: java
+sudo: false
+
+env:
+  global:
+  - export JRE6_HOME=/usr/lib/jvm/java-6-openjdk-amd64/jre
+  - ant -diagnostics
+  - ant all
+  
+jobs:
+  include:
+    - stage: build
+      os: linux
+      jdk: openjdk11
+      addons:
+        apt:
+          packages:
+          - ant-optional
+          - lib32ncurses5
+          - lib32z1
+          - openjdk-6-jdk
+          - winehq-stable
+    - stage: build
+      os: linux
+      jdk: openjdk8
+      addons:
+        apt:
+          packages:
+          - ant-optional
+          - lib32ncurses5
+          - lib32z1
+          - openjdk-6-jdk
+          - winehq-stable
+    - stage: build
+      os: linux
+      jdk: openjdk7
+      addons:
+        apt:
+          packages:
+          - ant-optional
+          - lib32ncurses5
+          - lib32z1
+          - openjdk-6-jdk
+          - winehq-stable
+    - stage: build
+      os: osx
+      jdk: openjdk8
+      addons:
+        homebrew:
+          packages:
+          - wine-stable
+          - ant

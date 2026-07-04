@@ -1,0 +1,35 @@
+name: Build and Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      - docker
+    env:
+      # TODO: Add global environment variables if needed
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update apt
+        run: sudo apt-get update
+      - name: Install raptor2-utils
+        run: sudo apt-get install -qq raptor2-utils
+      - name: Build Docker image
+        run: docker build -t atomgraph/processor .
+      - name: Start Docker Compose
+        run: cd http-tests && docker-compose up -d
+      - name: Wait for processor-ct
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8080 | grep "404" ; do sleep 1 ; done
+      - name: Wait for processor-ct-write
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8081 | grep "404" ; do sleep 1 ; done
+      - name: Wait for processor-ngt
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8082 | grep "404" ; do sleep 1 ; done
+      - name: Wait for processor-ngt-write
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8083 | grep "404" ; do sleep 1 ; done
+      - name: Wait for processor-custom
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8084 | grep "404" ; do sleep 1 ; done
+      - name: Wait for processor-custom-write
+        run: while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8085 | grep "404" ; do sleep 1 ; done

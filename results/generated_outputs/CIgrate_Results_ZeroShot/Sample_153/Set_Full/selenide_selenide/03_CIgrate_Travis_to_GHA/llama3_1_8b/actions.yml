@@ -1,0 +1,64 @@
+name: Java Project
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+      - release/*
+  pull_request:
+    branches:
+      - main
+      - feature/*
+      - release/*
+
+env:
+  SONAR_ORG: ${{ secrets.SONAR_ORG }}
+  SONAR_HOST: ${{ secrets.SONAR_HOST }}
+  SONAR_LOGIN: ${{ secrets.SONAR_LOGIN }}
+  TRAVIS_BRANCH: ${{ github.event.pull_request.branch }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      sonar:
+        image: sonarqube:latest
+        options: --web --no-start
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libappindicator1 fonts-liberation
+      - name: Cache Gradle
+        uses: actions/cache@v4
+          at: gradle-cache
+          path: ~/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${GITHUB_SHA:0:7}
+      - name: Install Gradle
+        run: |
+          export CHROME_BIN=/usr/bin/google-chrome
+         ./gradlew check --no-daemon --console=plain
+      - name: SonarQube
+        if: type!= pull_request
+        run: |
+         ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${SONAR_ORG} -Dsonar.host.url=${SONAR_HOST} -Dsonar.login=${SONAR_LOGIN} -Dsonar.branch.name=${GITHUB_REF}
+      - name: Grid
+        run:./gradlew grid --no-daemon --console=plain -i
+      - name: Firefox
+        run:./gradlew firefox_headless --no-daemon --console=plain -i
+      - name: Chrome
+        run:./gradlew chrome_headless --no-daemon --console=plain -i
+      - name: Upload reports
+        run: |
+         ./upload_reports.sh
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+          at: gradle

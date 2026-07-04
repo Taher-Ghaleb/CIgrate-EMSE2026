@@ -1,0 +1,27 @@
+language: java
+jdk:
+  - openjdk11
+
+sudo: false
+install: true
+
+env:
+  global:
+    - GRADE_CACHE: true
+
+cache:
+  directories:
+    - '$HOME/.gradle'
+
+script:
+  - chmod +x gradlew
+  - bash ./gradlew clean build
+
+before_script:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+branches:
+  only:
+    - master
+    - development

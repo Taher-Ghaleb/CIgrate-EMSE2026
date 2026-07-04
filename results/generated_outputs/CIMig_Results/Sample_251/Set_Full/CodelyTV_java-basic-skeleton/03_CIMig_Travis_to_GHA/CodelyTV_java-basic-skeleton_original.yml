@@ -1,0 +1,30 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      env:
+        ci: TRUE
+      uses: actions/setup-java@version
+      with:
+        path: ~/.maven-
+        key:
+          jdk11-${{ hashfiles(arg) }}
+          ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+        java-version: ${{ matrix.java }}
+      uses: actions/cache@version
+      with: java-version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run:
+        ./gradlew assemble --warning-mode all
+        if [[ \"$TRAVIS_OS_NAME\" == \"osx\" ]]; then brew update; fi
+

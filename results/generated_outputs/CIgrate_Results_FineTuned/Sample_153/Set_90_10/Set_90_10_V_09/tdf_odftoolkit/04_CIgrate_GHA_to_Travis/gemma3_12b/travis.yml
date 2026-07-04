@@ -1,0 +1,19 @@
+language: java
+
+jdk:
+  - openjdk11
+
+os:
+  - linux
+
+dist:
+  - bionic
+
+install: true
+
+script:
+  - mvn clean install -Ppedantic
+
+cache:
+  directories:
+    - $HOME/.m2

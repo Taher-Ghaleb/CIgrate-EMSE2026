@@ -1,0 +1,39 @@
+matrix:
+  os:
+    ubuntu-latest
+    windows-latest
+  language: java
+  java
+
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix
+      fail-fast: FALSE
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        java-version: 1.8
+      with:
+        key: jdk11-${{ hashfiles(arg) }}
+        bundler-cache: TRUE
+      uses: actions/checkout@version
+      with: java-version
+      uses: actions/setup-java@version
+    - name: placeholder_Name
+      run:
+        cd examples/quickstart-firefox
+        mvn -Pjava11 javadoc:aggregate
+        chmod +x ./docs/cibuild
+
+env:
+  github_token: ${{ github.token }}
+

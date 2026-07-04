@@ -1,0 +1,32 @@
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with: key
+      with: java-version
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      env:
+        ci: TRUE
+        github_token: ${{ github.token }}
+      run: .github/PATH-OR-URL
+    - name: Placeholder
+      uses: actions/checkout@version
+
+macos:
+  jdk: oraclejdk8
+

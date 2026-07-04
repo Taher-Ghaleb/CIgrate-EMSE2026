@@ -1,0 +1,29 @@
+name: Scala Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      JAVA_HOME: /usr/lib/jvm/java-8-openjdk-amd64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Cache SBT
+        uses: actions/cache@v4
+        with:
+          path: ~/.sbt
+          key: ${{ github.workspace }}/sbt
+          restore-keys: ${{ github.workspace }}/sbt
+      - name: Install Dependencies
+        run: sbt update
+      - name: Compile
+        run: sbt compile
+      - name: Test
+        run: sbt test

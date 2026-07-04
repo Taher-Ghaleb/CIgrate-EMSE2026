@@ -1,0 +1,33 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.gradle
+
+env:
+  global:
+    - BINTRAY_USERNAME=$BINTRAY_USERNAME
+    - BINTRAY_API_KEY=$BINTRAY_API_KEY
+
+jobs:
+  include:
+    - stage: build
+      script:
+        - chmod +x gradlew
+        - ./gradlew clean build javadoc --no-daemon
+
+    - stage: deploy
+      if: type = push AND tag IS present
+      script:
+        - chmod +x gradlew
+        - bash -v scripts/publishToBintray.sh
+
+branches:
+  only:
+    - master
+    - /^v\d+\.\d+\.\d+.*$/

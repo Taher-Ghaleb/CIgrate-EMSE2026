@@ -1,0 +1,71 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+  - export GRADLE_HOME=$(pwd)/gradle
+  - export PATH=$GRADLE_HOME:$PATH
+  - curl -sL https://github.com/gradle/gradle/releases/download/gradle-6.9/gradle-6.9-bin.zip -o gradle.zip
+  - unzip gradle.zip -d gradle
+  - export PATH=$GRADLE_HOME/bin:$PATH
+  - chmod +x gradlew
+
+install:
+  -./gradlew wrapper --gradle-version 6.9
+
+script:
+  -./gradlew build
+
+after_success:
+  - echo "Deploying build artifacts"
+  -./gradlew deploy
+
+deploy:
+  - echo "Deploying to production"
+  -./gradlew deploy
+
+after_failure:
+  - echo "Failed to deploy"
+
+branches:
+  only:
+    - main
+
+services:
+  - docker
+
+addons:
+  apt:
+    sources:
+      - 'ppa:deadsnakes/ppa'
+    packages:
+      - openjdk-8-jdk
+      - zip
+      - curl
+
+cache:
+  directories:
+    - $HOME/.gradle
+    - $HOME/.m2/repository
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - os: ubuntu-latest
+      dist: xenial
+      java: temurin-8
+    - os: ubuntu-latest
+      dist: bionic
+      java: temurin-8
+    - os: ubuntu-latest
+      dist: focal
+      java: temurin-8
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - your_email@example.com

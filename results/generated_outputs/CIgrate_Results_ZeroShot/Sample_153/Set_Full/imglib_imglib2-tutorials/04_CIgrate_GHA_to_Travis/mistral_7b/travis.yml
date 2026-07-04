@@ -1,0 +1,53 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+
+deploy:
+  on:
+    tags: true
+    branches:
+      only:
+        - master
+        - '*-[0-9]*.*'
+        - '*-[0-9]*'
+
+before_install:
+  - install: actions/checkout@v4
+
+services:
+  # TODO: Map GHA services to Travis services/addons
+
+before_script:
+  - run: chmod +x .travis/build.sh
+
+script:
+  - env:
+      SECRET_1: $SECRET_1
+      SECRET_2: $SECRET_2
+      SECRET_3: $SECRET_3
+      SECRET_4: $SECRET_4
+    - ./.travis/build.sh
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_install:
+  - run: |
+      # TODO: Keep docker-compose and wait loops in hooks
+
+install:
+  - uses: actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+      cache: 'maven'
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, while adhering to the specified output and migration rules.

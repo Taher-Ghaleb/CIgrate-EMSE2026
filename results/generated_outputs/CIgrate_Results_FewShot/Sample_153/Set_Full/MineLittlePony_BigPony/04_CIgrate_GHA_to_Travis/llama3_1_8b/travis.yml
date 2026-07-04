@@ -1,0 +1,27 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+
+script:
+  - chmod +x gradlew
+  -./gradlew check
+
+deploy:
+  on:
+    branch: master
+  if: true
+  env:
+    global:
+      ACCESS_KEY: $ACCESS_KEY
+  before_deploy:
+    - chmod +x gradlew
+  script:
+    -./gradlew build publish
+  after_deploy:
+    -./gradlew check
+```
+
+Note that the `deploy` section is used to define a deployment job that runs on the `master` branch, and the `before_deploy` and `after_deploy` sections are used to run the `chmod` and `check` commands before and after the deployment, respectively. The `env` section is used to set the `ACCESS_KEY` environment variable.

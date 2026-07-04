@@ -1,0 +1,37 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['9']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 9
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '9'
+      - name: Install Maven
+        uses: actions/setup-node@v4
+      - name: Install Maven
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+      - name: Cache Maven plugins
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/plugins
+          key: ${{ runner.os }}-maven-plugins-${{ hashFiles('**/pom.xml') }}
+      - name: Install Maven plugins
+        run: mvn dependency:get -Dexec.executable=/usr/bin/wget -Dexec.args="-O ${{ runner.tempFile('maven-plugins') }}/${{ runner.os }}-${{ runner.os }}-${{ runner.os }}-${{ runner.os }}.jar https://repo1.maven.org/maven2/org/apache/maven/plugins/maven-site-plugin/3.8.1/maven-site-plugin-3.8.1.jar"
+      - name: Install Maven plugins
+        run: mvn dependency:get -Dexec.executable=/usr/bin/wget -Dexec.args="-O ${{ runner.tempFile('maven-plugins') }}/${{ runner.os }}-${{ runner.os }}-${{ runner.os }}-${{ runner.os }}.jar https://repo1.maven

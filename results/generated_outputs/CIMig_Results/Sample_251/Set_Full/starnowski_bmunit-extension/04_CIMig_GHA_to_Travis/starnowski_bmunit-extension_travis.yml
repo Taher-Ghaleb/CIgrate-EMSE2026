@@ -1,0 +1,21 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  mvn clean install
+script:
+  script:
+    mvn clean install -P !main,byteman4_compatible
+stages:
+  build
+  test
+directories: ~/.maven-
+apt:
+  packages: jdk-8-jdk
+include:
+  name: Integration tests

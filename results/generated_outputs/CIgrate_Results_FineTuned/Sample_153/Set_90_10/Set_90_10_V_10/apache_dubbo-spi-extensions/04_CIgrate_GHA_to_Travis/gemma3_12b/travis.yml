@@ -1,0 +1,33 @@
+language: java
+
+services:
+  - docker
+
+jdk:
+  - openjdk11
+  - openjdk8
+
+before_cache:
+  - rm -rf $HOME/.m2/repository/org/glassfish/javax.el/3.0.1-b08
+
+cache:
+  directories:
+    - $HOME/.m2
+
+script:
+  - ./mvnw --batch-mode --no-transfer-progress clean install -DskipTests=false -DskipIntegrationTests=false -Dcheckstyle.skip=false -Drat.skip=false -Dmaven.javadoc.skip=true
+  - bash <(curl -s https://codecov.io/bash)
+
+notifications:
+  email:
+    recipients:
+      - travis-j@qos.ch
+      - travis-j2@qos.ch
+      - travis-n@qos.ch
+      - travis-p@qos.ch
+      - travis-s@qos.ch
+      - travis-t@qos.ch
+      - travis-w@qos.ch
+
+after_failure:
+  - echo "build failed!"

@@ -1,0 +1,24 @@
+language: java
+sudo: false
+branches:
+  only:
+    - master
+  except:
+    - '**-[0-9]+.**'
+    - '**-[0-9]+.[0-9]+.[0-9]+**'
+pull_request:
+  only:
+    - master
+  except:
+    - '**-[0-9]+.**'
+    - '**-[0-9]+.[0-9]+.[0-9]+**'
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+script:
+  - mvn -s ./.travis.maven-settings.xml clean
+  - mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install
+  - mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install -f example
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

@@ -1,0 +1,34 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - GPG_SECRET_KEYS=$GPG_SECRET_KEYS
+    - GPG_OWNERTRUST=$GPG_OWNERTRUST
+    - COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN
+    - GPG_PASSPHRASE=$GPG_PASSPHRASE
+    - OSSRH_USERNAME=$OSSRH_USERNAME
+    - OSSRH_PASSWORD=$OSSRH_PASSWORD
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+before_install:
+  - echo "$GPG_SECRET_KEYS" | base64 --decode | gpg --batch --import
+  - echo "$GPG_OWNERTRUST" | base64 --decode | gpg --batch --import-ownertrust
+
+script:
+  - mvn test
+
+after_success:
+  - mvn -B jacoco:report coveralls:report
+
+deploy:
+  provider: script
+  script: ./.deploy.sh
+  on:
+    repo: dhatim/safesql
+    all_branches: true
+    condition: $TRAVIS_BRANCH = master || $TRAVIS_TAG =~ ^v

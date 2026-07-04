@@ -1,0 +1,30 @@
+language: bash
+sudo: false
+branches:
+  only:
+    - master
+    - /^\\d+\\.[\\d.]*$/
+  except:
+    - tags
+    - /^\\d+\\.[\\d.]*$/
+pull_request:
+  branches:
+    only:
+      - master
+      - /^\\d+\\.[\\d.]*$/
+except:
+    - tags
+    - /^\\d+\\.[\\d.]*$/
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ./.m2/repository
+
+script:
+  - chmod +x .travis/build.sh
+  - .travis/build.sh
+
+before_install:
+  - echo "Setting up JDK 8"
+  - echo "Cache: maven"

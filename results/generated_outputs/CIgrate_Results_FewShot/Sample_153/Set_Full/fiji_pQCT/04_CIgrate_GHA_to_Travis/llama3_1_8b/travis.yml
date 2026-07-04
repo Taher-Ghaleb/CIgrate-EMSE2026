@@ -1,0 +1,20 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+install: true
+script:
+  -.travis/build.sh
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+```
+
+Note: The `build.sh` script is assumed to be a script that is part of the repository, and it's responsible for the build process. The `build.sh` script should be placed in the `.travis` directory of the repository.

@@ -1,0 +1,15 @@
+language: java
+sudo: false
+env:
+  _JAVA_OPTIONS: "-Xms1G -Xmx4G"
+cache:
+  directories:
+    - ~/.m2/repository
+jdk:
+  - openjdk8
+script:
+  - mvn clean verify
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+      curl -sSL https://raw.githubusercontent.com/rectalogic/notify-irc/master/notify-irc.sh | bash -s -- -s irc.libera.chat -p 6697 -c '#io7m' -n github-actions-io7m -m "[${TRAVIS_REPO_SLUG}] Build ${TRAVIS_JOB_STATUS} - ${TRAVIS_COMMIT_AUTHOR}: ${TRAVIS_COMMIT_MESSAGE} (${TRAVIS_COMMIT})" -d "${TRAVIS_BUILD_URL}"
+    fi

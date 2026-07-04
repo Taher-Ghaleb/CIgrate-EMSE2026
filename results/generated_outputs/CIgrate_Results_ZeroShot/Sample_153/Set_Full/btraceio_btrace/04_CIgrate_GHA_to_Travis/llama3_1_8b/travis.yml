@@ -1,0 +1,82 @@
+language: java
+
+before_install:
+  - apt-get update
+  - apt-get install -y ca-certificates-java
+  - update-ca-certificates -f
+
+install:
+  - apt-get install -y default-jdk
+  - apt-get install -y maven
+  - apt-get install -y python3
+  - apt-get install -y python3-pip
+  - pip3 install codecov
+
+script:
+  - if [[! -d ~/.sdkman ]]; then
+      rm -rf ~/.sdkman
+      curl -sL https://get.sdkman.io | bash
+      echo "sdkman_auto_answer=true" > ~/.sdkman/etc/config
+      echo "sdkman_auto_selfupdate=true" >> ~/.sdkman/etc/config
+    fi
+  - source ~/.sdkman/bin/sdkman-init.sh
+  - sdk version
+  - chmod +x gradlew
+  - source./config_build.sh
+  -./gradlew assemble -DexcludeBenchmark
+  -./run_tests.sh
+  -./gradlew buildDistributions -DexcludeBenchmark
+  - codecov upload -c.codecov.yml
+  - if [ "${TRAVIS_BRANCH}" == "develop" ]; then
+      mvn deploy -DaltDeploymentRepository=your-repo-id::default::https://your-repo-url.com
+    fi
+
+deploy:
+  on:
+    branch: develop
+  environment:
+    MAVEN_USERNAME: $MAVEN_USERNAME
+    MAVEN_PASSWORD: $MAVEN_PASSWORD
+  script:
+    - echo "Bintray shutdown - configure alternative deployment"
+  only:
+    branches:
+      - develop
+
+notifications:
+  on_success:
+    email:
+      recipients:
+        - your_email@example.com
+  on_failure:
+    email:
+      recipients:
+        - your_email@example.com
+
+matrix:
+  include:
+    - java: '11'
+      os: linux
+      dist: ubuntu
+    - java: '11'
+      os: linux
+      dist: ubuntu
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+  - wait
+
+before_script:
+  - if [ "${TRAVIS_BRANCH}" == "develop" ]; then
+      mvn deploy -DaltDeploymentRepository=your-repo-id::default::https://your-repo-url.com
+    fi
+```
+
+Note:

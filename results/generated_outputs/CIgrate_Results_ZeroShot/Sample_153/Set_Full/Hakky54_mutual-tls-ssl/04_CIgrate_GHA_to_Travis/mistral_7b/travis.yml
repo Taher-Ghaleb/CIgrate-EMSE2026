@@ -1,0 +1,78 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+before_script:
+  - export DOCKER_CONFIG=$HOME/.docker/config.json
+
+script:
+  - checkout
+  - setup_java -q -j 11
+  - cache --directories ~/.m2/repository,~/.gradle,~$HOME/.npm
+
+before_script:
+  - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+      export GITHUB_TOKEN=$GITHUB_TOKEN
+      docker login -u "$GITHUB_ACTOR" -p "$GITHUB_TOKEN" docker.io
+    fi
+
+matrix:
+  include:
+    - java:
+        - 11
+
+  allow_failures:
+    - java: 11
+
+branches:
+  only:
+    - master
+
+  except:
+    - /^two-way-authentication-/
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+  java:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy: matrix
+    steps:
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: 'maven'
+
+  without-authentication:
+    needs: java
+    steps:
+      - name: Test without authentication
+        run: mvn clean verify -P without-authentication
+
+  one-way-authentication:
+    needs: without-authentication
+    steps:
+      - name: Test with one-way authentication
+        run: mvn clean verify -P with-one-way-authentication
+
+  two-way-authentication-trusting-each-other:
+    needs: one-way-authentication

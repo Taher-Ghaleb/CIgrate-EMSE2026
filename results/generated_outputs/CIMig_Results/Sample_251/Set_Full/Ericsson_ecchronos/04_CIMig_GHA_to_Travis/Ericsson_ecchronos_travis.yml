@@ -1,0 +1,22 @@
+cache:
+  directories: ~/.maven-
+language:
+  java
+  python
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn install -DskipTests=true
+script:
+  script:
+    mvn $TEST_SUITE -B
+stage:
+  coverage
+  Unit tests
+directories:
+  ~/.m2/repository
+  ~/.sonar/cache
+sudo: FALSE
+apt:
+  packages: jdk-6-jdk

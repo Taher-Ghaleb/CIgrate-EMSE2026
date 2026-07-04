@@ -1,0 +1,34 @@
+language: android
+jdk: openjdk8
+sudo: required
+
+env:
+  global:
+    - ANDROID_HOME=~/android-sdk
+
+before_install:
+  - yes | sdkmanager "platform-tools" "build-tools;28.0.3" "platforms;android-28" "extras;google;m2repository" "extras;android;m2repository"
+  - chmod +x gradlew
+
+script:
+  - ./gradlew clean build --stacktrace
+
+jobs:
+  include:
+    - stage: release
+      if: branch = master AND type = push
+      script:
+        - ./gradlew clean assembleRelease --stacktrace
+      before_deploy:
+        - openssl aes-256-cbc -K $KEYSTORE_KEY -iv $KEYSTORE_IV -in gotify-release-key.jks.enc -out gotify-release-key.jks -d
+        - jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore gotify-release-key.jks -storepass $KEYSTORE_PASSWORD -keypass $KEY_PASSWORD app/build/outputs/apk/release/app-release-unsigned.apk gotify-release-key
+        - jarsigner -verify app/build/outputs/apk/release/app-release-unsigned.apk
+        - "${ANDROID_HOME}/build-tools/28.0.3/zipalign" -v 4 app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/Gotify.apk
+      deploy:
+        provider: releases
+        api_key: $GITHUB_TOKEN
+        file: app/build/outputs/apk/release/Gotify.apk
+        skip_cleanup: true
+        on:
+          tags: true
+          repo: gotify/android

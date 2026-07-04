@@ -1,0 +1,23 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk11
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.cache'
+script:
+  - mvn clean install -Ppedantic
+```
+
+Note that I've used the following mappings:
+
+- `language: java` to specify the language as Java
+- `jdk: openjdk11` to specify the JDK version as OpenJDK 11
+- `install: true` to enable the install phase
+- `cache: directories` to cache the Maven repository and the cache directory
+- `script` to specify the script to run, which is the Maven build command with the pedantic profile.

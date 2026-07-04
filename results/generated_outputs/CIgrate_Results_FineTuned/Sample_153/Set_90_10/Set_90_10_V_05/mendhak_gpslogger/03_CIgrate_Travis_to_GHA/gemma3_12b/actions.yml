@@ -1,0 +1,52 @@
+name: Android CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "tools" "platform-tools" "build-tools;26.0.2" "platforms;android-23" "extras;android-support" "extras;m2repository" "extras;google"
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.android/build-cache/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.android-sdk-dl/
+            ~/.android-sdk/
+          key: ${{ runner.os }}-android-sdk-${{ hashFiles('**/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-android-sdk-
+      - name: Before install
+        run: ./gradlew --version
+      - name: Build
+        run: |
+          echo '"Build..."' && echo -en 'travis_fold:start:script.build\r'
+          ./gradlew assembleDebugUnitTest -Dpre-dex=false
+          echo -en 'travis_fold:end:script.build\r'
+      - name: Test
+        run: ./gradlew testDebugUnitTest -Dpre-dex=false -q
+      - name: Before cache
+        if: always()
+        run: |
+          rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -

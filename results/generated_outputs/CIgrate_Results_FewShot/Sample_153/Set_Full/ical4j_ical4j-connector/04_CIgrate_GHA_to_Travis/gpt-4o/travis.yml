@@ -1,0 +1,35 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - secure: $SONAR_TOKEN
+
+matrix:
+  allow_failures:
+    - java: '8'
+
+install: true
+
+before_install:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew check
+  - if [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_REPO_SLUG" = "ical4j/ical4j-connector" ] && [ "$TRAVIS_BRANCH" = "master" ]; then
+      sudo keytool -import -alias sonar -keystore $JAVA_HOME/lib/security/cacerts -file sonar_cert.pem -storepass changeit -noprompt || true;
+      ./gradlew sonarqube;
+    fi
+
+deploy:
+  provider: script
+  script: ./gradlew assembleDist && ./gradlew sonarqube
+  on:
+    tags: true
+    repo: ical4j/ical4j-connector
+
+after_deploy:
+  - export VERSION=${TRAVIS_TAG}
+  - ./gradlew assembleDist
+  - gh release create $VERSION build/distributions/ical4j-$VERSION.zip build/distributions/ical4j-$VERSION.tar.gz -t $VERSION -R ical4j/ical4j-connector

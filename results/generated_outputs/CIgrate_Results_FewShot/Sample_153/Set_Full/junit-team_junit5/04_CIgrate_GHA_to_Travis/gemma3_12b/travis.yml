@@ -1,0 +1,59 @@
+language: java
+sudo: required
+env:
+  matrix:
+    - os: ubuntu-latest
+      java: '11'
+    - os: macos-latest
+      java: '11'
+    - os: ubuntu-latest
+      java: 'ea'
+  global:
+    - ADB_INSTALL_TIMEOUT: 10
+jdk:
+  - openjdk11
+  - openjdk11
+  - openjdk${JAVA_VERSION} # TODO: Handle EA version correctly
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+before_install:
+  - chmod +x gradlew
+  - ./gradlew --version
+script:
+  - ./gradlew --scan --warning-mode=all -Dplatform.tooling.support.tests.enabled=true build
+  - ./gradlew --scan --stacktrace --warning-mode=all -PenableJaCoCo build jacocoRootReport
+  - ./gradlew --scan publish -x check
+  - ./src/publishDocumentationSnapshotOnlyIfNecessary.sh
+notifications:
+  email:
+    recipients:
+      - your_email@example.com
+    on_success: change
+    on_failure: always
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      echo "Deploying to production..."
+      # TODO: Add deployment steps here
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      echo "Updating documentation..."
+      # TODO: Add documentation update steps here
+    fi
+before_script:
+  - echo no | android create avd --force --name test --target $ANDROID_TARGET --abi $ANDROID_ABI
+  - emulator -avd test -no-skin -no-audio -no-window &
+  - android-wait-for-emulator
+  - adb devices
+  - adb shell input keyevent 82 &
+  - adb shell svc power stayon true
+addons:
+  codecov:
+    token: $CODECOV_TOKEN
+    fail_ci_if_error: false
+  sonarqube:
+    token:
+      secure: "rFMDGYB3C4EbfS+CJq9lEuCtTmJgz8FmyrBp39P0lo6Zk/LqcuXolJBR2CLU9xkf/0oIOURov6+H6lMLRtmpYl6ZbmgAB+grq/y5ORLvlqccij+9UM19LeO/w8Nf1raOnwpB+V1VAfUx1dNTnxZIJRO/RrhtJDDdb9nWjyU0ua0="

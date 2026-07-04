@@ -1,0 +1,19 @@
+language: java
+jdk:
+  - openjdk9
+  - openjdk8
+  - oraclejdk8
+install: true
+script:
+  - mvn clean verify
+deploy:
+  provider: script
+  script: mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+  skip_cleanup: true
+  on:
+    repo: bootique/bootique-logback
+    branch: master
+    jdk: openjdk8
+    event: push
+notifications:
+  email: false

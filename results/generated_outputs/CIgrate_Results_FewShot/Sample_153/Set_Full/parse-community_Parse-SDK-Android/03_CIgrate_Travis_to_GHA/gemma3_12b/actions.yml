@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - /^\\d+\\.\\d+\\.\\d+$/
+  pull_request:
+    branches:
+      - master
+      - /^\\d+\\.\\d+\\.\\d+$/
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install codecov
+        run: pip install --user codecov
+      - name: Create Android licenses directory
+        run: mkdir "$ANDROID_HOME/licenses" || true
+      - name: Add Android SDK license
+        run: echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> "$ANDROID_HOME/licenses/android-sdk-license"
+      - name: Gradle Build
+        run: ./gradlew clean testDebugUnitTest jacocoTestReport
+      - name: Coveralls
+        run: ./gradlew coveralls
+      - name: Codecov
+        run: ./codecov
+    cache:
+      paths:
+        - $HOME/.gradle
+        - $HOME/.m2/repository

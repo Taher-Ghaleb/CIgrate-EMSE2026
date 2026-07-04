@@ -1,0 +1,15 @@
+Here is the migrated Travis CI configuration:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - openjdk8
+install: true
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.maven/cache'
+script:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+working-directory: Hogajama

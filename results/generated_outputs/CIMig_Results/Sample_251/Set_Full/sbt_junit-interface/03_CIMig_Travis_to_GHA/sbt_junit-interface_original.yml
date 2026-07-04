@@ -1,0 +1,32 @@
+matrix:
+  language: java
+  os:
+    ubuntu-latest
+    windows-latest
+  java
+
+name: placeholder_Name
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: FALSE
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        java-version: ${{ matrix.java }}
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      uses: actions/setup-java@version
+      with: java-version
+    - name: Placeholder
+      uses: actions/checkout@version
+

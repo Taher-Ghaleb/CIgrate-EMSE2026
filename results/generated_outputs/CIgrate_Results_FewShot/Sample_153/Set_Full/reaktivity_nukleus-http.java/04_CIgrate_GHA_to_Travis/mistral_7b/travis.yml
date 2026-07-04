@@ -1,0 +1,23 @@
+language: java
+sudo: false
+env:
+  global:
+    branches:
+      - master
+      - develop
+      - feature/*
+      - bugfix/*
+    - JAVA_HOME: ${{ env.JAVA_HOME }}
+
+jdk:
+  - openjdk8
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+script:
+  - mvn -B -nsu verify
+```
+
+This Travis CI configuration maintains the semantics of the GitHub Actions workflow, including the language, script, caches, env, and branch filters. It uses the `openjdk8` JDK, caches Maven packages in the `$HOME/.m2/repository` directory, and runs the `mvn -B -nsu verify` command. The env section includes the `JAVA_HOME` variable, which is assumed to be configured. The branches filter is set to include `master`, `develop`, and branches named `feature/*` and `bugfix/*`.

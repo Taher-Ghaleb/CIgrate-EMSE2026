@@ -1,0 +1,18 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+branches:
+  except: /^docker-cmd
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew clean build
+services: docker/metadata-action@v3
+stage:
+  ☕ 11
+  docker-cmd

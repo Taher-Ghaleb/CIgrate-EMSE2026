@@ -1,0 +1,37 @@
+language: java
+sudo: false
+env:
+  matrix:
+    - java: '8'
+  global:
+    fail_fast: true
+branches:
+  only:
+    - master
+    - pull-request
+deploy:
+  on:
+    tags: true
+cache:
+  directories:
+    - gradle
+before_install:
+  - chmod +x gradlew
+script:
+  - ./gradlew check
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_REPO_OWNER" == "ical4j/ical4j-connector" ]; then sudo keytool -import -alias sonar -keystore $JAVA_HOME/lib/security/cacerts -file sonar_cert.pem -storepass changeit -noprompt || true; fi
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_REPO_OWNER" == "ical4j/ical4j-connector" ]; then ./gradlew sonarqube; fi
+  - ./gradlew assembleDist
+  - if [ "$TRAVIS_TAG" != "" ]; then
+      VERSION=$(echo $TRAVIS_TAG | sed 's/^refs\/tags\///')
+      echo "version=$VERSION" > .version
+      echo "version=$VERSION"
+    fi
+after_success:
+  - if [ "$TRAVIS_TAG" != "" ]; then
+      if [ "$TRAVIS_REPO_OWNER" == "ical4j/ical4j-connector" ]; then
+        echo "Creating GitHub Release..."
+        echo "version=$VERSION" > .version
+        ./scripts/create_github_release.sh
+      fi
+    fi

@@ -1,0 +1,58 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [8]
+    env:
+      GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+      GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Set Gradle version
+        run: ./gradlew wrapper --gradle-version 4.8.1
+
+      - name: Create build number file
+        run: echo ${{ github.run_number }} > ${{ github.workspace }}/src/main/resources/build.txt
+
+      - name: Run tests
+        run: ./gradlew :test
+
+      - name: Configure Git for deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          git config --local user.name "PepperLola"
+          git config --local user.email "${{ secrets.GIT_EMAIL }}"
+          git tag -a ${{ github.run_number }} -m "Automated beta build."
+          git push https://${{ secrets.GIT_TOKEN }}@github.com/PepperLola/playerinfo.git HEAD:master --follow-tags
+
+      - name: Deploy to GitHub Releases
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ github.workspace }}/build/libs/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}

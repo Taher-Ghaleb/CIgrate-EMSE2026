@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - /^release.*$/
+  pull_request:
+    branches:
+      - master
+      - /^release.*$/
+
+env:
+  ROOT_POM: pom.xml
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '11']
+        ROOT_POM: ['pom.xml', 'android/pom.xml']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Install dependencies
+        run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f ${{ matrix.ROOT_POM }}
+      - name: Run tests
+        run: travis_wait 60 mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f ${{ matrix.ROOT_POM }}
+      - name: Deploy snapshot
+        if: success()
+        run: util/deploy_snapshot.sh
+      - name: Update snapshot docs
+        if: success()
+        run: util/update_snapshot_docs.sh
+      - name: Print Surefire reports
+        if: failure()
+        run: util/print_surefire_reports.sh

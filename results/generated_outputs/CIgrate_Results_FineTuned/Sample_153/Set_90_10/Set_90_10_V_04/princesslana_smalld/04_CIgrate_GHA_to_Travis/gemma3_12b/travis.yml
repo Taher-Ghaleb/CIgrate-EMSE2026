@@ -1,0 +1,27 @@
+language: java
+dist: trusty
+sudo: false
+
+before_install:
+- fetch depth 0
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then ./etc/extract_secrets.sh; fi
+
+install: true
+
+script:
+- mvn -B verify
+- if [[ "$TRAVIS_JDK_VERSION" == "oraclejdk8" && "$TRAVIS_PULL_REQUEST" == "false" ]]; then mvn -B sonar:sonar; fi
+
+addons:
+  sonarcloud:
+    organization: "ianagbip1oti-github"
+    token:
+      secure: "********************"
+
+deploy:
+  provider: script
+  script: mvn -s etc/settings.xml -B versions:set-property deploy -P release
+  skip_cleanup: true
+  on:
+    tags: true
+    condition: $TRAVIS_TAG =~ ^\d+\.\d+(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+)?(\.\d+

@@ -1,0 +1,30 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  # Preserve global env
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker: docker-dind
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build-docker-image
+        run: ci/build-docker-image
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ github.repository_owner }}/${{ github.repository }}:${{ github.ref.ref_name }}
+
+      - name: Run tests
+        run: ci/docker-run-game

@@ -1,0 +1,66 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-$jdk
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - ant
+  - ant test
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: Add deploy script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: Add deploy script"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: ant deploy
+  skip_cleanup: true
+  on:
+    branch: never
+  environment:
+    name: production
+    matrix:
+      - jdk: 8
+      - jdk: 11
+  cache:
+    directories:
+      - ~/.m2/repository
+      - ~/.gradle/*
+      - $HOME/.npm
+  allow_failures:
+    - jdk: 8
+    - jdk: 11
+  services:
+    - docker
+    - docker-compose
+  notifications:
+    email:
+      on_success: false
+      on_failure: true
+  branches:
+    only:
+      - main
+  matrix:
+    include:
+      - jdk: 8
+        java-version: 8
+      - jdk: 11
+        java-version: 11
+    allow_failures:
+      - jdk: 8
+      - jdk: 11

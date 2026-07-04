@@ -1,0 +1,44 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk9
+
+env:
+  global:
+    - CC_TEST_REPORTER_ID=430594ee361ff2e93ebf0a942f639b8092c6f17b7c5098f9c75abc404311dfc7
+
+matrix:
+  allow_failures:
+    - jdk: openjdk9
+
+before_install:
+  - chmod +x gradlew
+  - if [ "$TRAVIS_JDK_VERSION" = "openjdk8" ]; then
+      curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter;
+      chmod +x ./cc-test-reporter;
+    fi
+
+install: true
+
+before_script:
+  - if [ "$TRAVIS_JDK_VERSION" = "openjdk8" ]; then
+      ./cc-test-reporter before-build;
+    fi
+
+script:
+  - ./gradlew clean build jacocoTestReport
+
+after_success:
+  - if [ "$TRAVIS_JDK_VERSION" = "openjdk8" ]; then
+      JACOCO_SOURCE_PATH=src/main/java ./cc-test-reporter format-coverage ./build/reports/jacoco/test/jacocoTestReport.xml --input-type jacoco;
+      ./cc-test-reporter upload-coverage -r $CC_TEST_REPORTER_ID;
+    fi
+
+notifications:
+  slack:
+    rooms:
+      - secure: $SLACK_WEBHOOK_URL
+    on_success: always
+    on_failure: always
+    template:
+      - "Build %{result}: %{repository_slug}@%{branch} (JDK %{jdk}) - Commit: %{commit_message}"

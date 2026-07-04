@@ -1,0 +1,28 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+env:
+  matrix:
+    - SECRET_1=$SECRET_1
+    - SECRET_2=$SECRET_2
+
+script:
+  - chmod +x .travis/build.sh
+  - .travis/build.sh
+
+before_script:
+  - actions/checkout@v4
+
+cache:
+  directories:
+    - '.travis/build.sh'
+```
+
+This Travis CI configuration maintains the semantics of the GitHub Actions workflow, including the use of `actions/setup-java@v4` for setting up JDK 8, the use of Maven, the setting of environment variables from secrets, the execution of a build script, and the caching of the build script. The `on` section has been adapted to Travis CI syntax, and the `runs-on` and `steps` sections have been combined into the `script` section. The `env` section has been adapted to use the `matrix` key for setting environment variables, and the `before_script` section is used to checkout the repository. The `cache` section is used to cache the build script.

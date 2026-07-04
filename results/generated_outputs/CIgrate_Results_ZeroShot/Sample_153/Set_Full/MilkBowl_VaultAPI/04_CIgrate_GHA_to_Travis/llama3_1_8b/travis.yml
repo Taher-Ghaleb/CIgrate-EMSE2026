@@ -1,0 +1,52 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+script:
+  - mvn test
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      chmod +x.utility/do-publish.sh
+     .utility/do-publish.sh
+    fi
+
+deploy:
+  on:
+    tags: true
+  environment:
+    SECRET_1: $SECRET_1
+    SECRET_2: $SECRET_2
+    SECRET_3: $SECRET_3
+  script:
+    - echo "Deploying to production"
+  allow_failures: true
+
+matrix:
+  include:
+    - java: '11'
+      cache:'maven'
+      services:
+        - docker-compose
+      before_script:
+        - echo "Setting up JDK 11"
+        - apt-get update && apt-get install -y default-jdk
+      script:
+        - mvn test
+      after_script:
+        - if [ "$TRAVIS_BRANCH" == "master" ]; then
+            chmod +x.utility/do-publish.sh
+           .utility/do-publish.sh
+          fi
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com

@@ -1,0 +1,33 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  FEDORA: 27
+  FEDORA: 28
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Docker
+        uses: docker/setup-docker@v4
+      - name: Pull Fedora images
+        run: |
+          for fedora in ${{ env.FEDORA }}; do
+            docker pull registry.fedoraproject.org/fedora:$fedora
+          done
+      - name: Run Fedora container
+        run: |
+          docker run --name=container -d -i -v $(pwd):/root/jss registry.fedoraproject.org/fedora:${{ env.FEDORA }}
+      - name: Install dependencies
+        run: docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+      - name: Enable PKI COPR repository
+        run: docker exec container dnf copr -y enable @pki/10.6
+      - name: Build RPM
+        run: docker exec container dnf builddep -y --spec /root/jss/jss.spec.in && docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+      - name: Install built RPM
+        run: docker exec container rpm -Uvh /root/build/jss/RPMS/*

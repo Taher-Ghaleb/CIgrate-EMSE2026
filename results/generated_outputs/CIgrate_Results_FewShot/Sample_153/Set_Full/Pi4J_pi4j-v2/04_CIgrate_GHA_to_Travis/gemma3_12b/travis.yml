@@ -1,0 +1,26 @@
+language: java
+branches:
+  only:
+    - master
+  except:
+    - /^(\d+)$/
+sudo: required
+cache:
+  directories:
+    - ~/.m2/repository
+    - $HOME/.maven
+jdk:
+  - openjdk11
+script:
+  - echo "Architecture: $(uname -m)"
+  - echo "Java Home: $JAVA_HOME"
+  - java -version
+  - mvn -version
+  - mvn clean install -Drelease-build
+after_success:
+  - if [ $TRAVIS_BRANCH = "master" ]; then
+      echo "Uploading build artifacts..."
+      mkdir -p build/artifacts
+      find target -name "*.jar" -o -name "*.war" -print0 | xargs -0 -I {} cp {} build/artifacts/
+      echo "Artifacts uploaded."
+    fi

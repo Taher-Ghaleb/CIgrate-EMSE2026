@@ -1,0 +1,22 @@
+env: global
+sudo
+cache:
+  directories: ~/.gradle
+language:
+  java
+  python
+  addons:
+    firefox: latest
+jdk: jdk8
+before_install:
+  java -version
+  mvn clean install -pl -:gremlin-python,-gremlin-dotnet,-:gremlin-dotnet-source,-:gremlin-dotnet-tests -q -DskipTests -Dci\nmvn verify -pl :gremlin-javascript\n
+install:
+  mvn clean install -pl -:gremlin-javascript -Dci --batch-mode -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+script:
+  script:
+    mvn clean install -pl -:gremlin-javascript,-:gremlin-python,-gremlin-dotnet,-:gremlin-dotnet-source,-:gremlin-dotnet-tests -q -DskipTests -Dci\nmvn verify -pl :spark-gremlin -DskipTests -DskipIntegrationTests=false '-Dit.test=*IntegrateTest,!SparkGryoSerializerGraphComputerProcessIntegrateTest'\n
+directories: ~/.maven-
+include:
+  name: javascript
+  if: type in (pull_request, push)

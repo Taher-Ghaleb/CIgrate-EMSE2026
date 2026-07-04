@@ -1,0 +1,58 @@
+language: java
+sudo: false
+env:
+  matrix:
+    - JDK_CACHE: maven
+
+jdk:
+  - openjdk8
+
+script:
+  - mvn clean install
+
+on:
+  branches:
+    - master
+
+deploy:
+  on:
+    branches:
+      - master
+    types:
+      - push
+    paths:
+      - .
+
+  if: github.event_name == 'push'
+
+  script:
+    - mvn clean install
+    - mvn deploy -Dmaven.test.skip=true --settings .travis.settings.xml
+
+notify:
+  on:
+    branches:
+      - master
+    types:
+      - push
+
+  if: always()
+
+  script:
+    - dawidd6/action-send-mail@v3 \
+      --server_address smtp.gmail.com \
+      --server_port 587 \
+      --username ${{ secrets.SMTP_USERNAME }} \
+      --password ${{ secrets.SMTP_PASSWORD }} \
+      --subject "Build ${{ job.status }}: ${{ github.repository }}" \
+      --to gr-tig-oss@future.co.jp \
+      --from GitHub Actions \
+      --body |
+        Build ${{ job.status }} for ${{ github.repository }}
+        Commit: ${{ github.sha }}
+        Branch: ${{ github.ref }}
+        Workflow: ${{ github.workflow }}
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

@@ -1,0 +1,60 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      PROJECT_DIR: ${{ github.workspace }}
+
+    strategy:
+      matrix:
+        jdk: [openjdk11]
+        os: [linux]
+        arch: [arm64]
+        dist: [ubuntu-bionic]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Set up build tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qq --yes tree git build-essential file curl wget maven gcc
+          sudo apt-get --force-yes --yes install gcc-arm-linux-gnueabihf
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Checkout project
+        working-directory: ${{ env.PROJECT_DIR }}
+
+      - name: Build and Test
+        run: |
+          export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")
+          mvn clean install -Drelease-build
+
+      - name: Upload artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-artifact
+          path: ${{ env.PROJECT_DIR }}/target/*.jar
+
+      - name: Test coverage
+        if: success() && ${{ matrix.os }} == linux
+        uses: jest

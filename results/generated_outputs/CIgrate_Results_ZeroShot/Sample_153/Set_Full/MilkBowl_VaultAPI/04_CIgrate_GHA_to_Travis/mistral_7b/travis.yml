@@ -1,0 +1,39 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+  except:
+    - gh-pages
+
+services:
+  - docker
+
+before_install:
+  - chmod +x .utility/do-publish.sh
+
+script:
+  - checkout
+  - setup_java --java-version 11 --distribution temurin --cache maven
+  - mvn test
+
+before_deploy:
+  - if: $TRAVIS_EVENT_TYPE == 'push' && $TRAVIS_BRANCH == 'master'
+    script: chmod +x .utility/do-publish.sh
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - .utility/do-publish.sh
+
+env:
+  global:
+    - SECRET_1: $SECRET_1
+    - SECRET_2: $SECRET_2
+    - SECRET_3: $SECRET_3
+
+```
+
+This Travis CI configuration maintains the semantics of the given GitHub Actions workflow, including branches/tags filters, env variables, caches, and deploy. It uses the Travis lifecycle keys (before_install, script, before_deploy, deploy) to map jobs/steps. The services section uses the Travis services/addons for the GHA services. The script section includes the build and test steps from the GitHub Actions workflow. The deploy section is for releasing on tags, similar to the GitHub Actions workflow's "Publish artifacts" step. The env section maintains the env variables from the GitHub Actions workflow.

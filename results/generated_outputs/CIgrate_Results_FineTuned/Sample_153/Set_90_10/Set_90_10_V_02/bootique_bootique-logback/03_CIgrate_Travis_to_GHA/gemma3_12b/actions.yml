@@ -1,0 +1,32 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        jdk: ['8', '9']
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master' || github.event_name == 'push'
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK ${{ matrix.jdk }}
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: ${{ matrix.jdk }}
+    - name: Build and verify
+      run: mvn clean verify
+    - name: Build and deploy
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository == 'bootique/bootique-logback' && matrix.jdk == '8'
+      run: mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+    - name: Build and verify
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push' && github.repository != 'bootique/bootique-logback' && matrix.jdk == '8'
+      run: mvn clean verify

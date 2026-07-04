@@ -1,0 +1,55 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: ${{ if eq(env.GITHUB_EVENT_NAME, 'pull_request') }} && \
+    git config --local --add github.auto-merge true
+
+before_install:
+  - name: Set up JDK 8
+    install: |
+      wget --quiet https://download.java.net/java/GA/jdk8u275-b01/265e04d92a084c8d952d8d89880d3b07/jdk-8u275-linux-x64.tar.gz
+      tar -xzf jdk-8u275-linux-x64.tar.gz -C $HOME
+      export JAVA_HOME=$HOME/jdk1.8.0_275
+      export PATH=$JAVA_HOME/bin:$PATH
+      export MAVEN_OPTS="-Xmx2g -XX:MaxPermSize=512m"
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+script:
+  - mvn clean install -DskipTests=false
+
+before_script:
+  - mvn dependency:purge-local-repository
+
+before_script:
+  - mvn -B -U org.apache.maven.plugins:maven-checkstyle-plugin:3.1.1:checkstyle
+
+after_success:
+  - mvn dependency:purge-local-repository
+
+after_success:
+  - mvn -B -U org.apache.maven.plugins:maven-checkstyle-plugin:3.1.1:checkstyle
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - git tag -a ${TRAVIS_TAG} -m "De

@@ -1,0 +1,25 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+  pip_cache: true
+  apt_cache: false
+branches:
+  except:
+    - release/**
+os: ubuntu
+services:
+  - docker
+before_install:
+  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+install:
+  - echo "Installing dependencies..."
+  - mvn install -DskipTests=true -B -nsu
+before_script:
+  - echo "Preparing environment..."
+  - git config --global user.email "travis@travis-ci.org"
+  - git config --global user.name "Travis CI"
+script:
+  - echo "Running tests..."
+  - mvn -B -nsu verify

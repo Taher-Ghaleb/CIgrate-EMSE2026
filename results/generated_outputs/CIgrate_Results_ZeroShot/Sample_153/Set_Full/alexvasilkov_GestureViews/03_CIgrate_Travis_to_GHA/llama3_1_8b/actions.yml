@@ -1,0 +1,74 @@
+name: Android CI/CD
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      android-emulator:
+        image: ghcr.io/mibexco/android-emulator:latest
+        privileged: true
+        ports:
+          - 5554:5554
+          - 5555:5555
+          - 5556:5556
+          - 5557:5557
+          - 5558:5558
+          - 5559:5559
+          - 5560:5560
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Install Android SDK
+        run: |
+          yes | sdkmanager "platforms;android-29"
+      - name: Cache Gradle
+        uses: actions/cache@v4
+          at: gradle-cache
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradlew') }}
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v4
+          at: gradle-wrapper
+          path: $HOME/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('gradlew') }}
+      - name: Install dependencies
+        run: |
+         ./gradlew --warning-mode all --stacktrace
+      - name: Build and test
+        run: |
+         ./gradlew assembleDebug checkstyle lintDebug --stacktrace
+      - name: Deploy
+        if: github.event.pull_request == null
+        run: |
+          git fetch --unshallow
+         ./gradlew publishSample --stacktrace
+      - name: Deploy to production
+        if: github.event.pull_request!= null
+        run: |
+         ./gradlew publishSample --stacktrace
+      - name: Send notification
+        uses: actions/notify@v2
+          dependencies: |
+            - github
+          branches:
+            - master
+          on:
+            push:
+              branches:
+                - master
+          on:
+            pull_request:
+              branches:
+                - master

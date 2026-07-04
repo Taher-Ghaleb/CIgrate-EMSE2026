@@ -1,0 +1,49 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - master
+  except:
+    - tags
+deploy:
+  on:
+    tags: true
+env:
+  global:
+    GPG_SECRET_KEYS: $GPG_SECRET_KEYS
+    GPG_OWNERTRUST: $GPG_OWNERTRUST
+    COVERALLS_REPO_TOKEN: $COVERALLS_REPO_TOKEN
+    GPG_PASSPHRASE: $GPG_PASSPHRASE
+    OSSRH_USERNAME: $OSSRH_USERNAME
+    OSSRH_PASSWORD: $OSSRH_PASSWORD
+matrix:
+  allow_failures:
+    - java: 8
+  include:
+    - language: java
+      jdk: 8
+      script:
+        - echo "Importing GPG keys"
+        - |
+          echo "$GPG_SECRET_KEYS" | base64 --decode | gpg --batch --import
+          echo "$GPG_OWNERTRUST" | base64 --decode | gpg --batch --import-ownertrust
+        - echo "Building and testing"
+        - mvn test
+        - echo "Generating coverage report and uploading to Coveralls"
+        - mvn -B jacoco:report coveralls:report
+    - language: java
+      jdk: 8
+      script:
+        - echo "Importing GPG keys"
+        - |
+          echo "$GPG_SECRET_KEYS" | base64 --decode | gpg --batch --import
+          echo "$GPG_OWNERTRUST" | base64 --decode | gpg --batch --import-ownertrust
+        - echo "Making deploy script executable"
+        - chmod +x .deploy.sh
+        - echo "Deploying"
+        - ./.deploy.sh

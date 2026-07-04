@@ -1,0 +1,59 @@
+name: Java Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - beta
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at: cache-maven-dependencies
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+      - name: Install Maven
+        run: |
+          chmod +x gradlew
+         ./gradlew wrapper --gradle-version 4.8.1
+      - name: Configure Git
+        run: |
+          git config --local user.name "PepperLola"
+          git config --local user.email ${{ secrets.GIT_EMAIL }}
+      - name: Create and push tag
+        run: |
+          git tag -a ${{ github.event.release.tag_name }} -m "Automated beta build."
+          git push https://github.com/PepperLola/playerinfo.git HEAD:main --follow-tags
+      - name: Deploy to GitHub Releases
+        uses: actions/upload-artifact@v3
+          name: Release
+          path: ${{ github.workspace }}/build/libs/*
+          repository: ${{ secrets.GITHUB_REPOSITORY }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          on:
+            repository: ${{ secrets.GITHUB_REPOSITORY }}
+            prerelease: true
+          if: github.event.release.tag_name =~ ^v.*
+```
+
+Note: The `deploy` section has been replaced with `actions/upload-artifact@v3` as GitHub Releases is not a native GitHub Action. The `if` condition has been added to ensure the deployment only happens on tags starting with `v`.

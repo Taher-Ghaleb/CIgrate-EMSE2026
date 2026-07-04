@@ -1,0 +1,34 @@
+language: android
+
+jdk:
+  - oraclejdk8
+
+android:
+  components:
+    - platform-tools
+    - tools
+
+    - android-23
+
+    - build-tools-23.0.3
+
+    - extra-android-m2repository
+
+  licenses:
+    - android-sdk-preview-license-.+
+    - android-sdk-license-.+
+    - google-gdk-license-.+
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle
+
+script: ./gradlew clean build
+
+branches:
+  except:
+  - /^gh-pages.*$/

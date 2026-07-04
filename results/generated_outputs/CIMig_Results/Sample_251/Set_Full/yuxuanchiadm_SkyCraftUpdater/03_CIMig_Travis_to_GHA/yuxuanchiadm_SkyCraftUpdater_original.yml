@@ -1,0 +1,21 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run: chmod +x gradlew
+
+macos:
+  jdk: openjdk8
+

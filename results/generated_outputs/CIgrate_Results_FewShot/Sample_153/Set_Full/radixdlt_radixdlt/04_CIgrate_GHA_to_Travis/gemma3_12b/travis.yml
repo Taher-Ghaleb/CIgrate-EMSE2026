@@ -1,0 +1,41 @@
+language: java
+sudo: required
+env:
+  TEST_DURATION: 30s
+cache:
+  directories:
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+    - build
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+jobs:
+  setup:
+    script:
+      - ./gradlew assemble --info
+    artifacts:
+      paths:
+        - '**/build/'
+  check:
+    dependencies:
+      - setup
+    script:
+      - ./gradlew check jacocoTestReport sonarqube --info
+  integration:
+    needs:
+      - setup
+      - check
+    script:
+      - ./gradlew integrationTest --info
+jdk:
+  - openjdk11
+install:
+  - echo "Setting up Gradle..."
+  - gradle wrapper
+before_install:
+  - echo "Fetching depth 0"
+  - git config --global fetch.depth 0

@@ -1,0 +1,69 @@
+name: Java CI
+
+on:
+  push:
+    tags:
+      - '*'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [oraclejdk8, oraclejdk7, openjdk7]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Run Gradle Check
+        run: ./gradlew check
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: oraclejdk8
+      - name: Assemble Distribution
+        run: ./gradlew assembleDist
+      - name: Upload Release Assets
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-assets
+          path: |
+            build/distributions/ical4j-${{ github.event.release.tag_name }}.zip
+            build/distributions/ical4j-${{ github.event.release.tag_name }}.tar.gz
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          files: |
+            build/distributions/ical4j-${{ github.event.release.tag_name }}.zip
+            build/distributions/ical4j-${{ github.event.release.tag_name }}.tar.gz
+
+  sonar:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'ical4j/ical4j-connector'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: oraclejdk8
+      - name: Import Sonar Certificate
+        run: |
+          sudo keytool -import -alias sonar -keystore $JAVA_HOME/jre/lib/security/cacerts -file sonar_cert.pem -storepass changeit -noprompt
+      - name: Run SonarQube
+        run: ./gradlew sonarqube

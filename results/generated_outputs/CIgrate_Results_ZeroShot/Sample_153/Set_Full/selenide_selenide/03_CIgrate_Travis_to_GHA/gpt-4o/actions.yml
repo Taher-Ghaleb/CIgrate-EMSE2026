@@ -1,0 +1,78 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CHROME_BIN: /usr/bin/google-chrome
+    services:
+      chrome:
+        image: selenium/standalone-chrome
+        options: --shm-size 2g
+      firefox:
+        image: selenium/standalone-firefox
+        options: --shm-size 2g
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Install dependencies
+        run: sudo apt-get install -y libappindicator1 fonts-liberation
+
+      - name: Update APT
+        run: sudo apt-get update
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+            ~/.sonar/cache/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Remove Gradle lock files
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+      - name: Run Check
+        run: ./gradlew check --no-daemon --console=plain
+
+      - name: Run Check + Sonar
+        if: github.event_name != 'pull_request'
+        run: ./gradlew sonarqube --no-daemon --console=plain -Dsonar.organization=${{ secrets.SONAR_ORG }} -Dsonar.host.url=${{ secrets.SONAR_HOST }} -Dsonar.login=${{ secrets.SONAR_LOGIN }} -Dsonar.branch.name=${{ github.ref_name }}
+
+      - name: Run Grid
+        run: ./gradlew grid --no-daemon --console=plain -i
+
+      - name: Run Firefox
+        run: ./gradlew firefox_headless --no-daemon --console=plain -i
+
+      - name: Run Chrome
+        run: ./gradlew chrome_headless --no-daemon --console=plain -i
+
+      - name: Upload Reports
+        run: ./.upload_reports.sh
+
+  notifications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack
+        # TODO: Add Slack notification action
+        run: echo "Slack notifications are not directly supported in GitHub Actions. Use a custom action or webhook."

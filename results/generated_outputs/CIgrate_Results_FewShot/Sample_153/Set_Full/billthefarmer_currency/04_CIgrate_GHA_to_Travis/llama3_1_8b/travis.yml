@@ -1,0 +1,16 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+sudo: false
+install: true
+cache: gradle
+before_install:
+  - yes | sdkmanager --licenses
+script:
+  -./gradlew build
+```
+
+Note that the `android-actions/setup-android@v3` and `sdkmanager` steps are not directly equivalent in Travis CI. In Travis CI, you can use the `android` configuration to specify the Android SDK components to install. In this case, we're assuming that the `android-sdk-preview-license-52d11cd2`, `android-sdk-license-.+`, and `google-gdk-license-.+` licenses are accepted. The `android` configuration is used to specify the Android SDK components to install, and the `build` script is used to run the Gradle build.

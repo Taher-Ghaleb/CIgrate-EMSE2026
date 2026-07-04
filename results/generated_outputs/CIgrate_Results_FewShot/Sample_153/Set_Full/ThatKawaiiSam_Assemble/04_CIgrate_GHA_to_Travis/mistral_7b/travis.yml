@@ -1,0 +1,49 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+env:
+  matrix:
+    - GITHUB_REF: refs/tags/*
+
+script:
+  - mvn install -DfinalName=release -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+before_script:
+  - mvn dependency:purge-local-repository
+
+matrix:
+  maven_cache:
+    - cache: maven
+
+before_install:
+  - mvn -B -U dependency:go-offline
+
+script:
+  - mvn test -B
+
+after_success:
+  - if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    uses: actions/upload-artifact@v4
+    with:
+      name: release-jar
+      path: target/release.jar
+
+deploy:
+  needs: build
+  if: ${{ startsWith(github.ref, 'refs/tags/') }}
+  script:
+    - mvn dependency:go-offline
+    - mvn dependency:get -Dartifact=release.jar:target/release.jar
+    - softprops/action-gh-release@v2 \
+      -f release.properties \
+      -f release.yml \
+      -f CHANGELOG.md \
+      -f README.md \
+      -f LICENSE

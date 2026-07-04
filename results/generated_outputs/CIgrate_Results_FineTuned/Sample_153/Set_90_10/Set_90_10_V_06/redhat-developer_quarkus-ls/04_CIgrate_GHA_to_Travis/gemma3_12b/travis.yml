@@ -1,0 +1,13 @@
+language: java
+jdk:
+  - oraclejdk8
+install: true
+script:
+  - cd quarkus.jdt.ext && ./mvnw clean verify
+  - cd quarkus.ls.ext/com.redhat.quarkus.ls && ./mvnw clean verify
+before_cache:
+  - rm -rf $HOME/.m2/repository/**/*-SNAPSHOT
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.m2/wrapper

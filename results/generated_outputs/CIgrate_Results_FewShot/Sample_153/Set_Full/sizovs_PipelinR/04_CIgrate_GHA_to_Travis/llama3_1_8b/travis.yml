@@ -1,0 +1,25 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - chmod +x gradlew
+  -./gradlew build jacocoTestReport
+cache:
+  directories:
+    - '$HOME/.gradle'
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+```
+
+Note that I've used the following mappings:
+
+- `language: java` to specify the language as Java
+- `jdk: openjdk8` to specify the JDK version as OpenJDK 8
+- `install: true` to enable the installation of the Gradle wrapper
+- `script` to specify the script commands to run
+- `cache` to specify the cache directories
+- `after_success` to specify the command to run after the build is successful

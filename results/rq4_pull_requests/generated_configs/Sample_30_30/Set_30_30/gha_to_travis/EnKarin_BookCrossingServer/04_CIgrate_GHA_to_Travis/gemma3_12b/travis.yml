@@ -1,0 +1,64 @@
+language: java
+jdk:
+  - openjdk21
+os: linux
+dist: xenial
+services:
+  - docker
+before_install:
+  - unset GEM_PATH
+install:
+  - mvn clean
+script:
+  - mvn verify
+  - mvn verify -P sonar,pitest-stryker
+  - bash <(curl -s https://codecov.io/bash)
+  - mvn package docker:build -DskipTests
+cache:
+  directories:
+    - $HOME/.m2
+    - $HOME/.sonar/cache
+before_cache:
+  - rm -f  $HOME/.m2/settings.xml
+before_script:
+  - unset GEM_PATH
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - secure: "********************"
+model" from GitHub Actions to Travis CI:
+name: Java CI
+
+on: [pull_request, push]
+
+jobs:
+  build:
+    runs_on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build with Maven
+        run: mvn clean verify
+      - name: Build with Maven and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+        run: mvn verify -P sonar,pitest-stry

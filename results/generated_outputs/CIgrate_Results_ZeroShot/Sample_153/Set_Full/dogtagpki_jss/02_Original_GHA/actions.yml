@@ -1,0 +1,41 @@
+name: Docker Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        FEDORA: [38, 39, 40]
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Pull Fedora Docker image
+      run: docker pull registry.fedoraproject.org/fedora:${{ matrix.FEDORA }}
+
+    - name: Start Fedora container
+      run: |
+        docker run \
+          --name=container \
+          --detach \
+          -i \
+          -v $(pwd):/root/jss \
+          registry.fedoraproject.org/fedora:${{ matrix.FEDORA }}
+
+    - name: Install build dependencies
+      run: |
+        docker exec container dnf install -y dnf-plugins-core gcc make rpm-build
+        docker exec container dnf copr -y enable @pki/10.6
+        docker exec container dnf builddep -y --spec /root/jss/jss.spec.in
+
+    - name: Build RPM packages
+      run: docker exec container /root/jss/build.sh --with-timestamp --with-commit-id rpm
+
+    - name: Install and test RPM packages
+      run: docker exec container rpm -Uvh /root/build/jss/RPMS/*
+
+    - name: Cleanup container
+      if: always()
+      run: docker rm -f container || true

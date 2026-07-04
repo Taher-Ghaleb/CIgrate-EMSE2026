@@ -1,0 +1,53 @@
+name: Java Build and Coverage Report
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: ${{ secrets.JAVA_HOME }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Install Maven
+        uses: actions/setup-node@v4
+        with:
+          version: '6.x'
+
+      - name: Install Maven
+        run: npm install -g maven
+
+      - name: Build, Test, and Generate Javadoc and Coverage Report
+        run: mvn verify javadoc:javadoc coveralls:report -Pcoverage
+
+workflow:
+  branches:
+    master:
+      permissions:
+        contents: read
+        pull-requests: write
+      secrets:
+        - JAVA_HOME

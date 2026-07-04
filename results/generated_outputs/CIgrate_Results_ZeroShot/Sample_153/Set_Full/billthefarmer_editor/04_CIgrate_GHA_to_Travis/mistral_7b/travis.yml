@@ -1,0 +1,40 @@
+language: java
+
+branches:
+  only:
+    - master
+    - feature/*
+    - bugfix/*
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - java -version
+  - ./gradlew wrapper
+  - cache --directories ~/.m2/repository,~/.gradle/
+
+script:
+  - java -version
+  - ./gradlew clean assembleDebug
+
+before_script:
+  - sdkmanager --sdk_root ~/android-sdk --list
+  - sdkmanager --sdk_root ~/android-sdk --install "platform-tools"
+  - sdkmanager --sdk_root ~/android-sdk --install "build-tools;25.0.2"
+  - sdkmanager --sdk_root ~/android-sdk --install "platforms;android-22"
+  - yes | sdkmanager --sdk_root ~/android-sdk --licenses
+  - chmod +x ./gradlew
+
+deploy:
+  on:
+    tags: true
+
+  script:
+    - git tag -a ${TRAVIS_TAG} -m "Deploying to production"
+    - git push origin ${TRAVIS_TAG}
+
+# TODO: Add notifications

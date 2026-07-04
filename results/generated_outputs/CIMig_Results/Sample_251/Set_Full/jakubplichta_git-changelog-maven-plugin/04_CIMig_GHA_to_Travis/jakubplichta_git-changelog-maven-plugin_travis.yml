@@ -1,0 +1,18 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  ./mvnw verify javadoc:javadoc -Pcoverage
+script
+after_success:
+  codecov
+  python-cmd
+directories: ~/.maven-
+include:
+  stage: build

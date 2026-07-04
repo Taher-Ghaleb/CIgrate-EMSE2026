@@ -1,0 +1,28 @@
+language: java
+jdk: 8
+env:
+  global:
+    - TEST_DIR: code/ingest
+    - secure: ${CODECOV_TOKEN}
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - master
+services:
+  - docker
+before_install:
+  - "if [ -e $TEST_DIR/gradlew ]; then chmod +x $TEST_DIR/gradlew; elif [ -e ./gradlew ]; then chmod +x ./gradlew; fi"
+install:
+  - "# TODO: Gradle setup - equivalent to gradle/actions/setup-gradle"
+script:
+  - cd $TEST_DIR
+  - if [ -e ./gradlew ]; then ./gradlew jacocoTestReport; else gradle jacocoTestReport; fi
+after_success:
+  - if [ -n "$CODECOV_TOKEN" ]; then
+      curl -L https://codecov.io/bash/ | bash
+    fi

@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  global:
+    sercoll_jdk6_java: $sercoll_jdk6_java
+    sercoll_jdk6_javac: $sercoll_jdk6_javac
+    sercoll_jdk6_javadoc: $sercoll_jdk6_javadoc
+  matrix:
+    jdk:
+      - openjdk8
+      - openjdk6
+
+language: java
+sudo: false
+
+jdk:
+  - openjdk8
+  - openjdk6
+
+script:
+  - sudo apt-get update
+  - sudo apt-get install -y openjdk-6-jdk
+  - actions/checkout@v4
+  - actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '8'
+  - cache:
+      directories:
+        - '~$HOME/.gradle'
+      key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+      restore-keys: |
+        ${{ runner.os }}-gradle-
+  - run: ./gradlew clean

@@ -1,0 +1,44 @@
+language: java
+sudo: false
+dist: focal
+
+matrix:
+  include:
+    - jdk: openjdk8
+      env: ROOT_POM=pom.xml
+    - jdk: openjdk8
+      env: ROOT_POM=android/pom.xml
+    - jdk: openjdk11
+      env: ROOT_POM=pom.xml
+    - jdk: openjdk11
+      env: ROOT_POM=android/pom.xml
+
+branches:
+  only:
+    - master
+    - /^release.*$/
+
+before_install:
+  - chmod +x util/*.sh
+
+install:
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn install -U -DskipTests=true -f $ROOT_POM
+
+script:
+  - mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn verify -U -Dmaven.javadoc.skip=true -f $ROOT_POM
+
+after_failure:
+  - ./util/print_surefire_reports.sh
+
+jobs:
+  include:
+    - stage: deploy
+      if: branch = master OR branch =~ ^release.*$
+      jdk: openjdk8
+      script:
+        - chmod +x util/*.sh
+        - export SECRET_1=$SECRET_1
+        - export SECRET_2=$SECRET_2
+        - export SECRET_3=$SECRET_3
+        - ./util/deploy_snapshot.sh
+        - ./util/update_snapshot_docs.sh

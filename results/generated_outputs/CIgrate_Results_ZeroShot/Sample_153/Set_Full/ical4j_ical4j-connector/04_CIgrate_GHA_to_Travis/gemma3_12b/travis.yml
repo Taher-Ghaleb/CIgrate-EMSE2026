@@ -1,0 +1,61 @@
+language: java
+jdk:
+  - 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - master
+services:
+  - docker
+before_install:
+  - echo "Before install"
+install:
+  - echo "Install"
+before_script:
+  - echo "Before script"
+script:
+  - chmod +x gradlew
+  - ./gradlew check
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      sudo keytool -import -alias sonar -keystore $JAVA_HOME/lib/security/cacerts -file sonar_cert.pem -storepass changeit -noprompt || true
+    fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      ./gradlew sonarqube
+    fi
+deploy:
+  provider: script
+  on:
+    tags: true
+  if: $TRAVIS_BRANCH =~ ^tags\/.*
+  script:
+    - chmod +x gradlew
+    - ./gradlew assembleDist
+    - VERSION=$(echo $TRAVIS_TAG | sed 's/refs\/tags\///')
+    - echo "version=$VERSION" > .travis_version
+    - echo "version=$VERSION"
+    - echo "version=${GITHUB_REF#refs/tags/}" > $GITHUB_OUTPUT
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"
+    - echo "version=$VERSION"

@@ -1,0 +1,34 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.gradle
+
+branches:
+  only:
+    - main
+    - /^v\d+\.\d+\.\d+/
+
+before_install:
+  - chmod +x ./gradlew
+
+install:
+  - ./gradlew build
+
+script:
+  - ./gradlew build
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file_glob: true
+  file: build/libs/*.jar
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: AuScope/NVCLAnalyticalServices

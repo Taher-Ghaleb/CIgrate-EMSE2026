@@ -1,0 +1,39 @@
+language: java
+sudo: false
+env:
+  MAVEN_OPTS: -Drevision=${{ github.ref_name }}-SNAPSHOT -Dproperty=revision -DnewVersion=${{ github.ref_name }}-SNAPSHOT -DgenerateBackupPoms=false
+jdk:
+  - openjdk8
+  - oraclejdk9
+install: true
+matrix:
+  include:
+    - jdk: openjdk8
+      distribution: temurin
+    - jdk: oraclejdk9
+      distribution: temurin
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+    - '$HOME/.gradle/'
+before_install:
+  - cat /etc/hosts
+  - sudo hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+  - cat /etc/hosts
+script:
+  - mvn -B verify
+  - if [ "${matrix.jdk}" == "8" ]; then mvn -B sonar:sonar; fi
+  - if [ -n "${SONAR_TOKEN}" ]; then
+      mvn -B sonar:sonar
+    env:
+      SONAR_TOKEN: $SONAR_TOKEN
+      SONAR_ORGANIZATION: ianagbip1oti-github
+  fi
+deploy:
+  on:
+    tags: true
+  if: startsWith(github.ref, 'refs/tags/') && github.ref_name != '' && contains(github.ref_name, '.')
+  script:
+    - mvn -s etc/settings.xml -B versions:set-property deploy -P release
+    - echo "Deploying to Maven Central"

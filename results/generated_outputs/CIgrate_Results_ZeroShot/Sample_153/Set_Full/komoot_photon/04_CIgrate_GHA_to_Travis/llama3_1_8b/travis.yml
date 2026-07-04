@@ -1,0 +1,59 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK ${{ matrix.jdk }}"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-${{ matrix.jdk }}
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - echo "Building and testing with Maven"
+  - mvn clean install
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploying to staging"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "Deploying to staging on failure"
+
+deploy:
+  - echo "Deploying to production"
+  - echo "Deploying to staging"
+
+branches:
+  only:
+    - main
+    - feature/new-feature
+
+matrix:
+  include:
+    - jdk: 8
+    - jdk: 11
+    - jdk: 17
+  allow_failures:
+    - jdk: 11
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    recipients:
+      - user@example.com
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+env:
+  FOO: ${{ secrets.FOO }}

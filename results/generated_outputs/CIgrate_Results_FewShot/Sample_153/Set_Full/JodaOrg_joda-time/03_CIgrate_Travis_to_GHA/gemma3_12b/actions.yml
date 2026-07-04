@@ -1,0 +1,38 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Verify Maven installation
+        run: mvn --version
+      - name: Run install and site
+        run: mvn install site -e -B
+      - name: Deploy website (tagged builds only)
+        if: ${{ github.ref =~ /^refs\/tags\/website\./ && github.event.ref_type == 'tag' && env.JAVA_VERSION == '8' }}
+        run: |
+          chmod +x ./.github/website.sh
+          ./.github/website.sh
+      - name: Deploy website (versioned builds only)
+        if: ${{ github.ref =~ /^refs\/tags\/v\./ && github.event.ref_type == 'tag' && env.JAVA_VERSION == '8' && github.event.pull_request == null }}
+        run: |
+          chmod +x ./.github/website.sh
+          ./.github/website.sh
+    env:
+      JAVA_VERSION: 8
+      secure: ********************

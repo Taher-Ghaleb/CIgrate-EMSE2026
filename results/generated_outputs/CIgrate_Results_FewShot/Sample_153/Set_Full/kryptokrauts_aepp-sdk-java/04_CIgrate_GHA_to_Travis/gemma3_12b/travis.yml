@@ -1,0 +1,73 @@
+language: java
+sudo: required
+branches:
+  only:
+    - master
+    - dev
+
+env:
+  global:
+    - ADB_INSTALL_TIMEOUT: 10
+
+jobs:
+  build:
+    script:
+      - chmod +x gradlew
+      - ./gradlew build
+    before_install:
+      - cat /etc/hosts
+    install:
+      - chmod +x travis-install-libsodium.sh
+      - ./travis-install-libsodium.sh
+      - echo "PKG_CONFIG_PATH=$HOME/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+      - echo "LD_LIBRARY_PATH=$HOME/libsodium/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+    cache:
+      directories:
+        - $HOME/libsodium
+    before_script:
+      - docker-compose up -d
+    script:
+      - ./gradlew integrationTest
+    after_success:
+      - ./gradlew artifactoryPublish -x test -Dsnapshot=false -Dbintray.user=${BINTRAY_USER} -Dbintray.key=${BINTRAY_KEY} -Dbuild.number=${TRAVIS_BUILD_NUMBER}
+    artifacts:
+      paths:
+        - build/libs/*.jar
+  snapshot:
+    if: $TRAVIS_BRANCH == 'dev' && $TRAVIS_EVENT_TYPE == 'push'
+    script:
+      - chmod +x gradlew
+      - ./gradlew artifactoryPublish -x test -Dsnapshot=true -Dbintray.user=${BINTRAY_USER} -Dbintray.key=${BINTRAY_KEY} -Dbuild.number=${TRAVIS_BUILD_NUMBER}
+  release:
+    if: $TRAVIS_BRANCH == 'master' && $TRAVIS_EVENT_TYPE == 'push'
+    script:
+      - ./gradlew bintrayUpload -x test -Dbintray.user=${BINTRAY_USER} -Dbintray.key=${BINTRAY_KEY} -Dbuild.number=${TRAVIS_BUILD_NUMBER}
+    before_script:
+      - VERSION=$(./gradlew -q pV)
+      - echo "tag=v$VERSION"
+    after_success:
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"
+      - echo "tag=v$VERSION"

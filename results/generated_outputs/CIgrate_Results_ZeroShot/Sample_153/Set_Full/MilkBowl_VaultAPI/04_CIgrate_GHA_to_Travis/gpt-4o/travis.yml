@@ -1,0 +1,31 @@
+language: java
+jdk:
+  - openjdk11
+
+branches:
+  except:
+    - gh-pages
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+env:
+  global:
+    - SECRET_1=$SECRET_1
+    - SECRET_2=$SECRET_2
+    - SECRET_3=$SECRET_3
+
+before_install:
+  - chmod +x .utility/do-publish.sh
+
+install:
+  - if [ -f "pom.xml" ]; then mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V; fi
+  - if [ -f "build.gradle" ]; then ./gradlew assemble; fi
+
+script:
+  - if [ -f "pom.xml" ]; then mvn test; fi
+  - if [ -f "build.gradle" ]; then ./gradlew test; fi
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_EVENT_TYPE" == "push" ]; then ./.utility/do-publish.sh; fi

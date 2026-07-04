@@ -1,0 +1,23 @@
+language: java
+git:
+  quiet: true
+env:
+  global:
+    - secure: "********************"
+branches:
+  only:
+    - master
+    - /v\d+\.\d+[a-zA-Z-_]+?(\.\d+[a-zA-Z-_]+?)/
+install:
+  - mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - ant dist
+deploy:
+  provider: releases
+  overwrite: true
+  api_key:
+    secure: "********************"
+  file: MedTagger.zip
+  on:
+    tags: true
+  skip_cleanup: true

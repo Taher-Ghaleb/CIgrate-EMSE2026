@@ -1,0 +1,27 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install codecov
+        run: pip install --user codecov
+      - name: Install dependencies
+        run: mvn install -DskipTests=true -Dgpg.skip=true -B -V
+      - name: Run tests and generate coverage
+        run: mvn test jacoco:report
+      - name: Upload coverage to Codecov
+        run: codecov
+```
+Note: The `after_success` event in Travis CI is equivalent to the `on.push` event in GitHub Actions, which is triggered when a push event occurs. In this case, we've moved the `codecov` step to the end of the workflow, which will run after the `test` step.

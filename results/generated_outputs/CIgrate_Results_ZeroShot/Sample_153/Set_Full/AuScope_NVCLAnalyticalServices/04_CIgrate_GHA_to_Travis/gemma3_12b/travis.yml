@@ -1,0 +1,49 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+branches:
+  only:
+    - main
+    - /^(\([0-9]+|[a-z0-9])+\)$/
+    - tags
+before_install:
+  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+install:
+  - chmod +x ./gradlew
+script:
+  - ./gradlew build
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+    - echo "Skipping release on main branch"
+    - exit 0
+    fi
+  - if [ "$TRAVIS_TAG" != "null" ]; then
+    - echo "Creating and uploading release"
+    - |
+      if [ "$TRAVIS_REPO_SLUG" == "AuScope/NVCLAnalyticalServices" ]; then
+        if [[ "$TRAVIS_TAG" == v* ]]; then
+          echo "Tag is a valid version"
+        else
+          echo "Tag is not a valid version"
+          exit 1
+        fi
+        echo "Release name: $TRAVIS_TAG"
+        echo "Release version: $TRAVIS_TAG"
+        echo "Release body: $TRAVIS_TAG"
+        echo "Releasing..."
+        curl -fSL -H "Authorization: token $GITHUB_TOKEN" \
+          -d "tag_name=$TRAVIS_TAG" \
+          https://api.github.com/repos/${TRAVIS_REPO_SLUG}/releases
+        curl -fSL -H "Authorization: token $GITHUB_TOKEN" \
+          -d "tag_name=$TRAVIS_TAG" \
+          https://api.github.com/repos/${TRAVIS_REPO_SLUG}/releases
+        curl -fSL -H "Authorization: token $GITHUB_TOKEN" \
+          -d "tag_name=$TRAVIS_TAG" \
+          https://api.github.com/repos/${TRAVIS_REPO_SLUG}/releases
+      else
+        echo "Skipping release for non-AuScope/NVCLAnalyticalServices repository"
+      fi
+  fi

@@ -1,0 +1,25 @@
+language: java
+jdk: openjdk8
+sudo: false
+
+branches:
+  except:
+    - '/^.*-[0-9]+\\..*/'
+    - '/^.*-[0-9]+\\.[0-9]+\\.[0-9]+.*/'
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+before_install:
+  - mvn -s ./.travis.maven-settings.xml clean
+
+script:
+  - mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install
+  - mvn -s ./.travis.maven-settings.xml -Pcontinuous-integration -U -Dmaven.javadoc.skip=true install -f example
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+after_script:
+  - rm -rf $HOME/.m2/repository/io/wcm

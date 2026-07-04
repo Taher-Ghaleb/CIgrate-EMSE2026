@@ -1,0 +1,19 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: main
+before_install:
+  java -version
+  mvn -B -U -Possrh clean verify\n
+script:
+  script:
+    mvn -B -U deploy -DskipTests=true\n
+deploy:
+  github_token: $github_token
+stage: ☕ 11
+directories: ~/.maven-

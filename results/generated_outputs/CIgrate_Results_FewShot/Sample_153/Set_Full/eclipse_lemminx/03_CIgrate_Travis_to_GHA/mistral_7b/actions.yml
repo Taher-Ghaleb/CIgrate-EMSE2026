@@ -1,0 +1,52 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    - SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Clean Maven Snapshots
+        run: rm -rf ${{ env.HOME }}/.m2/repository/**/*-SNAPSHOT
+      - name: Install Maven Wrapper
+        uses: jbarr78/maven-wrapper@v1
+      - name: Install Maven Dependencies
+        run: ./mvnw dependency:get
+      - name: Build, test and analyze
+        run: ./mvnw clean verify
+      - name: Upload coverage to SonarCloud
+        uses: sonarsource/sonarcloud-scanner-maven@4.1.0.1218
+        with:
+          sonar.login: ${{ env.SONAR_TOKEN }}
+          sonar.projectKey: ${{ github.repository }}
+          sonar.projectName: ${{ github.repository }}
+          sonar.sources: .
+          sonar.exclusions: '**/*.java'
+      - name: Notify via Email
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const core = require('@actions/core');
+            const github = require('@actions/github');
+            try {
+              const pull

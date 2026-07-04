@@ -1,0 +1,51 @@
+language: java
+sudo: required
+env:
+  ANDROID_API_LEVEL: 33
+  ANDROID_BUILD_TOOLS_VERSION: 33.0.2
+branches:
+  only:
+    - main
+    - master
+    - develop
+pull_request:
+  branches:
+    - main
+    - master
+cache:
+  directories:
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+jdk:
+  - openjdk17
+before_install:
+  - chmod +x gradlew
+install:
+  - yes | sdkmanager --licenses || true
+  - sdkmanager "build-tools;${ANDROID_BUILD_TOOLS_VERSION}"
+  - sdkmanager "platforms;android-${ANDROID_API_LEVEL}"
+  - sdkmanager --list_installed
+script:
+  - ./gradlew clean build
+  - ./gradlew test
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "main" ] || [ "$TRAVIS_BRANCH" == "master" ]; then
+      echo "Creating development release..."
+      ./gradlew assembleRelease
+      if [ $TRAVIS_COMMIT_MESSAGE != "" ]; then
+        echo "Commit message: $TRAVIS_COMMIT_MESSAGE"
+      fi
+      if [ $TRAVIS_COMMIT_AUTHOR_NAME != "" ]; then
+        echo "Commit author: $TRAVIS_COMMIT_AUTHOR_NAME"
+      fi
+      if [ $TRAVIS_COMMIT_AUTHOR_EMAIL != "" ]; then
+        echo "Commit email: $TRAVIS_COMMIT_AUTHOR_EMAIL"
+      fi
+      
+      # TODO: Implement gh release using Travis CI environment variables
+      # This requires setting up GITHUB_TOKEN in Travis CI settings
+      # and using Travis CI's environment variables for authentication.
+      # The softprops/action-gh-release action is not directly compatible with Travis CI.
+      # A custom script or a different tool would be needed to achieve the same functionality.
+      echo "Development release creation skipped due to Travis CI limitations."
+    fi

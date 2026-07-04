@@ -1,0 +1,57 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+
+env:
+  BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+  BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      - docker
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          distribution_version: ${{ matrix.jdk }}
+
+      - name: Setup Gradle
+        uses: actions/setup-gradle@v2
+
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-gradle-dependencies
+          path: ${{ runner.cacheDir }}/.gradle/caches/
+          restore-keys: |
+            ${{ runner.os }}-gradle-dependencies-v${{ hashFiles('**/build.gradle') }}
+            ${{ runner.os }}-gradle-dependencies-v${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Install Libsodium
+        run: ./travis-install-libsodium.sh
+
+      - name: Configure Libsodium Environment
+        env:
+          PKG_CONFIG_PATH: ${{ runner.cacheDir }}/.gradle/caches/libsodium/lib/pkgconfig:$PKG_CONFIG_PATH
+          LD_LIBRARY_PATH: ${{ runner.cacheDir }}/.gradle/caches/libsodium/lib:$LD_LIBRARY_PATH
+
+      - name: Build
+        run: docker-compose up -d && ./gradlew integrationTest && ./gradlew build
+
+  snapshot:
+    needs:

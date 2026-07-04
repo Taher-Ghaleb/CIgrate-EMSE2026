@@ -1,0 +1,55 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  TAG_BRANCH: ${{ github.event.pusher.ref }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 12
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: '12'
+      - name: Install p7zip-full
+        uses: actions/cache@v4
+        with:
+          path: /usr/lib
+          key: ${{ runner.os }}-p7zip-full-${{ hashFiles('p7zip-full.deb') }}
+          restore-keys: ${{ runner.os }}-p7zip-full-
+      - name: Start Xvfb
+        run: |
+          if [[ "${GITHUB_ACTIONS}" == "true" ]]; then export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start; fi
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2-
+      - name: Run Maven
+        run: mvn package -q
+      - name: Prepare deploy
+        run: chmod +x.github/deploy_prepare.sh
+      - name: Deploy to GitHub Releases
+        uses: actions/upload-artifact@v2
+        with:
+          name: javadoc.zip
+          path: javadoc.zip
+      - name: Deploy to GitHub Releases
+        uses: actions/upload-artifact@v2
+        with:
+          name: /**/target/*.jar
+          path: /**/target/*.jar
+      - name: Deploy to Bintray Central
+        run: chmod +x.github/deploy_bintray_central.sh
+      - name: Deploy to Bintray Central
+        run:.github/deploy_bintray_central.sh
+```
+Note that I've used the `actions/upload-artifact` action to upload the artifacts to GitHub Releases, as the `releases` provider is not a valid provider in GitHub Actions.

@@ -1,0 +1,41 @@
+language: java
+sudo: false
+env:
+  global:
+  - secure: "********************"
+  - secure: "********************"
+  - JAVA_HOME=/home/travis/openjdk11
+before_cache:
+  - rm -rf $HOME/.gradle
+  - rm -rf $HOME/.sdkman
+cache:
+  directories:
+  - $HOME/.gradle
+  - $HOME/.sdkman
+before_install:
+  - pip install --user codecov
+  - curl -sL https://get.sdkman.io | bash
+  - echo "sdkman_auto_answer=true" > $HOME/.sdkman/etc/config
+  - echo "sdkman_auto_selfupdate=true" >> $HOME/.sdkman/etc/config
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sudo dpkg --purge --force-depends ca-certificates-java || true
+  - sudo apt-get update
+  - sudo apt-get install ca-certificates-java
+  - sudo update-ca-certificates -f
+script:
+  - source ./config_build.sh && ./gradlew assemble -DexcludeBenchmark
+  - source ./config_build.sh && ./run_tests.sh
+  - ./gradlew buildDistributions -DexcludeBenchmark
+after_success:
+  - codecov
+deploy:
+  provider: script
+  script:
+    # TODO: Configure Bintray deployment using bintray.json
+  skip_cleanup: true
+  on:
+    branch: develop
+notifications:
+  webhooks: https://webhooks.gitter.im/e/31a671345ecfdce18046
+  slack:
+    secure: "********************"

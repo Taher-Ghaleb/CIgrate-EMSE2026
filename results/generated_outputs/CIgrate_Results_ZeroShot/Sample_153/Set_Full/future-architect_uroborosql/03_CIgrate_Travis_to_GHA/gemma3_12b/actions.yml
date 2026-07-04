@@ -1,0 +1,47 @@
+name: Java CI with Travis Migration
+
+on:
+  push:
+  pull_request:
+  branch:
+    paths:
+      - 'master'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_OPTS: -Dorg.slf4j.simpleMappin=true
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache
+          key: ${{ runner.os }}-cache
+      - run: mvn clean test jacoco:report coveralls:report
+      # TODO: Coveralls integration needs a dedicated action or manual setup.
+
+  deploy:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: mvn deploy -Dmaven.test.skip=true --settings .travis.settings.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # TODO: Skip cleanup is not directly supported.  Consider using a separate deployment job with appropriate permissions.
+
+notifications:
+  email:
+    recipients:
+      - gr-tig-oss@future.co.jp
+    on_success: change
+    on_failure: always

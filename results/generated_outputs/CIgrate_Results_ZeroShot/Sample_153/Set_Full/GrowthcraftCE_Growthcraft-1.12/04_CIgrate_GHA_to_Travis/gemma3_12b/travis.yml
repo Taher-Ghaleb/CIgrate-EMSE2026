@@ -1,0 +1,47 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - ~/.sonar/cache
+branches:
+  only:
+    - master
+  except:
+    - tags
+notifications:
+  email:
+    recipients:
+      -
+    on_success: change
+    on_failure: change
+before_install:
+-
+install:
+-
+before_script:
+- chmod +x ./gradlew
+script:
+  - ./gradlew setupCIWorkspace -S
+  - ./gradlew build
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then ./gradlew sonarqube; fi
+  - ls -la build/libs
+deploy:
+  provider: script
+  on:
+    tags: true
+  script:
+    - chmod +x ./gradlew
+    - ./gradlew build
+    - if [ "$TRAVIS_TAG" != null ]; then ./bin/release.sh; fi
+  skip_cleanup: true
+  repo: growthcraftce/REPO_NAME
+  tags: true
+  environment:
+    global:
+      secure:
+        SONAR_TOKEN: $SONAR_TOKEN
+        GITHUB_TOKEN: $GITHUB_TOKEN
+      SONAR_HOST_URL: https://sonarcloud.io
+      SONAR_ORGANIZATION: growthcraftce

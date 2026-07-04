@@ -1,0 +1,43 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+script:
+  - docker pull my-docker-image:${{ matrix.java }}
+  - docker run --rm -v "$(pwd)":/app my-docker-image:${{ matrix.java }} mvn install -B
+
+before_script:
+  - export JAVA_HOME=$(/usr/lib/jvm/java-${{ matrix.java }}-openjdk-amd64/bin/java --version | awk '{print $3}' | sed 's/\.openjdk//')
+
+cache:
+  directories:
+    - ~/.m2/repository
+
+env:
+  global:
+    - GIT_STRATEGY: none
+
+matrix:
+  include:
+    - distribution: 'zulu'
+      java: '7'
+    - distribution: 'temurin'
+      java: '8'
+
+addons:
+  docker:
+    - name: Docker
+      version: latest

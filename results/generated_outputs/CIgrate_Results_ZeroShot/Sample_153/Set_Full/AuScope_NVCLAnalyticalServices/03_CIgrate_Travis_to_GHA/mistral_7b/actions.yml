@@ -1,0 +1,66 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  JDK_VERSION: oraclejdk8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JDK_VERSION }}
+
+      - name: Install Gradle
+        run: |
+          curl -sSL https://get.gradle.org/gradle-6.7.1-all.zip -o /tmp/gradle.zip
+          unzip /tmp/gradle.zip -d /tmp/gradle
+          export PATH=$PATH:/tmp/gradle/bin
+
+      - name: Build
+        run: ./gradlew build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repository context
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.ref }}
+
+      - name: Login to GitHub Packages
+        uses: actions/github-login@v4
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build/libs/NVCLAnalyticalServices-1.0.0.jar
+          path: build/libs/NVCLAnalyticalServices-1.0.0.jar
+
+      - name: Create a new release
+        uses: actions/create-release@v4
+        with:
+          tag_name: ${{ github.ref }}
+          release-name: NVCLAnalyticalServices ${{ github.ref }}
+          token

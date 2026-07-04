@@ -1,0 +1,14 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+script:
+  - mvn clean install

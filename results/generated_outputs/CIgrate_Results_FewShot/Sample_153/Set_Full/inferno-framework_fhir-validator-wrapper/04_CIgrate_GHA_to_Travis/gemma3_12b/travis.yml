@@ -1,0 +1,22 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.gradle
+    - ~/.m2/repository
+    - build/
+branches:
+  only:
+    - master
+    - develop
+jobs:
+  build-and-test:
+    script:
+      - chmod +x gradlew
+      - ./gradlew build
+    jdk: openjdk8
+  docker-build:
+    dependencies:
+      - build-and-test
+    script:
+      - docker build -t hl7_validator .

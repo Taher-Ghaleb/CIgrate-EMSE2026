@@ -1,0 +1,62 @@
+name: Java Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+    tags:
+      - '*'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      zookeeper:
+        image: apache/zookeeper:3.7.0
+        ports:
+          - 2181:2181
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+
+      - name: Install dependencies
+        run: |
+          mkdir /tmp/zookeeper
+          export ZK="apache-zookeeper-3.7.0-bin"
+          wget https://archive.apache.org/dist/zookeeper/zookeeper-3.7.0/$ZK.tar.gz
+          tar xzf $ZK.tar.gz -C /tmp/zookeeper
+          cp /tmp/zookeeper/$ZK/conf/zoo_sample.cfg /tmp/zookeeper/$ZK/conf/zoo.cfg
+          /tmp/zookeeper/$ZK/bin/zkServer.sh start
+          cat /tmp/zookeeper/$ZK/logs/*
+
+      - name: Configure Zookeeper
+        run: |
+          sed -i "s/zookeepernodes:.*/zookeepernodes:\ ['localhost:2181']/" conf/bboxdb.yaml
+          echo "#####################################################################"
+          cat conf/bboxdb.yaml
+          echo "#####################################################################"
+      - name: Create required directories
+        run: mkdir -p /tmp/bboxdb/data
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-dependencies-
+
+      - name: Build and test
+        run: |
+          mvn clean package
+
+      - name: Upload to codecov
+        run: bash <(curl -s https://codecov.io/bash)
+```
+Note: The above workflow uses the `ubuntu-latest` image, which is a more modern and secure option than the `trusty` image used in the original Travis CI configuration. The `actions/cache` step is used to cache the Maven dependencies, and the `actions/checkout` step

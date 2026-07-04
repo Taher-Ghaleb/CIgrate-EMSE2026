@@ -1,0 +1,24 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+jdk:
+  - openjdk8
+
+script:
+  - mvn install -P eclipse
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+      if [ "$TRAVIS_TAG" == "" ]; then
+        echo "Skipping Codecov upload on main branch without tag."
+      else
+        echo "Uploading coverage to Codecov..."
+        if [[ -n "${CODECOV_TOKEN}" ]]; then
+          curl -X POST -H "Authorization: Bearer ${CODECOV_TOKEN}" -d '{}' https://codecov.io/validate
+        else
+          echo "CODECOV_TOKEN not set. Skipping Codecov upload."
+        fi
+      fi
+    fi

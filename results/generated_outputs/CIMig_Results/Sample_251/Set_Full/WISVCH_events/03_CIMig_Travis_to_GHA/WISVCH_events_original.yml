@@ -1,0 +1,19 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path
+        configuration-cache-enabled: FALSE
+    - name: Placeholder
+      run: if [ \"${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}\" == \"master\" ]; then docker login -u=\"$DOCKER_USERNAME\" -p=\"$DOCKER_PASSWORD\"; docker push wisvch/events:$TRAVIS_BUILD_NUMBER; fi
+
+macos:
+  jdk: oraclejdk8
+

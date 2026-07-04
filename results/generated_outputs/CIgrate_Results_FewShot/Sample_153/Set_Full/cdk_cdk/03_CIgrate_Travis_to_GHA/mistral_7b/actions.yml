@@ -1,0 +1,47 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    - ADB_INSTALL_TIMEOUT: 10
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Install Maven
+        uses: actions/setup-node@v4
+      - name: Install Maven
+        run: |
+          curl -sL https://deb.nodesource.com -o nodesource_setup.sh
+          chmod +x nodesource_setup.sh
+          ./nodesource_setup.sh -p java-8-openjdk
+      - name: Install Maven
+        run: |
+          wget https://repo.maven.apache.org/maven2/org/apache/maven/maven-core/3.6.3/maven-core-3.6.3-bin.tar.gz
+          tar -xzf maven-core-3.6.3-bin.tar.gz
+          mv apache-maven-3.6.3 ~/.m2/
+          export M2_HOME=~/.m2/apache-maven-3.6.3
+          export PATH=$M2_HOME/bin:$PATH
+      - name: Install Maven
+        run: |
+          curl -sL https://deb.nodesource.com -o nodesource_setup.sh
+          chmod +x nodesource_setup.sh
+          ./nodesource_setup.sh -p java-8-openjdk
+      - name: Install Maven
+        run: |
+          wget https

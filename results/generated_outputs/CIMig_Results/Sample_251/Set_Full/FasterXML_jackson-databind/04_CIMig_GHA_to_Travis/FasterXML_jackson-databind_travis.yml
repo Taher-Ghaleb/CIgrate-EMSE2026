@@ -1,0 +1,33 @@
+env:
+  global:
+    OBJ-NODE:
+      secure: token
+    OBJ-NODE:
+      secure: token
+cache:
+  directories:
+    ~/.gradle
+    ~/.maven-
+notifications: email
+language:
+  java
+jdk: [jdk7,jdk8]
+branches: master
+before_install:
+  java -version
+  ./mvnw -B -ff -DskipTests -ntp source:jar deploy
+script:
+  script:
+    ./mvnw -V -B -ff -ntp verify
+after_success:
+  bash <(curl-cmd
+  ./mvnw -B -ff -ntp test
+directories: ~/.m2/repository
+apt:
+  packages: jdk-6-jdk
+sudo: FALSE
+name: placeholder_Name
+addons:
+  firefox: latest
+include:
+  stage: Build

@@ -1,0 +1,36 @@
+language: java
+branches:
+  only:
+    - master
+    - '**-[0-9]+.**'
+  except:
+    - tags
+  
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+before_install:
+  - echo "Before install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before script"
+
+script:
+  - chmod +x .travis/build.sh
+  - .travis/build.sh
+  
+env:
+  SECRET_1: $SECRET_1
+  SECRET_2: $SECRET_2
+  
+after_success:
+  - echo "After success"
+  
+after_failure:
+  - echo "After failure"

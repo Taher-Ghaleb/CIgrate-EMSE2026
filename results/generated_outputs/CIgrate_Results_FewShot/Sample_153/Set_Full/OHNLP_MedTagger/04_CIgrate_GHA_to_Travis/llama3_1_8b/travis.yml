@@ -1,0 +1,78 @@
+Here is the equivalent complete Travis CI configuration:
+
+```yaml
+language: java
+sudo: false
+jdk:
+  - oraclejdk8
+env:
+  matrix:
+    - DEPLOY_KEY=$DEPLOY_KEY
+install: true
+script:
+  - mvn clean deploy -Pbuild-deploy -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dtoken=$DEPLOY_KEY
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - ant dist
+after_success:
+  - if [ -f "MedTagger.zip" ]; then
+      echo "MedTagger.zip found"
+    else
+      echo "Error: MedTagger.zip not found"
+      exit 1
+    fi
+deploy:
+  on:
+    tags: true
+  skip_cleanup: true
+  provider: script
+  script:
+    - if [ -f "MedTagger.zip" ]; then
+        echo "MedTagger.zip found"
+      else
+        echo "Error: MedTagger.zip not found"
+        exit 1
+      fi
+  on:
+    tags: true
+  skip_cleanup: true
+  provider: script
+  script:
+    - if [ -f "MedTagger.zip" ]; then
+        echo "MedTagger.zip found"
+      else
+        echo "Error: MedTagger.zip not found"
+        exit 1
+      fi
+  on:
+    tags: true
+  skip_cleanup: true
+  provider: script
+  script:
+    - if [ -f "MedTagger.zip" ]; then
+        echo "MedTagger.zip found"
+      else
+        echo "Error: MedTagger.zip not found"
+        exit 1
+      fi
+  on:
+    tags: true
+  skip_cleanup: true
+  provider: script
+  script:
+    - if [ -f "MedTagger.zip" ]; then
+        echo "MedTagger.zip found"
+      else
+        echo "Error: MedTagger.zip not found"
+        exit 1
+      fi
+  on:
+    tags: true
+  skip_cleanup: true
+  provider: script
+  script:
+    - if [ -f "MedTagger.zip" ]; then
+        echo "MedTagger.zip found"
+      else
+        echo "Error: MedTagger.zip not found"
+        exit 1
+      fi

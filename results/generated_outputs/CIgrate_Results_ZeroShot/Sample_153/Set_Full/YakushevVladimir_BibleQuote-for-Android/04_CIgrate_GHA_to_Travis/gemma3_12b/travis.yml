@@ -1,0 +1,33 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+
+branches:
+  only:
+    - main
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - export JAVA_HOME=${JAVA_HOME}
+
+install:
+  - echo "Installing Android SDK..."
+  - sdkmanager "tools" "platform-tools" "build-tools;30.0.3" "platforms;android-30" "extras;android;m2repository" "extras;google;m2repository" "extras;android;support" > /dev/null
+  - echo "Accepting Android licenses..."
+  - sdkmanager --licenses > /dev/null
+
+before_script:
+  - chmod +x gradlew
+
+script:
+  - echo "Building the project..."
+  - ./gradlew clean build
+  - echo "Running tests and coverage..."
+  - ./gradlew testDebugUnitTestCoverage coveralls

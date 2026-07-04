@@ -1,0 +1,38 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Build and test
+        run: mvn clean test jacoco:report coveralls:report
+      - name: Deploy to Maven Central
+        if: github.ref == 'refs/heads/master'
+        run: mvn deploy -Dmaven.test.skip=true --settings .travis.settings.xml
+      - name: Email notifications
+        if: always()
+        run: |
+          # TODO: Configure email notifications here.
+          # This is a placeholder for sending email notifications on success or failure.
+          # You'll need to configure email settings and use a tool like `mail` or `sendmail` to send emails.
+          # For example:
+          # if [[ $TRAVIS_BUILD_STATUS == "success" ]]; then
+          #   mail -s "Build Success" gr-tig-oss@future.co.jp <<< "Build $TRAVIS_BUILD_NUMBER on branch $TRAVIS_BRANCH has succeeded."
+          # else
+          #   mail -s "Build Failure" gr-tig-oss@future.co.jp <<< "Build $TRAVIS_BUILD_NUMBER on branch $TRAVIS_BRANCH has failed."
+          # fi

@@ -1,0 +1,22 @@
+env: global
+cache:
+  directories: ~/.maven-
+language:
+  java
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  ./mvnw -V -B -ff -ntp verify
+script:
+  script:
+    ./mvnw -V -B -ff -DskipTests -ntp source:jar deploy
+sudo: FALSE
+addons:
+  firefox: latest
+apt:
+  packages: jdk-6-jdk
+include:
+  name: Deploy snapshot
+  stage: Build
+directories: ~/.m2/repository

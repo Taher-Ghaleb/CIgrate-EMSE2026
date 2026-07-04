@@ -1,0 +1,63 @@
+language: android
+jdk: openjdk17
+env:
+  ANDROID_API_LEVEL: 33
+  ANDROID_BUILD_TOOLS_VERSION: 33.0.2
+
+sudo: required
+
+before_install:
+  - sdkmanager --licenses
+
+install:
+  - sdkmanager "build-tools;${{ env.ANDROID_BUILD_TOOLS_VERSION }}"
+  - sdkmanager "platforms;android-${{ env.ANDROID_API_LEVEL }}"
+
+script:
+  - chmod +x gradlew
+  - ./gradlew clean build
+  - ./gradlew test
+
+after_success:
+  - name: Upload test results
+    uses: actions/upload-artifact@v4
+    with:
+      name: test-results
+      path: |
+        **/build/reports/tests/
+        **/build/test-results/
+      retention-days: 7
+
+  - name: Upload APK artifacts
+    if: success()
+    uses: actions/upload-artifact@v4
+    with:
+      name: apk-builds
+      path: |
+        **/build/outputs/apk/**/*.apk
+      retention-days: 7
+
+deploy:
+  on:
+    push:
+      branches:
+        - main
+        - master
+    pull_request:
+      branches:
+        - main
+        - master
+  script:
+    - uses: softprops/action-gh-release@v2
+      with:
+        tag_name: dev-build-${{ github.run_number }}
+        name: Development Build ${{ github.run_number }}
+        body: |
+          Automatic development build of PojavLauncher
+
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          **Build Date:** ${{ github.event.head_commit.timestamp }}
+          **Commit Message:** ${{ github.event.head_commit.message }}
+        files: |
+          app/build/outputs/apk/debug/app-debug.ap

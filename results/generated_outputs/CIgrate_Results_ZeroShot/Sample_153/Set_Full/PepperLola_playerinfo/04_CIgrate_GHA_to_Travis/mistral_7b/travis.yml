@@ -1,0 +1,67 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - main
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4 with: fetch-depth: 0
+
+addons:
+  jdk:
+    - openjdk:8
+
+before_script:
+  - name: Setup Gradle
+    uses: gradle/actions/setup-gradle@v4
+    with:
+      gradle-version: 8.5
+      cache-read-only: ${{ github.ref != 'refs/heads/master' && github.ref != 'refs/heads/main' }}
+
+script:
+  - run: chmod +x gradlew
+  - run: ./gradlew test
+  - run: ./gradlew build
+
+before_deploy:
+  - name: Create build number file
+    run: |
+      mkdir -p src/main/resources
+      echo "$BUILD_NUMBER" > src/main/resources/build.txt
+      cat src/main/resources/build.txt
+
+deploy:
+  on:
+    tags: true
+  only:
+    - master
+    - main
+  script:
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          **/build/reports/tests/
+          **/build/test-results/
+        retention-days: 7
+    - name: Create release and upload artifacts
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: build-${{ env.BUILD_NUMBER }}
+        name: Beta Build ${{ env.BUILD_NUMBER }}
+        body: |
+          Automated beta build ${{ env.BUILD_NUMBER }}
+
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref_name }}
+        files: |
+          build/libs/*.jar
+        prerelease: true
+        fail_on_unmatched_files: true
+        generate_release_notes: true

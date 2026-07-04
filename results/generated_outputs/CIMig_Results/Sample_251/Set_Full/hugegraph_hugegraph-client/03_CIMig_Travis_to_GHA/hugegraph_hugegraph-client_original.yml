@@ -1,0 +1,21 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run: bash <(curl -s https://codecov.io/bash)
+    run: mvn compile -Dmaven.javadoc.skip=true | grep -v \"Downloading\\|Downloaded
+
+macos:
+  jdk: openjdk8
+

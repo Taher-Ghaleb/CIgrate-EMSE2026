@@ -1,0 +1,31 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: key
+      with:
+        java-version: 1.8
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+    - name: placeholder_Name
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/checkout@version
+      with: java-version
+      uses: actions/setup-java@version
+      run:
+        bash <(curl -s https://codecov.io/bash)
+        mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+        echo \"Downloading Maven 3.2.5\" && wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.zip && unzip -q apache-maven-3.2.5-bin.zip && export M2_HOME=$PWD/apache-maven-3.2.5 && export PATH=$M2_HOME/bin:$PATH && cp ./.middleware-common/.travis.settings.xml $HOME/.m2/settings.xml && mvn -version
+

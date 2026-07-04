@@ -1,0 +1,66 @@
+language: java
+
+before_install:
+  - echo "https://${CI_DEPLOY_USERNAME}:${CI_DEPLOY_PASSWORD}@github.com" >.git/credentials
+  - git config user.name "$GIT_NAME"
+  - git config user.email "$GIT_EMAIL"
+  - git config credential.helper "store --file=.git/credentials"
+
+install:
+  - gem install asciidoctor
+
+before_script:
+  - chmod +x mvnw
+
+script:
+  -./mvnw install -P docs -q -U -DskipTests=true -Dmaven.test.redirectTestOutputToFile=true
+  -./docs/src/main/asciidoc/ghpages.sh
+
+after_success:
+  -./mvnw clean deploy -nsu
+
+after_failure:
+  - echo "Deployment failed"
+
+deploy:
+  on:
+    push:
+      branches:
+        only:
+          - main
+  environment:
+    name: production
+    matrix:
+      - CI_DEPLOY_USERNAME=sgibb
+      - CI_DEPLOY_PASSWORD=$CI_DEPLOY_PASSWORD
+  script:
+    -./mvnw clean deploy -nsu
+  on:
+    tags:
+      branches: true
+
+services:
+  - docker-compose
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    on_error: true
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - java-version: 8
+      distribution: temurin
+      cache: maven
+```
+
+Note: The above configuration is a complete Travis CI configuration that maintains the same semantics as the original GitHub Actions workflow. It includes the necessary environment variables, caches, services, and notifications. The `deploy` section is also included, with the `on` trigger set to `push` and `tags` set to `true`. The `script` section includes the necessary commands to install Asciidoctor, make the `mvnw` executable, and deploy the application. The `after_success` and `after_failure` sections are also included to handle the deployment and error scenarios, respectively.

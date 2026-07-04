@@ -1,0 +1,22 @@
+language: java
+sudo: false
+env:
+  matrix:
+    os: [ubuntu, macos]
+    java: ['8']
+
+jdk:
+  - openjdk8
+
+script:
+  - ant -f make-jar.xml
+
+matrix:
+  include:
+    - os: ubuntu
+      java: 8
+    - os: macos
+      java: 8
+
+before_install:
+  - if [ "$os" = "macos" ]; then xcode-select --install; fi

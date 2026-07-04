@@ -1,0 +1,41 @@
+language: bash
+branches:
+  only:
+    - main
+    - develop
+    - /^(\d+\.\d+)\.(.*)$/ # Capture semantic versioning
+  except:
+    - tags
+
+cache:
+  directories:
+    - .m2
+    - ~/.gradle
+    - $HOME/.npm
+
+before_install:
+  - |
+    if [ -s "$HOME/docker-compose" ]; then
+      sudo apt-get update -qq
+      sudo apt-get install -qq docker.io
+    fi
+
+install:
+  - |
+    if [ -s "$HOME/docker-compose" ]; then
+      sudo apt-get update -qq
+      sudo apt-get install -qq docker-compose
+    fi
+
+before_script:
+  - |
+    if [ -s "$HOME/docker-compose" ]; then
+      sudo docker info
+    fi
+
+script:
+  - |
+    chmod +x ci/build-docker-image
+    chmod +x ci/docker-build-game
+    ./ci/build-docker-image
+    ./ci/docker-build-game

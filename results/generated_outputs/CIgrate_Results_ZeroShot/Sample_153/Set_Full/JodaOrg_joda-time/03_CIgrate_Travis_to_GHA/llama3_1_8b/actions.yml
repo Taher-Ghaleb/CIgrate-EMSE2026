@@ -1,0 +1,59 @@
+name: Java Build and Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - 'website/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres
+        ports:
+          - 5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('pom.xml') }}
+          restore-keys: $HOME/.m2/repository
+      - name: Install Maven
+        run: mvn --version
+      - name: Build and deploy
+        run: |
+          mvn install site -e -B
+      - name: Deploy to website
+        if: ${{ github.event.pull_request == null && github.event.ref =~ /website.*$ && env.JDK_VERSION == "oraclejdk8" }}
+        run: |
+          chmod +x./.github/website.sh
+         ./.github/website.sh
+      - name: Deploy to production
+        if: ${{ github.event.pull_request == null && github.event.ref =~ /v.*$ && env.PULL_REQUEST == "false" && env.JDK_VERSION == "oraclejdk8" }}
+        run: |
+          chmod +x./.github/website.sh
+         ./.github/website.sh
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('pom.xml') }}
+          restore-keys: $HOME/.m2/repository
+      - name: Remove Joda Time cache
+        run: rm -rf $HOME/.m2/repository/org/joda/time
+```
+
+Note: I've assumed that the `secure` value in the `env` section is a placeholder and should be replaced with the actual secret value.

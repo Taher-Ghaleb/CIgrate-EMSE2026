@@ -1,0 +1,55 @@
+language: bash
+
+branches:
+  only:
+    - main
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+    releases: true
+
+env:
+  RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+  SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+  SONAR_ORGANIZATION: constellation-app
+  GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+
+services:
+  - docker
+
+before_install:
+  - cache: directories: [~/.ivy2/cache, ~/.m2/repository, ~/.gradle, $HOME/.npm]
+
+script:
+  - docker pull "${RUNNER_IMAGE}"
+  - docker run \
+    --mount "type=bind,source=${GITHUB_WORKSPACE},target=${GITHUB_WORKSPACE}" \
+    --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" \
+    --workdir "${GITHUB_WORKSPACE}" \
+    "${RUNNER_IMAGE}" \
+    .travis/run-tests.sh
+  - .travis/sonar.sh
+
+before_deploy:
+  - actions/checkout@v4
+
+deploy:
+  on:
+    tags:
+      only: constellation-app/constellation
+  if: ${{ github.event_name == 'release' }}
+  permissions:
+    contents: write
+  script:
+    - actions/download-artifact@v4 \
+      - name: constellation-distribution \
+        path: dist/
+    - softprops/action-gh-release@v2 \
+      - name: Create GitHub Release \
+        files: dist/constellation.zip
+    - zulip/github-actions-gitter@v1 \
+      - name: Send Gitter notification \
+        webhook-url: https://webhooks.gitter.im/e/82ac70bdb3f9e144d859 \

@@ -1,0 +1,74 @@
+name: PKCS11 Tests
+
+on: [push, pull_request]
+
+jobs:
+  init:
+    name: Initialization
+    uses: ./.github/workflows/init.yml
+    secrets: inherit
+
+  build:
+    name: Waiting for build
+    needs: init
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(needs.init.outputs.matrix) }}
+    steps:
+      - name: Wait for build
+        uses: lewagon/wait-on-check-action@v1.2.0
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'Building JSS (${{ matrix.os }})'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 30
+        if: github.event_name == 'push'
+
+      - name: Wait for build
+        uses: lewagon/wait-on-check-action@v1.2.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: 'Building JSS (${{ matrix.os }})'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 30
+        if: github.event_name == 'pull_request'
+
+  pkcs11-constants-test:
+    name: Testing PKCS11 Constants
+    needs: [init, build]
+    runs-on: ubuntu-latest
+    env:
+      SHARED: /tmp/workdir/jss
+    strategy:
+      matrix: ${{ fromJSON(needs.init.outputs.matrix) }}
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Retrieve jss-runner image
+        uses: actions/cache@v3
+        with:
+          key: jss-runner-${{ matrix.os }}-${{ github.sha }}
+          path: jss-runner.tar
+
+      - name: Load jss-runner image
+        run: docker load --input jss-runner.tar
+
+      - name: Run container
+        run: |
+          IMAGE=jss-runner \
+          NAME=jss \
+          HOSTNAME=jss.example.com \
+          tests/bin/runner-init.sh
+
+      - name: Install dependencies
+        run: docker exec jss dnf install -y nss-util-devel python3 java-devel
+
+      - name: Generate PKCS11 constants
+        run: |
+          docker exec jss python3 $SHARED/tools/build_pkcs11_constants.py \
+                   --pkcs11t /usr/include/nss3/pkcs11t.h \
+                   --pkcs11n /usr/include/nss3/pkcs11n.h \
+                   -o PKCS11Constants.java \
+                   --verbose
+          docker exec jss diff PKCS11Constants.java $SHARED/base/src/main/java/org/mozilla/jss/pkcs11/PKCS11Constants.java

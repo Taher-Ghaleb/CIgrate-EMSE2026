@@ -1,0 +1,24 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: 'default'
+    - name: Run Maven Cobertura
+      run: mvn cobertura:cobertura
+    - name: Upload coverage to Codecov
+      run: bash <(curl -s https://codecov.io/bash)

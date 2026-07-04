@@ -1,0 +1,69 @@
+language: java
+
+branches:
+  only:
+    - main
+    - feature/*
+    - release/*
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+script:
+  - echo "Building and installing with site"
+  - mvn install site -e -B
+  - echo "Cleaning up Maven cache"
+  - rm -rf ~/.m2/repository/org/joda/time
+
+deploy:
+  on:
+    tags:
+      branches:
+        - website
+        - v*
+
+after_success:
+  - echo "Deploying website (website tags)"
+  - chmod +x./.github/website.sh
+  -./.github/website.sh
+  - echo "Deploying website (version tags)"
+  -./.github/website.sh
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+    recipients:
+      - your_email@example.com
+
+matrix:
+  allow_failures:
+    - main
+  include:
+    - java8
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - "ppa:openjdk/ppa"
+    packages:
+      - openjdk-8-jdk
+```
+
+Note: The above configuration assumes that you have a `.github/website.sh` script in your repository that handles the deployment. You should replace `your_email@example.com` with your actual email address.

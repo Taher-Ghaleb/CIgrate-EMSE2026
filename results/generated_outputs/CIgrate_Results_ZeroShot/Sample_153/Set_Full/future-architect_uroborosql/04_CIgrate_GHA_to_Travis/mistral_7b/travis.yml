@@ -1,0 +1,66 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+
+deploy:
+  on:
+    branches:
+      only: [master]
+    types:
+      - push
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - name: Set up JDK 8
+    script: |
+      wget --quiet https://download.java.net/java/GA/jdk8/8u275/jdk-8u275-linux-x64.tar.gz
+      tar -xzf jdk-8u275-linux-x64.tar.gz -C ~
+      export JAVA_HOME=~/jdk1.8.0_275
+      export PATH=$JAVA_HOME/bin:$PATH
+      export M2_HOME=$JAVA_HOME
+      export MAVEN_OPTS="-Xmx2048m -XX:MaxPermSize=512m"
+      export MAVEN_OPTS="$MAVEN_OPTS -Duser.timezone=UTC"
+      export COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN
+
+script:
+  - mvn clean install
+
+before_script:
+  - mvn dependency:purge-local-repository
+
+matrix:
+  include:
+    - java:
+        - 8
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_deploy:
+  - checkout
+
+deploy:
+  on:
+    types:
+      - push
+    tags: true
+
+  if: $github.ref_type == 'tag'
+
+  script:
+    - mvn deploy -Dmaven.test.skip=true --settings .travis.settings.xml
+
+after_success:
+  - name: Send email notification
+    script: |
+      echo "Build success for ${github.repository}" | mail -s "Build success: ${github.repository}" -r "GitHub Actions" -a .tr

@@ -1,0 +1,59 @@
+name: Java Kubernetes Test
+
+on:
+  push:
+    branches:
+      - master
+      - qa
+  pull_request:
+    branches:
+      - master
+      - qa
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      kubernetes:
+        image: kubernetes/minikube:latest
+        args: ["--vm-driver=none", "--bootstrapper=localkube"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: temurin
+          java-version: '11'
+      - name: Install dependencies
+        run: |
+          chmod +x../scripts/travisTest.sh
+      - name: Run tests
+        run: |
+          sudo mount --make-rshared /
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+          chmod +x kubectl
+          sudo ln -s $(pwd)/kubectl /usr/local/bin/kubectl
+          wget https://github.com/kubernetes/minikube/releases/download/v0.28.2/minikube-linux-amd64 -q -O minikube
+          chmod +x minikube
+          sudo ln -s $(pwd)/minikube /usr/local/bin/minikube
+          sudo minikube start
+         ../scripts/travisTest.sh
+      - name: Cache dependencies
+        uses: actions/cache@v4
+          at: cache
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-dependencies-${{ hashFiles('pom.xml') }}
+          restore-keys: maven-dependencies-*
+      - name: Allow failures
+        continue-on-error: true
+      - name: Deploy
+        uses: kubernetes/deploy@v1
+          kustomize: true
+          kustomize-path: kustomize
+          image: ${{ secrets.IMAGE }}
+          namespace: ${{ secrets.NAMESPACE }}
+      - name: Notify
+        uses: actions/notify@v2
+          name: Deployment
+          email: ${{ secrets.EMAIL }}
+          message: "Deployment successful"

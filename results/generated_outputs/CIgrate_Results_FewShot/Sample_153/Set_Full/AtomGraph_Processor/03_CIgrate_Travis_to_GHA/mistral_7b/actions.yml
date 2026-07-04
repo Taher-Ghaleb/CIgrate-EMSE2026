@@ -1,0 +1,37 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  # Preserve env.global
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update packages
+        run: sudo apt-get update
+      - name: Install raptor2-utils
+        run: sudo apt-get install -qq raptor2-utils
+      - name: Build Docker image
+        run: docker build -t atomgraph/processor .
+      - name: Setup Docker Compose
+        uses: docker/compose-login@v4
+      - name: Checkout http-tests
+        uses: actions/checkout@v4
+        with:
+          path: http-tests
+      - name: Start containers
+        run: |
+          docker-compose up -d
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8080 | grep "404" ; do sleep 1 ; done
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8081 | grep "404" ; do sleep 1 ; done
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8082 | grep "404" ; do sleep 1 ; done
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8083 | grep "404" ; do sleep 1 ; done
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8084 | grep "404" ; do sleep 1 ; done
+          while ! curl -w "%{http_code}\n" -s -o /dev/null http://localhost:8085 | grep "404" ; do sleep 1 ; done
+      - name: Run tests
+        run: bash ./

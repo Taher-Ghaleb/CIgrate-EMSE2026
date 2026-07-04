@@ -1,0 +1,24 @@
+cache:
+  directories: ~/.m2/repository
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn clean install sonar:sonar -Pwithout-authentication -P'!standalone-client' -Pjacoco -Dsonar.organization=hakky54 -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }} --no-transfer-progress
+script:
+  script:
+    mvn clean install -Pwith-two-way-authentication-by-trusting-each-other -P'!standalone-client' --no-transfer-progress
+deploy:
+  github_token: $github_token
+directories:
+  ~/.m2/repository
+  ~/.sonar/cache
+sudo: FALSE
+apt:
+  packages: jdk-6-jdk
+stage: ☕ 11
+include:
+  os: windows
+  if: type in (pull_request, push)

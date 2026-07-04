@@ -1,0 +1,49 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TRAVIS_PULL_REQUEST: ${{ github.event.pull_request.pull_request }}
+  TRAVIS_REPO_SLUG: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Clone Travis repository
+        run: |
+          git clone -b travis $GITHUB_REPOSITORY target/travis
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Set up Maven settings
+        run: |
+          cp target/travis/settings.xml target/settings.xml
+      - name: Run Maven
+        run: |
+          if [ $TRAVIS_PULL_REQUEST = 'false' ]; then
+            mvn clean deploy --settings target/settings.xml
+          else
+            mvn clean verify --settings target/settings.xml
+          fi
+      - name: Cache Maven settings
+        uses: actions/cache@v4
+        with:
+          path: target/settings.xml
+          key: ${{ runner.os }}-maven-settings-${{ hashFiles('target/settings.xml') }}
+          restore-keys: ${{ runner.os }}-maven-settings-

@@ -1,0 +1,13 @@
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches: master
+before_install:
+  java -version
+  mvn -B clean verify -Dscala-${{ matrix.scala-version }} -Dflink.version=${{ matrix.flink-version }}
+script
+after_success:
+  bash <(curl-cmd
+directories: ~/.maven-

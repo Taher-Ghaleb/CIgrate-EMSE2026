@@ -1,0 +1,47 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: 'maven'
+
+      - name: Check Maven version
+        run: mvn --version
+
+      - name: Build and install with site
+        run: mvn install site -e -B
+        env:
+          SECRET_TOKEN: ${{ secrets.SECRET_TOKEN }}
+
+      - name: Cleanup Maven cache
+        if: always()
+        run: rm -rf ~/.m2/repository/org/joda/time
+
+      - name: Make website script executable
+        if: |
+          github.event_name == 'push' && 
+          (startsWith(github.ref, 'refs/tags/website') || startsWith(github.ref, 'refs/tags/v'))
+        run: chmod +x ./.github/website.sh
+
+      - name: Deploy website (website tags)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/website')
+        run: ./.github/website.sh
+        env:
+          SECRET_TOKEN: ${{ secrets.SECRET_TOKEN }}
+
+      - name: Deploy website (version tags)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: ./.github/website.sh
+        env:
+          SECRET_TOKEN: ${{ secrets.SECRET_TOKEN }}

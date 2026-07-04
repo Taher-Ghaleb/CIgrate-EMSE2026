@@ -1,0 +1,63 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - '1.12.x'
+  pull_request:
+    branches:
+      - '1.12.x'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      gradle:
+        image: gradle:oraclejdk8
+        env:
+          GRADLE_OPTS: -Xmx512m
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Cache Gradle
+      uses: actions/cache@v4
+        at: gradle-cache
+        path: $HOME/.gradle/caches/
+        key: ${{ runner.os }}-gradle-${GITHUB_SHA:0:7}
+        restore-keys: ${{ runner.os }}-gradle-
+    - name: Install dependencies
+      run: |
+       ./gradlew setupCIWorkspace -S
+    - name: Build
+      run: |
+       ./gradlew build
+    - name: Generate Javadoc
+      run: |
+       ./gradlew javadoc
+    - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v1
+        github-token: $GITHUB_TOKEN
+        local-dir:./build/docs/javadoc
+        skip-cleanup: true
+        keep-history: true
+    - name: Wait for deployment
+      run: |
+        sleep 10
+    - name: Deploy to GitHub Pages (again)
+      uses: actions/deploy-pages@v1
+        github-token: $GITHUB_TOKEN
+        local-dir:./build/docs/javadoc
+        skip-cleanup: true
+        keep-history: true
+    - name: Allow failure
+      continue-on-error: true
+    - name: Send email notification
+      uses: dbrgn/send-email-action@v1
+        # TODO: equivalent to Travis CI's email notification
+        # No direct equivalent in GitHub Actions
+```
+Note: The `dbrgn/send-email-action` is not a real action, it's a placeholder for the fact that there is no direct equivalent to Travis CI's email notification in GitHub Actions. You would need to use a different action or implement your own email sending logic.

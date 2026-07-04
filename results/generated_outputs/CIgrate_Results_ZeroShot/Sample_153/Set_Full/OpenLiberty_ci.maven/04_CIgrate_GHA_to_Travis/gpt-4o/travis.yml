@@ -1,0 +1,38 @@
+language: java
+
+jdk:
+  - openjdk8
+  - openjdk11
+
+env:
+  global:
+    - MAVEN_OPTS="-Xmx1024m"
+  matrix:
+    - RUNTIME=ol RUNTIME_VERSION=19.0.0.6
+    - RUNTIME=wlp RUNTIME_VERSION=19.0.0.6
+    - RUNTIME=ol RUNTIME_VERSION=19.0.0.3
+    - RUNTIME=wlp RUNTIME_VERSION=19.0.0.3
+
+matrix:
+  allow_failures:
+    - jdk: openjdk8
+    - jdk: openjdk11
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+before_install:
+  - echo "Deleting old .m2 artifacts..."
+  - rm -rf $HOME/.m2/repository/net/wasdev
+  - rm -rf $HOME/.m2/repository/io/openliberty
+
+install:
+  - echo 'Installing ci.common lib...'
+  - git clone https://github.com/OpenLiberty/ci.common.git ./ci.common
+  - cd ./ci.common
+  - mvn clean install
+  - cd ..
+
+script:
+  - mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=$RUNTIME -DruntimeVersion=$RUNTIME_VERSION

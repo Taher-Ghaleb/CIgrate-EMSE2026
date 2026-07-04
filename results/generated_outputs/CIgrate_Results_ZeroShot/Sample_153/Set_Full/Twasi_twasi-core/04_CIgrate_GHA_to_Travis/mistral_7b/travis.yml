@@ -1,0 +1,64 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - dev
+
+deploy:
+  on:
+    branches:
+      only: dev
+    types:
+      - push
+
+services:
+  - docker
+
+before_install:
+  - install: docker-compose -v
+
+before_script:
+  - docker-compose pull
+  - docker-compose build --no-cache
+  - docker-compose ps -q --filter name=sonarqube || docker-compose run --rm --name sonarqube sonarqube
+
+script:
+  - SONAR_TOKEN=$SONAR_TOKEN SONAR_ORGANIZATION=twasi mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+
+install:
+  - actions/checkout@v4
+  - name: Set up JDK 8
+    uses: actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+      cache: 'maven'
+
+before_script:
+  - mvn dependency:purge-local-repository
+
+script:
+  - mvn clean compile assembly:single
+
+deploy:
+  if: $GITHUB_REF == 'refs/heads/dev'
+  script:
+    - actions/checkout@v4
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+        cache: 'maven'
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - run: |
+        cp .travis.settings.xml $HOME/.m2/settings.xml
+        mvn clean compile assembly:single docker:build -DpushImage
+
+deploy-dev:
+  if: $GITHUB_REF == 'refs/heads/dev'
+  script:
+    - actions/checkout@v4
+    - name: Set up JDK

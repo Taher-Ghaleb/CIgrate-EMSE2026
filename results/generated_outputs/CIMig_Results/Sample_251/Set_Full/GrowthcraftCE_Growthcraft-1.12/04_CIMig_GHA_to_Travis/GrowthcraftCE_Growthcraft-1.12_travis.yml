@@ -1,0 +1,24 @@
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+branches:
+  except: /^release-.*$/
+before_install:
+  chmod +x gradlew
+  java -version
+script:
+  script:
+    ./gradlew build
+after_success:
+  ./gradlew setupCIWorkspace
+deploy:
+  github_token: $github_token
+coverity_scan:
+  branch_pattern: release.*
+apt:
+  packages: jdk-8-jdk
+stages:
+  build
+  test

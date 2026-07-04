@@ -1,0 +1,66 @@
+language: generic
+
+os:
+  - linux
+  - osx
+  - windows
+
+dist: bionic
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.npm/
+    - $HOME/.npm/cache/
+
+addons:
+  apt:
+    packages:
+      - cmake
+      - clang
+      - lib32ncurses5-dev
+      - lib32z1
+      - lib32ncursesw5-dev
+      - llvm-13
+      - llvm-13-dev
+      - clang-13
+      - clang-13-dev
+  msys2:
+    install:
+      - base-devel
+      - mingw-w64-x86_64-toolchain
+      - mingw-w64-x86_64-cmake
+      - mingw-w64-x86_64-ninja
+      - mingw-w64-x86_64-llvm
+      - mingw-w64-x86_64-llvm-devel
+      - mingw-w64-x86_64-clang
+      - mingw-w64-x86_64-clang-devel
+
+services:
+  - docker
+
+before_install:
+  - pip install --user codecov
+  - if [[ "$TRAVIS_OS_X" == "true" ]]; then echo "OSX"; fi
+  - if [[ "$TRAVIS_OS_X" == "false" ]]; then echo "linux"; fi
+
+install:
+  - "echo 'TRAVIS_OS_X=$TRAVIS_OS_X' | sed -e 's/true/OSX/g' -e 's/false/linux/g'";
+    # DO NOT repeat JDK or git version numbers, use as given in the Github Actions and stick to it.
+    # DO NOT repeat sections, like deploy, script, before_install, install, matrix etc. MUST NOT be duplicated.
+    # DO NOT repeat the child properties as well in a section like inside matrix and others.
+
+script:
+  - src/main/c/cubiomes/cmake . -B build -DCMAKE_BUILD_TYPE=Release
+  - src/main/c/cubiomes/build/libcubiomes.so
+  - src/main/c/cubiomes/src/main/resources/libcubiomes.so
+  - src/main/c/cubiomes/src/main/resources/libcubiomes.dylib
+  - src/main/c/cubiomes/src/main/resources/cubiomes.dll
+  - cd jextract && ./gradlew --stacktrace -Pjdk_home=$JAVA_HOME -Pllvm_home=$LLVM_HOME clean verify && cd ../
+  - ./gradlew build

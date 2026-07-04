@@ -1,0 +1,62 @@
+name: Android Build and Test
+
+on:
+  push:
+    branches:
+      - master
+      - '^\d+\.\d+\.\d+$'
+  pull_request:
+    branches:
+      - master
+      - '^\d+\.\d+\.\d+$'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      android-emulator:
+        image: ghcr.io/actions-emulator/android-emulator:latest
+        privileged: true
+        ports:
+          - 5554:5554
+          - 5555:5555
+          - 5556:5556
+          - 5557:5557
+          - 5558:5558
+          - 5559:5559
+          - 5560:5560
+          - 5561:5561
+          - 5562:5562
+          - 5563:5563
+          - 5564:5564
+          - 8080:8080
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Setup Android
+        run: |
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+      - name: Install dependencies
+        run: |
+         ./gradlew wrapper --gradle-version 7.4.1
+         ./gradlew wrapper --distribution-type ALL
+         ./gradlew wrapper --classpath-mode COMPILE
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./gradlew wrapper --classpath-mode COMPILE_CLASSPATH
+         ./grad

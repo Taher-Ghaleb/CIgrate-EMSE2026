@@ -1,0 +1,33 @@
+with:
+  distribution: zulu
+
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        java-version: ${{ matrix.java }}
+      with:
+        java-version: 1.8
+      with: key
+      uses: actions/checkout@version
+      uses: actions/setup-java@version
+    - name: set up jdk 1.8
+      with: java-version
+
+uses: actions/setup-java@version
+

@@ -1,0 +1,46 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  JAVA_HOME: c:\java8
+  GITHUB_PATH: c:\java8\bin
+  CODECOV_TOKEN: $CODECOV_TOKEN
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+
+services:
+  - docker
+
+branches:
+  only:
+    - main
+    - develop
+
+matrix:
+  include:
+    - os: windows
+      language: java
+      jdk: openjdk8
+      env: JAVA_HOME=c:\java8
+      script:
+        - choco install jdk8 -params 'installdir=c:\\java8' -y
+        - echo "JAVA_HOME=c:\java8" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        - echo "c:\java8\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        - choco install maven --version 3.6.3 -y
+        - echo "C:\ProgramData\chocolatey\lib\maven\apache-maven-3.6.3\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        - cmd: .\gradlew.bat build -x test --stacktrace --console=plain --no-daemon
+      
+    - os: linux
+      language: java
+      jdk: openjdk8
+      script:
+        - chmod +x ./gradlew
+        - java -version
+        - ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon
+      
+      after_success:
+        - curl -X POST -H "Authorization: $CODECOV_TOKEN" -H "Content-Type: application/json" --data '{"branch":"${TRAVIS_BRANCH}"}' https://codecov.io/validate

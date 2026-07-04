@@ -1,0 +1,54 @@
+name: Java Build and Deploy
+
+on:
+  push:
+    branches:
+      - main  # Replace 'main' with your repository's main branch name
+  pull_request:
+    branches:
+      - feature/my-feature  # Replace 'feature/my-feature' with your repository's feature branch name
+
+env:
+  global:
+    GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
+    GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
+    OSSRH_JIRA_USERNAME: ${{ secrets.OSSRH_JIRA_USERNAME }}
+    OSSRH_JIRA_PASSWORD: ${{ secrets.OSSRH_JIRA_PASSWORD }}
+    GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
+    GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    services:
+      maven: maven
+      postgres: postgres:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Install and configure Maven
+        uses: actions/setup-maven@v4
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-dependencies
+          restore-keys: |
+            ${{ cache.key }}
+
+      - name: Build and Test
+        run: mvn verify
+
+      - name: Generate and Upload Code Coverage
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+        run: |
+          mvn clean

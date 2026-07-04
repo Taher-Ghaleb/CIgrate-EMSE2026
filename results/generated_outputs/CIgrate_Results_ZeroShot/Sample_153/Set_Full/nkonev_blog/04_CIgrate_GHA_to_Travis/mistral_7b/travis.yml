@@ -1,0 +1,51 @@
+language: bash
+
+branches:
+  only:
+    - master
+
+deploy:
+  on:
+    push:
+      branches: [ master ]
+      tags: true
+
+services:
+  - docker
+
+before_install:
+  - setup_jdk:
+      distribution: temurin
+      java_version: '17'
+      cache: maven
+
+script:
+  - checkout
+  - cache:
+      directories:
+        - frontend/node
+        - frontend/node_modules
+      key: ${{ os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+      restore_keys: ${{ os }}-node-
+  - apt-get update && apt-get install -y chromium-browser
+  - browser-actions/setup-firefox@v1 -f firefox-version: 'latest'
+  - run: |
+      mkdir -p ~/.ssh
+      openssl aes-256-cbc \
+        -K ${{ ENCRYPTED_7051AC01CF89_KEY }} \
+        -iv ${{ ENCRYPTED_7051AC01CF89_IV }} \
+        -in ./.travis/id_rsa.enc \
+        -out ~/.ssh/id_rsa -d
+      chmod 600 ~/.ssh/id_rsa
+  - run: java -version && echo "JAVA_HOME: $JAVA_HOME"
+  - run: chmod +x mvnw
+  - run: docker-compose up -d
+  - run: echo "DATE_VERSION=$(date +%Y%m%d.%H.%M)" >> $GITHUB_ENV
+  - run: rm -f ~/.m2/settings.xml
+  - run: ./mvnw -U -q -Drevision=$DATE_VERSION -P frontend -P jacoco -P docker -P webdriver-chrome -P webdriver-firefox -Dcustom.selenium.headless=true clean install
+  - run: docker-compose down
+  - run: ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+  - run: |
+      rm -rf ~/.m2/repository/com/github/nkonev/blog
+      rm -rf $GITHUB_WORKSPACE/frontend/node_modules/.cache
+  - codecov/

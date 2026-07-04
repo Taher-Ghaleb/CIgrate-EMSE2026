@@ -1,0 +1,19 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+  - name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+      uses: actions/checkout@version
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Placeholder
+    run: mvn -B clean verify
+

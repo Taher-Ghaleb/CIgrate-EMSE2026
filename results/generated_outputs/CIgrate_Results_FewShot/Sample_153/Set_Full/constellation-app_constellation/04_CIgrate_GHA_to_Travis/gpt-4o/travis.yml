@@ -1,0 +1,46 @@
+language: java
+jdk:
+  - openjdk11
+
+env:
+  global:
+    - RUNNER_IMAGE=constellationapplication/netbeans-runner:11.3
+
+services:
+  - docker
+
+cache:
+  directories:
+    - '$HOME/.ivy2/cache'
+
+before_install:
+  - docker pull "$RUNNER_IMAGE"
+
+script:
+  - docker run --mount "type=bind,source=${TRAVIS_BUILD_DIR},target=${TRAVIS_BUILD_DIR}" --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" --workdir "${TRAVIS_BUILD_DIR}" "$RUNNER_IMAGE" .travis/run-tests.sh
+  - .travis/sonar.sh
+
+after_success:
+  - if [ -n "$TRAVIS_TAG" ]; then
+      zip -r dist/constellation.zip dist/;
+      curl -sL https://github.com/softprops/action-gh-release/releases/download/v2/gh-release-linux-amd64.tar.gz | tar xz;
+      ./gh-release upload --repo constellation-app/constellation --tag "$TRAVIS_TAG" --name "constellation-distribution" --file dist/constellation.zip --token "$GITHUB_TOKEN";
+    fi
+
+after_script:
+  - find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+
+deploy:
+  provider: script
+  script: bash .travis/deploy.sh
+  on:
+    repo: constellation-app/constellation
+    tags: true
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/82ac70bdb3f9e144d859
+    on_success: always
+    on_failure: always
+    on_start: never

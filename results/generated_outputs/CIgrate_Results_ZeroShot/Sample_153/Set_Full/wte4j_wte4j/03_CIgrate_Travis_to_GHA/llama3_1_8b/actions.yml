@@ -1,0 +1,46 @@
+name: Java Maven Deployment
+
+on:
+  push:
+    branches:
+      - main
+      -'release/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    services:
+      maven:
+        image: maven:3-jdk-11
+        env:
+          OSSRH_USER: ${{ secrets.OSSRH_USER }}
+          OSSRH_PASS: ${{ secrets.OSSRH_PASS }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+          distribution: 'temurin'
+          java-version: '11'
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+          at:'maven-dependencies'
+          path: ~/.m2/repository
+          key: ${{ runner.hash }}
+          restore-keys: |
+            ~/.m2/repository/*
+      - name: Install Maven
+        run: |
+          mvn --version
+      - name: Deploy to OSSRH
+        run: |
+          if [ -z ${{ github.event.release } } ]; then
+            mvn deploy --settings ~/settings.xml
+          fi
+    after_failure:
+      - name: Save settings.xml
+        run: |
+          echo "<settings><servers><server><id>ossrh</id><username>\${env.OSSRH_USER}</username><password>\${env.OSSRH_PASS}</password></server></servers></settings>" > ~/settings.xml

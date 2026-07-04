@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - release
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SECURE_ENV_VAR_1: ${{ secrets.SECURE_ENV_VAR_1 }}
+      SECURE_ENV_VAR_2: ${{ secrets.SECURE_ENV_VAR_2 }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Decrypt Firebase SDK Key
+      run: |
+        openssl aes-256-cbc -K ${{ secrets.ENCRYPTED_7D07226627DA_KEY }} -iv ${{ secrets.ENCRYPTED_7D07226627DA_IV }} \
+        -in firebase/firebase-sdk-key.json.enc -out firebase/firebase-sdk-key.json -d
+
+    - name: Install Firebase CLI
+      run: curl -sL https://firebase.tools | bash
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 8
+
+    - name: Cache Firebase and Gradle
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ github.workspace }}/.cache/firebase
+          ${{ github.workspace }}/.gradle/caches
+          ${{ github.workspace }}/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    - name: Remove Gradle Locks
+      run: |
+        rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+        rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+    - name: Run Tests
+      run: firebase emulators:exec --only auth --project turma-de-elite-app './gradlew test'
+
+    - name: Deploy to Heroku
+      if: github.ref == 'refs/heads/release'
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      run: |
+        git remote add heroku https://git.heroku.com/turma-de-elite.git
+        git push heroku HEAD:master

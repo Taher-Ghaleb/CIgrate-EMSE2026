@@ -1,0 +1,21 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  mvn deploy -s $GITHUB_WORKSPACE/settings.xml -P build-deploy
+script:
+  script:
+    mvn -B package --file pom.xml -s settings.xml -P build-deploy
+apt:
+  packages: jdk-8-jdk
+sonarcloud:
+  organization: jmrozanec-github
+global:
+  secure: token
+directories: ~/.maven-

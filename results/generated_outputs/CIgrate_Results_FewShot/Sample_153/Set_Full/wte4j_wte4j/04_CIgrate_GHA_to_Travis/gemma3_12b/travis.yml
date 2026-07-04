@@ -1,0 +1,32 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+jdk:
+  - openjdk7
+env:
+  global:
+    - secure: "YOUR_OSSRH_BASE64_ENCODED_CREDENTIALS" # Replace with your actual encoded credentials
+branches:
+  only:
+    - main
+    - develop
+  except:
+    - tags
+script:
+  - mvn test -B
+deploy:
+  provider: script
+  script: |
+    cat > ~/settings.xml <<EOF
+    <settings><servers><server><id>ossrh</id><username>${OSSRH_USER}</username><password>${OSSRH_PASS}</password></server></servers></settings>
+    EOF
+    mvn deploy --settings ~/settings.xml
+  on:
+    success: true
+    branch:
+      - main
+      - develop
+  skip_cleanup: true
+  tags: false

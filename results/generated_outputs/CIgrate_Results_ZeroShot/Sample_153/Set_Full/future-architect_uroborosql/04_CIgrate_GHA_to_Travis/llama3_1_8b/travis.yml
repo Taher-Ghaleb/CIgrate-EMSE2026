@@ -1,0 +1,58 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - mvn clean install
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      echo "Deploying to repository"
+      mvn deploy -Dmaven.test.skip=true --settings.travis.settings.xml
+    fi
+
+after_failure:
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      echo "Deploying to repository"
+      mvn deploy -Dmaven.test.skip=true --settings.travis.settings.xml
+    fi
+
+deploy:
+  on:
+    tags: true
+  if: branch = "master"
+  env:
+    COVERALLS_REPO_TOKEN: $COVERALLS_REPO_TOKEN
+  script:
+    - mvn jacoco:report coveralls:report
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+    recipients:
+      - gr-tig-oss@future.co.jp
+    subject: "Build $TRAVIS_BUILD_RESULT: $TRAVIS_REPO_SLUG"
+    body: |
+      Build $TRAVIS_BUILD_RESULT for $TRAVIS_REPO_SLUG
+      Commit: $TRAVIS_COMMIT
+      Branch: $TRAVIS_BRANCH
+      Workflow: $TRAVIS_JOB_ID
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: temurin
+      cache:'maven'
+  allow_failures: true

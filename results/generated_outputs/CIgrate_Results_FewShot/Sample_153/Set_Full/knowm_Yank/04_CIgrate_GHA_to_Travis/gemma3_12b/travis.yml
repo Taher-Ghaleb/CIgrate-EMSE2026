@@ -1,0 +1,25 @@
+language: java
+branches:
+  only:
+    - develop
+  except:
+    - tags
+
+jobs:
+  build:
+    script:
+      - git clone -b travis https://x-access-token:${MAVEN_USERNAME}@github.com/${{ github.repository }}.git target/travis
+      - if [ "$GITHUB_EVENT_NAME" == "pull_request" ]; then mvn clean verify --settings target/travis/settings.xml; else mvn clean deploy --settings target/travis/settings.xml; fi
+      - if [ "$GITHUB_EVENT_NAME" == "push" ] && [ "$GITHUB_REF" == "refs/heads/develop" ]; then mvn clean deploy --settings target/travis/settings.xml; fi
+    env:
+      MAVEN_USERNAME: $MAVEN_USERNAME
+      MAVEN_PASSWORD: $MAVEN_PASSWORD
+    cache:
+      directories:
+        - ~/.m2/repository
+    before_install:
+      - cat /etc/hosts
+    install:
+      - echo no | sdkmanager --licenses || true
+    jdk:
+      - openjdk11

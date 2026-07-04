@@ -1,0 +1,57 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  TRAVIS_BUILD_NUMBER: ${{ env.TRAVIS_BUILD_NUMBER }}
+  GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+  GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8']
+        os: ['linux']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Gradle
+        run: |
+          chmod +x gradlew
+         ./gradlew wrapper --gradle-version 4.8.1
+      - name: Update build number
+        run: echo $TRAVIS_BUILD_NUMBER > $TRAVIS_BUILD_NUMBER/src/main/resources/build.txt
+      - name: Configure Git
+        run: |
+          git config --local user.name "PepperLola"
+          git config --local user.email "$GIT_EMAIL"
+      - name: Create tag
+        run: git tag -a $TRAVIS_BUILD_NUMBER -m "Automated beta build."
+      - name: Push tag
+        run: |
+          git push https://$GIT_TOKEN@github.com/PepperLola/playerinfo.git HEAD:master --follow-tags
+      - name: Deploy release
+        uses: actions/upload-artifact@v3
+        with:
+          name: release
+          path: $TRAVIS_BUILD_DIR/build/libs/*
+          repository: ${{ env.GIT_TOKEN }}
+          token: ${{ secrets.GIT_TOKEN }}
+          on: ${{ env.GIT_TOKEN }}
+          prerelease: true
+      - name: Check if tag is blank
+        run: |
+          if [ -z "$TRAVIS_BUILD_NUMBER" ]; then
+            exit 1
+          fi
+```
+Note that I've used the `actions/upload-artifact` action to deploy the release, as the `releases` provider is not a built-in GitHub Actions action. Also, I've used the `secrets` feature to store the `GIT_EMAIL` and `GIT_TOKEN` variables, and referenced them in the workflow using `${{ secrets.GIT_EMAIL }}` and ${{ secrets.GIT_TOKEN }}`.

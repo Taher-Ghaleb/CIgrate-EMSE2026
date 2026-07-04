@@ -1,0 +1,13 @@
+language: java
+sudo: false
+jdk:
+  - openjdk8
+  - openjdk11
+  - openjdk17
+cache:
+  directories:
+    - '$HOME/.gradle'
+    - 'build'
+script:
+  - chmod +x gradlew
+  - ./gradlew build --scan -s

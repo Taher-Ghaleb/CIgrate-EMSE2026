@@ -1,0 +1,51 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk:
+  - openjdk8
+install: true
+script:
+  - chmod +x gradlew
+  -./gradlew setupCIWorkspace -S
+  -./gradlew build
+  -./gradlew javadoc
+deploy:
+  on:
+    branch: 1.12.x
+    if: github.event_name == 'push'
+  provider: github
+  token: $GITHUB_TOKEN
+  repo: $GITHUB_REPOSITORY
+  branch: master
+  commit_message: "Deploy to GitHub Pages"
+  commit_message_body: "Automated deployment of javadoc to GitHub Pages"
+  commit_message_title: "Deploy to GitHub Pages"
+  commit_message_branch: 1.12.x
+  commit_message_commit: $GITHUB_COMMIT
+  commit_message_commit_title: "Deploy to GitHub Pages"
+  commit_message_commit_body: "Automated deployment of javadoc to GitHub Pages"
+  commit_message_commit_title: "Deploy to GitHub Pages"
+  commit_message_branch: 1.12.x
+  commit_message_commit: $GITHUB_COMMIT
+  commit_message_commit_title: "Deploy to GitHub Pages"
+  commit_message_commit_body: "Automated deployment of javadoc to GitHub Pages"
+  commit_message_commit_title: "Deploy to GitHub Pages"
+  commit_message_branch: 1.12.x
+  commit_message_commit: $GITHUB_COMMIT
+  commit_message_commit_title: "Deploy to GitHub Pages"
+  commit_message_commit_body: "Automated deployment of javadoc to GitHub Pages"
+  commit_message_commit_title: "Deploy to GitHub Pages"
+  commit_message_branch: 1.12.x
+  commit_message_commit: $GITHUB_COMMIT
+  commit_message_commit_title: "Deploy to GitHub Pages"
+  commit_message_commit_body: "Automated deployment of javadoc to GitHub Pages"
+  commit_message_commit_title: "Deploy to GitHub Pages"
+  commit_message_branch: 1.12.x
+  commit_message_commit: $GITHUB_COMMIT
+  commit_message_commit_title: "Deploy to GitHub Pages"
+  commit_message_commit_body: "Automated deployment of javadoc to GitHub Pages"
+  commit_message_commit_title: "Deploy to GitHub Pages"
+  commit_message_branch: 1.12.x
+  commit_message_commit: $GITHUB_COMMIT
+  commit_message_commit_title: "Deploy to GitHub Pages

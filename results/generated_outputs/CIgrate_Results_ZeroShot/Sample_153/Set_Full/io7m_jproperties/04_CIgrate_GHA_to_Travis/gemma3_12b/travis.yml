@@ -1,0 +1,60 @@
+language: java
+jdk:
+  - openjdk11
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+branches:
+  only:
+    - main
+    - develop
+
+services:
+  - docker
+
+before_install:
+  - echo "Before Install"
+
+install:
+  - echo "Install"
+
+before_script:
+  - echo "Before Script"
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" = "main" ]; then
+      echo "Deploying to production..."
+      # TODO: Add deployment steps here
+    fi
+  - if [ "$TRAVIS_BRANCH" = "develop" ]; then
+      echo "Deploying to staging..."
+      # TODO: Add deployment steps here
+    fi
+
+  - if [ "$TRAVIS_BRANCH" = "main" || "$TRAVIS_BRANCH" = "develop" ]; then
+    - echo "Sending IRC notification..."
+    - |
+      curl -s -u irc.libera.chat:github-actions-jproperties "irc://irc.libera.chat/irc.libera.chat/6697" -d "PRIVMSG #io7m :[${TRAVIS_BUILD_NUMBER}] Build ${TRAVIS_JOB_STATUS} - ${TRAVIS_COMMIT_AUTHOR}: ${TRAVIS_COMMIT_MESSAGE} (${TRAVIS_COMMIT})"
+  fi
+
+  - if [ "$TRAVIS_JOB_STATUS" = "success" ]; then
+    - echo "Uploading coverage to Codecov..."
+    - curl -L https://codecov.io/bash/v2 -X POST -d token=${CODECOV_TOKEN} -d file=./com.io7m.jproperties.core/target/site/jacoco/jacoco.xml
+  fi
+
+notifications:
+  irc:
+    channel: "#io7m"
+    server: "irc.libera.chat"
+    port: "6697"
+    nickname: "github-actions-jproperties"
+    on_success: always
+    on_failure: always
+    format: "%{build_number} %{branch} %{commit_message} %{commit}"

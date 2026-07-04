@@ -1,0 +1,22 @@
+language: java
+jdk: openjdk17
+sudo: required
+before_install:
+    - yes | sdkmanager --licenses || true
+    - sdkmanager "build-tools;33.0.2"
+    - sdkmanager "platforms;android-33"
+    - sdkmanager --list_installed
+script:
+    - chmod +x gradlew
+    -./gradlew clean build
+    -./gradlew test
+    -./gradlew test --tests "*Test" --tests "*Test2"
+    -./gradlew test --tests "*Test" --tests "*Test2" --tests "*Test3"
+    -./gradlew test --tests "*Test" --tests "*Test2" --tests "*Test3" --tests "*Test4"
+    -./gradlew test --tests "*Test" --tests "*Test2" --tests "*Test3" --tests "*Test4" --tests "*Test5"
+    -./gradlew test --tests "*Test" --tests "*Test2" --tests "*Test3" --tests "*Test4" --tests "*Test5" --tests "*Test6"
+    -./gradlew test --tests "*Test" --tests "*Test2" --tests "*Test3" --tests "*Test4" --tests "*Test5" --tests "*Test6" --tests "*Test7"
+    -./gradlew test --tests "*Test" --tests "*Test2" --tests "*Test3" --tests "*Test4" --tests "*Test5" --tests "*Test6" --tests "*Test7" --tests "*Test8"
+    -./gradlew test --tests "*Test" --tests "*Test2" --tests "*Test3" --tests "*Test4" --tests "*Test5" --tests "*Test6" --tests "*Test7" --tests "*Test8" --tests "*Test9"
+    -./gradlew test --tests "*Test" --tests "*Test2" --tests "*Test3" --tests "*Test4" --tests "*Test5" --tests "*Test6" --tests "*Test7" --tests "*Test8" --tests "*Test9" --tests "*Test10"
+    -./gradlew test --tests "*Test" --tests "*Test2" --tests "*Test3" --tests "*Test4" --tests "*Test5" --tests "*Test6" --tests "*Test7" --tests "*Test8"

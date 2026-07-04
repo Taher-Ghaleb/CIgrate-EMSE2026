@@ -1,0 +1,54 @@
+name: Android CI
+
+on: [push, pull_request]
+
+env:
+  COMPILE_SDK_VERSION: 29
+  EMULATOR_API: 22
+  BUILD_TOOLS_VERSION: 28.0.3
+  ABI: armeabi-v7a
+  ADB_INSTALL_TIMEOUT: 5
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11' # Assuming Java 11 is suitable. Adjust as needed.
+      - name: Cache Gradle Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          components: |
+            tools
+            platform-tools
+            tools
+            build-tools-${{ env.BUILD_TOOLS_VERSION }}
+            android-${{ env.COMPILE_SDK_VERSION }}
+            android-${{ env.EMULATOR_API }}
+            extra-android-m2repository
+            sys-img-${{ env.ABI }}-android-${{ env.EMULATOR_API }}
+          licenses: |
+            android-sdk-preview-license-52d11cd2
+            android-sdk-license-.+
+            google-gdk-license-.+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Assemble Release
+        run: ./gradlew assembleRelease
+      - name: Run tests and generate coverage
+        run: ./gradlew jacocoTestReport connectedCheck
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)
+      - name: Create AVD
+        run: echo no | android create avd --force -n test -t android-${{ env.EMULATOR

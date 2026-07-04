@@ -1,0 +1,56 @@
+language: java
+jdk:
+  - openjdk17
+
+env:
+  - ENCRYPTED_7051AC01CF89_KEY: $ENCRYPTED_7051AC01CF89_KEY
+  - ENCRYPTED_7051AC01CF89_IV: $ENCRYPTED_7051AC01CF89_IV
+  - CODECOV_TOKEN: $CODECOV_TOKEN
+  - DOCKER_LOGIN: $DOCKER_LOGIN
+  - DOCKER_PASSWORD: $DOCKER_PASSWORD
+  - CONNECT_LINE: $CONNECT_LINE
+  - UPDATE_COMMAND: $UPDATE_COMMAND
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - $HOME/.npm
+    - frontend/node
+    - frontend/node_modules
+
+services:
+  - docker
+
+before_install:
+  - sudo apt-get update && sudo apt-get install -y chromium-browser
+
+install:
+  - chmod +x mvnw
+
+before_script:
+  - mkdir -p ~/.ssh
+  - openssl aes-256-cbc -K "$ENCRYPTED_7051AC01CF89_KEY" -iv "$ENCRYPTED_7051AC01CF89_IV" -in ./.travis/id_rsa.enc -out ~/.ssh/id_rsa -d
+  - chmod 600 ~/.ssh/id_rsa
+  - java -version
+  - echo "JAVA_HOME: $JAVA_HOME"
+
+script:
+  - ./mvnw -U -q -Drevision=$DATE_VERSION -P frontend -P jacoco -P docker -P webdriver-chrome -P webdriver-firefox -Dcustom.selenium.headless=true clean install
+  - ./mvnw -U -q -Drevision=$DATE_VERSION -pl deploy-test -P deploy-test clean test
+
+after_success:
+  - rm -rf ~/.m2/repository/com/github/nkonev/blog
+  - rm -rf $GITHUB_WORKSPACE/frontend/node_modules/.cache
+
+deploy:
+  provider: script
+  skip-cleanup: true
+  script:
+    - echo "Pushing Docker image"
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_LOGIN" --password-stdin
+    - docker push nkonev/blog:latest
+    - ssh -o "BatchMode yes" -o StrictHostKeyChecking=no -q $CONNECT_LINE $UPDATE_COMMAND
+  on:
+    tags: true
+    branch: master
+    condition

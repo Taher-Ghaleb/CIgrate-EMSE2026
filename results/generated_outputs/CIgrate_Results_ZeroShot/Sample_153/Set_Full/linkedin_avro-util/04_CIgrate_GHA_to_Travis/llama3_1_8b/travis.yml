@@ -1,0 +1,63 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies..."
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - echo "Installing Gradle..."
+  - curl -s https://get.sdkman.io | sh
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install gradle 7.4
+
+script:
+  - echo "Building with Gradle..."
+  -./gradlew clean build javadoc --no-daemon
+
+after_success:
+  - echo "Deploying to Bintray..."
+  - bash -v scripts/publishToBintray.sh
+  - echo "Deploy successful"
+
+after_failure:
+  - echo "Deploy failed"
+
+deploy:
+  on:
+    tags: true
+  if: github.event_name == 'push' && startsWith(github.ref,'refs/tags/')
+  before_script:
+    - echo "Preparing deployment..."
+  script:
+    - bash -v scripts/publishToBintray.sh
+  env:
+    BINTRAY_USERNAME: $BINTRAY_USERNAME
+    BINTRAY_API_KEY: $BINTRAY_API_KEY
+
+matrix:
+  allow_failures:
+    - ubuntu-latest
+  include:
+    - os: ubuntu-latest
+      dist: xenial
+      java: oraclejdk8
+      env:
+        BINTRAY_USERNAME: $BINTRAY_USERNAME
+        BINTRAY_API_KEY: $BINTRAY_API_KEY
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - your_email@example.com

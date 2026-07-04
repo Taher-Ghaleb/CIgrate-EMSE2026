@@ -1,0 +1,25 @@
+language: java
+jdk: openjdk11
+sudo: false
+
+install: true
+
+before_install:
+  - chmod +x gradlew
+
+addons:
+  sonarcloud:
+    organization: "kaklakariada-github"
+    token:
+      secure: "$SONAR_TOKEN"
+
+script:
+  - ./gradlew clean check sonarqube --info --stacktrace --warning-mode all
+
+env:
+  global:
+    - GITHUB_TOKEN=$GITHUB_TOKEN
+
+cache:
+  directories:
+    - '$HOME/.sonar/cache'

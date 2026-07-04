@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - ${{ github.ref_name }}
+  pull_request:
+    branches:
+      - ${{ github.head_ref }}
+
+env:
+  global:
+    TAG_BRANCH: ${{ github.ref_name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk12
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: ${{ matrix.jdk }}
+      - name: Install p7zip-full
+        uses: actions/setup-apt@v2
+        with:
+          apt-packages: p7zip-full
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+      - name: Install and run xvfb
+        if: ${{ github.os == 'linux' }}
+        run: |
+          export DISPLAY=:99.0
+          sh -e /etc/init.d/xvfb start
+      - name: Install and run Maven
+        run: mvn package -q
+      - name: Prepare deploy script
+        run: chmod +x .github/deploy_prepare.sh
+      - name: Prepare deploy bintray_central script
+        run: chmod +x .github/deploy_bintray_central.sh
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy prepare
+        uses: ${{ needs.build.outputs.script }}
+        id: deploy_prepare

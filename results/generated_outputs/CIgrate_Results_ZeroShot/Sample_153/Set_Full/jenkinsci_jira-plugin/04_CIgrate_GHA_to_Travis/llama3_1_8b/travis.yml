@@ -1,0 +1,89 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK"
+  - export JAVA_HOME=/usr/lib/jvm/temurin
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - echo "Building and verifying with coverage"
+  - mvn -Penable-jacoco \
+    -Dsonar.projectKey=jenkins-jira-plugin \
+    -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+    clean verify
+
+after_success:
+  - echo "Deploying to SonarCloud"
+  - mvn sonar:sonar
+  - echo "Uploading coverage to Coveralls"
+  - coverallsapp/github-action \
+    --github-token=$GITHUB_TOKEN \
+    --path-to-lcov=target/site/jacoco/jacoco.xml
+
+after_failure:
+  - echo "Cleaning up Maven cache"
+  - rm -rf ~/.m2/repository/org/jenkins-ci/plugins/jira
+
+deploy:
+  on:
+    branches:
+      only:
+        - main
+    tags:
+      - true
+
+services:
+  - docker-compose
+
+addons:
+  sonarcloud:
+    on:
+      push:
+        branches:
+          only:
+            - main
+    on:
+      pull_request:
+        branches:
+          only:
+            - main
+
+notifications:
+  email:
+    on:
+      push:
+        branches:
+          only:
+            - main
+      pull_request:
+        branches:
+          only:
+            - main
+
+matrix:
+  include:
+    - jdk: 8
+    - jdk: 11
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+env:
+  GITHUB_TOKEN: $GITHUB_TOKEN
+  SONAR_TOKEN: $SONAR_TOKEN
+  SONAR_ORGANIZATION: warden
+  GITHUB_TOKEN: $GITHUB_TOKEN
+```
+
+Note: The above configuration is a complete Travis CI configuration YAML file. It includes all the necessary sections and properties as per the provided GitHub Actions workflow. The configuration is based on the provided rules and maintains the 1 to 1 mapping of the original workflow.

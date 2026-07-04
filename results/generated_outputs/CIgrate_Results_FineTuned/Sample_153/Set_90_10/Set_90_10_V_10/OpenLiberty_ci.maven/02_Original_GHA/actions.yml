@@ -1,0 +1,65 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - java-version: 8
+            RUNTIME: ol
+            RUNTIME_VERSION: 19.0.0.6
+          - java-version: 8
+            RUNTIME: ol
+            RUNTIME_VERSION: 19.0.0.3
+          - java-version: 8
+            RUNTIME: wlp
+            RUNTIME_VERSION: 19.0.0.6
+          - java-version: 8
+            RUNTIME: wlp
+            RUNTIME_VERSION: 19.0.0.3
+          - java-version: 11
+            RUNTIME: ol
+            RUNTIME_VERSION: 19.0.0.6
+          - java-version: 11
+            RUNTIME: ol
+            RUNTIME_VERSION: 19.0.0.3
+          - java-version: 11
+            RUNTIME: wlp
+            RUNTIME_VERSION: 19.0.0.6
+          - java-version: 11
+            RUNTIME: wlp
+            RUNTIME_VERSION: 19.0.0.3
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.java-version }}
+
+    - name: Cache Maven repository
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-m2-
+
+    - name: Before install
+      run: |
+        echo "Deleting old .m2 artifacts..."
+        rm -rf $HOME/.m2/repository/net/wasdev
+        rm -rf $HOME/.m2/repository/io/openliberty
+        echo 'Installing ci.common lib...'
+        git clone https://github.com/OpenLiberty/ci.common.git ./ci.common
+        cd ./ci.common
+        mvn clean install
+        cd ..
+
+    - name: Build
+      run: mvn verify -Ponline-its -Dinvoker.streamLogs=true -Druntime=${{ matrix.RUNTIME }} -DruntimeVersion=${{ matrix.RUNTIME_VERSION }}

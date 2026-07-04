@@ -1,0 +1,23 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 7
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '7'
+
+    - name: After success
+      if: startsWith(github.ref, 'refs/tags/') == false
+      run: |
+        cat > ~/settings.xml <<'EOF'
+        <settings><servers><server><id>ossrh</id><username>${env.OSSRH_USER}</username><password>${env.OSSRH_PASS}</password></server></servers></settings>
+        EOF
+        mvn deploy --settings ~/settings.xml

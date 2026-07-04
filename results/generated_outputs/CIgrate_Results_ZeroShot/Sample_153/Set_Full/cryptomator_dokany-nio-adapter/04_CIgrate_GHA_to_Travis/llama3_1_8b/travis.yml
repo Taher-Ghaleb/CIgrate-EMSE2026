@@ -1,0 +1,41 @@
+language: java
+
+services:
+  docker:
+    image: ubuntu:latest
+
+before_install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+before_script:
+  - mkdir -p $HOME/.m2
+  - curl -o $HOME/.m2/settings.xml https://gist.githubusercontent.com/cryptobot/cf5fbd909c4782aaeeeb7c7f4a1a43da/raw/e60ee486e34ee0c79f89f947abe2c83b4290c6bb/settings.xml
+
+script:
+  - mvn dependency:go-offline -Pdependency-check,coverage,release
+  - mvn clean test jacoco:report verify -Dsurefire.useFile=false -Pcoverage
+  - curl -o ~/codacy-coverage-reporter-assembly-latest.jar https://oss.sonatype.org/service/local/repositories/releases/content/com/codacy/codacy-coverage-reporter/4.0.1/codacy-coverage-reporter-4.0.1-assembly.jar
+  - $JAVA_HOME/bin/java -jar ~/codacy-coverage-reporter-assembly-latest.jar report -l Java -r target/site/jacoco/jacoco.xml
+
+deploy:
+  on:
+    tags: true
+  if: startsWith(github.ref,'refs/tags/') && github.repository == 'cryptomator/dokany-nio-adapter'
+  script:
+    - mvn clean versions:set -DnewVersion=${{ github.ref_name }} deploy -DskipTests -Prelease
+    - echo '{"close": "1"}' | curl -X POST -u cryptobot:${BINTRAY_API_KEY} https://api.bintray.com/maven_central_sync/cryptomator/maven/dokany-nio-adapter/versions/${{ github.ref_name }}
+  env:
+    BINTRAY_API_KEY: $BINTRAY_API_KEY
+  needs: script
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - cryptobot@example.com

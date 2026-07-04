@@ -1,0 +1,8 @@
+sudo: FALSE
+cache:
+  directories: ~/.maven-
+language:
+  java
+jdk: jdk8
+android:
+  components: extra-android-maven-repository

@@ -1,0 +1,43 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+env:
+  TRAVIS_JDK_VERSION: ${{ matrix.jdk }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['7', '8', '9', '10']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: oracle
+          java-version: ${{ matrix.jdk }}
+      - name: Install Maven
+        run: |
+          export MAVEN_OPTS="-Dhttps.protocols=TLSv1.2 -Xmx512m -XX:MaxPermSize=128m"
+          export JAVA_HOME="/usr/lib/jvm/java-${{ matrix.jdk }}-oracle"
+          export PATH="${JAVA_HOME}/bin:${PATH}"
+          if [[! -d "${JAVA_HOME}" ]]; then
+            # Download and install Oracle JDK
+            wget https://s3.amazonaws.com/d2fbee19-5fe2-425f-ae11-cd25b35dc99a/jdk-${{ matrix.jdk }}u80-linux-x64.tar.gz -O /tmp/jdk-${{ matrix.jdk }}u80-linux-x64.tar.gz
+            tar xvfz /tmp/jdk-${{ matrix.jdk }}u80-linux-x64.tar.gz -C /tmp
+            sudo mv /tmp/jdk1.${{ matrix.jdk }}.0_80 "${JAVA_HOME}"
+          fi
+          # Download and install JCE Unlimited Strength Crypto policies for Oracle JDK
+          curl -q -L -C - https://238dj3282as03k369.s3-us-west-1.amazonaws.com/UnlimitedJCEPolicyJDK${{ matrix.jdk }}.zip -o /tmp/UnlimitedJCEPolicyJDK${{ matrix.jdk }}.zip
+          sudo unzip -oj -d "$JAVA_HOME/jre/lib/security" /tmp/UnlimitedJCEPolicyJDK${{ matrix.jdk }}.zip \*/\*.jar
+          rm /tmp/UnlimitedJCEPolicyJDK${{ matrix.jdk }}.zip
+      - name: Run Maven
+        run: mvn install
+      - name: Run tests
+        run: |
+          test -z "$BUILD_COVERAGE" || { mvn clean

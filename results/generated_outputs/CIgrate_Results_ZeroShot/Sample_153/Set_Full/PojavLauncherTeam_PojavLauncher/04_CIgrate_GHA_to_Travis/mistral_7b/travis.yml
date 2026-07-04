@@ -1,0 +1,60 @@
+language: bash
+
+branches:
+  only:
+    - main
+    - master
+    - develop
+
+deploy:
+  on:
+    push:
+      branches:
+        - main
+        - master
+    pull_request:
+      branches:
+        - main
+        - master
+
+env:
+  ANDROID_API_LEVEL: $ANDROID_API_LEVEL
+  ANDROID_BUILD_TOOLS_VERSION: $ANDROID_BUILD_TOOLS_VERSION
+
+services:
+  - docker
+
+before_install:
+  - checkout
+
+install:
+  - name: Set up JDK 17
+    script: |
+      curl -s https://get.sdkman.io | bash
+      sdk install java 17.0.2
+      java -version
+
+  - name: Setup Gradle
+    script: |
+      curl -s https://packages.gradle.org/gradle/gradle-7.3.3-all.zip -o gradle-7.3.3-all.zip
+      unzip gradle-7.3.3-all.zip
+      export GRADLE_HOME=$(pwd)/gradle-7.3.3
+      echo 'export GRADLE_HOME=$GRADLE_HOME' >> ~/.bashrc
+      gradle -v
+
+before_script:
+  - yes | sdkmanager --licenses || true
+
+script:
+  - sdkmanager "build-tools;${{ env.ANDROID_BUILD_TOOLS_VERSION }}"
+  - sdkmanager "platforms;android-${{ env.ANDROID_API_LEVEL }}"
+  - sdkmanager --list_installed
+  - chmod +x gradlew
+  - ./gradlew clean build
+  - ./gradlew test
+
+after_success:
+  - name: Upload test results
+    script: |
+      find . -path '*/build/reports/tests/*' -o -path '*/build/test-results/*' -exec tar -czvf {} \;
+      curl -F file=@test-results.tar.gz -F set_draft=true -F name

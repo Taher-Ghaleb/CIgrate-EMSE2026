@@ -1,0 +1,39 @@
+language: java
+jdk:
+  - openjdk8
+
+sudo: false
+install: true
+addons:
+  maven:
+    version: 3.6.3
+
+env:
+  matrix:
+    - SECRET_TOKEN: ${{ secrets.SECRET_TOKEN }}
+
+script:
+  - mvn --version
+  - mvn install site -e -B
+
+before_install:
+  - rm -rf ~/.m2/repository/org/joda/time
+
+before_script:
+  - if [ "${github.event_name}" == "push" ]; then \
+      if [ "${github.ref}" == "refs/tags/website" ] || [ "${github.ref}" == "refs/tags/v*" ]; then \
+        chmod +x ./.github/website.sh; \
+      fi; \
+    fi
+
+deploy:
+  on:
+    branches:
+      - master
+      - develop
+    tags:
+      - website*
+      - v*
+  script:
+    - ./.github/website.sh
+    - env: $SECRET_TOKEN

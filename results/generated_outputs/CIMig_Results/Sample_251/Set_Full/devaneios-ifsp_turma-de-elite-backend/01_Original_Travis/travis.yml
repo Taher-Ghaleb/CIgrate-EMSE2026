@@ -1,0 +1,31 @@
+language: java
+jdk: openjdk8
+before_install:
+- openssl aes-256-cbc -K $encrypted_7d07226627da_key -iv $encrypted_7d07226627da_iv
+  -in firebase/firebase-sdk-key.json.enc -out firebase/firebase-sdk-key.json -d
+- curl -sL https://firebase.tools | bash
+script: firebase emulators:exec --only auth --project turma-de-elite-app './gradlew
+  test'
+deploy:
+  provider: heroku
+  skip_cleanup: true
+  strategy: git
+  api_key:
+    secure: kvSlDjM6oGtOzHAOJ8eWcD+58h32rYMRlbSfM0dC7wEDVXvIFB0EVsbvCtoRFdqvdSB0zzsgUMAPXIcrexsoSQgcJlTIN6p9r+XHhRFYmJDqbiZmogtnPyKWRoHzkDBa9eoKBr4OEeBRrCDMzYhrLOVDwjk+iqPkbh5Iw8V7Zhb3whUoYwXEkcYdAtgla0BGfl+ItndHR37y8eHRpzCC1Z/cA6WuwW1Tr8lkop20gBI9COrnjpAzZuqAYoMzxyp34Pu5CPdR0NoYGvg3Y48dMOicQfo74KOS0Y4iy/yqSCclrWJyv4c14ikZprZrexsrDk+CzI8/3tqUMZx+5akqwcMhwuK7bHIMHtraZ4W0A8/FpnXtTWGcyjvrIuA03vup78c/kobMOc+U4nU25oThsWwiKfmtyQpf59asPFGSZc6H9cBvPtdgFa358mdaLSid3YtMtJ4DI51kDLdiv2+38v6csRD3IOQVdUL9N4qsaQzTIC5q0+yJaZxvDut1B6kd9OiFMDf3rk3zus8AYATiRQqWSQZrlykyiktJegasUSQOgEMfckuYndIbb0jYVwSYh0DzMp9QuW/uLJyX18cQW3rC88bwo4lKgX22TjCbjJz/2cvhr8g/a7Bh2ON6IzRbEfYJ8UHcN1hs3isBbAJTV5DUIDWxT5FJWiN+d42IeZ0=
+  app: turma-de-elite
+  on:
+    branch: release
+    condition: release
+before_cache:
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  npm: true
+  directories:
+  - "$HOME/.cache/firebase"
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
+env:
+  global:
+  - secure: Qxs7oivqGaOkmIBdvgTeCmqDX9RfuLVIChLupr79lQ+CabhWlf/jEPwzoo3T1hu94u4boMYWT0lIrsSHuW/pmHo0O2eNBo1kSxNQ8ShRhoQ9G8w5yjFYNdcUjBsfANWZzGpyQHGFyCMtTFuZiWvczR/FEy014CkU3VGYbBJkT5LaV8zd2dhaUDTcAh3ox4al4n8YcyKEB97ioQLiShEPIVLQxSrSTWZ1SCpjG9S/150nMoLWFhFxvIfJcacq4yNRa8wywPShKK0sqQMIlh5bFTpvQilq1mIWJBMUWztvk7h7WKhiu8MQTHwQ+d/pdbFNfSKi+UqKWcT7k7drbrjUPCtfGUyMnDDawXAQn3irBlTUrQbXhLiMEw9IyBuO565foxchOOF0k6iW+fOp0CAfxF8Ce41uMD7bZLjp+H6dgegKxQKsB/gXsBJGnjW/4DOKoVewufUAAtRbhaXdvR3ZpoHl5zVD97bHabJ5vQU0IfA0T7aa7cLgMn5cnPDP7+Ou+Id/VgKUW7ehhz6m3GfbxRyS6ep75Dm3Y5laCQeX4ZBLzmvwsVJDk2xEV7oXkS9I1DP2MfDJlyv02FfohwtFw8rIEZ52BIT9upZIgyOFy0NdIWpBzSbeFGWpmGxBfpIUBnB9wt7dg/Ox6mmVNflPiMdHBb0JqZWpG0V1p8aveYw=
+  - secure: AEJHV9jq1o9KbVFtmmP5PXONCtToILvPjxKtRkRBazH68y0ol3BHQhJOIBBThTFdFd0ysMiQW+dHqmj1MrG2/bm273hfY2KVKiFae2KHVwJ/y0an1WXCSureLXBMRnSwZipVxhaWFHhPO6ryNaKvRjRqFil4tcI9hR3TxSX/TU5FrHBL9lyT/OHL6nG0A6kt9BYE9pRxWEr99qEHpnZJUmYSa4CMjat6SivVLeAG722wlZwlzEZTiWl9YqiETZQwv/vzj+OkrhMChSxgthRwhO7R5RdCIGI0zycfqGyLN4sds+kbROQ4EKzKm9zogO/rVPVfl26MR2vKhPv1Zz0jGtlishKt31NU8tI7CSbvQNeMMF+7AR/ynVn/e2D0H4plXeefUOy8d97p8vzU9qGQalPgD+sdPerNvPK1fB8HiGiYPenNDPSg2ug8NgSzIM0jZG4zAK+Dz4HLPJZwEYcqvd+MZvo24lD4dsK9k5+OPZ/ta6GzOO2161Rdyee6IveXrsloFmQw/eX3RtkGMdJiTemab/nadEM+fGIn5nGWpQ/AZd3HUq1zAW5JsghHuVyjyDByqzgu10RE/AkcnccweuTZKh0w0g1nzr/qQ+RxotWm0b7WQTiMsNAyaDNlrldDh7fn6lYY/bAFCM+TL4QhWN7nYkGDkgfBTtOzHT8mZqw=

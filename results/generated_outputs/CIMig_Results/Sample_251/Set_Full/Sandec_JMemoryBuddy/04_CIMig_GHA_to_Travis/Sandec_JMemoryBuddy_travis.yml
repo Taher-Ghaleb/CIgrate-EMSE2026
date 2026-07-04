@@ -1,0 +1,17 @@
+env: global
+sudo: FALSE
+cache:
+  directories:
+    ~/.maven-
+    ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew build
+apt:
+  packages: jdk-8-jdk

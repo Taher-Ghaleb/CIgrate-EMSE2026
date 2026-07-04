@@ -1,0 +1,23 @@
+name: placeholder
+
+on:
+  pull_request
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path
+        key: jdk11-${{ hashfiles(arg) }}
+      with:
+        java-version: ${{ matrix.java }}
+      with: key
+      with: java-version
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+      run: mvn clean install
+

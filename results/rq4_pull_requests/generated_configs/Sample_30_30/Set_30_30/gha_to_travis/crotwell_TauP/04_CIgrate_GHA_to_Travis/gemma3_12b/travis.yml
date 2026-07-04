@@ -1,0 +1,90 @@
+language: java
+sudo: false
+jdk:
+  - openjdk11
+  - oraclejdk9
+  - oraclejdk8
+  - oraclejdk7
+  - oraclejdk6
+  - oraclejdk5
+  - oraclejdk4
+  - oraclejdk3
+  - oraclejdk2
+  - oraclejdk1
+script:
+  - ./gradlew installDist
+  - ./gradlew  check
+env:
+  global:
+    - secure: "********************"
+model
+name: Java CI with Gradle
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.actor }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '11'
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+    - name: Build with Gradle
+      run: ./gradlew installDist
+    - name: Test with Gradle
+      run: ./gradlew check
+model
+language: java
+sudo: false
+jdk:
+  - openjdk11
+  - oraclejdk9
+  - oraclejdk8
+  - oraclejdk7
+  - oraclejdk6
+  - oraclejdk5
+  - oraclejdk4
+  - oraclejdk3
+  - oraclejdk2
+  - oraclejdk1
+script:
+  - ./gradlew installDist
+  - ./gradlew  check
+env:
+  global:
+    - secure: "********************"
+model
+name: Java CI with Gradle
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.actor }}-${{ github.ref }}
+  cancel_in_progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs_on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 11
+      uses:

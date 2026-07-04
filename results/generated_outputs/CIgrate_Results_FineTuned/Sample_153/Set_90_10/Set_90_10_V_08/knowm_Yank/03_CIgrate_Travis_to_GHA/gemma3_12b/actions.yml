@@ -1,0 +1,28 @@
+name: Java CI
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Clone travis repository
+      run: git clone -b travis `git config --get remote.origin.url` target/travis
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+    - name: Build and deploy
+      if: github.event_name != 'pull_request'
+      run: mvn clean deploy --settings target/travis/settings.xml
+    - name: Build and verify
+      if: github.event_name == 'pull_request'
+      run: mvn clean verify --settings target/travis/settings.xml

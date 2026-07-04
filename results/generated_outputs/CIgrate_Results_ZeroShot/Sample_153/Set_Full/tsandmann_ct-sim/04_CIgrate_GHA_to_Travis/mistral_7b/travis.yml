@@ -1,0 +1,63 @@
+name: CI
+
+branches:
+  only:
+    - main
+    - develop
+    - feature/*
+    - bugfix/*
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+before_install:
+  - install: docker
+
+script:
+  - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" $DOCKER_REGISTRY
+  - docker build -t $DOCKER_REGISTRY/my-image:$TRAVIS_TAG .
+  - docker push $DOCKER_REGISTRY/my-image:$TRAVIS_TAG
+
+language: java
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle
+    - $HOME/.npm
+
+before_script:
+  - export JAVA_HOME=$(/usr/lib/jvm/java-$JAVA_VERSION/jre/bin/java -version 2>&1 | awk '/version/ {print $3}')
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+matrix:
+  include:
+    os: [ubuntu, osx]
+    java: [8, 11, 17]
+
+install:
+  - ant -f make-jar.xml
+
+script:
+  - ant -f make-jar.xml
+
+before_install:
+  - git config --global user.name "$GITHUB_ACTOR"
+  - git config --global user.email "$GITHUB_ACTOR@github.com"
+
+env:
+  global:
+    - GITHUB_ACTOR
+    - GITHUB_REF
+    - GITHUB_SHA
+    - GITHUB_REPOSITORY
+    - DOCKER_USERNAME
+    - DOCKER_PASSWORD
+    - DOCKER_REGISTRY
+    - JAVA_VERSION
+
+# TODO: Add a hook to wait for services and docker-compose if needed

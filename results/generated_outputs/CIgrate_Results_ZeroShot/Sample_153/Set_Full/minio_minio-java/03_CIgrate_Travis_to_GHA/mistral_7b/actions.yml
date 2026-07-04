@@ -1,0 +1,58 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+env:
+  JAVA_HOME: ${{ runner.os == 'ubuntu' ? '${{ secrets.JAVA_HOME_UBUNTU }}' : '${{ secrets.JAVA_HOME_MACOS }}' }
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+          cache: gradle
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-gradle-dependencies
+          restore-keys: |
+            ${{ runner.os }}-gradle-dependencies
+
+      - name: Install and run tests
+        run: |
+          ./gradlew clean check runFunctionalTest
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: build/libs/*.jar
+
+      - name: Deploy to production (TODO: Implement deployment)
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { context } = require('@actions/github');
+            const octokit = new context.GitHub(context.repo);
+            const ref = context.payload.pull_request ? context.payload.pull_request.head.ref : context.ref;
+            octokit.rest.repos.createRelease({
+              repo: context.repo,
+              tag_name: ref,
+              name: ref,
+              prerelease: context.payload

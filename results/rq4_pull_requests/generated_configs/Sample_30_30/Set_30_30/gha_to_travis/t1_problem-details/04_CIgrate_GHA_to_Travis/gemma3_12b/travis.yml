@@ -1,0 +1,85 @@
+language: java
+
+jdk:
+  - openjdk17
+  - openjdk21
+
+install: true
+
+script:
+  - mvn --batch-mode --show-version --no-transfer-progress -DCI=GitHub install
+model
+name: Java CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [ openjdk17, openjdk21 ]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK ${{ matrix.jdk }}
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.jdk }}
+        cache: 'maven'
+    - name: Build with Maven
+      run: mvn --batch-mode --show-version --no-transfer-progress -DCI=GitHub install
+model
+language: java
+
+jdk:
+  - openjdk17
+  - openjdk21
+
+install: true
+
+script:
+  - mvn --batch-mode --show-version --no-transfer-progress -DCI=GitHub install
+model
+name: Java CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [ openjdk17, openjdk21 ]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK ${{ matrix.jdk }}
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.jdk }}
+        cache: 'maven'
+    - name: Build with Maven
+      run: mvn --batch-mode --show-version --no-transfer-progress -DCI=GitHub install
+model
+language: java
+
+jdk:
+  - openjdk17
+  - openjdk21
+
+install: true
+
+script:
+  - mvn --batch-mode --show-version --no-transfer-progress -DCI=GitHub install
+model
+name: Java CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:

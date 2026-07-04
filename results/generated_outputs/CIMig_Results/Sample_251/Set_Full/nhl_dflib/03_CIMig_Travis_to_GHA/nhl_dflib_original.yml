@@ -1,0 +1,20 @@
+name: placeholder_Name
+
+on:
+  pull_request: master
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      with: path
+    - name: Placeholder
+      run: mvn clean source:jar javadoc:javadoc deploy -DskipTests --settings travis_settings.xml
+
+env:
+  github_token: ${{ github.token }}
+
+macos:
+  jdk: openjdk8
+

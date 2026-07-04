@@ -1,0 +1,35 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - ~/.gradle/wrapper
+branches:
+  only:
+    - main
+    - develop
+    - /^feature\/.*$/
+    - /^bugfix\/.*$/
+    - /^hotfix\/.*$/
+    - /^release\/.*$/
+script:
+  - chmod +x gradlew
+  - ./gradlew build
+  - ./gradlew jacocoTestReport
+after_success:
+  - if [ "$TRAVIS_BRANCH" == "main" ]; then
+      echo "Deploying to production..."
+      # TODO: Deploy to production
+    fi
+  - if [ "$TRAVIS_BRANCH" == "develop" ]; then
+      echo "Deploying to staging..."
+      # TODO: Deploy to staging
+    fi
+  - if [ "$TRAVIS_BRANCH" == "main" || "$TRAVIS_BRANCH" == "develop" ]; then
+    - if [[ -z "${CODECOV_TOKEN}" ]]; then
+        echo "CODECOV_TOKEN is not set. Skipping Codecov upload."
+      else
+        - curl -L https://codecov.io/bash/3.1 | bash -s -E CODECOV_TOKEN=${CODECOV_TOKEN}
+      fi
+  fi

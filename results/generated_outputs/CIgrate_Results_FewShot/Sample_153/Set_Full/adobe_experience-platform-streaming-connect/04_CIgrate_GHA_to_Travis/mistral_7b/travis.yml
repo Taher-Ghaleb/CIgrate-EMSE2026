@@ -1,0 +1,20 @@
+language: java
+sudo: false
+services:
+  - docker
+    image: docker:latest
+    options: --privileged
+
+jdk:
+  - zulu8
+
+env:
+  matrix:
+    - GRADE_CACHE_KEY=${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+script:
+  - actions/checkout@v4
+  - actions/setup-java@v4 -d 'zulu' -j '8'
+  - actions/cache@v4 -p '~/.gradle/caches ~/.gradle/wrapper' -k ${{ env.GRADE_CACHE_KEY }} -r ${{ env.GRADE_CACHE_KEY }}
+  - chmod +x ./gradlew
+  - ./gradlew clean build

@@ -1,0 +1,64 @@
+Here is the migrated GitHub Actions workflow:
+
+```yml
+name: Android Build and Test
+
+on:
+  push:
+    branches: ['main' ]
+  pull_request:
+    branches: ['main' ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      android-emulator:
+        image: ghcr.io/mibexco/android-emulator:latest
+        privileged: true
+        ports:
+          - 5554:5554
+          - 5555:5555
+          - 5556:5556
+          - 5557:5557
+          - 5558:5558
+          - 5559:5559
+          - 5560:5560
+          - 5554:5554
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Setup Android
+        uses: actions/setup-android@v4
+        with:
+          android-version: '26.0.2'
+      - name: Install Android components
+        run: |
+          echo "Installing Android components..."
+          sdkmanager --licenses
+          sdkmanager --install 'tools'
+          sdkmanager --install 'platform-tools'
+          sdkmanager --install 'build-tools-26.0.2'
+          sdkmanager --install 'android-23'
+          sdkmanager --install 'extra-android-support'
+          sdkmanager --install 'extra-android-m2repository'
+          sdkmanager --install 'extra-google-m2repository'
+          sdkmanager --install 'extra-android-m2repository'
+          sdkmanager --install 'extra-google-google_play_services'
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradlew') }}
+          restore-keys: ${{ runner.os }}-gradle-${{ hashFiles('gradlew') }}
+      - name: Cache Android build cache
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.android/build-cache
+          key: ${{ runner.os }}-android-build-cache-${{ hashFiles('gradlew') }}
+          restore-keys: ${{ runner.os }}-android-build-cache

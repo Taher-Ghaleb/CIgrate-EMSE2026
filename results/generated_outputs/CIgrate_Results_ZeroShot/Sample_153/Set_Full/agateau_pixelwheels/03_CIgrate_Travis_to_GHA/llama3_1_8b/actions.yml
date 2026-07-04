@@ -1,0 +1,70 @@
+name: Migrate Travis CI to GitHub Actions
+
+on:
+  push:
+    branches:
+      -'main'
+      - 'feature/*'
+  pull_request:
+    branches:
+      -'main'
+      - 'feature/*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10
+        env:
+          DOCKER_TLS_CERTDIR: '/certs'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Docker
+        uses: docker/setup-docker@v1
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: ${{ secrets.DOCKER_IMAGE_TAG }}
+      - name: Deploy
+        uses: docker/deploy-action@v1
+        with:
+          image: ${{ secrets.DOCKER_IMAGE_TAG }}
+          container-name: my-game
+          command: /app/run
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ cachedir }}/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            node_modules
+      - name: Install dependencies
+        run: |
+          npm install
+      - name: Run tests
+        run: |
+          npm run test
+      - name: Deploy to production
+        uses: docker/deploy-action@v1
+        with:
+          image: ${{ secrets.DOCKER_IMAGE_TAG }}
+          container-name: my-game
+          command: /app/deploy
+      - name: Wait for deployment
+        run: |
+          sleep 10
+      - name: Verify deployment
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" http://my-game:80
+      - name: Fail on error
+        continue-on-error: true
+        run: |
+          exit 1

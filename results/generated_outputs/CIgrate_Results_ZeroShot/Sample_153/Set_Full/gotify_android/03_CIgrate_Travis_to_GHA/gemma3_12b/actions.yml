@@ -1,0 +1,47 @@
+name: Android Build and Release
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  tag:
+  branches:
+    - main
+    - develop
+
+env:
+  ANDROID_HOME: /home/runner/Android/Sdk
+  STOREPASS: ${{ secrets.STOREPASS }}
+  KEYPASS: ${{ secrets.KEYPASS }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Setup Android
+        run: |
+          yes | sdkmanager "platforms;android-28"
+      - name: Grant execute permission for gradle
+        run: chmod +x ./gradlew
+      - name: Build with Gradle
+        run: ./gradlew clean build --stacktrace
+      - name: Decrypt Keystore
+        run: |
+          openssl aes-256-cbc -K ${{ secrets.ENCRYPTED_F6E0F94759D3_KEY }} -iv ${{ secrets.ENCRYPTED_F6E0F94759D3_IV }} -in gotify-release-key.jks.enc -out gotify-release-key.jks -d
+      - name: Sign APK
+        run: |
+          cp $TRAVIS_BUILD_DIR/gotify-release-key.jks $HOME
+          cd app/build/outputs/apk/release
+          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/gotify-release-key.jks -storepass $STOREPASS -keypass $KEYPASS app-release-unsigned.apk gotify-release-key
+      - name: Verify APK
+        run: jarsigner -verify app-release-unsigned.apk
+      - name: Zipalign APK
+        run: "${ANDROID_HOME}/build-tools/28.0.3/zipalign -v 4 app-release-unsigned.apk Gotify.apk"
+
+    cache:
+      key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle-wrapper.properties') }}

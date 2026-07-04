@@ -1,0 +1,52 @@
+name: Java Build and Deploy
+
+on:
+  push:
+  pull_request:
+  branch:
+    paths:
+      - '1.12.x'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+      - name: Setup Gradle
+        run: chmod +x gradlew
+      - name: Setup CI Workspace
+        run: ./gradlew setupCIWorkspace -S
+      - name: Build
+        run: ./gradlew build
+      - name: Javadoc
+        run: ./gradlew javadoc
+        if: success()
+    cache:
+      key: ${{ runner.os }}-gradle
+      path: |
+        ~/.gradle/caches
+        ~/.gradle/wrapper
+    before_cache:
+      - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+      - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - rm -f $HOME/.gradle/caches/minecraft/deobfedDeps/providedDummy.jar
+      - rm -f $HOME/.gradle/caches/minecraft/deobfedDeps/compileDummy.jar
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/1.12.x'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Pages
+        uses: actions/deploy-pages@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          keep_history: true
+          local_dir: ./build/docs/javadoc

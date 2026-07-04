@@ -1,0 +1,29 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push::
+    branches-ignore:
+      main
+      master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+    - name: Placeholder
+      with:
+        java-version: ${{ matrix.java }}
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run: ./gradlew check
+
+arguments:
+  build publish
+  check
+
+macos:
+  jdk: openjdk8
+

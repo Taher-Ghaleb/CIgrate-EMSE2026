@@ -1,0 +1,22 @@
+language: java
+dist: focal
+
+jdk:
+  - openjdk21
+
+before_install:
+  - sudo rm -rf /var/lib/elasticsearch
+  - curl https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-9.1.4-amd64.deb -o elasticsearch.deb && sudo dpkg -i --force-confnew elasticsearch.deb
+  - sudo cp ./src/test/resources/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml
+  - sudo cat /etc/elasticsearch/elasticsearch.yml
+  - sudo java -version
+  - sudo chown -R elasticsearch:elasticsearch /etc/default/elasticsearch
+  - sudo service elasticsearch start
+  - sleep 30
+
+install:
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true
+
+script:
+  - ulimit -a
+  - mvn test

@@ -1,0 +1,15 @@
+sudo: FALSE
+cache:
+  directories: ~/.gradle
+language:
+  java
+  addons:
+    firefox: latest
+jdk: jdk8
+branches: master
+before_install:
+  java -version
+  mvn -B package --file pom.xml
+script
+stage: ☕ 11
+directories: ~/.maven-

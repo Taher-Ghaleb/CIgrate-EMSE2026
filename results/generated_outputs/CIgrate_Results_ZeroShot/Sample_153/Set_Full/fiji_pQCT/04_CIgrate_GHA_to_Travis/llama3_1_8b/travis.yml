@@ -1,0 +1,89 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - echo "Installing Maven"
+  - apt-get install -y maven
+
+before_script:
+  - echo "Setting up Maven cache"
+  - mkdir -p ~/.m2/repository
+
+script:
+  - echo "Building the project"
+  - mvn clean package
+
+after_success:
+  - echo "Deploying to production"
+  - echo "TODO: implement deployment script"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "TODO: implement deployment script on failure"
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script: echo "TODO: implement deployment script"
+  skip_cleanup: true
+  on:
+    branch: never
+  environment:
+    name: production
+    matrix:
+      - java_version: 8
+        jdk: temurin
+  cache:
+    directories:
+      - ~/.m2/repository
+  allow_failures: true
+  before_deploy:
+    - echo "Setting up JDK 8"
+    - apt-get update
+    - apt-get install -y default-jdk
+  before_install:
+    - echo "Installing Maven"
+    - apt-get install -y maven
+  before_script:
+    - echo "Setting up Maven cache"
+    - mkdir -p ~/.m2/repository
+  script:
+    - echo "Building the project"
+    - mvn clean package
+  after_success:
+    - echo "Deploying to production"
+    - echo "TODO: implement deployment script"
+  after_failure:
+    - echo "Deploying to production on failure"
+    - echo "TODO: implement deployment script on failure"
+  matrix:
+    include:
+      - java_version: 8
+        jdk: temurin
+  services:
+    - docker
+  addons:
+    - travis-ci/emoji
+  notifications:
+    email:
+      on_success: false
+      on_failure: true
+      recipients:
+        - your_email@example.com
+  branches:
+    only:
+      - master
+      - '*-[0-9]*.*'
+  tags:
+    - "v1.0"
+  before_deploy:
+    - echo "Setting up JDK 8"
+    - apt-get update
+    - apt-get install -y default-jdk
+  before_install:
+    - echo "

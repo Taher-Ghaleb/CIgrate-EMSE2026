@@ -1,0 +1,22 @@
+language: java
+jdk:
+  - openjdk8
+  - openjdk11
+
+branches:
+  only:
+    - master
+    - "2.13"
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+before_install:
+  - git checkout -qf FETCH_HEAD
+
+install:
+  - echo "Installing dependencies..."
+
+script:
+  - mvn -B clean verify

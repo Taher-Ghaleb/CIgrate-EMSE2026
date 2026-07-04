@@ -1,0 +1,34 @@
+language: java
+sudo: false
+cache:
+  directories:
+    - ~/.m2/repository
+jdk:
+  - openjdk11
+
+script:
+  - mvn --errors clean verify site
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" = "main" ]; then
+      if [ "$TRAVIS_JOB_STATUS" = "success" ]; then
+        echo "Upload coverage to Codecov"
+        if [[ -n "${CODECOV_TOKEN}" ]]; then
+          curl -L https://codecov.io/bash | bash -s -- -t "${CODECOV_TOKEN}" -f com.io7m.jmurmur.core/target/site/jacoco/jacoco.xml
+        fi
+      fi
+    fi
+
+after_script:
+  - if [ "$TRAVIS_BRANCH" != "main" ]; then
+      echo "Skipping IRC notification on non-main branches"
+    else
+      if [ "$TRAVIS_JOB_STATUS" = "success" ]; then
+        echo "Sending IRC notification"
+        curl -s -u "github-actions-jmurmur:$(echo $IRC_PASSWORD | base64 -d)" "irc.libera.chat/irc?channel=#io7m&message=Build ${TRAVIS_JOB_STATUS}: ${TRAVIS_REPO_SLUG} (${TRAVIS_COMMIT_SHA})"
+      fi
+    fi
+env:
+  global:
+    secure: ${CODECOV_TOKEN}
+    secure: ${IRC_PASSWORD}

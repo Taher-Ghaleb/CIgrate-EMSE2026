@@ -1,0 +1,25 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Clone CI Tooling
+        run: git clone --depth 1 https://github.com/igniterealtime/ci-tooling.git target/ci-tooling
+      - name: Copy Maven Settings
+        run: cp target/ci-tooling/maven-settings-for-openfire-plugins.xml $HOME/.m2/settings.xml
+      - name: Deploy
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/')
+        run: mvn deploy --settings target/ci-tooling/maven-settings-for-openfire-plugins.xml
+        env:
+          # TODO: Add secure environment variables here
+          SECURE_VAR1: ${{ secrets.SECURE_VAR1 }}
+          SECURE_VAR2: ${{ secrets.SECURE_VAR2 }}

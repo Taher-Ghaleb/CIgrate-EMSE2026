@@ -1,0 +1,28 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    master
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        java-version:
+          ${{ matrix.java }}
+          1.8
+    - name: Placeholder
+    - name: placeholder_Name
+      with: java-version
+      uses: actions/setup-java@version
+      uses: actions/checkout@version
+      run:
+        bash <(curl -s https://codecov.io/bash)
+        if .travis/build_condition.sh $TRAVIS_COMMIT_RANGE examples/example; then\n  echo \"Testing\";\nelse\n  echo \"NOT testing\" && travis_terminate 0;\nfi\n
+        ./gradlew check -i
+

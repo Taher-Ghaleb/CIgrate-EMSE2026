@@ -1,0 +1,88 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update
+  - apt-get install -y maven
+
+install:
+  - mvn --version
+
+script:
+  - mvn clean verify -P without-authentication
+  - mvn clean verify -P with-one-way-authentication
+  - mvn clean verify -P with-two-way-authentication-by-trusting-each-other
+  - mvn clean verify -P with-two-way-authentication-by-trusting-root-ca
+
+deploy:
+  on:
+    tags: true
+  environment:
+    - name: production
+      matrix:
+        - JDK_VERSION: 11
+        - JDK_VERSION: 17
+  before_deploy:
+    - echo "Deploying to production"
+  deploy:
+    provider: script
+    script: mvn clean deploy -P with-two-way-authentication-by-trusting-root-ca
+    on:
+      branch: master
+    environment:
+      - name: production
+        matrix:
+          - JDK_VERSION: 11
+          - JDK_VERSION: 17
+    after_deploy:
+      - echo "Deployed to production"
+
+notifications:
+  email:
+    recipients:
+      - user1@example.com
+      - user2@example.com
+    on:
+      branch: master
+      status: success
+
+matrix:
+  include:
+    - JDK_VERSION: 11
+    - JDK_VERSION: 17
+  allow_failures:
+    - JDK_VERSION: 17
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  apt:
+    sources:
+      - "ppa:openjdk/ppa"
+
+branches:
+  only:
+    - master
+
+before_script:
+  - echo "Setting up JDK 11"
+  - apt-get update
+  - apt-get install -y openjdk-11-jdk
+  - export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - export JDK_VERSION=11
+  - export MAVEN_OPTS=-Dmaven.repoLocalPolicy=always-sync
+  - mvn --version
+  - mvn clean verify -P without-authentication
+  - mvn clean verify -P with-one-way-authentication
+  - mvn clean verify -P with-two-way-authentication-by-trusting-each-other
+  - mvn clean verify

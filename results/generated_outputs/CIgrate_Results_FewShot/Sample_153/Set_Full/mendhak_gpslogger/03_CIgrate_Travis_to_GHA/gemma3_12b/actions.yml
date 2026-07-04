@@ -1,0 +1,53 @@
+name: Android CI
+
+on: [push, pull_request]
+
+env:
+  ANDROID_HOME: $ANDROID_HOME
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "tools"
+          sdkmanager "platform-tools"
+          sdkmanager "build-tools-26.0.2"
+          sdkmanager "android-23"
+          sdkmanager "extra-android-support"
+          sdkmanager "extra-android-m2repository"
+          sdkmanager "extra-google-m2repository"
+          sdkmanager "extra-android-m2repository"
+          sdkmanager "extra-google-google_play_services"
+      - name: Cache Gradle and Android dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.android/build-cache
+            ~/android-sdk-dl
+            ~/android-sdk
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-android-${{ hashFiles('**/build.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-android-
+      - name: Gradle Version
+        run: ./gradlew --version
+      - name: Build and Unit Tests
+        run: |
+          echo '"Build..."' && echo -en 'travis_fold:start:script.build\r'
+          ./gradlew assembleDebugUnitTest -Dpre-dex=false
+          echo -en 'travis_fold:end:script.build\r'
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest -

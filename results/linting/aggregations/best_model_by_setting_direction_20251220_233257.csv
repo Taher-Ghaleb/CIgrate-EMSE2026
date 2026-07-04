@@ -1,0 +1,9 @@
+setting,direction,model,n,min,q1,q2,median,max,mean,yaml_score_avg,external_score_avg,composite_from_avgs
+CIMig,travis_to_gha,CIMig,251,0.0,0.0,0.0,0.0,0.5,0.0279,0.0558,0.0,0.0279
+CIMig,gha_to_travis,CIMig,251,0.0,0.0,0.0,0.0,1.0,0.0598,0.0598,0.0598,0.0598
+Zero-Shot,travis_to_gha,gpt-4o,153,0.0,1.0,1.0,1.0,1.0,0.9379,0.9935,0.8824,0.938
+Zero-Shot,gha_to_travis,gpt-4o,153,0.0,1.0,1.0,1.0,1.0,0.9477,0.9477,0.9477,0.9477
+Fine-Tuned,travis_to_gha,gemma3_12b,150,0.5,1.0,1.0,1.0,1.0,0.9467,1.0,0.8933,0.9466
+Fine-Tuned,gha_to_travis,gemma3_12b,150,0.0,1.0,1.0,1.0,1.0,0.9733,0.9733,0.9733,0.9733
+Few-Shot,travis_to_gha,gpt-4o,153,0.0,1.0,1.0,1.0,1.0,0.951,0.9935,0.9085,0.951
+Few-Shot,gha_to_travis,gpt-4o,153,0.0,1.0,1.0,1.0,1.0,0.9608,0.9608,0.9608,0.9608

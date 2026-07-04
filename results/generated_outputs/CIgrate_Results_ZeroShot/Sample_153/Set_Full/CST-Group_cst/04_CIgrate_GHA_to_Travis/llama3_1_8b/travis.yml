@@ -1,0 +1,99 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies..."
+  - apt-get update
+  - apt-get install -y default-jdk
+  - apt-get install -y curl
+
+install:
+  - echo "Installing gradle..."
+  - curl -s https://get.sdkman.io | sh
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install gradle 7.4
+  - sdk current gradle
+
+script:
+  - echo "Building and testing..."
+  -./gradlew clean build jacocoTestReport
+
+after_success:
+  - echo "Deploying..."
+  - curl -X POST $SLACK_WEBHOOK_URL -H 'Content-Type: application/json' -d "{\"text\":\"Build $TRAVIS_BUILD_NUMBER: $TRAVIS_REPO_SLUG@${TRAVIS_BRANCH} (JDK $TRAVIS_JDK) - Commit: ${TRAVIS_COMMIT}\"}"
+
+before_deploy:
+  - echo "Preparing deployment..."
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to production..."
+  on:
+    branch: never
+  environment:
+    - name: production
+      matrix:
+        - jdk: 8
+          deploy:
+            provider: script
+            script:
+              - echo "Deploying to production (JDK 8)..."
+            on:
+              branch: never
+            environment:
+              - name: production
+                matrix:
+                  - jdk: 9
+                    deploy:
+                      provider: script
+                      script:
+                        - echo "Deploying to production (JDK 9)..."
+                      on:
+                        branch: never
+                      environment:
+                        - name: production
+
+services:
+  - docker-compose
+
+notifications:
+  on_success: always
+  on_failure: always
+  on_start: never
+  on_state_change: never
+  email:
+    recipients:
+      - your_email@example.com
+  slack:
+    webhook_url: $SLACK_WEBHOOK_URL
+
+matrix:
+  include:
+    - jdk: 8
+      cache: gradle
+    - jdk: 9
+      cache: gradle
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+continue-on-error:
+  - true
+
+jdk:
+  - 8
+  - 9
+
+branches:
+  only:
+    - main
+  except:
+    - master
+
+env:
+  CC

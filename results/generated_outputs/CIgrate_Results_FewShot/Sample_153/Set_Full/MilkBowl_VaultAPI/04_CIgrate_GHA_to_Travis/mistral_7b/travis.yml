@@ -1,0 +1,27 @@
+name: Java CI
+
+sudo: false
+language: java
+jdk: openjdk11
+
+env:
+  global:
+    matrix:
+      - SECRET_1: ${{ secrets.SECRET_1 }}
+      - SECRET_2: ${{ secrets.SECRET_2 }}
+      - SECRET_3: ${{ secrets.SECRET_3 }}
+
+branches:
+  only:
+    - master
+
+script:
+  - mvn test
+
+after_success:
+  - chmod +x .utility/do-publish.sh
+  - .utility/do-publish.sh
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'

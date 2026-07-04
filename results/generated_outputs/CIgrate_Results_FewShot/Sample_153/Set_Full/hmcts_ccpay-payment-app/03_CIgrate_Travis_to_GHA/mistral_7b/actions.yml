@@ -1,0 +1,36 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  # Keep the original branch/tag names
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker: dind
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Clear Gradle caches
+        run: |
+          rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+          rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.gradle/caches/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Install and build
+        run: ./gradlew build
+      - name: Generate and upload coverage report
+        run: ./gradlew jacocoTestReport
+      - name: Upload coverage to Codecov
+        run: bash <(curl -s https://codecov.io/bash)

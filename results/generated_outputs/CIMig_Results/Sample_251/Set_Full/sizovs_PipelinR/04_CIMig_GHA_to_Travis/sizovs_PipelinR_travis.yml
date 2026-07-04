@@ -1,0 +1,16 @@
+cache:
+  directories: ~/.maven-
+sudo: FALSE
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+script:
+  script:
+    ./gradlew build jacocoTestReport
+after_success:
+  bash <(curl -s https://codecov.io/bash)
+include:
+  stage: Build

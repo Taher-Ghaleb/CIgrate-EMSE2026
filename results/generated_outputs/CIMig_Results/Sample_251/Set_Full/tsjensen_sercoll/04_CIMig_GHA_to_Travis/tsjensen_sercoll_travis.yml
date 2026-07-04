@@ -1,0 +1,13 @@
+sudo: FALSE
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  echo PATH=${PATH}\ngit --version\necho JAVA_HOME=${JAVA_HOME}\nls -l ${JAVA_HOME}/bin/java\njava -version\necho ZULU_HOME=${ZULU_HOME}\nls -l ${sercoll_jdk6_java}\n${ZULU_HOME}/bin/java -version\n
+script:
+  script:
+    gradle clean build
+include:
+  stage: build

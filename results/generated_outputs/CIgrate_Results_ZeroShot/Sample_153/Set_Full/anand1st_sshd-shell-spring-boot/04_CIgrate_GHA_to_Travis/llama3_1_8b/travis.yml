@@ -1,0 +1,55 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - apt-get update
+  - apt-get install -y openjdk-8-jdk
+
+install:
+  - apt-get install -y maven
+
+before_script:
+  - echo "Setting up Maven cache"
+  - mkdir -p ~/.m2/repository
+  - echo "Cache directory set up"
+
+script:
+  - echo "Running Maven build"
+  - cd sshd-shell-spring-boot-starter
+  - mvn clean verify
+
+after_success:
+  - echo "Deploying to Coveralls"
+  - curl -X POST https://coveralls.io/badges/ \
+    -H "Content-Type: application/json" \
+    -d '{"repository_token": "$COVERALLS_REPO_TOKEN"}'
+
+after_failure:
+  - echo "Deploying to Coveralls on failure"
+  - curl -X POST https://coveralls.io/badges/ \
+    -H "Content-Type: application/json" \
+    -d '{"repository_token": "$COVERALLS_REPO_TOKEN"}'
+
+deploy:
+  on:
+    tags: true
+  provider: script
+  script:
+    - echo "Deploying to Coveralls"
+    - curl -X POST https://coveralls.io/badges/ \
+      -H "Content-Type: application/json" \
+      -d '{"repository_token": "$COVERALLS_REPO_TOKEN"}'
+
+notifications:
+  email:
+    on:
+      push:
+        branches:
+          only:
+            - main
+      release:
+        tags:
+          branches:
+            - main
+    recipients:
+      - your_email@example.com

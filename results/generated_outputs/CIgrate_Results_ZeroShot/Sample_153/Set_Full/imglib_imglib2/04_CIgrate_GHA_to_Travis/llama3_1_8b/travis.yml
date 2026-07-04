@@ -1,0 +1,72 @@
+language: java
+
+before_install:
+  - echo "Installing Maven"
+  - apt-get update && apt-get install -y maven
+
+install:
+  - mvn --version
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - chmod +x.travis/build.sh
+  -./travis/build.sh
+
+after_success:
+  - echo "Deploying to production"
+  - echo "Deploying to staging"
+
+after_failure:
+  - echo "Deploying to production on failure"
+  - echo "Deploying to staging on failure"
+
+deploy:
+  - provider: script
+    script: echo "Deploying to production"
+    on:
+      branch: master
+      tags: true
+
+matrix:
+  include:
+    - java-version: '8'
+      os: ubuntu
+      dist: xenial
+    - java-version: '11'
+      os: ubuntu
+      dist: xenial
+    - java-version: '17'
+      os: ubuntu
+      dist: xenial
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true
+    recipients:
+      - user@example.com
+
+branches:
+  only:
+    - master
+    - '*-[0-9]*.*'
+    - '*-[0-9]*'
+
+continue-on-error:
+  - matrix.include
+
+env:
+  FOO: ${{ secrets.FOO }}

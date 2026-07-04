@@ -1,0 +1,53 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+  except:
+    - /^hotfix-/
+    - /^feature-/
+
+tags:
+  only:
+    - v*
+
+deploy:
+  on:
+    tags: true
+
+env:
+  OSSRH_JIRA_USERNAME: $OSSRH_JIRA_USERNAME
+  OSSRH_JIRA_PASSWORD: $OSSRH_JIRA_PASSWORD
+  GPG_KEY_NAME: $GPG_KEY_NAME
+  GPG_PASSPHRASE: $GPG_PASSPHRASE
+
+services:
+  - docker
+
+before_install:
+  - gpg --version || apt-get update -y && apt-get install -y gnupg
+
+install:
+  - git config --global user.name "$GITHUB_ACTOR"
+  - git config --global user.email "$GITHUB_ACTOR@github.com"
+  - curl -sSL https://raw.githubusercontent.com/actions/github-scripts/main/setup-java/setup-java.sh | bash -s 8
+  - cache --directories ~/.m2/repository ~/.gradle ~/$HOME/.npm
+
+script:
+  - mvn verify
+  - mvn clean test jacoco:report coveralls:report
+
+before_deploy:
+  - gpg --version || apt-get update -y && apt-get install -y gnupg
+  - release/createReleaseProperties.sh
+  - echo $GPG_SECRET_KEYS | base64 --decode | gpg --import
+  - echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
+  - gpg -v --keyserver hkp://p80.pool.sks-keyservers.net:80 --refresh-keys
+  - gpg -v --list-keys
+
+deploy:
+  on:
+    tags: true
+  needs: build
+  script:
+    - mvn -X release:perform --settings release

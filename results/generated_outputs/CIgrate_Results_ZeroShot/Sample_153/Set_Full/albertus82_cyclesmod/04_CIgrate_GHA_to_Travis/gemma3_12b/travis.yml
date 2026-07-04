@@ -1,0 +1,60 @@
+language: java
+jdk:
+  - openjdk11
+  - openjdk8
+  - openjdk7
+
+os:
+  - linux
+  - macOS
+
+dist:
+  - zulu
+
+matrix:
+  allow_failures:
+    - jdk: openjdk7
+  include:
+    - os: linux
+      jdk: openjdk11
+      env:
+        - JAVA_HOME=/usr/lib/jvm/zulu-11
+    - os: linux
+      jdk: openjdk8
+      env:
+        - JAVA_HOME=/usr/lib/jvm/zulu-8
+    - os: linux
+      jdk: openjdk7
+      env:
+        - JAVA_HOME=/usr/lib/jvm/zulu-7
+    - os: macOS
+      jdk: openjdk11
+      env:
+        - JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home
+      
+before_install:
+  - echo "Before Install"
+
+install:
+  - echo "Install"
+  - if [ "$os" = "linux" ]; then
+      sudo apt-get update && sudo apt-get install -y ant
+    fi
+  - if [ "$os" = "macOS" ]; then
+      brew update
+      brew install ant
+    fi
+
+before_script:
+  - echo "Before Script"
+
+script:
+  - echo "Script"
+  - ant -diagnostics
+  - ant
+
+after_success:
+  - echo "After Success"
+
+after_failure:
+  - echo "After Failure"

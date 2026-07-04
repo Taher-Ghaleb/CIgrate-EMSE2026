@@ -1,0 +1,20 @@
+sudo: FALSE
+api_key:
+  secure: token
+provider
+cache: directories
+language:
+  java
+  addons:
+    firefox: latest
+before_install:
+  java -version
+  mvn -B -ntp deploy -DskipTests=true
+script:
+  script:
+    mvn -B -ntp package
+deploy:
+  skip_cleanup: TRUE
+directories: ~/.maven-
+include:
+  name: deploy to sonatype's snapshots repository

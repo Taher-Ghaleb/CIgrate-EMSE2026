@@ -1,0 +1,72 @@
+language: java
+
+before_install:
+  - echo "Installing dependencies"
+  - apt-get update
+  - apt-get install -y default-jdk
+
+install:
+  - echo "Installing Maven"
+  - apt-get install -y maven
+
+before_script:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+script:
+  - echo "Building with Maven"
+  - mvn package -DskipTests=true
+  - echo "Setting environment variables"
+  - export SECRET_1=$SECRET_1
+  - export SECRET_2=$SECRET_2
+  - export SECRET_3=$SECRET_3
+  - export SECRET_4=$SECRET_4
+  - export SECRET_5=$SECRET_5
+
+after_success:
+  - echo "Deploying to Maven repository"
+  - mvn --settings.travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+
+after_failure:
+  - echo "Deploying to GitHub Pages"
+  - mvn package -DskipTests=true
+  - peaceiris/actions-gh-pages@v4
+    with:
+      github_token: $SECRET_GITHUB_TOKEN
+      publish_dir:./target/staging
+
+deploy:
+  on:
+    branch: master
+    tags: true
+  if: github.event_name == 'push' && github.ref =='refs/heads/master'
+  permissions:
+    contents: write
+  script:
+    - echo "Deploying to Maven repository"
+    - mvn --settings.travis.settings.xml source:jar javadoc:jar deploy -DskipTests=true
+
+matrix:
+  include:
+    - java-version: '8'
+      distribution: temurin
+      cache:'maven'
+  allow_failures: true
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+addons:
+  - travis-encrypt: SECRET_1
+  - travis-encrypt: SECRET_2
+  - travis-encrypt: SECRET_3
+  - travis-encrypt: SECRET_4
+  - travis-encrypt: SECRET_5
+  - travis-encrypt: GITHUB_TOKEN

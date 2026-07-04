@@ -1,0 +1,43 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    - name: TRAVIS_PULL_REQUEST
+      value: ${{ not github.event_name == 'pull_request' }}
+    - name: SECRET_1
+      secure: ${{ secrets.SECRET_1 }}
+    - name: SECRET_2
+      secure: ${{ secrets.SECRET_2 }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Clone travis repository
+        run: git clone -b develop ${{ secrets.REPO_URL }} target/travis
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Install Maven
+        uses: actions/setup-node@v4
+        with:
+          version: '6.x'
+      - name: Install Maven settings
+        uses: actions/checkout@v4
+        with:
+          path: target/travis
+      - name: Install Maven dependencies
+        run: mvn dependency:go-offline
+      - name: Build and deploy
+        if: ${{ not github.event_name == 'pull_request' }}
+        run: mvn clean deploy --settings target/travis/settings.xml
+      - name: Verify
+        if: ${{ github.event_name == 'pull_request' }}
+        run: mvn clean verify --settings target/travis/settings.xml

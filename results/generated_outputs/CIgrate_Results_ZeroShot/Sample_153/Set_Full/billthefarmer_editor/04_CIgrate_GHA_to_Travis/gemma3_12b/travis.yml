@@ -1,0 +1,58 @@
+language: java
+jdk: 8
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/caches
+    - $HOME/.gradle
+branches:
+  only:
+    - main
+    - develop
+    - /^(\([0-9]+\)\s)?(\w+\/(\w+))?$/
+    - /^feature\/.+$/
+    - /^bugfix\/.+$/
+    - /^hotfix\/.+$/
+    - /^release\/.+$/
+    - /^release-candidate\/.+$/
+    - /^release-patch\/.+$/
+    - /^fixup\/.+$/
+    - /^chore\/.+$/
+    - /^docs\/.+$/
+    - /^test\/.+$/
+    - /^refactor\/.+$/
+    - /^style\/.+$/
+    - /^ci\/.+$/
+    - /^perf\/.+$/
+    - /^tools\/.+$/
+    - /^i18n\/.+$/
+    - /^accessibility\/.+$/
+    - /^security\/.+$/
+    - /^internal\/.+$/
+    - /^experimental\/.+$/
+    - /^staging\/.+$/
+    - /^preview\/.+$/
+    - /^beta\/.+$/
+    - /^alpha\/.+$/
+    - /^trunk\/.+$/
+    - /^master\/.+$/
+    - /^release-candidate\/.+$/
+    - /^release-patch\/.+$/
+    - /^fixup\/.+$/
+    - /^chore\/.+$/
+    - /^docs\/.+$/
+    - /^test\/.+$/
+    - /^refactor\/.+$/
+    - /^style\/.+$/
+    - /^ci\/.+$/
+    - /^perf\/.+$/
+    - /^tools\/.+$/
+    - /^i18n\/.+$/
+    - /^accessibility\/.+$/
+    - /^security\/.+$/
+    - /^internal\/.+$/
+    - /^experimental\/.+$/
+    - /^staging\/.+$/
+    - /^preview\/.+$/
+    - /^beta\/.+$/
+    - /^alpha\/.+$/

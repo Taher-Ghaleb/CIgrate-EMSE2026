@@ -1,0 +1,51 @@
+language: ubuntu
+
+branches:
+  only:
+    - master
+    - develop
+
+deploy:
+  on:
+    tags: true
+
+env:
+  _JAVA_OPTIONS: "-Xms1G -Xmx4G"
+
+services:
+  - docker
+
+before_install:
+  - install: actions/checkout@v4
+
+script:
+  - run: |
+      # Set up JDK 8
+      npm install -g @rectalogic/travis-cli
+      travis_wait docker --wait-for=jdk:8
+      travis_wait mvn
+      mvn -B -Dmaven.test.skip=true clean verify
+
+before_install:
+  - cache:
+      directories:
+        - ~/.m2/repository
+        - ~/.gradle
+        - $HOME/.npm
+
+before_script:
+  - java -version
+  - git --version
+
+before_script:
+  - if [ -f ~/.bashrc ]; then source ~/.bashrc; fi
+
+after_success:
+  - script: |
+      # Send IRC notification
+      travis notify-irc --server irc.libera.chat --port 6697 --channel '#io7m' --nickname github-actions-io7m --message "[$(travis_repo_name)] Build success - $(travis_build_pull_request_title): $(travis_build_pull_request_head_commit_message) ($(travis_build_sha))" --url "$(travis_build_web_url)"
+
+after_failure:
+  - script: |
+      # Send IRC notification
+      travis notify-irc --server irc.libera.chat --port 6697 --channel '#io7m' --nickname github-actions-io7m --message "[$(travis_repo_name)] Build fail - $(travis_build_pull_request_title): $(travis_build_pull_request_head_commit_message) ($(travis_build_sha))" --url "$(travis_build_web

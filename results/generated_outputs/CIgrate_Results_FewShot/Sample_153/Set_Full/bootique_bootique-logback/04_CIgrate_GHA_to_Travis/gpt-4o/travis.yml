@@ -1,0 +1,35 @@
+language: java
+sudo: false
+
+env:
+  global:
+    - MAVEN_USERNAME=$OSSRH_USERNAME
+    - MAVEN_PASSWORD=$OSSRH_PASSWORD
+
+matrix:
+  include:
+    - jdk: openjdk9
+      if: branch != master OR type = pull_request
+    - jdk: openjdk8
+      if: branch != master OR type = pull_request
+    - jdk: openjdk9
+      if: branch = master AND type = push
+    - jdk: openjdk8
+      if: branch = master AND type = push AND repo = bootique/bootique-logback
+    - jdk: openjdk8
+      if: branch = master AND type = push AND repo != bootique/bootique-logback
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+script:
+  - mvn clean verify
+
+deploy:
+  provider: script
+  script: mvn clean source:jar javadoc:javadoc deploy --settings travis_settings.xml
+  on:
+    branch: master
+    repo: bootique/bootique-logback
+    condition: $TRAVIS_JDK_VERSION = openjdk8

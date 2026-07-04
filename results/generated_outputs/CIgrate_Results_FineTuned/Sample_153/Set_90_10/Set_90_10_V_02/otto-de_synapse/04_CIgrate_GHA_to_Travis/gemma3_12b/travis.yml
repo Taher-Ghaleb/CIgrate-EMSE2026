@@ -1,0 +1,58 @@
+language: java
+jdk:
+  - oraclejdk8
+env:
+  global:
+    - secure: "********************"
+    - secure: "********************"
+    - AWS_DEFAULT_REGION=eu-central-1
+before_install:
+  - docker pull localstack/localstack
+install: true
+script: ./gradlew check
+after_success:
+  - ./gradlew jacocoRootReport
+after_failure:
+  - ./gradlew jacocoRootReport
+cache:
+  directories:
+    - $HOME/.gradle
+    - $HOME/.sdkman
+notifications:
+  email:
+    recipients:
+      - notification@qos.ch
+      - jmesnil@redhat.com
+      - kfuentes@redhat.com
+      - swhittle@redhat.com
+      - vergil.voogd@gmail.com
+      - dflajoo@gmail.com
+      - jbachorik@qos.ch
+      - cstucker@redhat.com
+      - pdebey@redhat.com
+      - pkopec@redhat.com
+      - jluijten@qos.ch
+      - pvanwynen@gmail.com
+      - jvanmariej@gmail.com
+      - gbrown@redhat.com
+      - jfoley@redhat.com
+      - jberney@redhat.com
+      - jhendricks@redhat.com
+      - jwilkins@redhat.com
+      - jzhang@redhat.com
+      - mdeiszboos@redhat.com
+      - rkumar@redhat.com
+      - skouba@redhat.com
+      - tchaplin@redhat.com
+      - vkurkovsky@redhat.com
+      - ytran@redhat.com
+      - zhe@redhat.com
+      - jmesnil@qos.ch
+      - kfuentes@qos.ch
+      - swheeler@redhat.com
+      - dflajoo@qos.ch
+      - pvanwynen@qos.ch
+      - jvanmariej@qos.ch
+      - gbrown@qos.ch
+      - jfoley@qos.ch
+      - jber

@@ -1,0 +1,9 @@
+setting,direction,service,n_files,n_with_external,external_all_ok_files,tools_seen
+CIMig,travis_to_gha,gha,251,251,0,actionlint
+CIMig,gha_to_travis,travis,251,251,15,travis lint
+Zero-Shot,travis_to_gha,gha,612,612,268,actionlint
+Zero-Shot,gha_to_travis,travis,612,612,393,travis lint
+Fine-Tuned,travis_to_gha,gha,150,150,134,actionlint
+Fine-Tuned,gha_to_travis,travis,150,150,146,travis lint
+Few-Shot,travis_to_gha,gha,612,612,295,actionlint
+Few-Shot,gha_to_travis,travis,612,612,372,travis lint

@@ -1,0 +1,34 @@
+language: java
+
+dist: xenial
+
+jdk:
+  - openjdk11
+
+env:
+  - MAVEN_OPTS=-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+cache:
+  directories:
+    - .autoconf
+    - $TRAVIS_HOME/.m2
+
+jobs:
+  fast_finish: true
+
+services:
+- docker
+
+install: true
+
+script:
+  - mvn package -Dci.buildNumber=$TRAVIS_BUILD_NUMBER -U
+
+after_success:
+  - ./scripts/docker_build
+
+deploy:
+  provider: script
+  script: bash scripts/docker_push
+  on:
+    branch: master

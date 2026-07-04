@@ -1,0 +1,33 @@
+language: java
+jdk:
+  - openjdk8
+
+env:
+  global:
+    - SECRET_TOKEN=$SECRET_TOKEN
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+script:
+  - mvn --version
+  - mvn install site -e -B
+
+after_script:
+  - rm -rf ~/.m2/repository/org/joda/time
+
+before_deploy:
+  - chmod +x ./.github/website.sh
+
+deploy:
+  - provider: script
+    script: ./.github/website.sh
+    on:
+      tags: true
+      condition: "$TRAVIS_TAG =~ ^website"
+  - provider: script
+    script: ./.github/website.sh
+    on:
+      tags: true
+      condition: "$TRAVIS_TAG =~ ^v"

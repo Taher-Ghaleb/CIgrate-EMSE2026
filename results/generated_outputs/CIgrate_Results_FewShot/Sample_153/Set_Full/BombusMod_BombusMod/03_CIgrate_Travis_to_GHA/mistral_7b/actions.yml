@@ -1,0 +1,36 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JDK: oraclejdk8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ env.JDK }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JDK }}
+      - name: Fix Gradle output
+        run: |
+          export TERM=dumb
+          yes | sdkmanager "platforms;android-28"
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: |
+          yes | sdkmanager --licenses || true
+      - name: Install Android SDK components
+        run: |
+          sdkmanager "tools"
+          sdkmanager "build-tools;${{ env.JDK }}"
+          sdkmanager "platforms;android-28"
+          sdkmanager "sysimg-28"
+          sdkmanager "extra-google-m2repository"
+          sdkmanager "extra-android-m2repository"
+      - name: Run tests
+        run: ./gradlew --no-daemon check

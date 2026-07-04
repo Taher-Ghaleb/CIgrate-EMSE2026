@@ -1,0 +1,60 @@
+language: java
+
+before_install:
+  - export TERM=dumb
+
+install:
+  - apt-get update
+  - apt-get install -y default-jdk
+
+script:
+  - chmod +x gradlew
+  -./gradlew test jacocoTestReport
+
+after_success:
+  - coveralls
+
+coverity-scan:
+  if: branch = "coverity_scan"
+  before_install:
+    - apt-get update
+    - apt-get install -y default-jdk
+  script:
+    - chmod +x gradlew
+    -./gradlew build
+  deploy:
+    provider: coverity
+    on:
+      tags: true
+    api_key:
+      secure: $COVERITY_SCAN_TOKEN
+    project:
+      name: micheljung/nocatch
+      email: michel.jung89@gmail.com
+
+matrix:
+  include:
+    - java_version: '11'
+      distribution: temurin
+  allow_failures:
+    - java_version: '11'
+      distribution: temurin
+
+cache:
+  directories:
+    - ~/.m2/repository
+    - ~/.gradle/*
+    - $HOME/.npm
+
+services:
+  - docker-compose
+
+notifications:
+  email:
+    on_success: true
+    on_failure: true
+    recipients:
+      - michel.jung89@gmail.com
+```
+
+Note: The above configuration is a complete Travis CI configuration that maintains the same semantics as the original GitHub Actions workflow. It includes the necessary steps, services, and notifications. The `coverity-scan` job is also included, which is triggered when the branch is `coverity_scan`. The `coverity-scan` job runs the `build` script, which is the same as the original `Coverity Scan` step.

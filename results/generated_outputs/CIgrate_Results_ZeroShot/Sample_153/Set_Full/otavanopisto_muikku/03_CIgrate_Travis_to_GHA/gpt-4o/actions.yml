@@ -1,0 +1,55 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - devel
+  pull_request:
+    branches:
+      - devel
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [oraclejdk7, openjdk7]
+    env:
+      SECURE_ENV_VAR_1: ${{ secrets.SECURE_ENV_VAR_1 }}
+      SECURE_ENV_VAR_2: ${{ secrets.SECURE_ENV_VAR_2 }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Unset GEM_PATH
+        run: unset GEM_PATH
+
+      - name: Install dependencies
+        run: mvn install
+
+      - name: After success actions
+        if: success()
+        run: |
+          mvn package -f muikku/pom.xml -Popenshift
+          python travis-prepare-maven.py
+          mvn deploy --settings ~/.m2/mySettings.xml
+
+      - name: Before deploy
+        if: success()
+        run: echo 'Starting deployment'
+
+      - name: Deploy to OpenShift
+        if: success() && matrix.jdk == 'openjdk7'
+        run: |
+          # TODO: Implement OpenShift deployment
+          echo "Deploying to OpenShift for app: muikku, domain: oodev"
+
+      - name: After deploy
+        if: success() && matrix.jdk == 'openjdk7'
+        run: echo 'Deployed'

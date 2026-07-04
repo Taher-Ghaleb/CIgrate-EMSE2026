@@ -1,0 +1,8 @@
+language: Java
+sudo: false
+jdk:
+  - openjdk8
+
+script:
+  - chmod +x gradlew
+  - ./gradlew test

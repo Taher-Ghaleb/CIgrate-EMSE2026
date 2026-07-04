@@ -1,0 +1,44 @@
+language: java
+jdk:
+  - openjdk8
+
+services:
+  - docker
+
+env:
+  global:
+    - AWS_ACCESS_KEY_ID=localstack
+    - AWS_SECRET_ACCESS_KEY=localstack
+    - AWS_DEFAULT_REGION=eu-central-1
+    - LOCALSTACK_VERSION=3.0.2
+    - LOCALSTACK_ENDPOINT=http://localhost:4566
+
+before_install:
+  - docker run -d -p 4566:4566 -p 4571:4571 --name localstack localstack/localstack:3.0.2
+  - docker exec localstack bash -c "awslocal kinesis list-streams || exit 1"
+  - echo "Waiting for LocalStack to be ready..."
+  - for i in {1..30}; do
+      if curl -s http://localhost:4566/_localstack/health | grep -q '"kinesis": "available"'; then
+        echo "LocalStack is ready!";
+        break;
+      fi;
+      echo "Waiting... ($i/30)";
+      sleep 2;
+    done
+  - echo "LocalStack health status:"
+  - curl -s http://localhost:4566/_localstack/health | jq .
+
+install:
+  - chmod +x gradlew
+
+script:
+  - ./gradlew check
+  - ./gradlew jacocoRootReport
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f ./build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml -v
+
+after_failure:
+  - echo "Uploading test results..."
+  - find . -type d -name 'test-results' -exec tar -czf test-results.tar.gz {} +
+  - curl --upload-file ./test-results.tar.gz https://transfer.sh/test-results.tar.gz

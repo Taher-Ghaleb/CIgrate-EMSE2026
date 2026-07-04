@@ -1,0 +1,61 @@
+name: Java CI
+
+on:
+  push:
+    branches:
+      - master
+      - '\\d+\\.\\d+'
+  pull_request:
+    branches:
+      - master
+      - '\\d+\\.\\d+'
+
+env:
+  SONATYPE_NEXUS_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      docker: docker-latest
+
+    strategy:
+      matrix:
+        jdk: [openjdk8, openjdk11]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2
+          restore-keys: |
+            ${{ runner.os }}-m2
+
+      - name: Install Maven
+        run: |
+          if ! command -v mvn &> /dev/null; then
+            curl -sL https://apache.org/dist/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz | tar xz
+            mv apache-maven-3.8.6 /usr/local/maven
+            export PATH=/usr/local/maven/bin:$PATH
+          fi
+
+      - name: Install NPM and run tests
+        if: ${{ matrix.jdk }} == 'openjdk8'
+        run: |
+          run: npm install
+          run: npm run test
+
+      - name: Install NPM and run Apollo Link tests
+        if: ${{ matrix.jdk }} == 'openjdk8'
+        run: |

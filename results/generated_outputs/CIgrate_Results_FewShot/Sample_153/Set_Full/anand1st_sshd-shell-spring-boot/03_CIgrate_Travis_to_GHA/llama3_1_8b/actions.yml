@@ -1,0 +1,24 @@
+Here is the migrated GitHub Actions workflow:
+
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Change directory
+        run: |
+          cd sshd-shell-spring-boot-starter
+      - name: Run tests and coverage
+        run: mvn jacoco:report coveralls:report
+```
+
+Note: I've used the `ubuntu-latest` runner, but you can change it to any other runner that suits your needs. Also, I've used the `temurin` JDK, but you can change it to any other JDK that you prefer.

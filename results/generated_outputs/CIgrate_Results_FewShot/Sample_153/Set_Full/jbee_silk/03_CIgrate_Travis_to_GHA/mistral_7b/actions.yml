@@ -1,0 +1,32 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  global:
+    ADB_INSTALL_TIMEOUT: 10
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: ['8', '9']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Install Ant
+        run: apt-get update && apt-get install -y ant
+      - name: Cache Ant
+        uses: actions/cache@v4
+        with:
+          path: ~/.ant/lib
+          key: ${{ runner.os }}-ant-${{ hashFiles('**/build.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-ant-
+      - name: Build
+        run: ant

@@ -1,0 +1,50 @@
+language: java
+
+before_install:
+  - echo "Setting up JDK 8"
+  - export JAVA_HOME=/usr/lib/jvm/temurin-8
+  - export PATH=$JAVA_HOME/bin:$PATH
+
+install:
+  - apt-get update
+  - apt-get install -y maven
+
+script:
+  - chmod +x mvnw
+  -./mvnw clean verify
+
+after_success:
+  - codecov:
+      token: $CODECOV_TOKEN
+      fail_ci_if_error: false
+
+deploy:
+  on:
+    tags: true
+
+services:
+  - docker
+
+addons:
+  apt:
+    sources:
+      - "temurin-stable"
+
+branches:
+  only:
+    - main
+
+matrix:
+  allow_failures:
+    - java-8
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle
+    - $HOME/.npm
+
+notifications:
+  email:
+    on_success: false
+    on_failure: true

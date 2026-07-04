@@ -1,0 +1,12 @@
+language: java
+jdk:
+  - oraclejdk8
+install: mvn install --settings .travis/settings.xml -DskipTests -Dmaven.javadoc.skip=true -B
+script:
+  - 'if [ ! -z "${GPG_SECRET_KEYS}" ]; then echo $GPG_SECRET_KEYS | base64 --decode | gpg --import; fi'
+  - 'if [ ! -z "${GPG_OWNERTRUST}" ]; then echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust; fi'
+deploy:
+  - mvn clean deploy --settings .travis/settings.xml -DskipTests=true -B
+cache:
+  directories:
+    - $HOME/.m2

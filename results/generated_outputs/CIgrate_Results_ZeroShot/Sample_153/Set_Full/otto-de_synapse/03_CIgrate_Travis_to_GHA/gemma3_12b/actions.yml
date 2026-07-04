@@ -1,0 +1,39 @@
+name: Java CI with LocalStack
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: localstack
+      AWS_SECRET_ACCESS_KEY: localstack
+      AWS_DEFAULT_REGION: eu-central-1
+    services:
+      - docker
+    strategy:
+      matrix:
+        jdk:
+          - oraclejdk8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Install AWS CLI (without sudo)
+        run: |
+          pip install --user awscli
+          export PATH=$PATH:$HOME/.local/bin
+      - name: Test reachability of localstack kinesis
+        run: |
+          ./gradlew startLocalStack
+          aws --endpoint-url=http://localhost:4568 kinesis list-streams
+          ./gradlew stopLocalStack
+      - name: Gradle Check
+        run: ./gradlew check --info
+      - name: Jacoco Root Report
+        run: ./gradlew jacocoRootReport
+      - name: Codecov
+        run: bash <(curl -s https://codecov.io/bash)

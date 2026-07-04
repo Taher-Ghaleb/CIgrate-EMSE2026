@@ -1,0 +1,54 @@
+language: java
+
+branches:
+  only:
+    - master
+
+deploy:
+  on:
+    tags: true
+    types: [release]
+    repository: ical4j/ical4j-connector
+
+before_install:
+  - checkout: $GITHUB_REF
+
+install:
+  - name: Set up JDK ${{ matrix.java }}
+    uses: oracle/java-action@v2
+    with:
+      java-version: ${{ matrix.java }}
+      cache: gradle
+
+before_script:
+  - run: chmod +x gradlew
+
+script:
+  - ./gradlew check
+
+matrix:
+  java:
+    - '8'
+    fail-fast: false
+
+before_script:
+  - if: ${{ github.event_name == 'push' && github.repository == 'ical4j/ical4j-connector' && github.ref == 'refs/heads/master' }}
+    run: |
+      wget https://www.digitalocean.com/docs/ssl/certs/sonarqube-cert.pem -O sonar_cert.pem
+      keytool -import -alias sonar -keystore $JAVA_HOME/lib/security/cacerts -file sonar_cert.pem -storepass changeit -noprompt || true
+
+  - if: ${{ github.event_name == 'push' && github.repository == 'ical4j/ical4j-connector' && github.ref == 'refs/heads/master' }}
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    run: ./gradlew sonarqube
+
+deploy:
+  needs: build
+  if: startsWith(github.ref, 'refs/tags/')
+  script:
+    - ./gradlew assembleDist
+    - echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    - uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          build/distributions/ical4

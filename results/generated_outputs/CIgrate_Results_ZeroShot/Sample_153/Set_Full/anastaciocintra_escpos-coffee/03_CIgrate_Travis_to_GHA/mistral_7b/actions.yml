@@ -1,0 +1,46 @@
+name: Java Build and Deploy
+on: [push, pull_request]
+
+env:
+  GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
+  GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
+  GPG_EXECUTABLE: gpg
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          path: ${{ runner.workspace }}/.m2
+
+      - name: Import GPG keys
+        if: |
+          ! empty(env.GPG_SECRET_KEYS) && ! empty(env.GPG_OWNERTRUST)
+        run: |
+          echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+          echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+
+      - name: Install and build
+        run: mvn install --settings .travis/settings.xml -DskipTests -Dmaven.javadoc.skip=true -B
+
+      - name: Deploy
+        if: success()
+        run: mvn clean deploy --settings .travis/settings.xml -DskipTests=true -B
+```
+
+This GitHub Actions workflow maintains the semantics of the provided Travis CI configuration while adhering to the specified migration rules. It includes a single job called `build-and-deploy` that runs on an Ubuntu runner,

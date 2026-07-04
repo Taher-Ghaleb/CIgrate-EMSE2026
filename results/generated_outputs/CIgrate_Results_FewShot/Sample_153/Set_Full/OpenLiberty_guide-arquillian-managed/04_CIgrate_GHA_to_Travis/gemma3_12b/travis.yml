@@ -1,0 +1,45 @@
+language: java
+sudo: required
+branches:
+  only:
+    - master
+    - qa
+  except:
+    - /^release\/.*$/
+jdk:
+  - openjdk8
+cache:
+  directories:
+    - ~/.m2/repository
+    - finish/target/liberty/wlp/usr/servers/*/logs
+before_install:
+  - cat /etc/hosts
+  - sudo hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
+  - cat /etc/hosts
+install: true
+script:
+  - chmod +x finish/../scripts/travisTest.sh
+  - if [ "${TRAVIS_BRANCH}" == "master" || "${TRAVIS_BRANCH}" == "qa" ]; then
+    - ../scripts/travisTest.sh
+    fi
+after_success:
+  - if [ "${TRAVIS_BRANCH}" == "master" || "${TRAVIS_BRANCH}" == "qa" ]; then
+    - if [ ! -f "finish/target/liberty/wlp/bin/server" ]; then
+      - echo "Error: Liberty server not found"
+      - exit 1
+    fi
+    - serverName=$(finish/target/liberty/wlp/bin/server list | cut -d '.' -f2 | tr -d '\n')
+    - if [ -z "$serverName" ]; then
+      - echo "Error: Could not determine server name"
+      - exit 1
+    fi
+    - echo "Server name: $serverName"
+    - logsDir="finish/target/liberty/wlp/usr/servers/$serverName/logs"
+    - if [ ! -d "$logsDir" ]; then
+      - echo "Error: Logs directory not found: $logsDir"
+      - exit 1
+    fi
+    - cd "$logsDir"
+    - repo_name=$(echo "${TRAVIS_BRANCH}" | sed -e "s/\//-/g")
+    - if [ "${TRAVIS_BRANCH}" == "master" || "${TRAVIS_BRANCH}" == "qa" ]; then

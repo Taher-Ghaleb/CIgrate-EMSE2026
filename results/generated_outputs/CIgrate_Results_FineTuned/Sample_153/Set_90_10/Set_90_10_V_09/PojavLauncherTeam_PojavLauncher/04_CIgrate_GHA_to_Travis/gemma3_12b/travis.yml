@@ -1,0 +1,63 @@
+language: android
+
+android:
+  components:
+    - tools
+    - build-tools-26.0.0
+    - android-26
+    - extra-android-m2repository
+    - android-28
+    - build-tools-28.0.3
+
+  licenses:
+    - android-sdk-license-.+
+    - android-sdk-preview-license-.+
+
+env:
+  global:
+    - ANDROID_API_LEVEL=26
+    - ANDROID_BUILD_TOOLS_VERSION=26.0.0
+
+jdk:
+  - oraclejdk8
+
+notifications:
+  email: false
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.android/build-cache
+
+before_install: chmod +x gradlew
+
+script:
+  - ./gradlew clean build
+  - ./gradlew test
+
+after_success:
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+    apk_name="PojavLauncher_DevBuild-$TRAVIS_COMMIT".apk
+    curl -H "${{ secrets.JFROG_TOKEN }}" -T "$apk_name" https://na.artifactory.swg-devops.com/artifactory/hyc-maven-release/PojavLauncher-snapshot/;
+    else
+    echo "Not creating release for pull request.";
+    fi
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "********************"
+  file: app/build/outputs/apk/debug/app-debug.apk
+  skip_cleanup: true
+  on:
+    repo: hyc-shell/PojavLauncher
+    tags: true
+  name: PojavLauncher_DevBuild-$TRAVIS_COMMIT
+  body: Automatic build of PojavLauncher from the latest source commit ($TRAVIS_COMMIT) built by Travis CI on $TRAVIS_BUILD_TIMESTAMP.
+  prerelease: true
+  target_commit: $TRAVIS_COMMIT

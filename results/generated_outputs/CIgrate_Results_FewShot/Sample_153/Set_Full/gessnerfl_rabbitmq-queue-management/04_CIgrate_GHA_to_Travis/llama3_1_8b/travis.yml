@@ -1,0 +1,29 @@
+Here is the complete Travis CI configuration (.travis.yml) equivalent to the provided GitHub Actions workflow:
+
+```yaml
+language: java
+jdk: openjdk8
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    options: >-
+      --health-cmd "rabbitmq-diagnostics -q ping"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+
+before_install:
+  - chmod +x gradlew
+
+script:
+  -./gradlew --stacktrace build
+```
+
+Note that the `services` section in Travis CI is used to run additional services, such as databases or message queues, during the build process. In this case, we're using the RabbitMQ service. The `ports` section specifies the ports that the service will listen on, and the `options` section specifies the health checks for the service.
+
+The `before_install` section is used to run commands before the build process starts, in this case, making the `gradlew` script executable.
+
+The `script` section is used to run the build process, in this case, running the `gradlew` build command with the `--stacktrace` option.

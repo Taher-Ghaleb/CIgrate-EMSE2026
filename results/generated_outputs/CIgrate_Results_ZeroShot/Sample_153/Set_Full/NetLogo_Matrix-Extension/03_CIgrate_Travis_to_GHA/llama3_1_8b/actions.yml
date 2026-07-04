@@ -1,0 +1,46 @@
+name: Scala Build and Test
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # TODO: consider using filters instead of wildcard
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      sbt:
+        image: AdoptOpenJDK/openjdk8
+        ports:
+          - 9000:9000
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: Cache sbt dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/.ivy2
+          key: ${{ runner.os }}-sbt-${GITHUB_SHA}-dependencies
+          restore-keys: $HOME/.ivy2
+      - name: Install sbt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sbt
+      - name: Install dependencies
+        run: sbt update
+      - name: Compile
+        run: sbt compile
+      - name: Test
+        run: sbt test
+```
+
+Note: The `jdk` and `language` settings are not directly applicable in GitHub Actions, so I've used the `actions/setup-java` action to set the Java version. The `scala` version is not used in GitHub Actions, so I've removed it. The `cache` settings are preserved using the `actions/cache` action. The `install` step is modified to install sbt using `apt-get`. The `script` steps are preserved and modified to use `run` instead of `script`.

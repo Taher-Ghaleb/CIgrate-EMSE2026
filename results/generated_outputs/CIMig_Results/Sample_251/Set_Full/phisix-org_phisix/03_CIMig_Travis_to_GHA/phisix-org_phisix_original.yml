@@ -1,0 +1,24 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: build with maven-
+      uses: actions/setup-java@version
+    - name: Placeholder
+      uses: actions/checkout@version
+    run: mvn -B clean org.jacoco:jacoco-maven-plugin:prepare-agent verify sonar:sonar
+
+macos:
+  jdk: oraclejdk8
+
+env:
+  ci: TRUE
+  github_token: ${{ github.token }}
+

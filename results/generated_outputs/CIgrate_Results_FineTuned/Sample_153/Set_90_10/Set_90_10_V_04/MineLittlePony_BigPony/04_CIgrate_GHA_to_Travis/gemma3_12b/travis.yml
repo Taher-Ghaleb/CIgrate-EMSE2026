@@ -1,0 +1,22 @@
+language: java
+jdk:
+  - oraclejdk8
+install: true
+script:
+  - ./gradlew check
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+deploy:
+  provider: script
+  script: ./gradlew build publish
+  skip_cleanup: true
+  on:
+    branch: master
+    all_branches: true
+env:
+  global:
+    - secure: "********************"

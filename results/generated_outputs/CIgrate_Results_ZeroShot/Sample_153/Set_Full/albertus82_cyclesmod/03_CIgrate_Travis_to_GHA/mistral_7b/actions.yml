@@ -1,0 +1,60 @@
+name: Java Build and Test
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    services:
+      dbs:
+        image: postgres:latest
+
+    env:
+      JRE6_HOME: ${{ secrets.JRE6_HOME }}
+
+    strategy:
+      matrix:
+        os: [linux, osx]
+        jdk: [oraclejdk11, oraclejdk8, openjdk7]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 11
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Set up Java 8
+        if: ${{ matrix.jdk == 'oraclejdk8' }}
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 8
+
+      - name: Set up Java 6
+        if: ${{ matrix.jdk == 'openjdk7' }}
+        uses: actions/setup-java@v4 with:
+          distribution: temurin
+          java-version: 6
+
+      - name: Install dependencies
+        if: ${{ matrix.os == 'osx' }}
+        run: |
+          brew update
+          brew install wine ant
+
+      - name: Install dependencies
+        if: ${{ matrix.os == 'linux' }}
+        run: |
+          apt-get update
+          apt-get install -y ant-optional lib32ncurses5 lib32z1 openjdk-6-jdk winehq-stable
+
+      - name: Run diagnostics
+        if: ${{ matrix.os == '*' }}
+        run: ant -diagnostics
+
+      - name: Build and Test
+        run: ant all
+
+    continue-on-error: true

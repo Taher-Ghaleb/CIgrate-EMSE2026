@@ -1,0 +1,63 @@
+name: Java CI
+
+on:
+  push:
+    branches: [master, stable]
+  pull_request:
+    branches: [master, stable]
+
+env:
+  repos_usr: jql_jars-INTE
+  repos_pwd: ${{ secrets.REPOS_PWD }}
+  github_token: ${{ secrets.GITHUB_TOKEN }}
+  downloads_usr: jql_downloads
+  downloads_pwd: ${{ secrets.DOWNLOADS_PWD }}
+  docs_usr: jql_docs
+  docs_pwd: ${{ secrets.DOCS_PWD }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+      
+      - name: Install Python 3
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3
+      
+      - name: Install virtualenv
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-venv
+      
+      - name: Create virtualenv
+        run: |
+          python3 -m virtualenv my_py3
+      
+      - name: Activate virtualenv
+        run: source my_py3/bin/activate
+      
+      - name: Install docutils
+        run: |
+          python -m pip --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org install docutils
+      
+      - name: Install Pygments
+        run: |
+          python -m pip --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org install Pygments
+      
+      - name: Check pip packages
+        run: python -m pip freeze
+      
+      - name: Build documentation
+        run: ./gradlew -Drst2html=`which rst2html.py` usrdoc build
+      
+      - name: Upload archives
+        if: github.ref == 'refs/heads/master'
+        run: ./gradlew -Drepos_

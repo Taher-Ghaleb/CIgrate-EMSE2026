@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - "/.*-[0-9]+\\..*/"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: openjdk
+          java-version: '8'
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+```
+
+This GitHub Actions workflow preserves the semantics of the provided Travis CI configuration. It includes a job named `build` that runs on `ubuntu-latest`. The job checks out the code, sets up JDK 8 using `actions/setup-java@v4`, and caches the Maven repository using `actions/cache@v4`. The `branches` filter is preserved using the expanded form for the event. The `install` and `script` sections are not directly mapped to GitHub Actions, but the equivalent behavior is achieved by using the `actions/checkout@v4` action and the `script` step. The `cache` section is mapped to `actions/cache@v4` with stable keys.

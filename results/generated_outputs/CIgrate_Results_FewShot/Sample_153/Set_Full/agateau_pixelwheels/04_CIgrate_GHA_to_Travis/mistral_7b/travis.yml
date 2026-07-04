@@ -1,0 +1,18 @@
+language: bash
+sudo: false
+env:
+  matrix:
+    - JDK_VERSION: 11
+
+script:
+  - chmod +x ci/build-docker-image
+  - chmod +x ci/docker-build-game
+
+before_install:
+  - ./ci/build-docker-image
+
+install:
+  - ./ci/docker-build-game
+```
+
+In this example, I've kept the `language` as `bash` since the provided workflow doesn't specify a language, and the scripts are bash scripts. The `env` section uses a matrix to simulate the different JDK versions, but since the provided workflow doesn't specify a JDK version, I've used `JDK_VERSION: 11` as an example. The `before_install` and `install` sections are used to simulate the GitHub Actions steps. The scripts are made executable, and the `before_install` script runs the `build-docker-image` script, while the `install` script runs the `docker-build-game` script.

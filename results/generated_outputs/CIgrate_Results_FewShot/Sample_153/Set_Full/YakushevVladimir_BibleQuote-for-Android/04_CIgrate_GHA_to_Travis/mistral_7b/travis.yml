@@ -1,0 +1,38 @@
+language: android
+jdk: openjdk8
+env:
+  matrix:
+    - JDK_CACHE=gradle
+
+sudo: required
+
+before_install:
+  - actions/checkout@v4
+
+install:
+  - uses: actions/setup-java@v4
+    with:
+      distribution: 'temurin'
+      java-version: '8'
+      cache: ${{ env.JDK_CACHE }}
+
+addons:
+  android:
+    components:
+      - tools
+      - platform-tools
+      - build-tools;30.0.3
+      - platforms;android-30
+      - extras;android;m2repository
+      - extras;google;m2repository
+      - extras;android;support
+
+script:
+  - chmod +x gradlew
+  - ./gradlew clean build
+
+before_script:
+  - yes | sdkmanager "sdkmanager" "licenses"
+
+after_success:
+  - ./gradlew testDebugUnitTestCoverage coveralls

@@ -1,0 +1,65 @@
+name: Java CI/CD
+
+on:
+  push:
+  pull_request:
+    branches:
+      - dev
+  tag:
+  
+env:
+  SONAR_ORGANIZATION: "twasi"
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    stage: tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Build, Test, and Sonar Scan
+        run: |
+          cp .travis.settings.xml $HOME/.m2/settings.xml && mvn jacoco:prepare-agent surefire:test jacoco:report sonar:sonar
+        env:
+          SONAR_ORGANIZATION: ${{ env.SONAR_ORGANIZATION }}
+          # TODO: SonarCloud authentication (requires login action or secrets)
+
+  build:
+    runs-on: ubuntu-latest
+    stage: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Build
+        run: |
+          cp .travis.settings.xml $HOME/.m2/settings.xml && mvn clean compile assembly:single
+
+  deploy-docker-dev:
+    runs-on: ubuntu-latest
+    stage: deploy-docker-dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Build and Push Docker Image
+        run: |
+          cp .travis.settings.xml $HOME/.m2/settings.xml && mvn clean compile assembly:single docker:build -DpushImage
+        env:
+          # TODO: Docker login credentials (requires login action or secrets)
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    stage: deploy-dev
+    if: github.ref == 'refs/heads/dev'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+      - name: Deploy to Dev
+        run:

@@ -1,0 +1,32 @@
+name: placeholder
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+  - name: Placeholder
+    strategy:
+      matrix: java
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        path: ~/.maven-
+        key: ${{ runner.os }}-maven-${{ hashfiles(arg) }}
+      uses: actions/cache@version
+      with:
+        java-version:
+          ${{ matrix.java }}
+          1.8
+      with: key
+    - name: placeholder_Name
+      uses: actions/checkout@version
+      run: ./gradlew build -x dependencyCheckAnalyze
+      with: java-version
+      uses: actions/setup-java@version
+
+macos:
+  jdk: oraclejdk8
+

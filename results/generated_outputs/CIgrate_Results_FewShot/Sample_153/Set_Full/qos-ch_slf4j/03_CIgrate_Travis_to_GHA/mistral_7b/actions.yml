@@ -1,0 +1,43 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  JAVA_VERSION: 11
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Install dependencies
+        run: mvn clean install
+      - name: Notify via email
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const core = require('@actions/core');
+            const github = require('@actions/github');
+            try {
+              const octokit = github.rest.getOctokit(core.getInput('github-token'));
+              const pull_number = github.context.payload.pull_request?.number || github.context.payload.pull_request?.number;
+              if (pull_number) {
+                octokit.issues.createComment({
+                  owner: github.context.repo.owner,
+                  repo: github.context.repo.repo,
+                  issue_number: pull_number,
+                  body: 'Build completed.',
+                  headers: {
+                    Authorization: `Bearer ${core.getInput('github-token')}`,
+                  },
+                });
+              }
+            } catch (error) {
+              core.setFailed(error.message);
+            }

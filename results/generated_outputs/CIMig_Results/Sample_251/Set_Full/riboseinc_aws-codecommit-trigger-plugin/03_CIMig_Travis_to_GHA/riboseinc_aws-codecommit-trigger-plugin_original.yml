@@ -1,0 +1,24 @@
+name: placeholder_Name
+
+on:
+  pull_request:
+    branches: branch-name
+  push:
+
+jobs:
+  build:
+    strategy: matrix
+    runs-on: ubuntu-latest
+    steps:
+      with:
+        key
+        java-version: ${{ matrix.java }}
+      with: java-version
+      uses: actions/setup-java@version
+    - name: build with maven-
+      uses: actions/checkout@version
+    run: mvn clean compile -Pit
+
+macos:
+  jdk: oraclejdk8
+

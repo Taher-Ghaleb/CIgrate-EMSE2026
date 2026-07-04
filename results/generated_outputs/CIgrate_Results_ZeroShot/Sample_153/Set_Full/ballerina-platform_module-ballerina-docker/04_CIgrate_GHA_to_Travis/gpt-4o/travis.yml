@@ -1,0 +1,41 @@
+language: java
+os:
+  - windows
+  - linux
+
+matrix:
+  include:
+    - os: windows
+      env: JOB=windows-build
+    - os: linux
+      env: JOB=linux-build
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.gradle
+
+services:
+  - docker
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then choco install jdk8 -params 'installdir=c:\\java8' -y; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then choco install maven --version 3.6.3 -y; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then jdk_switcher use openjdk8; fi
+
+install:
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then export JAVA_HOME=c:\\java8; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then export PATH=$PATH:/c/ProgramData/chocolatey/lib/maven/apache-maven-3.6.3/bin; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then chmod +x ./gradlew; fi
+
+script:
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then ./gradlew.bat build -x test --stacktrace --console=plain --no-daemon; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then ./gradlew clean build codeCoverageReport --stacktrace --scan --console=plain --no-daemon; fi
+
+after_success:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"; fi
+
+branches:
+  only:
+    - main
+    - develop

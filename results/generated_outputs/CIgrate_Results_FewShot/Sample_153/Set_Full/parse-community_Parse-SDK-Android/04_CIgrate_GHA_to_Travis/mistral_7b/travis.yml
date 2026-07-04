@@ -1,0 +1,55 @@
+language: java
+jdk: openjdk8
+sudo: false
+install: true
+addons:
+  gradle:
+    version: '4'
+  codecov:
+    token: ${{ secrets.CODECOV_TOKEN }}
+  coveralls:
+    token: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
+env:
+  global:
+    - COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
+script:
+  - sdkmanager --install "build-tools;30.0.3" "platforms;android-30"
+  - sdkmanager --list_installed
+  - chmod +x gradlew
+  - ./gradlew clean testDebugUnitTest jacocoTestReport
+  - ./gradlew coveralls
+
+before_script:
+  - yes | sdkmanager --licenses || true
+
+after_success:
+  - ./gradlew coveralls
+
+after_success:
+  - uses: codecov/codecov-action@v4
+    with:
+      token: ${{ secrets.CODECOV_TOKEN }}
+      files: ./build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+      fail_ci_if_error: false
+      verbose: true
+
+after_success:
+  - uses: actions/upload-artifact@v4
+    with:
+      name: test-results
+      path: |
+        **/build/reports/tests/
+        **/build/test-results/
+      retention-days: 7
+
+branches:
+  only:
+    - master
+    - '[0-9]+.[0-9]+.[0-9]+'
+
+pull_request:
+  branches:
+    - master
+    - '[0-9]+.[0-9]+.[0-9]+'

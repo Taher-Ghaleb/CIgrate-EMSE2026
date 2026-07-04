@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags: '*'
+  pull_request:
+
+env:
+  RUNNER_IMAGE: constellationapplication/netbeans-runner:11.3
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:19.03.12
+        options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Docker
+        run: docker pull "${{ env.RUNNER_IMAGE }}"
+      - name: Cache Ivy2
+        uses: actions/cache@v4
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-ivy2-${{ hashFiles('**/*.gradle', '**/*.gradle.kts', '**/build.gradle', '**/build.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-ivy2-
+      - name: Clean Ivy2 cache
+        run: find "${HOME}"/.ivy2/cache -name "ivydata-*.properties" -print -delete
+      - name: Run tests
+        run: docker run --mount "type=bind,source=${{ github.workspace }},target=${{ github.workspace }}" --mount "type=bind,source=${HOME}/.ivy2/cache,target=/root/.ivy2/cache" --workdir "${{ github.workspace }}" "${{ env.RUNNER_IMAGE }}" .travis/run-tests.sh
+      - name: Run SonarQube analysis
+        run: .travis/sonar.sh
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/constellation.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/82ac70bdb3f9e144d859
+    on_success: change
+    on_failure: always
+    on_start: never
